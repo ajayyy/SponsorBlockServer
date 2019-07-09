@@ -56,8 +56,8 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
         return;
     }
 
-    startTime = parseInt(startTime);
-    endTime = parseInt(endTime);
+    startTime = parseFloat(startTime);
+    endTime = parseFloat(endTime);
 
     let UUID = uuidv1();
 
