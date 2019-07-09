@@ -12,6 +12,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "http": "0.0.0",
-    "sqlite3": "^4.0.9"
+    "sqlite3": "^4.0.9",
+    "uuid": "^3.3.2"
   }
 }

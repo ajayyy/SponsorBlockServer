@@ -4,6 +4,9 @@ var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
 
+//uuid service
+var uuidv1 = require('uuid/v1');
+
 //load database
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./databases/sponsorTimes.db');
@@ -35,10 +38,27 @@ app.get('/api/get', function (req, res) {
 });
 
 //add the post function
-app.get('/api/get', function (req, res) {
+app.get('/api/post', function (req, res) {
+    let videoID = req.query.videoID;
+    let startTime = req.query.startTime;
+    let endTime = req.query.endTime;
 
+    if (typeof videoID != 'string' || startTime == undefined || endTime == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    startTime = parseInt(startTime);
+    endTime = parseInt(endTime);
+
+    let UUID = uuidv1();
+
+    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?)").run(videoID, startTime, endTime, UUID);
+
+    res.sendStatus(200);
 });
 
-app.get('/downloadDatabase', function (req, res) {
-    res.sendFile("./databases/sponsorTimes.db");
+app.get('/database.db', function (req, res) {
+    res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
