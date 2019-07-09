@@ -14,6 +14,13 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 // Create an HTTP service.
 http.createServer(app).listen(80);
 
+//setup CORS correctly
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 //add the get function
 app.get('/api/getVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
