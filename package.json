@@ -1,0 +1,17 @@
+{
+  "name": "sponsor_block_server",
+  "version": "0.1.0",
+  "description": "Server that holds the SponsorBlock database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Ajay Ramachandran",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "http": "0.0.0",
+    "sqlite3": "^4.0.9"
+  }
+}
