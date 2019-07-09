@@ -15,7 +15,7 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 http.createServer(app).listen(80);
 
 //add the get function
-app.get('/api/get', function (req, res) {
+app.get('/api/getVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
 
     let sponsorTimes = [];
@@ -38,7 +38,7 @@ app.get('/api/get', function (req, res) {
 });
 
 //add the post function
-app.get('/api/post', function (req, res) {
+app.get('/api/postVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
