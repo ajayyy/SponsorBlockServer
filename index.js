@@ -37,10 +37,14 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
             sponsorTimes[i][1] = rows[i].endTime;
         }
 
-        //send result
-        res.send({
-            sponsorTimes: sponsorTimes
-        })
+        if (sponsorTimes == []) {
+            res.sendStatus(404);
+        } else {
+            //send result
+            res.send({
+                sponsorTimes: sponsorTimes
+            })
+        }
     });
 });
 
