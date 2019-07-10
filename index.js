@@ -53,8 +53,9 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
+    let userID = req.query.userID;
 
-    if (typeof videoID != 'string' || startTime == undefined || endTime == undefined) {
+    if (typeof videoID != 'string' || startTime == undefined || endTime == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
         return;
@@ -65,7 +66,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
 
     let UUID = uuidv1();
 
-    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?)").run(videoID, startTime, endTime, UUID);
+    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID);
 
     res.sendStatus(200);
 });
