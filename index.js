@@ -7,6 +7,10 @@ var app = express();
 //uuid service
 var uuidv1 = require('uuid/v1');
 
+//hashing service
+var crypto = require('crypto');
+var hash = crypto.createHash('sha256');
+
 //load database
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./databases/sponsorTimes.db');
@@ -55,6 +59,12 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let endTime = req.query.endTime;
     let userID = req.query.userID;
 
+    //x-forwarded-for if this server is behind a proxy
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    //hash the ip so no one can get it from the database
+    let hashedIP = hash.update(ip).digest('hex');
+
     if (typeof videoID != 'string' || startTime == undefined || endTime == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
@@ -66,7 +76,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
 
     let UUID = uuidv1();
 
-    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID);
+    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP);
 
     res.sendStatus(200);
 });
