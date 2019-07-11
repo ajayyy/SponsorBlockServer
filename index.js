@@ -83,19 +83,27 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     //get current time
     let timeSubmitted = Date.now();
 
-    //check if this info has already been submitted first
-    db.prepare("SELECT UUID From sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
-        if (err) console.log(err);
-        
-        if (row == null) {
-            //not a duplicate, execute query
-            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP, timeSubmitted);
-
-            res.sendStatus(200);
+    //check to see if the user has already submitted sponsors for this video
+    db.prepare("SELECT UUID FROM sponsorTimes WHERE userID = ? and videoID = ?").all([userID, videoID], function(err, rows) {
+        if (rows.length >= 4) {
+            //too many sponsors for the same video from the same user
+            res.sendStatus(429);
         } else {
-            res.sendStatus(409);
+            //check if this info has already been submitted first
+            db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+                if (err) console.log(err);
+                
+                if (row == null) {
+                    //not a duplicate, execute query
+                    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP, timeSubmitted);
+
+                    res.sendStatus(200);
+                } else {
+                    res.sendStatus(409);
+                }
+            });
         }
-    })
+    });
 });
 
 app.get('/database.db', function (req, res) {
