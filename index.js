@@ -9,7 +9,6 @@ var uuidv1 = require('uuid/v1');
 
 //hashing service
 var crypto = require('crypto');
-var hash = crypto.createHash('sha256');
 
 //load database
 var sqlite3 = require('sqlite3').verbose();
@@ -73,16 +72,27 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     //hash the ip so no one can get it from the database
-    let hashedIP = hash.update(ip + globalSalt).digest('hex');
+    let hashCreator = crypto.createHash('sha256');
+    let hashedIP = hashCreator.update(ip + globalSalt).digest('hex');
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
 
     let UUID = uuidv1();
 
-    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP);
+    //check if this info has already been submitted first
+    db.prepare("SELECT UUID From sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+        if (err) console.log(err);
+        
+        if (row == null) {
+            //not a duplicate, execute query
+            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP);
 
-    res.sendStatus(200);
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(400);
+        }
+    })
 });
 
 app.get('/database.db', function (req, res) {
