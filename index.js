@@ -18,6 +18,10 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 // Create an HTTP service.
 http.createServer(app).listen(80);
 
+//global salt that is added to every ip before hashing to
+//  make it even harder for someone to decode the ip
+var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
+
 //setup CORS correctly
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -59,17 +63,17 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let endTime = req.query.endTime;
     let userID = req.query.userID;
 
-    //x-forwarded-for if this server is behind a proxy
-    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    //hash the ip so no one can get it from the database
-    let hashedIP = hash.update(ip).digest('hex');
-
     if (typeof videoID != 'string' || startTime == undefined || endTime == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
         return;
     }
+
+    //x-forwarded-for if this server is behind a proxy
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    //hash the ip so no one can get it from the database
+    let hashedIP = hash.update(ip + globalSalt).digest('hex');
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
