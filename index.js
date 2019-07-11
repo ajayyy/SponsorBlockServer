@@ -80,13 +80,16 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
 
     let UUID = uuidv1();
 
+    //get current time
+    let timeSubmitted = Date.now();
+
     //check if this info has already been submitted first
     db.prepare("SELECT UUID From sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
         if (err) console.log(err);
         
         if (row == null) {
             //not a duplicate, execute query
-            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP);
+            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP, timeSubmitted);
 
             res.sendStatus(200);
         } else {
