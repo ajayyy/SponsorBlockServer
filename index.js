@@ -7,12 +7,19 @@ var app = express();
 //uuid service
 var uuidv1 = require('uuid/v1');
 
+//hashing service
+var crypto = require('crypto');
+
 //load database
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./databases/sponsorTimes.db');
 
 // Create an HTTP service.
 http.createServer(app).listen(80);
+
+//global salt that is added to every ip before hashing to
+//  make it even harder for someone to decode the ip
+var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -53,21 +60,50 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
+    let userID = req.query.userID;
 
-    if (typeof videoID != 'string' || startTime == undefined || endTime == undefined) {
+    if (typeof videoID != 'string' || startTime == undefined || endTime == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
         return;
     }
+
+    //x-forwarded-for if this server is behind a proxy
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    //hash the ip so no one can get it from the database
+    let hashCreator = crypto.createHash('sha256');
+    let hashedIP = hashCreator.update(ip + globalSalt).digest('hex');
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
 
     let UUID = uuidv1();
 
-    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?)").run(videoID, startTime, endTime, UUID);
+    //get current time
+    let timeSubmitted = Date.now();
 
-    res.sendStatus(200);
+    //check to see if the user has already submitted sponsors for this video
+    db.prepare("SELECT UUID FROM sponsorTimes WHERE userID = ? and videoID = ?").all([userID, videoID], function(err, rows) {
+        if (rows.length >= 4) {
+            //too many sponsors for the same video from the same user
+            res.sendStatus(429);
+        } else {
+            //check if this info has already been submitted first
+            db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+                if (err) console.log(err);
+                
+                if (row == null) {
+                    //not a duplicate, execute query
+                    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP, timeSubmitted);
+
+                    res.sendStatus(200);
+                } else {
+                    res.sendStatus(409);
+                }
+            });
+        }
+    });
 });
 
 app.get('/database.db', function (req, res) {
