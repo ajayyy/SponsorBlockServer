@@ -106,6 +106,40 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     });
 });
 
+//voting endpoint
+app.get('/api/voteOnSponsorTime', function (req, res) {
+    let UUID = req.query.UUID;
+    let userID = req.query.userID;
+    let type = req.query.type;
+
+    if (UUID == undefined || userID == undefined || type == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
+    let incrementAmount = 0;
+
+    //don't use userID for now, and just add the vote
+    if (type == 1) {
+        //upvote
+        incrementAmount = 1;
+    } else if (type == 0) {
+        //downvote
+        incrementAmount = -1;
+    } else {
+        //unrecongnised type of vote
+        req.sendStatus(400);
+        return;
+    }
+
+    db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount, UUID);
+
+    //added to db
+    res.sendStatus(200);
+});
+
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
