@@ -33,8 +33,9 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
 
     let sponsorTimes = [];
+    let UUIDs = []
 
-    db.prepare("SELECT startTime, endTime FROM sponsorTimes WHERE videoID = ?").all(videoID, function(err, rows) {
+    db.prepare("SELECT startTime, endTime, UUID FROM sponsorTimes WHERE videoID = ?").all(videoID, function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
@@ -42,6 +43,8 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     
             sponsorTimes[i][0] = rows[i].startTime;
             sponsorTimes[i][1] = rows[i].endTime;
+
+            UUIDs[i] = rows[i].UUID;
         }
 
         if (sponsorTimes.length == 0) {
@@ -49,7 +52,8 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
         } else {
             //send result
             res.send({
-                sponsorTimes: sponsorTimes
+                sponsorTimes: sponsorTimes,
+                UUIDs: UUIDs
             })
         }
     });
