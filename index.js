@@ -226,7 +226,9 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
         let sqrtVotesList = [];
         let totalSqrtVotes = 0;
         for (let j = 0; j < similarSponsorsGroups[i].length; j++) {
-            let sqrtVote = Math.sqrt(votes[similarSponsorsGroups[i][j]]);
+            //multiplying by 10 makes the 10 votes the point where it the votes start not mattering as much
+            //this can be changed if this system increases in popularity.
+            let sqrtVote = Math.sqrt(votes[similarSponsorsGroups[i][j]] * 10);
             sqrtVotesList.push(sqrtVote)
             totalSqrtVotes += sqrtVote;
 
