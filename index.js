@@ -33,19 +33,37 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
 
     let sponsorTimes = [];
-    let UUIDs = []
+    let votes = []
+    let UUIDs = [];
 
-    db.prepare("SELECT startTime, endTime, UUID FROM sponsorTimes WHERE videoID = ?").all(videoID, function(err, rows) {
+    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ?").all(videoID, function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
-            sponsorTimes[i] = [];
+            //check if votes are above -2
+            if (rows[i].votes < -2) {
+                //too untrustworthy, just ignore it
+                continue;
+            }
+            sponsorTimes.push([]);
+            
+            let index = sponsorTimes.length - 1;
     
-            sponsorTimes[i][0] = rows[i].startTime;
-            sponsorTimes[i][1] = rows[i].endTime;
+            sponsorTimes[index][0] = rows[i].startTime;
+            sponsorTimes[index][1] = rows[i].endTime;
 
-            UUIDs[i] = rows[i].UUID;
+            votes[index] = rows[i].votes;
+            UUIDs[index] = rows[i].UUID;
         }
+
+        if (sponsorTimes.length == 0) {
+            res.sendStatus(404);
+            return;
+        }
+
+        organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs);
+        sponsorTimes = organisedData.sponsorTimes;
+        UUIDs = organisedData.UUIDs;
 
         if (sponsorTimes.length == 0) {
             res.sendStatus(404);
@@ -147,3 +165,112 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
+
+
+//This function will find sponsor times that are contained inside of eachother, called similar sponsor times
+//Only one similar time will be returned, randomly generated based on the sqrt of votes.
+//This allows new less voted items to still sometimes appear to give them a chance at getting votes.
+//Sponsor times with less than -2 votes are already ignored before this function is called
+function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
+    //list of sponsors that are contained inside eachother
+    let similarSponsors = [];
+
+    for (let i = 0; i < sponsorTimes.length; i++) {
+        //see if the start time is located between the start and end time of the other sponsor time.
+        for (let j = 0; j < sponsorTimes.length; j++) {
+            if (sponsorTimes[j][0] > sponsorTimes[i][0] && sponsorTimes[j][0] < sponsorTimes[i][1]) {
+                //sponsor j is contained in sponsor i
+                similarSponsors.push([i, j]);
+            }
+        }
+    }
+
+    let similarSponsorsGroups = [];
+    //once they have been added to a group, they don't need to be dealt with anymore
+    let dealtWithSimilarSponsors = [];
+
+    //create lists of all the similar groups (if 1 and 2 are similar, and 2 and 3 are similar, the group is 1, 2, 3)
+    for (let i = 0; i < similarSponsors.length; i++) {
+        if (dealtWithSimilarSponsors.includes(i)) {
+            //dealt with already
+            continue;
+        }
+
+        //this is the group of indexes that are similar
+        let group = similarSponsors[i];
+        for (let j = 0; j < similarSponsors.length; j++) {
+            if (group.includes(similarSponsors[j][0]) || group.includes(similarSponsors[j][1])) {
+                //this is a similar group
+                group.push(similarSponsors[j][0]);
+                group.push(similarSponsors[j][1]);
+                dealtWithSimilarSponsors.push(j);
+            }
+        }
+        similarSponsorsGroups.push(group);
+    }
+
+    //remove duplicate indexes in group arrays
+    for (let i = 0; i < similarSponsorsGroups.length; i++) {
+        uniqueArray = similarSponsorsGroups[i].filter(function(item, pos, self) {
+            return self.indexOf(item) == pos;
+        });
+
+        similarSponsorsGroups[i] = uniqueArray;
+    }
+
+    let finalSponsorTimeIndexes = [];
+    //the sponsor times either chosen to be added to finalSponsorTimeIndexes or chosen not to be added
+    let finalSponsorTimeIndexesDealtWith = [];
+
+    for (let i = 0; i < similarSponsorsGroups.length; i++) {
+        let sqrtVotesList = [];
+        let totalSqrtVotes = 0;
+        for (let j = 0; j < similarSponsorsGroups[i].length; j++) {
+            let sqrtVote = Math.sqrt(votes[similarSponsorsGroups[i][j]]);
+            sqrtVotesList.push(sqrtVote)
+            totalSqrtVotes += sqrtVote;
+
+            //this index has now been deat with
+            finalSponsorTimeIndexesDealtWith.push(similarSponsorsGroups[i][j]);
+        }
+
+        let randomNumber = Math.random();
+        //this array will keep adding to this variable each time one sqrt vote has been dealt with
+        //this is the sum of all the sqrtVotes under this index
+        let currentVoteNumber = 0;
+        for (let j = 0; j < sqrtVotesList.length; j++) {
+            if (randomNumber > currentVoteNumber / totalSqrtVotes && randomNumber < (currentVoteNumber + sqrtVotesList[j]) / totalSqrtVotes) {
+                //this one was randomly generated
+                finalSponsorTimeIndexes.push(similarSponsorsGroups[i][j]);
+                break;
+            }
+
+            //add on to the count
+            currentVoteNumber += sqrtVotesList[j];
+        }
+    }
+
+    //find the indexes never dealt with and add them
+    for (let i = 0; i < sponsorTimes.length; i++) {
+        if (!finalSponsorTimeIndexesDealtWith.includes(i)) {
+            finalSponsorTimeIndexes.push(i)
+        }
+    }
+
+    //convert this to a final array to return
+    let finalSponsorTimes = [];
+    for (let i = 0; i < finalSponsorTimeIndexes.length; i++) {
+        finalSponsorTimes.push(sponsorTimes[finalSponsorTimeIndexes[i]]);
+    }
+
+    //convert this to a final array of UUIDs as well
+    let finalUUIDs = [];
+    for (let i = 0; i < finalSponsorTimeIndexes.length; i++) {
+        finalUUIDs.push(UUIDs[finalSponsorTimeIndexes[i]]);
+    }
+
+    return {
+        sponsorTimes: finalSponsorTimes,
+        UUIDs: finalUUIDs
+    };
+}
