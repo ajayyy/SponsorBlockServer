@@ -224,6 +224,15 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     //the sponsor times either chosen to be added to finalSponsorTimeIndexes or chosen not to be added
     let finalSponsorTimeIndexesDealtWith = weightedRandomIndexes.choicesDealtWith;
 
+    let voteSums = weightedRandomIndexes.weightSums;
+    //convert these into the votes
+    for (let i = 0; i < voteSums.length; i++) {
+        if (voteSums[i] != undefined) {
+            //it should use the sum of votes, since anyone upvoting a similar sponsor is upvoting the existence of that sponsor.
+            votes[finalSponsorTimeIndexes[i]] = voteSums;
+        }
+    }
+
     //find the indexes never dealt with and add them
     for (let i = 0; i < sponsorTimes.length; i++) {
         if (!finalSponsorTimeIndexesDealtWith.includes(i)) {
@@ -257,8 +266,20 @@ function getWeightedRandomChoiceForArray(choiceGroups, weights) {
     let finalChoices = [];
     //the indexes either chosen to be added to final indexes or chosen not to be added
     let choicesDealtWith = [];
+    //for each choice group, what are the sums of the weights
+    let weightSums = [];
 
     for (let i = 0; i < choiceGroups.length; i++) {
+        //find weight sums for this group
+        weightSums.push(0);
+        for (let j = 0; j < choiceGroups[i].length; j++) {
+            //only if it is a positive vote, otherwise it is probably just a sponsor time with slightly wrong time
+            if (weights[choiceGroups[i][j]] > 0) {
+                weightSums[weightSums.length - 1] += weights[choiceGroups[i][j]];
+            }
+        }
+
+        //create a random choice for this group
         let randomChoice = getWeightedRandomChoice(choiceGroups[i], weights, 1)
         finalChoices.push(randomChoice.finalChoices);
 
@@ -269,7 +290,8 @@ function getWeightedRandomChoiceForArray(choiceGroups, weights) {
 
     return {
         finalChoices: finalChoices,
-        choicesDealtWith: choicesDealtWith
+        choicesDealtWith: choicesDealtWith,
+        weightSums: weightSums
     };
 }
 
