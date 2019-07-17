@@ -218,41 +218,11 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
         similarSponsorsGroups[i] = uniqueArray;
     }
 
-    let finalSponsorTimeIndexes = [];
+    let weightedRandomIndexes = getWeightedRandom(similarSponsorsGroups, votes);
+
+    let finalSponsorTimeIndexes = weightedRandomIndexes.finalIndexes;
     //the sponsor times either chosen to be added to finalSponsorTimeIndexes or chosen not to be added
-    let finalSponsorTimeIndexesDealtWith = [];
-
-    for (let i = 0; i < similarSponsorsGroups.length; i++) {
-        let sqrtVotesList = [];
-        let totalSqrtVotes = 0;
-        for (let j = 0; j < similarSponsorsGroups[i].length; j++) {
-            //multiplying by 10 makes around 13 votes the point where it the votes start not mattering as much (10 + 3)
-            //The 3 makes -2 the minimum votes before being ignored completely
-            //https://www.desmos.com/calculator/ljftxolg9j
-            //this can be changed if this system increases in popularity.
-            let sqrtVote = Math.sqrt((votes[similarSponsorsGroups[i][j]] + 3) * 10);
-            sqrtVotesList.push(sqrtVote)
-            totalSqrtVotes += sqrtVote;
-
-            //this index has now been deat with
-            finalSponsorTimeIndexesDealtWith.push(similarSponsorsGroups[i][j]);
-        }
-
-        let randomNumber = Math.random();
-        //this array will keep adding to this variable each time one sqrt vote has been dealt with
-        //this is the sum of all the sqrtVotes under this index
-        let currentVoteNumber = 0;
-        for (let j = 0; j < sqrtVotesList.length; j++) {
-            if (randomNumber > currentVoteNumber / totalSqrtVotes && randomNumber < (currentVoteNumber + sqrtVotesList[j]) / totalSqrtVotes) {
-                //this one was randomly generated
-                finalSponsorTimeIndexes.push(similarSponsorsGroups[i][j]);
-                break;
-            }
-
-            //add on to the count
-            currentVoteNumber += sqrtVotesList[j];
-        }
-    }
+    let finalSponsorTimeIndexesDealtWith = weightedRandomIndexes.indexesDealtWith;
 
     //find the indexes never dealt with and add them
     for (let i = 0; i < sponsorTimes.length; i++) {
@@ -276,5 +246,48 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     return {
         sponsorTimes: finalSponsorTimes,
         UUIDs: finalUUIDs
+    };
+}
+
+function getWeightedRandom(indexes, weights) {
+    let finalIndexes = [];
+    //the indexes either chosen to be added to final indexes or chosen not to be added
+    let indexesDealtWith = [];
+
+    for (let i = 0; i < indexes.length; i++) {
+        let sqrtVotesList = [];
+        let totalSqrtVotes = 0;
+        for (let j = 0; j < indexes[i].length; j++) {
+            //multiplying by 10 makes around 13 votes the point where it the votes start not mattering as much (10 + 3)
+            //The 3 makes -2 the minimum votes before being ignored completely
+            //https://www.desmos.com/calculator/ljftxolg9j
+            //this can be changed if this system increases in popularity.
+            let sqrtVote = Math.sqrt((weights[indexes[i][j]] + 3) * 10);
+            sqrtVotesList.push(sqrtVote)
+            totalSqrtVotes += sqrtVote;
+
+            //this index has now been deat with
+            indexesDealtWith.push(indexes[i][j]);
+        }
+
+        let randomNumber = Math.random();
+        //this array will keep adding to this variable each time one sqrt vote has been dealt with
+        //this is the sum of all the sqrtVotes under this index
+        let currentVoteNumber = 0;
+        for (let j = 0; j < sqrtVotesList.length; j++) {
+            if (randomNumber > currentVoteNumber / totalSqrtVotes && randomNumber < (currentVoteNumber + sqrtVotesList[j]) / totalSqrtVotes) {
+                //this one was randomly generated
+                finalIndexes.push(indexes[i][j]);
+                break;
+            }
+
+            //add on to the count
+            currentVoteNumber += sqrtVotesList[j];
+        }
+    }
+
+    return {
+        finalIndexes: finalIndexes,
+        indexesDealtWith: indexesDealtWith
     };
 }
