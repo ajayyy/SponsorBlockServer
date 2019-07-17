@@ -218,7 +218,7 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
         similarSponsorsGroups[i] = uniqueArray;
     }
 
-    let weightedRandomIndexes = getWeightedRandom(similarSponsorsGroups, votes);
+    let weightedRandomIndexes = getWeightedRandomChoiceForArray(similarSponsorsGroups, votes);
 
     let finalSponsorTimeIndexes = weightedRandomIndexes.finalIndexes;
     //the sponsor times either chosen to be added to finalSponsorTimeIndexes or chosen not to be added
@@ -230,6 +230,9 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
             finalSponsorTimeIndexes.push(i)
         }
     }
+
+    //if there are too many indexes, find the best 4
+    finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 4).finalIndexes;
 
     //convert this to a final array to return
     let finalSponsorTimes = [];
@@ -249,40 +252,79 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     };
 }
 
-function getWeightedRandom(indexes, weights) {
+//gets the getWeightedRandomChoice for each group in an array of groups
+function getWeightedRandomChoiceForArray(indexGroups, weights) {
     let finalIndexes = [];
     //the indexes either chosen to be added to final indexes or chosen not to be added
     let indexesDealtWith = [];
 
-    for (let i = 0; i < indexes.length; i++) {
-        let sqrtVotesList = [];
-        let totalSqrtVotes = 0;
-        for (let j = 0; j < indexes[i].length; j++) {
-            //multiplying by 10 makes around 13 votes the point where it the votes start not mattering as much (10 + 3)
-            //The 3 makes -2 the minimum votes before being ignored completely
-            //https://www.desmos.com/calculator/ljftxolg9j
-            //this can be changed if this system increases in popularity.
-            let sqrtVote = Math.sqrt((weights[indexes[i][j]] + 3) * 10);
-            sqrtVotesList.push(sqrtVote)
-            totalSqrtVotes += sqrtVote;
+    for (let i = 0; i < indexGroups.length; i++) {
+        let randomChoice = getWeightedRandomChoice(indexGroups[i], weights, 1)
+        finalIndexes.push(randomChoice.finalIndexes);
 
-            //this index has now been deat with
-            indexesDealtWith.push(indexes[i][j]);
+        for (let j = 0; j < randomChoice.indexesDealtWith.length; j++) {
+            indexesDealtWith.push(randomChoice.indexesDealtWith[j])
+        }
+    }
+
+    return {
+        finalIndexes: finalIndexes,
+        indexesDealtWith: indexesDealtWith
+    };
+}
+
+//gets a weighted random choice from the indexes array based on the weights.
+//amountOfChoices speicifies the amount of choices to return, 1 or more.
+//choices are unique
+function getWeightedRandomChoice(indexes, weights, amountOfChoices) {
+    if (amountOfChoices > indexes.length) {
+        //not possible, since all choices must be unique
+        return null;
+    }
+
+    let finalIndexes = [];
+    let indexesDealtWith = [];
+
+    let sqrtVotesList = [];
+    let totalSqrtVotes = 0;
+    for (let j = 0; j < indexes.length; j++) {
+        //multiplying by 10 makes around 13 votes the point where it the votes start not mattering as much (10 + 3)
+        //The 3 makes -2 the minimum votes before being ignored completely
+        //https://www.desmos.com/calculator/ljftxolg9j
+        //this can be changed if this system increases in popularity.
+        let sqrtVote = Math.sqrt((weights[indexes[j]] + 3) * 10);
+        sqrtVotesList.push(sqrtVote)
+        totalSqrtVotes += sqrtVote;
+
+        //this index has now been deat with
+        indexesDealtWith.push(indexes[j]);
+    }
+
+    //iterate and find amountOfChoices choices
+    let randomNumber = Math.random();
+    //this array will keep adding to this variable each time one sqrt vote has been dealt with
+    //this is the sum of all the sqrtVotes under this index
+    let currentVoteNumber = 0;
+    for (let j = 0; j < sqrtVotesList.length; j++) {
+        if (randomNumber > currentVoteNumber / totalSqrtVotes && randomNumber < (currentVoteNumber + sqrtVotesList[j]) / totalSqrtVotes) {
+            //this one was randomly generated
+            finalIndexes.push(indexes[j]);
+            //remove that from original array, for next recursion pass if it happens
+            indexes.splice(j, 1);
+            break;
         }
 
-        let randomNumber = Math.random();
-        //this array will keep adding to this variable each time one sqrt vote has been dealt with
-        //this is the sum of all the sqrtVotes under this index
-        let currentVoteNumber = 0;
-        for (let j = 0; j < sqrtVotesList.length; j++) {
-            if (randomNumber > currentVoteNumber / totalSqrtVotes && randomNumber < (currentVoteNumber + sqrtVotesList[j]) / totalSqrtVotes) {
-                //this one was randomly generated
-                finalIndexes.push(indexes[i][j]);
-                break;
-            }
-
-            //add on to the count
-            currentVoteNumber += sqrtVotesList[j];
+        //add on to the count
+        currentVoteNumber += sqrtVotesList[j];
+    }
+    
+    //add on the other choices as well using recursion
+    if (amountOfChoices > 1) {
+        let otherChoices = getWeightedRandomChoice(indexes, weights, amountOfChoices - 1).finalIndexes;
+        console.log(otherChoices);
+        //add all these choices to the finalIndexes array being returned
+        for (let i = 0; i < otherChoices.length; i++) {
+            finalIndexes.push(otherChoices[i]);
         }
     }
 
