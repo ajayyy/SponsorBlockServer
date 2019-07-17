@@ -220,9 +220,9 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
 
     let weightedRandomIndexes = getWeightedRandomChoiceForArray(similarSponsorsGroups, votes);
 
-    let finalSponsorTimeIndexes = weightedRandomIndexes.finalIndexes;
+    let finalSponsorTimeIndexes = weightedRandomIndexes.finalChoices;
     //the sponsor times either chosen to be added to finalSponsorTimeIndexes or chosen not to be added
-    let finalSponsorTimeIndexesDealtWith = weightedRandomIndexes.indexesDealtWith;
+    let finalSponsorTimeIndexesDealtWith = weightedRandomIndexes.choicesDealtWith;
 
     //find the indexes never dealt with and add them
     for (let i = 0; i < sponsorTimes.length; i++) {
@@ -232,7 +232,7 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     }
 
     //if there are too many indexes, find the best 4
-    finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 4).finalIndexes;
+    finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 4).finalChoices;
 
     //convert this to a final array to return
     let finalSponsorTimes = [];
@@ -253,51 +253,52 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
 }
 
 //gets the getWeightedRandomChoice for each group in an array of groups
-function getWeightedRandomChoiceForArray(indexGroups, weights) {
-    let finalIndexes = [];
+function getWeightedRandomChoiceForArray(choiceGroups, weights) {
+    let finalChoices = [];
     //the indexes either chosen to be added to final indexes or chosen not to be added
-    let indexesDealtWith = [];
+    let choicesDealtWith = [];
 
-    for (let i = 0; i < indexGroups.length; i++) {
-        let randomChoice = getWeightedRandomChoice(indexGroups[i], weights, 1)
-        finalIndexes.push(randomChoice.finalIndexes);
+    for (let i = 0; i < choiceGroups.length; i++) {
+        let randomChoice = getWeightedRandomChoice(choiceGroups[i], weights, 1)
+        finalChoices.push(randomChoice.finalChoices);
 
-        for (let j = 0; j < randomChoice.indexesDealtWith.length; j++) {
-            indexesDealtWith.push(randomChoice.indexesDealtWith[j])
+        for (let j = 0; j < randomChoice.choicesDealtWith.length; j++) {
+            choicesDealtWith.push(randomChoice.choicesDealtWith[j])
         }
     }
 
     return {
-        finalIndexes: finalIndexes,
-        indexesDealtWith: indexesDealtWith
+        finalChoices: finalChoices,
+        choicesDealtWith: choicesDealtWith
     };
 }
 
 //gets a weighted random choice from the indexes array based on the weights.
 //amountOfChoices speicifies the amount of choices to return, 1 or more.
 //choices are unique
-function getWeightedRandomChoice(indexes, weights, amountOfChoices) {
-    if (amountOfChoices > indexes.length) {
+function getWeightedRandomChoice(choices, weights, amountOfChoices) {
+    if (amountOfChoices > choices.length) {
         //not possible, since all choices must be unique
         return null;
     }
 
-    let finalIndexes = [];
-    let indexesDealtWith = [];
+    let finalChoices = [];
+    let choicesDealtWith = [];
 
-    let sqrtVotesList = [];
-    let totalSqrtVotes = 0;
-    for (let j = 0; j < indexes.length; j++) {
+    let sqrtWeightsList = [];
+    //the total of all the weights run through the cutom sqrt function
+    let totalSqrtWeights = 0;
+    for (let j = 0; j < choices.length; j++) {
         //multiplying by 10 makes around 13 votes the point where it the votes start not mattering as much (10 + 3)
         //The 3 makes -2 the minimum votes before being ignored completely
         //https://www.desmos.com/calculator/ljftxolg9j
         //this can be changed if this system increases in popularity.
-        let sqrtVote = Math.sqrt((weights[indexes[j]] + 3) * 10);
-        sqrtVotesList.push(sqrtVote)
-        totalSqrtVotes += sqrtVote;
+        let sqrtVote = Math.sqrt((weights[choices[j]] + 3) * 10);
+        sqrtWeightsList.push(sqrtVote)
+        totalSqrtWeights += sqrtVote;
 
         //this index has now been deat with
-        indexesDealtWith.push(indexes[j]);
+        choicesDealtWith.push(choices[j]);
     }
 
     //iterate and find amountOfChoices choices
@@ -305,31 +306,30 @@ function getWeightedRandomChoice(indexes, weights, amountOfChoices) {
     //this array will keep adding to this variable each time one sqrt vote has been dealt with
     //this is the sum of all the sqrtVotes under this index
     let currentVoteNumber = 0;
-    for (let j = 0; j < sqrtVotesList.length; j++) {
-        if (randomNumber > currentVoteNumber / totalSqrtVotes && randomNumber < (currentVoteNumber + sqrtVotesList[j]) / totalSqrtVotes) {
+    for (let j = 0; j < sqrtWeightsList.length; j++) {
+        if (randomNumber > currentVoteNumber / totalSqrtWeights && randomNumber < (currentVoteNumber + sqrtWeightsList[j]) / totalSqrtWeights) {
             //this one was randomly generated
-            finalIndexes.push(indexes[j]);
+            finalChoices.push(choices[j]);
             //remove that from original array, for next recursion pass if it happens
-            indexes.splice(j, 1);
+            choices.splice(j, 1);
             break;
         }
 
         //add on to the count
-        currentVoteNumber += sqrtVotesList[j];
+        currentVoteNumber += sqrtWeightsList[j];
     }
     
     //add on the other choices as well using recursion
     if (amountOfChoices > 1) {
-        let otherChoices = getWeightedRandomChoice(indexes, weights, amountOfChoices - 1).finalIndexes;
-        console.log(otherChoices);
-        //add all these choices to the finalIndexes array being returned
+        let otherChoices = getWeightedRandomChoice(choices, weights, amountOfChoices - 1).finalChoices;
+        //add all these choices to the finalChoices array being returned
         for (let i = 0; i < otherChoices.length; i++) {
-            finalIndexes.push(otherChoices[i]);
+            finalChoices.push(otherChoices[i]);
         }
     }
 
     return {
-        finalIndexes: finalIndexes,
-        indexesDealtWith: indexesDealtWith
+        finalChoices: finalChoices,
+        choicesDealtWith: choicesDealtWith
     };
 }
