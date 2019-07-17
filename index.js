@@ -117,7 +117,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                 
                 if (row == null) {
                     //not a duplicate, execute query
-                    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, UUID, userID, hashedIP, timeSubmitted);
+                    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, hashedIP, timeSubmitted);
 
                     res.sendStatus(200);
                 } else {
