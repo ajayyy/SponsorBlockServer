@@ -1,6 +1,6 @@
-# SponsorBlocker Server
+# SponsorBlock Server
 
-SponsorBlocker is an extension that will skip over sponsored segments of YouTube videos. SponsorBlocker is a crowdsourced browser extension that let's anyone submit the start and end time's of sponsored segments of YouTube videos. Once one person submits this information, everyone else with this extension will skip right over the sponsored segment.
+SponsorBlock is an extension that will skip over sponsored segments of YouTube videos. SponsorBlock is a crowdsourced browser extension that let's anyone submit the start and end time's of sponsored segments of YouTube videos. Once one person submits this information, everyone else with this extension will skip right over the sponsored segment.
 
 This is the server backend for it
 
@@ -14,4 +14,4 @@ Hopefully this project can be combined with projects like [this](https://github.
 
 # Client
 
-The client web browser extension is available here: https://github.com/ajayyy/SponsorBlocker
+The client web browser extension is available here: https://github.com/ajayyy/SponsorBlock
