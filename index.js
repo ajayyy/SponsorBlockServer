@@ -140,26 +140,57 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         return;
     }
 
-    //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
-    let incrementAmount = 0;
+    //check if vote has already happened
+    db.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
+        if (err) console.log(err);
+                
+        if (row != undefined && row.type == type) {
+            //they have already done this exact vote
+            res.status(405).send("Duplicate Vote");
+            return;
+        }
 
-    //don't use userID for now, and just add the vote
-    if (type == 1) {
-        //upvote
-        incrementAmount = 1;
-    } else if (type == 0) {
-        //downvote
-        incrementAmount = -1;
-    } else {
-        //unrecongnised type of vote
-        req.sendStatus(400);
-        return;
-    }
+        //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
+        let incrementAmount = 0;
+        let oldIncrementAmount = 0;
 
-    db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount, UUID);
+        if (type == 1) {
+            //upvote
+            incrementAmount = 1;
+        } else if (type == 0) {
+            //downvote
+            incrementAmount = -1;
+        } else {
+            //unrecongnised type of vote
+            res.sendStatus(400);
+            return;
+        }
+        if (row != undefined) {
+            if (row.type == 1) {
+                //upvote
+                oldIncrementAmount = 1;
+            } else if (row.type == 0) {
+                //downvote
+                oldIncrementAmount = -1;
+            }
+        }
 
-    //added to db
-    res.sendStatus(200);
+        //update the votes table
+        if (row != undefined) {
+            db.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
+        } else {
+            db.prepare("INSERT INTO votes VALUES(?, ?, ?)").run(userID, UUID, type);
+        }
+
+        //update the vote count on this sponsorTime
+        //oldIncrementAmount will be zero is row is null
+        db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+
+        //update the votes table
+
+        //added to db
+        res.sendStatus(200);
+    });
 });
 
 app.get('/database.db', function (req, res) {
