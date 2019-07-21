@@ -36,7 +36,7 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let votes = []
     let UUIDs = [];
 
-    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ?").all(videoID, function(err, rows) {
+    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
