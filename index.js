@@ -36,7 +36,7 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let votes = []
     let UUIDs = [];
 
-    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ?").all(videoID, function(err, rows) {
+    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
@@ -84,7 +84,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let endTime = req.query.endTime;
     let userID = req.query.userID;
 
-    if (typeof videoID != 'string' || startTime == undefined || endTime == undefined || userID == undefined) {
+    if (videoID == undefined || startTime == undefined || endTime == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
         return;
@@ -94,8 +94,12 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     //hash the ip so no one can get it from the database
-    let hashCreator = crypto.createHash('sha256');
-    let hashedIP = hashCreator.update(ip + globalSalt).digest('hex');
+    let hashedIP = ip + globalSalt;
+    //hash it 5000 times, this makes it very hard to brute force
+    for (let i = 0; i < 5000; i++) {
+        let hashCreator = crypto.createHash('sha512');
+        hashedIP = hashCreator.update(hashedIP).digest('hex');
+    }
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
@@ -105,23 +109,33 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     //get current time
     let timeSubmitted = Date.now();
 
-    //check to see if the user has already submitted sponsors for this video
-    db.prepare("SELECT UUID FROM sponsorTimes WHERE userID = ? and videoID = ?").all([userID, videoID], function(err, rows) {
-        if (rows.length >= 4) {
-            //too many sponsors for the same video from the same user
+    let yesterday = timeSubmitted - 86400000;
+    
+    //check to see if this ip has submitted too many sponsors today
+    db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
+        if (row.count >= 10) {
+            //too many sponsors for the same video from the same ip address
             res.sendStatus(429);
         } else {
-            //check if this info has already been submitted first
-            db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
-                if (err) console.log(err);
-                
-                if (row == null) {
-                    //not a duplicate, execute query
-                    db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, hashedIP, timeSubmitted);
-
-                    res.sendStatus(200);
+            //check to see if the user has already submitted sponsors for this video
+            db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID], function(err, row) {
+                if (row.count >= 4) {
+                    //too many sponsors for the same video from the same user
+                    res.sendStatus(429);
                 } else {
-                    res.sendStatus(409);
+                    //check if this info has already been submitted first
+                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+                        if (err) console.log(err);
+                        
+                        if (row == null) {
+                            //not a duplicate, execute query
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, hashedIP, timeSubmitted);
+
+                            res.sendStatus(200);
+                        } else {
+                            res.sendStatus(409);
+                        }
+                    });
                 }
             });
         }
@@ -140,26 +154,57 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         return;
     }
 
-    //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
-    let incrementAmount = 0;
+    //check if vote has already happened
+    db.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
+        if (err) console.log(err);
+                
+        if (row != undefined && row.type == type) {
+            //they have already done this exact vote
+            res.status(405).send("Duplicate Vote");
+            return;
+        }
 
-    //don't use userID for now, and just add the vote
-    if (type == 1) {
-        //upvote
-        incrementAmount = 1;
-    } else if (type == 0) {
-        //downvote
-        incrementAmount = -1;
-    } else {
-        //unrecongnised type of vote
-        req.sendStatus(400);
-        return;
-    }
+        //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
+        let incrementAmount = 0;
+        let oldIncrementAmount = 0;
 
-    db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount, UUID);
+        if (type == 1) {
+            //upvote
+            incrementAmount = 1;
+        } else if (type == 0) {
+            //downvote
+            incrementAmount = -1;
+        } else {
+            //unrecongnised type of vote
+            res.sendStatus(400);
+            return;
+        }
+        if (row != undefined) {
+            if (row.type == 1) {
+                //upvote
+                oldIncrementAmount = 1;
+            } else if (row.type == 0) {
+                //downvote
+                oldIncrementAmount = -1;
+            }
+        }
 
-    //added to db
-    res.sendStatus(200);
+        //update the votes table
+        if (row != undefined) {
+            db.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
+        } else {
+            db.prepare("INSERT INTO votes VALUES(?, ?, ?)").run(userID, UUID, type);
+        }
+
+        //update the vote count on this sponsorTime
+        //oldIncrementAmount will be zero is row is null
+        db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+
+        //update the votes table
+
+        //added to db
+        res.sendStatus(200);
+    });
 });
 
 app.get('/database.db', function (req, res) {
