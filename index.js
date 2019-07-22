@@ -94,8 +94,12 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     //hash the ip so no one can get it from the database
-    let hashCreator = crypto.createHash('sha256');
-    let hashedIP = hashCreator.update(ip + globalSalt).digest('hex');
+    let hashedIP = ip + globalSalt;
+    //hash it 5000 times, this makes it very hard to brute force
+    for (let i = 0; i < 5000; i++) {
+        let hashCreator = crypto.createHash('sha512');
+        hashedIP = hashCreator.update(hashedIP).digest('hex');
+    }
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
