@@ -207,6 +207,47 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     });
 });
 
+//Endpoint when a sponsorTime is used up
+app.get('/api/viewedVideoSponsorTime', function (req, res) {
+    let UUID = req.query.UUID;
+
+    if (UUID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //up the view count by one
+    db.prepare("UPDATE sponsorTimes SET views = views + 1 WHERE UUID = ?").run(UUID);
+
+    res.sendStatus(200);
+});
+
+//Gets all the views added up for one userID
+//Useful to see how much one user has contributed
+app.get('/api/getViewsForUser', function (req, res) {
+    let userID = req.query.userID;
+
+    if (userID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //up the view count by one
+    db.prepare("SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
+        if (err) console.log(err);
+
+        if (row != null) {
+            res.send({
+                viewCount: row.viewCount
+            });
+        } else {
+            res.send(404);
+        }
+    });
+});
+
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
