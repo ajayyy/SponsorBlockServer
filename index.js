@@ -84,7 +84,9 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let endTime = req.query.endTime;
     let userID = req.query.userID;
 
-    if (videoID == undefined || startTime == undefined || endTime == undefined || userID == undefined) {
+    //check if all correct inputs are here and the length is 1 second or more
+    if (videoID == undefined || startTime == undefined || endTime == undefined || userID == undefined
+            || Math.abs(startTime - endTime) < 1) {
         //invalid request
         res.sendStatus(400);
         return;
