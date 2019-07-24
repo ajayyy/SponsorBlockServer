@@ -84,7 +84,9 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let endTime = req.query.endTime;
     let userID = req.query.userID;
 
-    if (videoID == undefined || startTime == undefined || endTime == undefined || userID == undefined) {
+    //check if all correct inputs are here and the length is 1 second or more
+    if (videoID == undefined || startTime == undefined || endTime == undefined || userID == undefined
+            || Math.abs(startTime - endTime) < 1) {
         //invalid request
         res.sendStatus(400);
         return;
@@ -129,7 +131,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                         
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, hashedIP, timeSubmitted);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, hashedIP, timeSubmitted, 0);
 
                             res.sendStatus(200);
                         } else {
@@ -204,6 +206,47 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
 
         //added to db
         res.sendStatus(200);
+    });
+});
+
+//Endpoint when a sponsorTime is used up
+app.get('/api/viewedVideoSponsorTime', function (req, res) {
+    let UUID = req.query.UUID;
+
+    if (UUID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //up the view count by one
+    db.prepare("UPDATE sponsorTimes SET views = views + 1 WHERE UUID = ?").run(UUID);
+
+    res.sendStatus(200);
+});
+
+//Gets all the views added up for one userID
+//Useful to see how much one user has contributed
+app.get('/api/getViewsForUser', function (req, res) {
+    let userID = req.query.userID;
+
+    if (userID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //up the view count by one
+    db.prepare("SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
+        if (err) console.log(err);
+
+        if (row != null) {
+            res.send({
+                viewCount: row.viewCount
+            });
+        } else {
+            res.send(404);
+        }
     });
 });
 
