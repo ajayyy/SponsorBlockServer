@@ -109,7 +109,11 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
 
-    let UUID = uuidv1();
+    //this can just be a hash of the data
+    //it's better than generating an actual UUID like what was used before
+    //also better for duplication checking
+    let hashCreator = crypto.createHash('sha256');
+    let UUID = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
 
     //get current time
     let timeSubmitted = Date.now();
