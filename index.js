@@ -112,6 +112,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     if (startTime > endTime) {
         //time can't go backwards
         res.sendStatus(400);
+        return;
     }
 
     //this can just be a hash of the data
