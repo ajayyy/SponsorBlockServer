@@ -102,7 +102,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let hashedIP = ip + globalSalt;
     //hash it 5000 times, this makes it very hard to brute force
     for (let i = 0; i < 5000; i++) {
-        let hashCreator = crypto.createHash('sha512');
+        let hashCreator = crypto.createHash('sha256');
         hashedIP = hashCreator.update(hashedIP).digest('hex');
     }
 
@@ -268,7 +268,7 @@ function getHashedUserID(userID) {
     let hashedUserID = userID;
     //hash it 5000 times, this makes it very hard to brute force
     for (let i = 0; i < 5000; i++) {
-        let hashCreator = crypto.createHash('sha512');
+        let hashCreator = crypto.createHash('sha256');
         hashedUserID = hashCreator.update(hashedUserID).digest('hex');
     }
 
