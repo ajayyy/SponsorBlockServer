@@ -109,6 +109,11 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
 
+    if (startTime > endTime) {
+        //time can't go backwards
+        res.sendStatus(400);
+    }
+
     //this can just be a hash of the data
     //it's better than generating an actual UUID like what was used before
     //also better for duplication checking
