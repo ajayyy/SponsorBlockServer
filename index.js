@@ -92,6 +92,9 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
         return;
     }
 
+    //hash the userID
+    userID = getHashedUserID(userID);
+
     //x-forwarded-for if this server is behind a proxy
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
@@ -155,6 +158,9 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         res.sendStatus(400);
         return;
     }
+
+    //hash the userID
+    userID = getHashedUserID(userID);
 
     //check if vote has already happened
     db.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
@@ -236,16 +242,19 @@ app.get('/api/getViewsForUser', function (req, res) {
         return;
     }
 
+    //hash the userID
+    userID = getHashedUserID(userID);
+
     //up the view count by one
     db.prepare("SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
         if (err) console.log(err);
 
-        if (row != null) {
+        if (row.viewCount != null) {
             res.send({
                 viewCount: row.viewCount
             });
         } else {
-            res.send(404);
+            res.sendStatus(404);
         }
     });
 });
@@ -254,6 +263,17 @@ app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
 
+function getHashedUserID(userID) {
+    //hash the userID so no one can get it from the database
+    let hashedUserID = userID;
+    //hash it 5000 times, this makes it very hard to brute force
+    for (let i = 0; i < 5000; i++) {
+        let hashCreator = crypto.createHash('sha512');
+        hashedUserID = hashCreator.update(hashedUserID).digest('hex');
+    }
+
+    return hashedUserID;
+}
 
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
