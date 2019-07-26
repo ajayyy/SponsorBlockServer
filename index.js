@@ -224,8 +224,6 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         //oldIncrementAmount will be zero is row is null
         db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
 
-        //update the votes table
-
         //added to db
         res.sendStatus(200);
     });
