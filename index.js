@@ -109,7 +109,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
 
-    if (startTime == NaN || endTime == NaN) {
+    if (isNaN(startTime) || isNaN(endTime)) {
         //invalid request
         res.sendStatus(400);
         return;
@@ -223,8 +223,6 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         //update the vote count on this sponsorTime
         //oldIncrementAmount will be zero is row is null
         db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
-
-        //update the votes table
 
         //added to db
         res.sendStatus(200);
