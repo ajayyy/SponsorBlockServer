@@ -109,7 +109,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
 
-    if (startTime == NaN || endTime == NaN) {
+    if (isNaN(startTime) || isNaN(endTime)) {
         //invalid request
         res.sendStatus(400);
         return;
