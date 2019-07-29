@@ -181,7 +181,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     }
 
     //hash the userID
-    userID = getHashedUserID(userID);
+    userID = getHashedUserID(userID + UUID);
 
     //x-forwarded-for if this server is behind a proxy
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
