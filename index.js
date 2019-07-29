@@ -13,6 +13,8 @@ var crypto = require('crypto');
 //load database
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./databases/sponsorTimes.db');
+//where the more sensitive data such as IP addresses are stored
+var privateDB = new sqlite3.Database('./databases/private.db');
 
 // Create an HTTP service.
 http.createServer(app).listen(80);
@@ -133,7 +135,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let yesterday = timeSubmitted - 86400000;
     
     //check to see if this ip has submitted too many sponsors today
-    db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
+    privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
         if (row.count >= 10) {
             //too many sponsors for the same video from the same ip address
             res.sendStatus(429);
@@ -150,7 +152,10 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                         
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, hashedIP, timeSubmitted, 0);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0);
+
+                            //add to private db as well
+                            privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
 
                             res.sendStatus(200);
                         } else {
@@ -176,10 +181,21 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     }
 
     //hash the userID
-    userID = getHashedUserID(userID);
+    userID = getHashedUserID(userID + UUID);
+
+    //x-forwarded-for if this server is behind a proxy
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    //hash the ip so no one can get it from the database
+    let hashedIP = ip + globalSalt;
+    //hash it 5000 times, this makes it very hard to brute force
+    for (let i = 0; i < 5000; i++) {
+        let hashCreator = crypto.createHash('sha256');
+        hashedIP = hashCreator.update(hashedIP).digest('hex');
+    }
 
     //check if vote has already happened
-    db.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
+    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
         if (err) console.log(err);
                 
         if (row != undefined && row.type == type) {
@@ -215,9 +231,9 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
 
         //update the votes table
         if (row != undefined) {
-            db.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
+            privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
         } else {
-            db.prepare("INSERT INTO votes VALUES(?, ?, ?)").run(userID, UUID, type);
+            privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
         }
 
         //update the vote count on this sponsorTime
