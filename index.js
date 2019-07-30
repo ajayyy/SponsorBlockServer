@@ -1,6 +1,6 @@
 var express = require('express');
 var http = require('http');
-
+var BehindProxy = true
 // Create a service (the app object is just a callback).
 var app = express();
 
@@ -15,6 +15,14 @@ var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('./databases/sponsorTimes.db');
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new sqlite3.Database('./databases/private.db');
+
+function hash (value, times=5000) { // Should be bcrypt!!!
+    for (let i = 0; i < times; i++) {
+        let hashCreator = crypto.createHash('sha256');
+        value = hashCreator.update(value).digest('hex');
+    }
+    return value;
+}
 
 // Create an HTTP service.
 http.createServer(app).listen(80);
@@ -98,15 +106,9 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     userID = getHashedUserID(userID);
 
     //x-forwarded-for if this server is behind a proxy
-    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    //hash the ip so no one can get it from the database
-    let hashedIP = ip + globalSalt;
-    //hash it 5000 times, this makes it very hard to brute force
-    for (let i = 0; i < 5000; i++) {
-        let hashCreator = crypto.createHash('sha256');
-        hashedIP = hashCreator.update(hashedIP).digest('hex');
-    }
+    let ip = BehindProxy ? req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    //hash the ip 5000 times so no one can get it from the database
+    let hashedIP = hash(ip + globalSalt);
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
@@ -186,13 +188,8 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     //x-forwarded-for if this server is behind a proxy
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    //hash the ip so no one can get it from the database
-    let hashedIP = ip + globalSalt;
-    //hash it 5000 times, this makes it very hard to brute force
-    for (let i = 0; i < 5000; i++) {
-        let hashCreator = crypto.createHash('sha256');
-        hashedIP = hashCreator.update(hashedIP).digest('hex');
-    }
+    //hash the ip 5000 times so no one can get it from the database
+    let hashedIP = hash(ip + globalSalt);
 
     //check if vote has already happened
     privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
@@ -294,14 +291,8 @@ app.get('/database.db', function (req, res) {
 });
 
 function getHashedUserID(userID) {
-    //hash the userID so no one can get it from the database
-    let hashedUserID = userID;
-    //hash it 5000 times, this makes it very hard to brute force
-    for (let i = 0; i < 5000; i++) {
-        let hashCreator = crypto.createHash('sha256');
-        hashedUserID = hashCreator.update(hashedUserID).digest('hex');
-    }
-
+    //hash the userID  5000 times so no one can get it from the database
+    let hashedUserID = hash(userID);
     return hashedUserID;
 }
 
