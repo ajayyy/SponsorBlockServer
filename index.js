@@ -42,8 +42,8 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
-            //check if votes are above -2
-            if (rows[i].votes < -2) {
+            //check if votes are above -1
+            if (rows[i].votes < -1) {
                 //too untrustworthy, just ignore it
                 continue;
             }
@@ -308,7 +308,7 @@ function getHashedUserID(userID) {
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
-//Sponsor times with less than -2 votes are already ignored before this function is called
+//Sponsor times with less than -1 votes are already ignored before this function is called
 function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     //list of sponsors that are contained inside eachother
     let similarSponsors = [];
