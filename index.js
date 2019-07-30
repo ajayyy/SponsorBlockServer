@@ -4,9 +4,6 @@ var BehindProxy = true
 // Create a service (the app object is just a callback).
 var app = express();
 
-//uuid service
-var uuidv1 = require('uuid/v1');
-
 //hashing service
 var crypto = require('crypto');
 
@@ -29,7 +26,7 @@ http.createServer(app).listen(80);
 
 //global salt that is added to every ip before hashing to
 //  make it even harder for someone to decode the ip
-var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
+var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb"; // Should not be global
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -87,6 +84,10 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     });
 });
 
+function GetIP (req) {
+    return BehindProxy ? req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+}
+
 //add the post function
 app.get('/api/postVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
@@ -104,11 +105,9 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
 
     //hash the userID
     userID = getHashedUserID(userID);
-
-    //x-forwarded-for if this server is behind a proxy
-    let ip = BehindProxy ? req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
     //hash the ip 5000 times so no one can get it from the database
-    let hashedIP = hash(ip + globalSalt);
+    let hashedIP = hash(GetIP() + globalSalt);
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
@@ -186,7 +185,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     userID = getHashedUserID(userID + UUID);
 
     //x-forwarded-for if this server is behind a proxy
-    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let ip = GetIP();
 
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = hash(ip + globalSalt);
@@ -292,8 +291,7 @@ app.get('/database.db', function (req, res) {
 
 function getHashedUserID(userID) {
     //hash the userID  5000 times so no one can get it from the database
-    let hashedUserID = hash(userID);
-    return hashedUserID;
+    return hash(userID);
 }
 
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
@@ -455,7 +453,7 @@ function getWeightedRandomChoice(choices, weights, amountOfChoices) {
     }
 
     //iterate and find amountOfChoices choices
-    let randomNumber = Math.random();
+    let randomNumber = Math.random(); // Not cryptographically-secure
     //this array will keep adding to this variable each time one sqrt vote has been dealt with
     //this is the sum of all the sqrtVotes under this index
     let currentVoteNumber = 0;
