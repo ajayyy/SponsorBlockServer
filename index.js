@@ -1,6 +1,5 @@
 var express = require('express');
 var http = require('http');
-var BehindProxy = true
 // Create a service (the app object is just a callback).
 var app = express();
 
@@ -13,20 +12,15 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new sqlite3.Database('./databases/private.db');
 
-function hash (value, times=5000) { // Should be bcrypt!!!
-    for (let i = 0; i < times; i++) {
-        let hashCreator = crypto.createHash('sha256');
-        value = hashCreator.update(value).digest('hex');
-    }
-    return value;
-}
-
 // Create an HTTP service.
 http.createServer(app).listen(80);
 
 //global salt that is added to every ip before hashing to
 //  make it even harder for someone to decode the ip
 var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb"; // Should not be global
+
+//if so, it will use the x-forwarded header instead of the ip address of the connection
+var behindProxy = true;
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -84,8 +78,8 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     });
 });
 
-function GetIP (req) {
-    return BehindProxy ? req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+function getIP(req) {
+    return behindProxy ? req.headers['x-forwarded-for'] : req.connection.remoteAddress;
 }
 
 //add the post function
@@ -104,10 +98,10 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     }
 
     //hash the userID
-    userID = getHashedUserID(userID);
+    userID = getHash(userID);
     
     //hash the ip 5000 times so no one can get it from the database
-    let hashedIP = hash(GetIP() + globalSalt);
+    let hashedIP = getHash(getIP(req) + globalSalt);
 
     startTime = parseFloat(startTime);
     endTime = parseFloat(endTime);
@@ -182,13 +176,13 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     }
 
     //hash the userID
-    userID = getHashedUserID(userID + UUID);
+    userID = getHash(userID + UUID);
 
     //x-forwarded-for if this server is behind a proxy
-    let ip = GetIP();
+    let ip = getIP(req);
 
     //hash the ip 5000 times so no one can get it from the database
-    let hashedIP = hash(ip + globalSalt);
+    let hashedIP = getHash(ip + globalSalt);
 
     //check if vote has already happened
     privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
@@ -269,7 +263,7 @@ app.get('/api/getViewsForUser', function (req, res) {
     }
 
     //hash the userID
-    userID = getHashedUserID(userID);
+    userID = getHash(userID);
 
     //up the view count by one
     db.prepare("SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
@@ -288,11 +282,6 @@ app.get('/api/getViewsForUser', function (req, res) {
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
-
-function getHashedUserID(userID) {
-    //hash the userID  5000 times so no one can get it from the database
-    return hash(userID);
-}
 
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
@@ -453,7 +442,8 @@ function getWeightedRandomChoice(choices, weights, amountOfChoices) {
     }
 
     //iterate and find amountOfChoices choices
-    let randomNumber = Math.random(); // Not cryptographically-secure
+    let randomNumber = Math.random();
+    
     //this array will keep adding to this variable each time one sqrt vote has been dealt with
     //this is the sum of all the sqrtVotes under this index
     let currentVoteNumber = 0;
@@ -483,4 +473,13 @@ function getWeightedRandomChoice(choices, weights, amountOfChoices) {
         finalChoices: finalChoices,
         choicesDealtWith: choicesDealtWith
     };
+}
+
+function getHash(value, times=5000) {
+    for (let i = 0; i < times; i++) {
+        let hashCreator = crypto.createHash('sha256');
+        value = hashCreator.update(value).digest('hex');
+    }
+
+    return value;
 }
