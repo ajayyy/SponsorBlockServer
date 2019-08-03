@@ -307,7 +307,7 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes GROUP BY userID ORDER BY " + sortBy + " DESC LIMIT 10").all(function(err, rows) {
+    db.prepare("SELECT userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes GROUP BY userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
         for (let i = 0; i < rows.length; i++) {
             userNames[i] = rows[i].userID;
             viewCounts[i] = rows[i].viewCount;
