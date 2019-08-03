@@ -328,10 +328,11 @@ app.get('/api/getTopUsers', function (req, res) {
 //send out totals
 //send the total submissions, total views and total minutes saved
 app.get('/api/getTotalStats', function (req, res) {
-    db.prepare("SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes").get(function(err, row) {
+    db.prepare("SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes").get(function(err, row) {
         if (row != null) {
             //send this result
             res.send({
+                userCount: row.userCount,
                 viewCount: row.viewCount,
                 totalSubmissions: row.totalSubmissions,
                 minutesSaved: row.minutesSaved
