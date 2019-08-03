@@ -325,6 +325,21 @@ app.get('/api/getTopUsers', function (req, res) {
     });
 });
 
+//send out totals
+//send the total submissions, total views and total minutes saved
+app.get('/api/getTotalStats', function (req, res) {
+    db.prepare("SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes").get(function(err, row) {
+        if (row != null) {
+            //send this result
+            res.send({
+                viewCount: row.viewCount,
+                totalSubmissions: row.totalSubmissions,
+                minutesSaved: row.minutesSaved
+            });
+        }
+    });
+});
+
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
