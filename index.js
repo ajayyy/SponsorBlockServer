@@ -279,6 +279,52 @@ app.get('/api/getViewsForUser', function (req, res) {
     });
 });
 
+app.get('/api/getTopUsers', function (req, res) {
+    let sortType = req.query.sortType;
+
+    if (sortType == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //setup which sort type to use
+    let sortBy = "";
+    if (sortType == 0) {
+        sortBy = "minutesSaved";
+    } else if (sortType == 1) {
+        sortBy = "viewCount";
+    } else if (sortType == 2) {
+        sortBy = "totalSubmissions";
+    } else {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    let userNames = [];
+    let viewCounts = [];
+    let totalSubmissions = [];
+    let minutesSaved = [];
+
+    db.prepare("SELECT userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes GROUP BY userID ORDER BY " + sortBy + " DESC LIMIT 10").all(function(err, rows) {
+        for (let i = 0; i < rows.length; i++) {
+            userNames[i] = rows[i].userID;
+            viewCounts[i] = rows[i].viewCount;
+            totalSubmissions[i] = rows[i].totalSubmissions;
+            minutesSaved[i] = rows[i].minutesSaved;
+        }
+
+        //send this result
+        res.send({
+            userNames: userNames,
+            viewCounts: viewCounts,
+            totalSubmissions: totalSubmissions,
+            minutesSaved: minutesSaved
+        });
+    });
+});
+
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
