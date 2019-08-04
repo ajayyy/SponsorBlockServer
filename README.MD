@@ -15,3 +15,165 @@ Hopefully this project can be combined with projects like [this](https://github.
 # Client
 
 The client web browser extension is available here: https://github.com/ajayyy/SponsorBlock
+
+# API Docs
+
+`/api/getVideoSponsorTimes`
+
+**Input**:
+```
+{
+  videoID: string
+}
+```
+
+**Response**:
+```
+{
+  sponorTimes: array [float],
+  UUIDs: array [string] //The ID for this sponsor time, used to submit votes
+}
+```
+
+**Error codes**:
+404: Not Found
+
+__________________________________________________________________
+
+`/api/postVideoSponsorTimes`
+
+**Input**:
+```
+{
+  videoID: string,
+  startTime: float,
+  endTime: float,
+  userID: string //This should be a randomly generated UUID
+}
+```
+
+**Response**:
+```
+Nothing (status code 200)
+```
+
+**Error codes**:
+400: Bad Request (Your inputs are wrong/impossible)
+429: Rate Limit (Too many for the same user or IP)
+409: Duplicate
+
+__________________________________________________________________
+
+`/api/voteOnSponsorTime`
+
+**Input**:
+```
+{
+  UUID: string, //id of the sponsor being voted on
+  userID: string,
+  type: int //0 for downvote, 1 for upvote
+}
+```
+
+**Response**:
+```
+{
+Nothing (status code 200)
+}
+```
+
+**Error codes**:
+400: Bad Request (Your inputs are wrong/impossible)
+405: Duplicate
+
+__________________________________________________________________
+
+`/api/viewedVideoSponsorTime`
+
+**Input**:
+```
+{
+  UUID: string
+}
+```
+
+**Response**:
+```
+{
+Nothing (status code 200
+}
+```
+
+**Error codes**:
+400: Bad Request (Your inputs are wrong/impossible)
+
+__________________________________________________________________
+
+`/api/getViewsForUser`
+
+**Input**:
+```
+{
+  userID: string
+}
+```
+
+**Response**:
+```
+{
+  viewCount: int
+}
+```
+
+**Error codes**:
+404: Not Found
+
+__________________________________________________________________
+
+### Stats Calls
+
+`/api/getTopUsers`
+
+**Input**:
+```
+{
+  sortType: int //0 for by minutes saved, 1 for by view count, 2 for by total submissions
+}
+```
+
+**Response**:
+```
+{
+  userNames: array [string],
+  viewCounts: array [int],
+  totalSubmissions: array [int],
+  minutesSaved: array [float]
+}
+```
+
+**Error codes**:
+400: Bad Request (Your inputs are wrong/impossible)
+
+__________________________________________________________________
+
+`/api/getTotalStats`
+
+**Input**:
+```
+{
+Nothing
+}
+```
+
+**Response**:
+```
+{
+  userCount: int,
+  viewCount: int,
+  totalSubmissions: int,
+  minutesSaved: float
+}
+```
+
+**Error codes**:
+None
