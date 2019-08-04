@@ -36,6 +36,7 @@ The client web browser extension is available here: https://github.com/ajayyy/Sp
 ```
 
 **Error codes**:
+
 404: Not Found
 
 __________________________________________________________________
@@ -58,8 +59,11 @@ Nothing (status code 200)
 ```
 
 **Error codes**:
+
 400: Bad Request (Your inputs are wrong/impossible)
+
 429: Rate Limit (Too many for the same user or IP)
+
 409: Duplicate
 
 __________________________________________________________________
@@ -83,7 +87,9 @@ Nothing (status code 200)
 ```
 
 **Error codes**:
+
 400: Bad Request (Your inputs are wrong/impossible)
+
 405: Duplicate
 
 __________________________________________________________________
@@ -105,6 +111,7 @@ Nothing (status code 200
 ```
 
 **Error codes**:
+
 400: Bad Request (Your inputs are wrong/impossible)
 
 __________________________________________________________________
@@ -126,6 +133,7 @@ __________________________________________________________________
 ```
 
 **Error codes**:
+
 404: Not Found
 
 __________________________________________________________________
@@ -152,6 +160,7 @@ __________________________________________________________________
 ```
 
 **Error codes**:
+
 400: Bad Request (Your inputs are wrong/impossible)
 
 __________________________________________________________________
@@ -176,4 +185,5 @@ Nothing
 ```
 
 **Error codes**:
+
 None
