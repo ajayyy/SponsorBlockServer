@@ -18,6 +18,10 @@ The client web browser extension is available here: https://github.com/ajayyy/Sp
 
 # API Docs
 
+Public API available at https://sponsor.ajay.app.
+
+________________________________________________________________________________
+
 `/api/getVideoSponsorTimes`
 
 **Input**:
