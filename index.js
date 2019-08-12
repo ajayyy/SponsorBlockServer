@@ -17,7 +17,7 @@ http.createServer(app).listen(80);
 
 //global salt that is added to every ip before hashing to
 //  make it even harder for someone to decode the ip
-var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb"; // Should not be global
+var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
 
 //if so, it will use the x-forwarded header instead of the ip address of the connection
 var behindProxy = true;
