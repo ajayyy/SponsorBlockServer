@@ -137,7 +137,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
         } else {
             //check to see if the user has already submitted sponsors for this video
             db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID], function(err, row) {
-                if (row.count >= 4) {
+                if (row.count >= 8) {
                     //too many sponsors for the same video from the same user
                     res.sendStatus(429);
                 } else {
@@ -307,7 +307,7 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes GROUP BY userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
+    db.prepare("SELECT userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE votes > -1 GROUP BY userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
         for (let i = 0; i < rows.length; i++) {
             userNames[i] = rows[i].userID;
             viewCounts[i] = rows[i].viewCount;
