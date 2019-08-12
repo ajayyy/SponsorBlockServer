@@ -137,7 +137,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
         } else {
             //check to see if the user has already submitted sponsors for this video
             db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID], function(err, row) {
-                if (row.count >= 4) {
+                if (row.count >= 8) {
                     //too many sponsors for the same video from the same user
                     res.sendStatus(429);
                 } else {
