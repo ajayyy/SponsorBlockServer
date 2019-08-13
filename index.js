@@ -83,7 +83,7 @@ function getIP(req) {
 }
 
 //add the post function
-app.post('/api/postVideoSponsorTimes', function (req, res) {
+app.get('/api/postVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
