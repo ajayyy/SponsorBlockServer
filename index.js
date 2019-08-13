@@ -83,7 +83,7 @@ function getIP(req) {
 }
 
 //add the post function
-app.get('/api/postVideoSponsorTimes', function (req, res) {
+app.post('/api/postVideoSponsorTimes', function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
@@ -251,6 +251,36 @@ app.get('/api/viewedVideoSponsorTime', function (req, res) {
     res.sendStatus(200);
 });
 
+//To set your username for the stats view
+app.get('/api/setUsername', function (req, res) {
+    let userID = req.query.userID;
+    let userName = req.query.username;
+
+    if (userID == undefined || userName == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    userID = getHash(userID);
+
+    //check if username is already set
+    db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID, function(err, row) {
+        if (err) console.log(err);
+                
+        if (row.count > 0) {
+            //already exists, update this row
+            db.prepare("UPDATE userNames SET userName = ? WHERE userID = ?").run(userName, userID);
+        } else {
+            //add to the db
+            db.prepare("INSERT INTO userNames VALUES(?, ?)").run(userID, userName);
+        }
+
+        res.sendStatus(200);
+    });
+});
+
 //Gets all the views added up for one userID
 //Useful to see how much one user has contributed
 app.get('/api/getViewsForUser', function (req, res) {
@@ -307,9 +337,14 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE votes > -1 GROUP BY userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
+    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
         for (let i = 0; i < rows.length; i++) {
-            userNames[i] = rows[i].userID;
+            if (rows[i].userName != null) {
+                userNames[i] = rows[i].userName;
+            } else {
+                userNames[i] = rows[i].userID;
+            }
+
             viewCounts[i] = rows[i].viewCount;
             totalSubmissions[i] = rows[i].totalSubmissions;
             minutesSaved[i] = rows[i].minutesSaved;
