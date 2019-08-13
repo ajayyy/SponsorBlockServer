@@ -112,7 +112,7 @@ __________________________________________________________________
 **Response**:
 ```
 {
-  Nothing (status code 200
+  Nothing (status code 200)
 }
 ```
 
@@ -141,30 +141,6 @@ __________________________________________________________________
 **Error codes**:
 
 404: Not Found
-
-__________________________________________________________________
-
-**GET** `/api/viewedVideoSponsorTime`
-
-Indicates that the user has skipped this sponsor. Used for stats purposes.
-
-**Input**:
-```
-{
-  UUID: string //the UUID of the sponsor time
-}
-```
-
-**Response**:
-```
-{
-  Nothing
-}
-```
-
-**Error codes**:
-
-400: Bad Request (Your inputs are wrong/impossible)
 
 __________________________________________________________________
 
