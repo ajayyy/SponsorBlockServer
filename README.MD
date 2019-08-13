@@ -22,7 +22,7 @@ Public API available at https://sponsor.ajay.app.
 
 ________________________________________________________________________________
 
-`/api/getVideoSponsorTimes`
+**GET** `/api/getVideoSponsorTimes`
 
 **Input**:
 ```
@@ -45,7 +45,7 @@ ________________________________________________________________________________
 
 __________________________________________________________________
 
-`/api/postVideoSponsorTimes`
+**GET** `/api/postVideoSponsorTimes`
 
 **Input**:
 ```
@@ -74,7 +74,7 @@ __________________________________________________________________
 
 __________________________________________________________________
 
-`/api/voteOnSponsorTime`
+**GET** `/api/voteOnSponsorTime`
 
 **Input**:
 ```
@@ -100,7 +100,7 @@ __________________________________________________________________
 
 __________________________________________________________________
 
-`/api/viewedVideoSponsorTime`
+**GET** `/api/viewedVideoSponsorTime`
 
 **Input**:
 ```
@@ -122,7 +122,7 @@ __________________________________________________________________
 
 __________________________________________________________________
 
-`/api/getViewsForUser`
+**GET** `/api/getViewsForUser`
 
 **Input**:
 ```
@@ -144,9 +144,78 @@ __________________________________________________________________
 
 __________________________________________________________________
 
+**GET** `/api/viewedVideoSponsorTime`
+
+Indicates that the user has skipped this sponsor. Used for stats purposes.
+
+**Input**:
+```
+{
+  UUID: string //the UUID of the sponsor time
+}
+```
+
+**Response**:
+```
+{
+  Nothing
+}
+```
+
+**Error codes**:
+
+400: Bad Request (Your inputs are wrong/impossible)
+
+__________________________________________________________________
+
+**POST** `/api/setUsername`
+
+**Input**:
+```
+{
+  userID: string,
+  userName: string
+}
+```
+
+**Response**:
+```
+{
+  Nothing
+}
+```
+
+**Error codes**:
+
+400: Bad Request (Your inputs are wrong/impossible)
+
+__________________________________________________________________
+
+**POST** `/api/getUsername`
+
+**Input**:
+```
+{
+  userID: string
+}
+```
+
+**Response**:
+```
+{
+  userName: string //will send back hashed userID if no username has been set
+}
+```
+
+**Error codes**:
+
+400: Bad Request (Your inputs are wrong/impossible)
+
+__________________________________________________________________
+
 ### Stats Calls
 
-`/api/getTopUsers`
+**GET** `/api/getTopUsers`
 
 **Input**:
 ```
@@ -171,7 +240,7 @@ __________________________________________________________________
 
 __________________________________________________________________
 
-`/api/getTotalStats`
+**GET** `/api/getTotalStats`
 
 **Input**:
 ```
