@@ -252,7 +252,7 @@ app.get('/api/viewedVideoSponsorTime', function (req, res) {
 });
 
 //To set your username for the stats view
-app.get('/api/setUsername', function (req, res) {
+app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
 
@@ -278,6 +278,35 @@ app.get('/api/setUsername', function (req, res) {
         }
 
         res.sendStatus(200);
+    });
+});
+
+//get what username this user has
+app.get('/api/getUsername', function (req, res) {
+    let userID = req.query.userID;
+
+    if (userID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    userID = getHash(userID);
+
+    db.prepare("SELECT userName FROM userNames WHERE userID = ?").get(userID, function(err, row) {
+        if (err) console.log(err);
+        
+        if (row != null) {
+            res.send({
+                userName: row.userName
+            });
+        } else {
+            //no username yet, just send back the userID
+            res.send({
+                userName: userID
+            });
+        }
     });
 });
 
