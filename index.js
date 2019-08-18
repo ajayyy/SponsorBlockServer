@@ -219,19 +219,27 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             }
         }
 
-        //update the votes table
-        if (row != undefined) {
-            privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
-        } else {
-            privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
-        }
+        //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
+        db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, function(err, row) {
+            if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
+                //multiply the power of this downvote
+                incrementAmount *= 4;
+            }
 
-        //update the vote count on this sponsorTime
-        //oldIncrementAmount will be zero is row is null
-        db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+            //update the votes table
+            if (row != undefined) {
+                privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
+            } else {
+                privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
+            }
 
-        //added to db
-        res.sendStatus(200);
+            //update the vote count on this sponsorTime
+            //oldIncrementAmount will be zero is row is null
+            db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+
+            //added to db
+            res.sendStatus(200);
+        });
     });
 });
 
