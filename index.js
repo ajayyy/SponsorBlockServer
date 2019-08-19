@@ -185,10 +185,10 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     let hashedIP = getHash(ip + globalSalt);
 
     //check if vote has already happened
-    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
+    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, votesRow) {
         if (err) console.log(err);
                 
-        if (row != undefined && row.type == type) {
+        if (votesRow != undefined && votesRow.type == type) {
             //they have already done this exact vote
             res.status(405).send("Duplicate Vote");
             return;
@@ -209,11 +209,11 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             res.sendStatus(400);
             return;
         }
-        if (row != undefined) {
-            if (row.type == 1) {
+        if (votesRow != undefined) {
+            if (votesRow.type == 1) {
                 //upvote
                 oldIncrementAmount = 1;
-            } else if (row.type == 0) {
+            } else if (votesRow.type == 0) {
                 //downvote
                 oldIncrementAmount = -1;
             }
@@ -227,7 +227,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             }
 
             //update the votes table
-            if (row != undefined) {
+            if (votesRow != undefined) {
                 privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
             } else {
                 privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
