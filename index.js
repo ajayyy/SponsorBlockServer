@@ -251,22 +251,11 @@ app.get('/api/viewedVideoSponsorTime', function (req, res) {
     res.sendStatus(200);
 });
 
-function escapeHtml(text) {
-  var map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
 //To set your username for the stats view
 app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
-    let userName = escapeHtml(req.query.username);
-    if (userID == undefined || userName == undefined || userName.length >= 40) {
+    let userName = req.query.username;
+    if (userID == undefined || userName == undefined || userName.length > 40) {
         //invalid request
         res.sendStatus(400);
         return;
