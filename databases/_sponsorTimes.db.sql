@@ -13,9 +13,4 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"timeSubmitted"	INTEGER NOT NULL,
 	"views"	INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS "votes" (
-	"userID"	TEXT NOT NULL,
-	"UUID"	TEXT NOT NULL,
-	"type"	INTEGER NOT NULL
-);
 COMMIT;
