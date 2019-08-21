@@ -19,8 +19,8 @@ http.createServer(app).listen(80);
 //  make it even harder for someone to decode the ip
 var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
 
-//if so, it will use the x-forwarded header instead of the ip address of the connection
-var behindProxy = true;
+//if so, it will use the CF-Connecting-IP header instead of the ip address of the connection
+var behindCF = true;
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -79,7 +79,7 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
 });
 
 function getIP(req) {
-    return behindProxy ? req.headers['x-forwarded-for'] : req.connection.remoteAddress;
+    return behindCF ? req.headers['CF-Connecting-IP'] : req.connection.remoteAddress;
 }
 
 //add the post function
