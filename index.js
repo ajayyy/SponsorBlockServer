@@ -58,7 +58,7 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
                     privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
                 });
 
-                if (result.rows.length == 0 || !result.rows.includes({hashedIP})) {
+                if (!result.rows.some((e) => e.hashedIP === hashedIP)) {
                     //this isn't their ip, don't send it to them
                     continue;
                 }
