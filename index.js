@@ -282,7 +282,7 @@ app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
 
-    if (userID == undefined || userName == undefined) {
+    if (userID == undefined || userName == undefined || userID === "undefined") {
         //invalid request
         res.sendStatus(400);
         return;
