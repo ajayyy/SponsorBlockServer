@@ -37,7 +37,9 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let votes = []
     let UUIDs = [];
 
-    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, function(err, rows) {
+    let hashedIP = getHash(getIP(req) + globalSalt);
+
+    db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, async function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
@@ -46,6 +48,22 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
                 //too untrustworthy, just ignore it
                 continue;
             }
+
+            //check if shadowHidden
+            //this means it is hidden to everyone but the original ip that submitted it
+            if (rows[i].shadowHidden == 1) {
+                //get the ip
+                //await the callback
+                let result = await new Promise((resolve, reject) => {
+                    privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
+                });
+
+                if (result.rows.length == 0 || !result.rows.includes({hashedIP})) {
+                    //this isn't their ip, don't send it to them
+                    continue;
+                }
+            }
+
             sponsorTimes.push([]);
             
             let index = sponsorTimes.length - 1;
