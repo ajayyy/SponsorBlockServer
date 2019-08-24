@@ -18,6 +18,8 @@ http.createServer(app).listen(80);
 //global salt that is added to every ip before hashing to
 //  make it even harder for someone to decode the ip
 var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb"; // Should not be global
+//this is the user that can add shadow bans
+var adminUserID = "7b89ea26f77bda8176e655eee86029f28c1e6514b6d6e3450bce362b5b126ca3";
 
 //if so, it will use the x-forwarded header instead of the ip address of the connection
 var behindProxy = true;
@@ -146,7 +148,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let timeSubmitted = Date.now();
 
     let yesterday = timeSubmitted - 86400000;
-    
+
     //check to see if this ip has submitted too many sponsors today
     privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
         if (row.count >= 10) {
@@ -160,12 +162,19 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                     res.sendStatus(429);
                 } else {
                     //check if this info has already been submitted first
-                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], async function(err, row) {
                         if (err) console.log(err);
-                        
+
+                        //check to see if this user is shadowbanned
+                        let result = await new Promise((resolve, reject) => {
+                            privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+                        });
+
+                        let shadowBanned = result.row.userCount;
+        
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
 
                             //add to private db as well
                             privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
@@ -334,6 +343,67 @@ app.get('/api/getUsername', function (req, res) {
             });
         }
     });
+});
+
+//Endpoint used to hide a certain user's data
+app.get('/api/shadowBanUser', async function (req, res) {
+    let userID = req.query.userID;
+    let shadowUserID = req.query.shadowUserID;
+
+    let enabled = req.query.enabled;
+    if (enabled === undefined){
+        enabled = true;
+    } else {
+        enabled = enabled === "true";
+    }
+
+    //if enabled is false and the old submissions should be made visible again
+    let unHideOldSubmissions = req.query.unHideOldSubmissions;
+    if (enabled === undefined){
+        unHideOldSubmissions = true;
+    } else {
+        unHideOldSubmissions = unHideOldSubmissions === "true";
+    }
+
+    if (userID == undefined || shadowUserID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userIDs
+    userID = getHash(userID);
+
+    if (userID !== adminUserID) {
+        //not authorized
+        res.sendStatus(403);
+        return;
+    }
+
+    //check to see if this user is already shadowbanned
+    let result = await new Promise((resolve, reject) => {
+        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(shadowUserID, (err, row) => resolve({err, row}));
+    });
+
+    if (enabled && result.row.userCount == 0) {
+        //add them to the shadow ban list
+
+        //add it to the table
+        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(shadowUserID);
+
+        //find all previous submissions and hide them
+        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(shadowUserID);
+    } else if (!enabled && result.row.userCount > 0) {
+        //remove them from the shadow ban list
+        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(shadowUserID);
+
+        //find all previous submissions and unhide them
+        if (unHideOldSubmissions) {
+            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(shadowUserID);
+        }
+    }
+
+    res.sendStatus(200);
 });
 
 //Gets all the views added up for one userID
