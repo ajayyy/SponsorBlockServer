@@ -17,7 +17,7 @@ http.createServer(app).listen(80);
 
 //global salt that is added to every ip before hashing to
 //  make it even harder for someone to decode the ip
-var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb"; // Should not be global
+var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
 //this is the user that can add shadow bans
 var adminUserID = "7b89ea26f77bda8176e655eee86029f28c1e6514b6d6e3450bce362b5b126ca3";
 
