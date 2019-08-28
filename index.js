@@ -18,6 +18,8 @@ http.createServer(app).listen(80);
 //global salt that is added to every ip before hashing to
 //  make it even harder for someone to decode the ip
 var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
+//this is the user that can add shadow bans
+var adminUserID = "7b89ea26f77bda8176e655eee86029f28c1e6514b6d6e3450bce362b5b126ca3";
 
 //if so, it will use the x-forwarded header instead of the ip address of the connection
 var behindProxy = true;
@@ -37,7 +39,9 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let votes = []
     let UUIDs = [];
 
-    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, function(err, rows) {
+    let hashedIP = getHash(getIP(req) + globalSalt);
+
+    db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, async function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
@@ -46,6 +50,22 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
                 //too untrustworthy, just ignore it
                 continue;
             }
+
+            //check if shadowHidden
+            //this means it is hidden to everyone but the original ip that submitted it
+            if (rows[i].shadowHidden == 1) {
+                //get the ip
+                //await the callback
+                let result = await new Promise((resolve, reject) => {
+                    privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
+                });
+
+                if (!result.rows.some((e) => e.hashedIP === hashedIP)) {
+                    //this isn't their ip, don't send it to them
+                    continue;
+                }
+            }
+
             sponsorTimes.push([]);
             
             let index = sponsorTimes.length - 1;
@@ -128,7 +148,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let timeSubmitted = Date.now();
 
     let yesterday = timeSubmitted - 86400000;
-    
+
     //check to see if this ip has submitted too many sponsors today
     privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
         if (row.count >= 10) {
@@ -142,12 +162,19 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                     res.sendStatus(429);
                 } else {
                     //check if this info has already been submitted first
-                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], async function(err, row) {
                         if (err) console.log(err);
-                        
+
+                        //check to see if this user is shadowbanned
+                        let result = await new Promise((resolve, reject) => {
+                            privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+                        });
+
+                        let shadowBanned = result.row.userCount;
+        
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
 
                             //add to private db as well
                             privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
@@ -185,10 +212,10 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     let hashedIP = getHash(ip + globalSalt);
 
     //check if vote has already happened
-    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, row) {
+    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, votesRow) {
         if (err) console.log(err);
                 
-        if (row != undefined && row.type == type) {
+        if (votesRow != undefined && votesRow.type == type) {
             //they have already done this exact vote
             res.status(405).send("Duplicate Vote");
             return;
@@ -209,29 +236,37 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             res.sendStatus(400);
             return;
         }
-        if (row != undefined) {
-            if (row.type == 1) {
+        if (votesRow != undefined) {
+            if (votesRow.type == 1) {
                 //upvote
                 oldIncrementAmount = 1;
-            } else if (row.type == 0) {
+            } else if (votesRow.type == 0) {
                 //downvote
                 oldIncrementAmount = -1;
             }
         }
 
-        //update the votes table
-        if (row != undefined) {
-            privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
-        } else {
-            privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
-        }
+        //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
+        db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, function(err, row) {
+            if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
+                //multiply the power of this downvote
+                incrementAmount *= 4;
+            }
 
-        //update the vote count on this sponsorTime
-        //oldIncrementAmount will be zero is row is null
-        db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+            //update the votes table
+            if (votesRow != undefined) {
+                privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
+            } else {
+                privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
+            }
 
-        //added to db
-        res.sendStatus(200);
+            //update the vote count on this sponsorTime
+            //oldIncrementAmount will be zero is row is null
+            db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+
+            //added to db
+            res.sendStatus(200);
+        });
     });
 });
 
@@ -255,7 +290,7 @@ app.get('/api/viewedVideoSponsorTime', function (req, res) {
 app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
-    if (userID == undefined || userName == undefined || userName.length > 40) {
+    if (userID == undefined || userName == undefined || userID === "undefined" || userName.length > 40) {
         //invalid request
         res.sendStatus(400);
         return;
@@ -308,6 +343,67 @@ app.get('/api/getUsername', function (req, res) {
             });
         }
     });
+});
+
+//Endpoint used to hide a certain user's data
+app.get('/api/shadowBanUser', async function (req, res) {
+    let userID = req.query.userID;
+    let shadowUserID = req.query.shadowUserID;
+
+    let enabled = req.query.enabled;
+    if (enabled === undefined){
+        enabled = true;
+    } else {
+        enabled = enabled === "true";
+    }
+
+    //if enabled is false and the old submissions should be made visible again
+    let unHideOldSubmissions = req.query.unHideOldSubmissions;
+    if (enabled === undefined){
+        unHideOldSubmissions = true;
+    } else {
+        unHideOldSubmissions = unHideOldSubmissions === "true";
+    }
+
+    if (userID == undefined || shadowUserID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userIDs
+    userID = getHash(userID);
+
+    if (userID !== adminUserID) {
+        //not authorized
+        res.sendStatus(403);
+        return;
+    }
+
+    //check to see if this user is already shadowbanned
+    let result = await new Promise((resolve, reject) => {
+        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(shadowUserID, (err, row) => resolve({err, row}));
+    });
+
+    if (enabled && result.row.userCount == 0) {
+        //add them to the shadow ban list
+
+        //add it to the table
+        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(shadowUserID);
+
+        //find all previous submissions and hide them
+        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(shadowUserID);
+    } else if (!enabled && result.row.userCount > 0) {
+        //remove them from the shadow ban list
+        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(shadowUserID);
+
+        //find all previous submissions and unhide them
+        if (unHideOldSubmissions) {
+            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(shadowUserID);
+        }
+    }
+
+    res.sendStatus(200);
 });
 
 //Gets all the views added up for one userID
@@ -366,7 +462,7 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
+    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 100").all(function(err, rows) {
         for (let i = 0; i < rows.length; i++) {
             if (rows[i].userName != null) {
                 userNames[i] = rows[i].userName;
