@@ -290,6 +290,11 @@ app.get('/api/viewedVideoSponsorTime', function (req, res) {
 app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
+    if(userName.length > 40) {
+        // Username to large
+        res.sendStatus(413);
+        return;
+    }
     if (userID == undefined || userName == undefined || userID === "undefined" || userName.length > 40) {
         //invalid request
         res.sendStatus(400);
