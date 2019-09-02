@@ -501,6 +501,18 @@ app.get('/api/getTotalStats', function (req, res) {
     });
 });
 
+//send out a formatted time saved total
+app.get('/api/getDaysSavedFormatted', function (req, res) {
+    db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes").get(function(err, row) {
+        if (row != null) {
+            //send this result
+            res.send({
+                daysSaved: row.daysSaved.toFixed(2)
+            });
+        }
+    });
+});
+
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
