@@ -291,14 +291,27 @@ app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
 
+    let adminUserIDInput = req.query.adminUserID;
+
     if (userID == undefined || userName == undefined || userID === "undefined") {
         //invalid request
         res.sendStatus(400);
         return;
     }
 
-    //hash the userID
-    userID = getHash(userID);
+    if (adminUserIDInput != undefined) {
+        //this is the admin controlling the other users account, don't hash the controling account's ID
+        adminUserIDInput = getHash(adminUserIDInput);
+
+        if (adminUserIDInput != adminUserID) {
+            //they aren't the admin
+            res.sendStatus(403);
+            return;
+        }
+    } else {
+        //hash the userID
+        userID = getHash(userID);
+    }
 
     //check if username is already set
     db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID, function(err, row) {
