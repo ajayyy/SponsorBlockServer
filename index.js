@@ -13,10 +13,10 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new sqlite3.Database('./databases/private.db');
 
-// Create an HTTP service.
-http.createServer(app).listen(80);
-
 let config = JSON.parse(fs.readFileSync('config.json'));
+
+// Create an HTTP service.
+http.createServer(app).listen(config.port);
 
 var globalSalt = config.globalSalt;
 var adminUserID = config.adminUserID;
