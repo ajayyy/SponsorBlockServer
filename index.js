@@ -384,7 +384,7 @@ app.get('/api/shadowBanUser', async function (req, res) {
         return;
     }
 
-    //hash the userIDs
+    //hash the userID
     userID = getHash(userID);
 
     if (userID !== adminUserID) {
@@ -414,6 +414,49 @@ app.get('/api/shadowBanUser', async function (req, res) {
         if (unHideOldSubmissions) {
             db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(shadowUserID);
         }
+    }
+
+    res.sendStatus(200);
+});
+
+//Endpoint used to make a user a VIP user with special privileges
+app.post('/api/addUserAsVIP', async function (req, res) {
+    let userID = req.query.userID;
+    let adminUserIDInput = req.query.adminUserID;
+
+    let enabled = req.query.enabled;
+    if (enabled === undefined){
+        enabled = true;
+    } else {
+        enabled = enabled === "true";
+    }
+
+    if (userID == undefined || adminUserIDInput == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    adminUserIDInput = getHash(adminUserIDInput);
+
+    if (adminUserIDInput !== adminUserID) {
+        //not authorized
+        res.sendStatus(403);
+        return;
+    }
+
+    //check to see if this user is already a vip
+    let result = await new Promise((resolve, reject) => {
+        db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+    });
+
+    if (enabled && result.row.userCount == 0) {
+        //add them to the vip list
+        db.prepare("INSERT INTO vipUsers VALUES(?)").run(userID);
+    } else if (!enabled && result.row.userCount > 0) {
+        //remove them from the shadow ban list
+        db.prepare("DELETE FROM vipUsers WHERE userID = ?").run(userID);
     }
 
     res.sendStatus(200);
