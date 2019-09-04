@@ -1,4 +1,5 @@
 var express = require('express');
+var fs = require('fs');
 var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
@@ -12,17 +13,16 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new sqlite3.Database('./databases/private.db');
 
-// Create an HTTP service.
-http.createServer(app).listen(80);
+let config = JSON.parse(fs.readFileSync('config.json'));
 
-//global salt that is added to every ip before hashing to
-//  make it even harder for someone to decode the ip
-var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
-//this is the user that can add shadow bans
-var adminUserID = "7b89ea26f77bda8176e655eee86029f28c1e6514b6d6e3450bce362b5b126ca3";
+// Create an HTTP service.
+http.createServer(app).listen(config.port);
+
+var globalSalt = config.globalSalt;
+var adminUserID = config.adminUserID;
 
 //if so, it will use the x-forwarded header instead of the ip address of the connection
-var behindProxy = true;
+var behindProxy = config.behindProxy;
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -296,6 +296,8 @@ app.post('/api/setUsername', function (req, res) {
         res.sendStatus(413);
         return;
     }
+  
+    let adminUserIDInput = req.query.adminUserID;
     
     if (userID == undefined || userName == undefined || userID === "undefined" || userName.length > 40) {
         //invalid request
@@ -303,8 +305,19 @@ app.post('/api/setUsername', function (req, res) {
         return;
     }
 
-    //hash the userID
-    userID = getHash(userID);
+    if (adminUserIDInput != undefined) {
+        //this is the admin controlling the other users account, don't hash the controling account's ID
+        adminUserIDInput = getHash(adminUserIDInput);
+
+        if (adminUserIDInput != adminUserID) {
+            //they aren't the admin
+            res.sendStatus(403);
+            return;
+        }
+    } else {
+        //hash the userID
+        userID = getHash(userID);
+    }
 
     //check if username is already set
     db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID, function(err, row) {
@@ -503,6 +516,18 @@ app.get('/api/getTotalStats', function (req, res) {
                 viewCount: row.viewCount,
                 totalSubmissions: row.totalSubmissions,
                 minutesSaved: row.minutesSaved
+            });
+        }
+    });
+});
+
+//send out a formatted time saved total
+app.get('/api/getDaysSavedFormatted', function (req, res) {
+    db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes").get(function(err, row) {
+        if (row != null) {
+            //send this result
+            res.send({
+                daysSaved: row.daysSaved.toFixed(2)
             });
         }
     });
