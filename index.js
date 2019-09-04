@@ -1,4 +1,5 @@
 var express = require('express');
+var fs = require('fs');
 var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
@@ -15,14 +16,13 @@ var privateDB = new sqlite3.Database('./databases/private.db');
 // Create an HTTP service.
 http.createServer(app).listen(80);
 
-//global salt that is added to every ip before hashing to
-//  make it even harder for someone to decode the ip
-var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
-//this is the user that can add shadow bans
-var adminUserID = "7b89ea26f77bda8176e655eee86029f28c1e6514b6d6e3450bce362b5b126ca3";
+let config = JSON.parse(fs.readFileSync('config.json'));
+
+var globalSalt = config.globalSalt;
+var adminUserID = config.adminUserID;
 
 //if so, it will use the x-forwarded header instead of the ip address of the connection
-var behindProxy = true;
+var behindProxy = config.behindProxy;
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -291,14 +291,27 @@ app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
 
+    let adminUserIDInput = req.query.adminUserID;
+
     if (userID == undefined || userName == undefined || userID === "undefined") {
         //invalid request
         res.sendStatus(400);
         return;
     }
 
-    //hash the userID
-    userID = getHash(userID);
+    if (adminUserIDInput != undefined) {
+        //this is the admin controlling the other users account, don't hash the controling account's ID
+        adminUserIDInput = getHash(adminUserIDInput);
+
+        if (adminUserIDInput != adminUserID) {
+            //they aren't the admin
+            res.sendStatus(403);
+            return;
+        }
+    } else {
+        //hash the userID
+        userID = getHash(userID);
+    }
 
     //check if username is already set
     db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID, function(err, row) {
