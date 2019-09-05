@@ -6,13 +6,13 @@ var app = express();
 //hashing service
 var crypto = require('crypto');
 
+let config = JSON.parse(fs.readFileSync('config.json'));
+
 //load database
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('./databases/sponsorTimes.db');
+var db = new sqlite3.Database(config.db);
 //where the more sensitive data such as IP addresses are stored
-var privateDB = new sqlite3.Database('./databases/private.db');
-
-let config = JSON.parse(fs.readFileSync('config.json'));
+var privateDB = new sqlite3.Database(config.privateDB);
 
 var globalSalt = config.globalSalt;
 var adminUserID = config.adminUserID;
