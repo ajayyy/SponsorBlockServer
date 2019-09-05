@@ -4,5 +4,6 @@
     "adminUserID": "[the hashed id of the user who can perform admin actions]",
     "behindProxy": true,
     "db": "./databases/sponsorTimes.db",
-    "privateDB": "./databases/private.db'"
+    "privateDB": "./databases/private.db'",
+    "mode": "development"
 }
