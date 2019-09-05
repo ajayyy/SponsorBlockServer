@@ -390,7 +390,7 @@ app.get('/api/getUsername', function (req, res) {
 //Endpoint used to hide a certain user's data
 app.get('/api/shadowBanUser', async function (req, res) {
     let userID = req.query.userID;
-    let shadowUserID = req.query.shadowUserID;
+    let adminUserIDInput = req.query.adminUserID;
 
     let enabled = req.query.enabled;
     if (enabled === undefined){
@@ -407,16 +407,16 @@ app.get('/api/shadowBanUser', async function (req, res) {
         unHideOldSubmissions = unHideOldSubmissions === "true";
     }
 
-    if (userID == undefined || shadowUserID == undefined) {
+    if (adminUserIDInput == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
         return;
     }
 
     //hash the userID
-    userID = getHash(userID);
+    adminUserIDInput = getHash(adminUserIDInput);
 
-    if (userID !== adminUserID) {
+    if (adminUserIDInput !== adminUserID) {
         //not authorized
         res.sendStatus(403);
         return;
@@ -424,24 +424,24 @@ app.get('/api/shadowBanUser', async function (req, res) {
 
     //check to see if this user is already shadowbanned
     let result = await new Promise((resolve, reject) => {
-        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(shadowUserID, (err, row) => resolve({err, row}));
+        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
     });
 
     if (enabled && result.row.userCount == 0) {
         //add them to the shadow ban list
 
         //add it to the table
-        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(shadowUserID);
+        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(userID);
 
         //find all previous submissions and hide them
-        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(shadowUserID);
+        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(userID);
     } else if (!enabled && result.row.userCount > 0) {
         //remove them from the shadow ban list
-        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(shadowUserID);
+        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(userID);
 
         //find all previous submissions and unhide them
         if (unHideOldSubmissions) {
-            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(shadowUserID);
+            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(userID);
         }
     }
 
