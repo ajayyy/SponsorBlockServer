@@ -103,7 +103,7 @@ function getIP(req) {
 }
 
 //add the post function
-app.get('/api/postVideoSponsorTimes', function (req, res) {
+app.get('/api/postVideoSponsorTimes', async function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
@@ -119,7 +119,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
 
     //hash the userID
     userID = getHash(userID);
-    
+
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + globalSalt);
 
@@ -137,6 +137,11 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
         res.sendStatus(400);
         return;
     }
+
+    //check if this user is on the vip list
+    let vipResult = await new Promise((resolve, reject) => {
+        db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+    });
 
     //this can just be a hash of the data
     //it's better than generating an actual UUID like what was used before
@@ -171,10 +176,16 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                         });
 
                         let shadowBanned = result.row.userCount;
+
+                        let startingVotes = 0;
+                        if (vipResult.row.userCount > 0) {
+                            //this user is a vip, start them at a higher approval rating
+                            startingVotes = 10;
+                        }
         
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned);
 
                             //add to private db as well
                             privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
@@ -254,13 +265,13 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         }
 
         //check if this user is on the vip list
-        let result = await new Promise((resolve, reject) => {
+        let vipResult = await new Promise((resolve, reject) => {
             db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
         });
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
         db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, function(err, row) {
-            if (result.row.userCount != 0 && incrementAmount < 0) {
+            if (vipResult.row.userCount != 0 && incrementAmount < 0) {
                 //this user is a vip and a downvote
                 //their vote should be -25 or -80%
                 incrementAmount = -Math.max(25, Math.floor(row.votes * 0.8));
