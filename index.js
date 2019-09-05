@@ -203,6 +203,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     }
 
     //hash the userID
+    let nonAnonUserID = getHash(userID);
     userID = getHash(userID + UUID);
 
     //x-forwarded-for if this server is behind a proxy
@@ -212,7 +213,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     let hashedIP = getHash(ip + globalSalt);
 
     //check if vote has already happened
-    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, votesRow) {
+    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, async function(err, votesRow) {
         if (err) console.log(err);
                 
         if (votesRow != undefined && votesRow.type == type) {
@@ -243,14 +244,31 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             } else if (votesRow.type == 0) {
                 //downvote
                 oldIncrementAmount = -1;
+            } else if (votesRow.type == 1) {
+                //extra downvote
+                oldIncrementAmount = -4;
+            } else if (votesRow.type <= -25) {
+                //vip downvote
+                oldIncrementAmount = votesRow.type;
             }
         }
 
+        //check if this user is on the vip list
+        let result = await new Promise((resolve, reject) => {
+            db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
+        });
+
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
         db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, function(err, row) {
-            if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
+            if (result.row.userCount != 0 && incrementAmount < 0) {
+                //this user is a vip and a downvote
+                //their vote should be -25 or -80%
+                incrementAmount = -Math.max(25, Math.floor(row.votes * 0.8));
+                type = incrementAmount;
+            } else if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
                 //multiply the power of this downvote
                 incrementAmount *= 4;
+                type = 2;
             }
 
             //update the votes table
