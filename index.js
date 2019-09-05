@@ -11,7 +11,7 @@ let config = JSON.parse(fs.readFileSync('config.json'));
 // Default to production mode (for development mode set
 // development mode set it to 'development')
 // do not return full stacktrace to random people on internet
-app.set('env', config.mode || 'production');
+//app.set('env', config.mode || 'production');
 
 //load database
 var sqlite3 = require('sqlite3').verbose();
@@ -32,72 +32,20 @@ app.use(function(req, res, next) {
     next();
 });
 
+// Parse JSON body
+app.use(express.json())
+
 //add the get function
 app.get('/api/getVideoSponsorTimes', function (req, res) {
-    let videoID = req.query.videoID;
-
-    let sponsorTimes = [];
-    let votes = []
-    let UUIDs = [];
-
-    let hashedIP = getHash(getIP(req) + globalSalt);
-
-    db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, async function(err, rows) {
-        if (err) console.log(err);
-
-        for (let i = 0; i < rows.length; i++) {
-            //check if votes are above -1
-            if (rows[i].votes < -1) {
-                //too untrustworthy, just ignore it
-                continue;
-            }
-
-            //check if shadowHidden
-            //this means it is hidden to everyone but the original ip that submitted it
-            if (rows[i].shadowHidden == 1) {
-                //get the ip
-                //await the callback
-                let result = await new Promise((resolve, reject) => {
-                    privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
-                });
-
-                if (!result.rows.some((e) => e.hashedIP === hashedIP)) {
-                    //this isn't their ip, don't send it to them
-                    continue;
-                }
-            }
-
-            sponsorTimes.push([]);
-            
-            let index = sponsorTimes.length - 1;
-    
-            sponsorTimes[index][0] = rows[i].startTime;
-            sponsorTimes[index][1] = rows[i].endTime;
-
-            votes[index] = rows[i].votes;
-            UUIDs[index] = rows[i].UUID;
-        }
-
-        if (sponsorTimes.length == 0) {
-            res.sendStatus(404);
-            return;
-        }
-
-        organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs);
-        sponsorTimes = organisedData.sponsorTimes;
-        UUIDs = organisedData.UUIDs;
-
-        if (sponsorTimes.length == 0) {
-            res.sendStatus(404);
-        } else {
-            //send result
-            res.send({
-                sponsorTimes: sponsorTimes,
-                UUIDs: UUIDs
-            })
-        }
-    });
+    // This parameter instructs function to return only "sponsor" type
+    // If you don't want to expose this parameter to the new API,
+    // simply remane it to, e.g. req.sponsorsOnly, so that it's not
+    // accessible to the clients.
+    req.query.sponsorsOnly = true
+    getVideoSegmentTimes(req, res)
 });
+
+app.get('/api/videoSegmentTimes', getVideoSegmentTimes);
 
 function getIP(req) {
     return behindProxy ? req.headers['x-forwarded-for'] : req.connection.remoteAddress;
@@ -105,91 +53,19 @@ function getIP(req) {
 
 //add the post function
 app.get('/api/postVideoSponsorTimes', function (req, res) {
-    let videoID = req.query.videoID;
-    let startTime = req.query.startTime;
-    let endTime = req.query.endTime;
-    let userID = req.query.userID;
-
-    //check if all correct inputs are here and the length is 1 second or more
-    if (videoID == undefined || startTime == undefined || endTime == undefined || userID == undefined
-            || Math.abs(startTime - endTime) < 1) {
-        //invalid request
-        res.sendStatus(400);
-        return;
+    const reqObject = {
+        userID: req.query.userID,
+        videoID: req.query.videoID,
+        segments: [{
+            startTime: parseFloat(req.query.startTime),
+            endTime: parseFloat(req.query.endTime),
+            type: 'sponsor'
+        }]
     }
-
-    //hash the userID
-    userID = getHash(userID);
-    
-    //hash the ip 5000 times so no one can get it from the database
-    let hashedIP = getHash(getIP(req) + globalSalt);
-
-    startTime = parseFloat(startTime);
-    endTime = parseFloat(endTime);
-
-    if (isNaN(startTime) || isNaN(endTime)) {
-        //invalid request
-        res.sendStatus(400);
-        return;
-    }
-
-    if (startTime > endTime) {
-        //time can't go backwards
-        res.sendStatus(400);
-        return;
-    }
-
-    //this can just be a hash of the data
-    //it's better than generating an actual UUID like what was used before
-    //also better for duplication checking
-    let hashCreator = crypto.createHash('sha256');
-    let UUID = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
-
-    //get current time
-    let timeSubmitted = Date.now();
-
-    let yesterday = timeSubmitted - 86400000;
-
-    //check to see if this ip has submitted too many sponsors today
-    privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
-        if (row.count >= 10) {
-            //too many sponsors for the same video from the same ip address
-            res.sendStatus(429);
-        } else {
-            //check to see if the user has already submitted sponsors for this video
-            db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID], function(err, row) {
-                if (row.count >= 8) {
-                    //too many sponsors for the same video from the same user
-                    res.sendStatus(429);
-                } else {
-                    //check if this info has already been submitted first
-                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], async function(err, row) {
-                        if (err) console.log(err);
-
-                        //check to see if this user is shadowbanned
-                        let result = await new Promise((resolve, reject) => {
-                            privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-                        });
-
-                        let shadowBanned = result.row.userCount;
-        
-                        if (row == null) {
-                            //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
-
-                            //add to private db as well
-                            privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
-
-                            res.sendStatus(200);
-                        } else {
-                            res.sendStatus(409);
-                        }
-                    });
-                }
-            });
-        }
-    });
+    postVideoSegmentTimes({ body: reqObject }, res);
 });
+
+app.post('/api/videoSegmentTimes', postVideoSegmentTimes);
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', function (req, res) {
@@ -532,13 +408,194 @@ app.get('/database.db', function (req, res) {
 });
 
 // Start the server only AFTER all endpoints are regstered.
-app.listen(config.port);
+app.listen(config.port, function () {
+    console.info(`Server is running on port ${config.port}`);
+});
+
+function getVideoSegmentTimes (req, res) {
+    // This is a parameter automatically added for
+    // the old API.
+    let sponsorsOnly = req.query.sponsorsOnly
+
+    let videoID = req.query.videoID;
+
+    let sponsorTimes = [];
+    let votes = []
+    let UUIDs = [];
+    let types = [];
+
+    let hashedIP = getHash(getIP(req) + globalSalt);
+
+    db.prepare("SELECT type, startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? "
+      + (sponsorsOnly ? " AND type = 'sponsor' " : "")
+      + "ORDER BY startTime").all(videoID, async function(err, rows) {
+        if (err) console.log(err);
+
+        for (let i = 0; i < rows.length; i++) {
+            //check if votes are above -1
+            if (rows[i].votes < -1) {
+                //too untrustworthy, just ignore it
+                continue;
+            }
+
+            //check if shadowHidden
+            //this means it is hidden to everyone but the original ip that submitted it
+            if (rows[i].shadowHidden == 1) {
+                //get the ip
+                //await the callback
+                let result = await new Promise((resolve, reject) => {
+                    privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
+                });
+
+                if (!result.rows.some((e) => e.hashedIP === hashedIP)) {
+                    //this isn't their ip, don't send it to them
+                    continue;
+                }
+            }
+
+            sponsorTimes.push([]);
+            
+            let index = sponsorTimes.length - 1;
+    
+            sponsorTimes[index][0] = rows[i].startTime;
+            sponsorTimes[index][1] = rows[i].endTime;
+
+            votes[index] = rows[i].votes;
+            UUIDs[index] = rows[i].UUID;
+            types[index] = rows[i].type;
+        }
+
+        if (sponsorTimes.length == 0) {
+            res.sendStatus(404);
+            return;
+        }
+
+        organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs, types);
+        sponsorTimes = organisedData.sponsorTimes;
+        UUIDs = organisedData.UUIDs;
+        types = organisedData.types;
+
+        if (sponsorTimes.length == 0) {
+            res.sendStatus(404);
+        } else {
+            //send result
+            res.send({
+                sponsorTimes: sponsorTimes,
+                UUIDs: UUIDs,
+                types: sponsorsOnly ? undefined : types
+            });
+        }
+    });
+}
+
+/*
+ * Checks all segments for validity
+ */
+function validSegmentTimes (segments) {
+    const validTypes = [null, undefined, "intro", "sponsor", "merch", "social", "buttons", "patreon"]
+    for (const segment of segments) {
+        if (typeof segment.startTime !== 'number' ||
+            typeof segment.endTime !== 'number' ||
+            segment.endTime - segment.startTime < 1 ||
+            !validTypes.includes(segment.type)) {
+            return false
+        }
+    }
+
+    return true
+}
+
+function UUID (videoID, userID, segment) {
+    //this can just be a hash of the data
+    //it's better than generating an actual UUID like what was used before
+    //also better for duplication checking
+    let startTime = segment.startTime;
+    let endTime = segment.endTime;
+    let hashCreator = crypto.createHash('sha256');
+    let UUID_ = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
+    return UUID_
+}
+
+function insetSegmentRecords (userID, videoID, timeSubmitted, hashedIP, segments, shadowBanned, callback) {
+    let barrier = {
+        total: segments.length,
+        done: 0
+    }
+
+    for (let segment of segments) {
+        db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([segment.startTime, segment.endTime, videoID], function(err, row) {
+            if (err) console.log(err);
+            if (row == null) {
+                let UUID_ = UUID(videoID, userID, segment)
+                //not a duplicate, execute query
+                db.prepare("INSERT INTO sponsorTimes(videoID, type, startTime, endTime, votes, UUID, userID, timeSubmitted, views, shadowHidden) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segment.type, segment.startTime, segment.endTime, 0, UUID_, userID, timeSubmitted, 0, shadowBanned);
+
+                //add to private db as well
+                privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+            }
+            barrier.done++;
+            if (barrier.done >= barrier.total) {
+                callback()
+            }
+        });
+    }
+}
+
+function postVideoSegmentTimes (req, res) {
+    const videoID = req.body.videoID
+    let userID = req.body.userID
+    const segments = req.body.segments
+
+    //check if all correct inputs are here
+    if (typeof videoID !== 'string' ||
+        !Array.isArray(segments) || validSegmentTimes(segments) !== true ||
+        typeof userID !== 'string') {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    userID = getHash(userID);
+    
+    //hash the ip 5000 times so no one can get it from the database
+    let hashedIP = getHash(getIP(req) + globalSalt);
+
+    //get current time
+    let timeSubmitted = Date.now();
+
+    let yesterday = timeSubmitted - 86400000;
+
+    //check to see if this ip has submitted too many sponsors today
+    privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
+        if (row.count + segments.length > 10) {
+            //too many sponsors for the same video from the same ip address
+            res.sendStatus(429);
+        } else {
+            //check to see if the user has already submitted sponsors for this video
+            db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID], function(err, row) {
+                if (row.count + segments.length > 8) {
+                    //too many sponsors for the same video from the same user
+                    res.sendStatus(429);
+                } else {
+                    //check to see if this user is shadowbanned
+                    privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get([userID], function (err, row) {
+                        let shadowBanned = row.userCount > 0;
+                        insetSegmentRecords(userID, videoID, timeSubmitted, hashedIP, segments, shadowBanned, function () {
+                            res.sendStatus(200);
+			});
+                    });
+                }
+            });
+        }
+    });
+}
 
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Sponsor times with less than -1 votes are already ignored before this function is called
-function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
+function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs, types) {
     //list of sponsors that are contained inside eachother
     let similarSponsors = [];
 
@@ -624,9 +681,15 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
         finalUUIDs.push(UUIDs[finalSponsorTimeIndexes[i]]);
     }
 
+    let finalTypes = [];
+    for (let i = 0; i < finalSponsorTimeIndexes.length; i++) {
+        finalTypes.push(types[finalSponsorTimeIndexes[i]]);
+    }
+
     return {
         sponsorTimes: finalSponsorTimes,
-        UUIDs: finalUUIDs
+        UUIDs: finalUUIDs,
+        types: finalTypes
     };
 }
 
