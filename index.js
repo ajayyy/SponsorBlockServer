@@ -1,6 +1,5 @@
 var express = require('express');
 var fs = require('fs');
-var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
 
@@ -14,9 +13,6 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 var privateDB = new sqlite3.Database('./databases/private.db');
 
 let config = JSON.parse(fs.readFileSync('config.json'));
-
-// Create an HTTP service.
-http.createServer(app).listen(config.port);
 
 var globalSalt = config.globalSalt;
 var adminUserID = config.adminUserID;
@@ -529,6 +525,9 @@ app.get('/api/getDaysSavedFormatted', function (req, res) {
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
+
+// Start the server only AFTER all endpoints are regstered.
+app.listen(config.port);
 
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
