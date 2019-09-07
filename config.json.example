@@ -1,0 +1,6 @@
+{
+    "port": 80,
+    "globalSalt": "[global salt (pepper) that is added to every ip before hashing to make it even harder for someone to decode the ip]",
+    "adminUserID": "[the hashed id of the user who can perform admin actions]",
+    "behindProxy": true
+}

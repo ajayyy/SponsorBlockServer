@@ -88,4 +88,8 @@ typings/
 .dynamodb/
 
 # Databases
-databases
+databases/sponsorTimes.db
+databases/private.db
+
+# Config files
+config.json

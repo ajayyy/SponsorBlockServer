@@ -1,4 +1,5 @@
 var express = require('express');
+var fs = require('fs');
 var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
@@ -12,15 +13,16 @@ var db = new sqlite3.Database('./databases/sponsorTimes.db');
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new sqlite3.Database('./databases/private.db');
 
+let config = JSON.parse(fs.readFileSync('config.json'));
+
 // Create an HTTP service.
-http.createServer(app).listen(80);
+http.createServer(app).listen(config.port);
 
-//global salt that is added to every ip before hashing to
-//  make it even harder for someone to decode the ip
-var globalSalt = "49cb0d52-1aec-4b89-85fc-fab2c53062fb";
-
-//if so, it will use the CF-Connecting-IP header instead of the ip address of the connection
-var behindCF = true;
+var globalSalt = config.globalSalt;
+var adminUserID = config.adminUserID;
+ 
+//if so, it will use the x-forwarded header instead of the ip address of the connection
+var behindProxy = config.behindProxy;
 
 //setup CORS correctly
 app.use(function(req, res, next) {
@@ -37,7 +39,9 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
     let votes = []
     let UUIDs = [];
 
-    db.prepare("SELECT startTime, endTime, votes, UUID FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, function(err, rows) {
+    let hashedIP = getHash(getIP(req) + globalSalt);
+
+    db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, async function(err, rows) {
         if (err) console.log(err);
 
         for (let i = 0; i < rows.length; i++) {
@@ -46,6 +50,22 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
                 //too untrustworthy, just ignore it
                 continue;
             }
+
+            //check if shadowHidden
+            //this means it is hidden to everyone but the original ip that submitted it
+            if (rows[i].shadowHidden == 1) {
+                //get the ip
+                //await the callback
+                let result = await new Promise((resolve, reject) => {
+                    privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
+                });
+
+                if (!result.rows.some((e) => e.hashedIP === hashedIP)) {
+                    //this isn't their ip, don't send it to them
+                    continue;
+                }
+            }
+
             sponsorTimes.push([]);
             
             let index = sponsorTimes.length - 1;
@@ -79,7 +99,16 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
 });
 
 function getIP(req) {
-    return behindCF ? req.headers['CF-Connecting-IP'] : req.connection.remoteAddress;
+    switch(config.behindProxy) {
+      case "Cloudflare":
+        return req.headers['CF-Connecting-IP'];
+      case "X-Forwarded-For":
+        return req.headers['X-Forwarded-For'];
+      case "X-Real-IP":
+        return req.headers['X-Real-IP'];
+      default:
+        return req.connection.remoteAddress;
+    }
 }
 
 //add the post function
@@ -128,7 +157,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
     let timeSubmitted = Date.now();
 
     let yesterday = timeSubmitted - 86400000;
-    
+
     //check to see if this ip has submitted too many sponsors today
     privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
         if (row.count >= 10) {
@@ -142,12 +171,19 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                     res.sendStatus(429);
                 } else {
                     //check if this info has already been submitted first
-                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], function(err, row) {
+                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], async function(err, row) {
                         if (err) console.log(err);
-                        
+
+                        //check to see if this user is shadowbanned
+                        let result = await new Promise((resolve, reject) => {
+                            privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+                        });
+
+                        let shadowBanned = result.row.userCount;
+        
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
 
                             //add to private db as well
                             privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
@@ -264,14 +300,27 @@ app.post('/api/setUsername', function (req, res) {
     let userID = req.query.userID;
     let userName = req.query.username;
 
-    if (userID == undefined || userName == undefined) {
+    let adminUserIDInput = req.query.adminUserID;
+
+    if (userID == undefined || userName == undefined || userID === "undefined") {
         //invalid request
         res.sendStatus(400);
         return;
     }
 
-    //hash the userID
-    userID = getHash(userID);
+    if (adminUserIDInput != undefined) {
+        //this is the admin controlling the other users account, don't hash the controling account's ID
+        adminUserIDInput = getHash(adminUserIDInput);
+
+        if (adminUserIDInput != adminUserID) {
+            //they aren't the admin
+            res.sendStatus(403);
+            return;
+        }
+    } else {
+        //hash the userID
+        userID = getHash(userID);
+    }
 
     //check if username is already set
     db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID, function(err, row) {
@@ -316,6 +365,67 @@ app.get('/api/getUsername', function (req, res) {
             });
         }
     });
+});
+
+//Endpoint used to hide a certain user's data
+app.get('/api/shadowBanUser', async function (req, res) {
+    let userID = req.query.userID;
+    let shadowUserID = req.query.shadowUserID;
+
+    let enabled = req.query.enabled;
+    if (enabled === undefined){
+        enabled = true;
+    } else {
+        enabled = enabled === "true";
+    }
+
+    //if enabled is false and the old submissions should be made visible again
+    let unHideOldSubmissions = req.query.unHideOldSubmissions;
+    if (enabled === undefined){
+        unHideOldSubmissions = true;
+    } else {
+        unHideOldSubmissions = unHideOldSubmissions === "true";
+    }
+
+    if (userID == undefined || shadowUserID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userIDs
+    userID = getHash(userID);
+
+    if (userID !== adminUserID) {
+        //not authorized
+        res.sendStatus(403);
+        return;
+    }
+
+    //check to see if this user is already shadowbanned
+    let result = await new Promise((resolve, reject) => {
+        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(shadowUserID, (err, row) => resolve({err, row}));
+    });
+
+    if (enabled && result.row.userCount == 0) {
+        //add them to the shadow ban list
+
+        //add it to the table
+        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(shadowUserID);
+
+        //find all previous submissions and hide them
+        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(shadowUserID);
+    } else if (!enabled && result.row.userCount > 0) {
+        //remove them from the shadow ban list
+        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(shadowUserID);
+
+        //find all previous submissions and unhide them
+        if (unHideOldSubmissions) {
+            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(shadowUserID);
+        }
+    }
+
+    res.sendStatus(200);
 });
 
 //Gets all the views added up for one userID
@@ -374,7 +484,7 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 50").all(function(err, rows) {
+    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 100").all(function(err, rows) {
         for (let i = 0; i < rows.length; i++) {
             if (rows[i].userName != null) {
                 userNames[i] = rows[i].userName;
@@ -408,6 +518,18 @@ app.get('/api/getTotalStats', function (req, res) {
                 viewCount: row.viewCount,
                 totalSubmissions: row.totalSubmissions,
                 minutesSaved: row.minutesSaved
+            });
+        }
+    });
+});
+
+//send out a formatted time saved total
+app.get('/api/getDaysSavedFormatted', function (req, res) {
+    db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes").get(function(err, row) {
+        if (row != null) {
+            //send this result
+            res.send({
+                daysSaved: row.daysSaved.toFixed(2)
             });
         }
     });
