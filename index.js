@@ -48,7 +48,7 @@ function getIP(req) {
     return behindProxy ? req.headers['x-forwarded-for'] : req.connection.remoteAddress;
 }
 
-//add the post function
+//add the legacy post function
 app.get('/api/postVideoSponsorTimes', function (req, res) {
     const reqObject = {
         userID: req.query.userID,
@@ -59,6 +59,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
             type: 'sponsor'
         }]
     }
+
     postVideoSegmentTimes({ body: reqObject }, res);
 });
 
@@ -502,18 +503,20 @@ function validSegmentTimes (segments) {
     return true
 }
 
-function UUID (videoID, userID, segment) {
+//the ID of each sponsor can be a hash of it's contents
+function createUUIDHash(videoID, userID, segment) {
     //this can just be a hash of the data
     //it's better than generating an actual UUID like what was used before
     //also better for duplication checking
     let startTime = segment.startTime;
     let endTime = segment.endTime;
     let hashCreator = crypto.createHash('sha256');
-    let UUID_ = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
-    return UUID_
+    let UUID = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
+    return UUID
 }
 
-function insetSegmentRecords (userID, videoID, timeSubmitted, hashedIP, segments, shadowBanned, callback) {
+function insertSegmentRecords(userID, videoID, timeSubmitted, hashedIP, segments, shadowBanned, callback) {
+    //this is used to know when to call the callback
     let barrier = {
         total: segments.length,
         done: 0
@@ -523,14 +526,16 @@ function insetSegmentRecords (userID, videoID, timeSubmitted, hashedIP, segments
         db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([segment.startTime, segment.endTime, videoID], function(err, row) {
             if (err) console.log(err);
             if (row == null) {
-                let UUID_ = UUID(videoID, userID, segment)
+                let UUID = createUUIDHash(videoID, userID, segment)
                 //not a duplicate, execute query
-                db.prepare("INSERT INTO sponsorTimes(videoID, type, startTime, endTime, votes, UUID, userID, timeSubmitted, views, shadowHidden) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segment.type, segment.startTime, segment.endTime, 0, UUID_, userID, timeSubmitted, 0, shadowBanned);
+                db.prepare("INSERT INTO sponsorTimes(videoID, type, startTime, endTime, votes, UUID, userID, timeSubmitted, views, shadowHidden) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segment.type, segment.startTime, segment.endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
 
                 //add to private db as well
                 privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
             }
+
             barrier.done++;
+
             if (barrier.done >= barrier.total) {
                 callback()
             }
@@ -538,15 +543,14 @@ function insetSegmentRecords (userID, videoID, timeSubmitted, hashedIP, segments
     }
 }
 
-function postVideoSegmentTimes (req, res) {
+function postVideoSegmentTimes(req, res) {
     const videoID = req.body.videoID
     let userID = req.body.userID
     const segments = req.body.segments
 
     //check if all correct inputs are here
-    if (typeof videoID !== 'string' ||
-        !Array.isArray(segments) || validSegmentTimes(segments) !== true ||
-        typeof userID !== 'string') {
+    if (typeof videoID !== 'string' || !Array.isArray(segments) || 
+            validSegmentTimes(segments) !== true || typeof userID !== 'string') {
         //invalid request
         res.sendStatus(400);
         return;
@@ -578,9 +582,10 @@ function postVideoSegmentTimes (req, res) {
                     //check to see if this user is shadowbanned
                     privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get([userID], function (err, row) {
                         let shadowBanned = row.userCount > 0;
-                        insetSegmentRecords(userID, videoID, timeSubmitted, hashedIP, segments, shadowBanned, function () {
+
+                        insertSegmentRecords(userID, videoID, timeSubmitted, hashedIP, segments, shadowBanned, function () {
                             res.sendStatus(200);
-			});
+			            });
                     });
                 }
             });
