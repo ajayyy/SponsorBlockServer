@@ -11,7 +11,7 @@ let config = JSON.parse(fs.readFileSync('config.json'));
 // Default to production mode (for development mode set
 // development mode set it to 'development')
 // do not return full stacktrace to random people on internet
-//app.set('env', config.mode || 'production');
+app.set('env', config.mode || 'production');
 
 //load database
 var sqlite3 = require('sqlite3').verbose();
