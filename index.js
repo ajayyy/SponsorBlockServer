@@ -489,12 +489,13 @@ function getVideoSegmentTimes (req, res) {
 /*
  * Checks all segments for validity
  */
-function validSegmentTimes (segments) {
+function checkIfValidSegmentTimes (segments) {
     const validTypes = [null, undefined, "intro", "sponsor", "merch", "social", "buttons", "patreon"]
+    
     for (const segment of segments) {
         if (typeof segment.startTime !== 'number' ||
             typeof segment.endTime !== 'number' ||
-            segment.endTime - segment.startTime < 1 ||
+            segment.endTime - segment.startTime < 0.2 ||
             !validTypes.includes(segment.type)) {
             return false
         }
@@ -550,7 +551,7 @@ function postVideoSegmentTimes(req, res) {
 
     //check if all correct inputs are here
     if (typeof videoID !== 'string' || !Array.isArray(segments) || 
-            validSegmentTimes(segments) !== true || typeof userID !== 'string') {
+            checkIfValidSegmentTimes(segments) !== true || typeof userID !== 'string') {
         //invalid request
         res.sendStatus(400);
         return;
