@@ -38,9 +38,6 @@ app.use(express.json())
 //add the get function
 app.get('/api/getVideoSponsorTimes', function (req, res) {
     // This parameter instructs function to return only "sponsor" type
-    // If you don't want to expose this parameter to the new API,
-    // simply remane it to, e.g. req.sponsorsOnly, so that it's not
-    // accessible to the clients.
     req.query.sponsorsOnly = true
     getVideoSegmentTimes(req, res)
 });
@@ -482,7 +479,7 @@ function getVideoSegmentTimes (req, res) {
             res.send({
                 sponsorTimes: sponsorTimes,
                 UUIDs: UUIDs,
-                types: sponsorsOnly ? undefined : types
+                types: types
             });
         }
     });
