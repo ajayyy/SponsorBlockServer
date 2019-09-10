@@ -103,7 +103,7 @@ function getIP(req) {
 }
 
 //add the post function
-app.get('/api/postVideoSponsorTimes', function (req, res) {
+app.get('/api/postVideoSponsorTimes', async function (req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
@@ -119,7 +119,7 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
 
     //hash the userID
     userID = getHash(userID);
-    
+
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + globalSalt);
 
@@ -137,6 +137,11 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
         res.sendStatus(400);
         return;
     }
+
+    //check if this user is on the vip list
+    let vipResult = await new Promise((resolve, reject) => {
+        db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+    });
 
     //this can just be a hash of the data
     //it's better than generating an actual UUID like what was used before
@@ -171,10 +176,16 @@ app.get('/api/postVideoSponsorTimes', function (req, res) {
                         });
 
                         let shadowBanned = result.row.userCount;
+
+                        let startingVotes = 0;
+                        if (vipResult.row.userCount > 0) {
+                            //this user is a vip, start them at a higher approval rating
+                            startingVotes = 10;
+                        }
         
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, 0, UUID, userID, timeSubmitted, 0, shadowBanned);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned);
 
                             //add to private db as well
                             privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
@@ -203,6 +214,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     }
 
     //hash the userID
+    let nonAnonUserID = getHash(userID);
     userID = getHash(userID + UUID);
 
     //x-forwarded-for if this server is behind a proxy
@@ -212,7 +224,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
     let hashedIP = getHash(ip + globalSalt);
 
     //check if vote has already happened
-    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, function(err, votesRow) {
+    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, async function(err, votesRow) {
         if (err) console.log(err);
                 
         if (votesRow != undefined && votesRow.type == type) {
@@ -243,14 +255,31 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             } else if (votesRow.type == 0) {
                 //downvote
                 oldIncrementAmount = -1;
+            } else if (votesRow.type == 1) {
+                //extra downvote
+                oldIncrementAmount = -4;
+            } else if (votesRow.type <= -25) {
+                //vip downvote
+                oldIncrementAmount = votesRow.type;
             }
         }
 
+        //check if this user is on the vip list
+        let vipResult = await new Promise((resolve, reject) => {
+            db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
+        });
+
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
         db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, function(err, row) {
-            if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
+            if (vipResult.row.userCount != 0 && incrementAmount < 0) {
+                //this user is a vip and a downvote
+                //their vote should be -25 or -80%
+                incrementAmount = -Math.max(25, Math.floor(row.votes * 0.8));
+                type = incrementAmount;
+            } else if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
                 //multiply the power of this downvote
                 incrementAmount *= 4;
+                type = 2;
             }
 
             //update the votes table
@@ -361,7 +390,7 @@ app.get('/api/getUsername', function (req, res) {
 //Endpoint used to hide a certain user's data
 app.get('/api/shadowBanUser', async function (req, res) {
     let userID = req.query.userID;
-    let shadowUserID = req.query.shadowUserID;
+    let adminUserIDInput = req.query.adminUserID;
 
     let enabled = req.query.enabled;
     if (enabled === undefined){
@@ -378,16 +407,16 @@ app.get('/api/shadowBanUser', async function (req, res) {
         unHideOldSubmissions = unHideOldSubmissions === "true";
     }
 
-    if (userID == undefined || shadowUserID == undefined) {
+    if (adminUserIDInput == undefined || userID == undefined) {
         //invalid request
         res.sendStatus(400);
         return;
     }
 
-    //hash the userIDs
-    userID = getHash(userID);
+    //hash the userID
+    adminUserIDInput = getHash(adminUserIDInput);
 
-    if (userID !== adminUserID) {
+    if (adminUserIDInput !== adminUserID) {
         //not authorized
         res.sendStatus(403);
         return;
@@ -395,25 +424,68 @@ app.get('/api/shadowBanUser', async function (req, res) {
 
     //check to see if this user is already shadowbanned
     let result = await new Promise((resolve, reject) => {
-        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(shadowUserID, (err, row) => resolve({err, row}));
+        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
     });
 
     if (enabled && result.row.userCount == 0) {
         //add them to the shadow ban list
 
         //add it to the table
-        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(shadowUserID);
+        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(userID);
 
         //find all previous submissions and hide them
-        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(shadowUserID);
+        db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(userID);
     } else if (!enabled && result.row.userCount > 0) {
         //remove them from the shadow ban list
-        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(shadowUserID);
+        privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(userID);
 
         //find all previous submissions and unhide them
         if (unHideOldSubmissions) {
-            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(shadowUserID);
+            db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?").run(userID);
         }
+    }
+
+    res.sendStatus(200);
+});
+
+//Endpoint used to make a user a VIP user with special privileges
+app.post('/api/addUserAsVIP', async function (req, res) {
+    let userID = req.query.userID;
+    let adminUserIDInput = req.query.adminUserID;
+
+    let enabled = req.query.enabled;
+    if (enabled === undefined){
+        enabled = true;
+    } else {
+        enabled = enabled === "true";
+    }
+
+    if (userID == undefined || adminUserIDInput == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    adminUserIDInput = getHash(adminUserIDInput);
+
+    if (adminUserIDInput !== adminUserID) {
+        //not authorized
+        res.sendStatus(403);
+        return;
+    }
+
+    //check to see if this user is already a vip
+    let result = await new Promise((resolve, reject) => {
+        db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+    });
+
+    if (enabled && result.row.userCount == 0) {
+        //add them to the vip list
+        db.prepare("INSERT INTO vipUsers VALUES(?)").run(userID);
+    } else if (!enabled && result.row.userCount > 0) {
+        //remove them from the shadow ban list
+        db.prepare("DELETE FROM vipUsers WHERE userID = ?").run(userID);
     }
 
     res.sendStatus(200);
