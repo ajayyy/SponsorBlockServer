@@ -150,7 +150,9 @@ __________________________________________________________________
 ```
 {
   userID: string,
-  userName: string
+  userName: string,
+  //optional
+  adminUserID: string //This is if you want to change someone elses username from the admin account
 }
 ```
 
@@ -238,3 +240,81 @@ __________________________________________________________________
 **Error codes**:
 
 None
+__________________________________________________________________
+
+**GET** `/api/getDaysSavedFormatted`
+
+**Input**:
+```
+{
+  Nothing
+}
+```
+
+**Response**:
+```
+{
+  daysSaved: float (2 decimal places)
+}
+```
+
+**Error codes**:
+
+None
+__________________________________________________________________
+
+### Admin Calls
+
+These can only be called by the server administrator, set in the config.
+
+**POST** `/api/shadowBanUser`
+
+Shadow banned submissions are hidden for everyone but the IP that originally submitted it. Shadow banning a user shadow bans all future submissions.
+
+**Input**:
+```
+{
+  userID: string, //public userID of the user you want to shadowBan
+  adminUserID: string, //your userID as an admin
+  enabled: boolean, //optional, to be able to add and remove users
+  unHideOldSubmissions: boolean //optional, should all previous submissions be banned as well?
+}
+```
+
+**Response**:
+```
+{
+  Nothing (status code 200)
+}
+```
+
+**Error codes**:
+
+400: Bad Request (Your inputs are wrong/impossible)
+403: Unauthorized (You are not an admin)
+__________________________________________________________________
+
+**POST** `/api/addUserAsVIP`
+
+VIPs have extra privileges and their votes count more.
+
+**Input**:
+```
+{
+  userID: string, //public userID of the user you want to add to the VIP list
+  adminUserID: string, //your userID as an admin
+  enabled: boolean //optional, to be able to add and remove users
+}
+```
+
+**Response**:
+```
+{
+  Nothing (status code 200)
+}
+```
+
+**Error codes**:
+
+400: Bad Request (Your inputs are wrong/impossible)
+403: Unauthorized (You are not an admin)
