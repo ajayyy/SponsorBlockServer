@@ -16,6 +16,16 @@ Hopefully this project can be combined with projects like [this](https://github.
 
 The client web browser extension is available here: https://github.com/ajayyy/SponsorBlock
 
+# Build At Home
+
+This is a node.js server, so clone this repo and run `npm install` to install all dependencies.
+
+Make sure to create the databases in the `databases` folder out of the database schemas.
+
+Rename `config.json.example` to `config.json` and fill the parameters inside.
+
+Run the server with `npm start`.
+
 # API Docs
 
 Public API available at https://sponsor.ajay.app.
