@@ -388,7 +388,7 @@ app.get('/api/getUsername', function (req, res) {
 });
 
 //Endpoint used to hide a certain user's data
-app.get('/api/shadowBanUser', async function (req, res) {
+app.post('/api/shadowBanUser', async function (req, res) {
     let userID = req.query.userID;
     let adminUserIDInput = req.query.adminUserID;
 
