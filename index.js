@@ -190,7 +190,7 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
 
                             if (downvotedSubmissionsResult.row.downvotedSubmissions / totalSubmissionsResult.row.totalSubmissions > 0.6) {
                                 //hide this submission as this user is untrustworthy
-                                shadowBanned = true;
+                                shadowBanned = 1;
                             }
                         }
 
