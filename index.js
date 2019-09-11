@@ -171,11 +171,28 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                         if (err) console.log(err);
 
                         //check to see if this user is shadowbanned
-                        let result = await new Promise((resolve, reject) => {
+                        let shadowBanResult = await new Promise((resolve, reject) => {
                             privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
                         });
 
-                        let shadowBanned = result.row.userCount;
+                        let shadowBanned = shadowBanResult.row.userCount;
+
+                        //check to see if this user how many submissions this user has submitted
+                        let totalSubmissionsResult = await new Promise((resolve, reject) => {
+                            db.prepare("SELECT count(*) as totalSubmissions FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+                        });
+
+                        if (totalSubmissionsResult.row.totalSubmissions > 15) {
+                            //check if they have a high downvote ratio
+                            let downvotedSubmissionsResult = await new Promise((resolve, reject) => {
+                                db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND votes < 0").get(userID, (err, row) => resolve({err, row}));
+                            });
+
+                            if (downvotedSubmissionsResult.row.downvotedSubmissions / totalSubmissionsResult.row.totalSubmissions > 0.6) {
+                                //hide this submission as this user is untrustworthy
+                                shadowBanned = true;
+                            }
+                        }
 
                         let startingVotes = 0;
                         if (vipResult.row.userCount > 0) {
