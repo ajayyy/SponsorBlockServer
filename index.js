@@ -171,11 +171,16 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                         if (err) console.log(err);
 
                         //check to see if this user is shadowbanned
-                        let result = await new Promise((resolve, reject) => {
+                        let shadowBanResult = await new Promise((resolve, reject) => {
                             privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
                         });
 
-                        let shadowBanned = result.row.userCount;
+                        let shadowBanned = shadowBanResult.row.userCount;
+
+                        if (!(await isUserTrustworthy(userID))) {
+                            //hide this submission as this user is untrustworthy
+                            shadowBanned = 1;
+                        }
 
                         let startingVotes = 0;
                         if (vipResult.row.userCount > 0) {
@@ -270,7 +275,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         });
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, function(err, row) {
+        db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, async function(err, row) {
             if (vipResult.row.userCount != 0 && incrementAmount < 0) {
                 //this user is a vip and a downvote
                 //their vote should be -25 or -80%
@@ -292,6 +297,30 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             //update the vote count on this sponsorTime
             //oldIncrementAmount will be zero is row is null
             db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+
+            //for each positive vote, see if a hidden submission can be shown again
+            if (incrementAmount > 0) {
+                //find the UUID that submitted the submission that was voted on
+                let userIDSubmittedResult = await new Promise((resolve, reject) => {
+                    db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID, (err, row) => resolve({err, row}));
+                });
+
+                let submissionUserID = userIDSubmittedResult.row.userID;
+
+                //check if any submissions are hidden
+                let hiddenSubmissionsResult = await new Promise((resolve, reject) => {
+                    db.prepare("SELECT count(*) as hiddenSubmissions FROM sponsorTimes WHERE userID = ? AND shadowHidden > 0").get(submissionUserID, (err, row) => resolve({err, row}));
+                });
+
+                if (hiddenSubmissionsResult.row.hiddenSubmissions > 0) {
+                    //see if some of this users submissions should be visible again
+                    
+                    if (await isUserTrustworthy(submissionUserID)) {
+                        //they are trustworthy again, show 2 of their submissions again, if there are two to show
+                        db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE ROWID IN (SELECT ROWID FROM sponsorTimes WHERE userID = ? AND shadowHidden = 1 LIMIT 2)").run(submissionUserID)
+                    }
+                }
+            }
 
             //added to db
             res.sendStatus(200);
@@ -388,7 +417,7 @@ app.get('/api/getUsername', function (req, res) {
 });
 
 //Endpoint used to hide a certain user's data
-app.get('/api/shadowBanUser', async function (req, res) {
+app.post('/api/shadowBanUser', async function (req, res) {
     let userID = req.query.userID;
     let adminUserIDInput = req.query.adminUserID;
 
@@ -601,6 +630,27 @@ app.get('/api/getDaysSavedFormatted', function (req, res) {
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
+
+//returns true if the user is considered trustworthy
+//this happens after a user has made 5 submissions and has less than 60% downvoted submissions
+async function isUserTrustworthy(userID) {
+    //check to see if this user how many submissions this user has submitted
+    let totalSubmissionsResult = await new Promise((resolve, reject) => {
+        db.prepare("SELECT count(*) as totalSubmissions, sum(votes) as voteSum FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+    });
+
+    if (totalSubmissionsResult.row.totalSubmissions > 5) {
+        //check if they have a high downvote ratio
+        let downvotedSubmissionsResult = await new Promise((resolve, reject) => {
+            db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND (votes < 0 OR shadowHidden > 0)").get(userID, (err, row) => resolve({err, row}));
+        });
+        
+        return (downvotedSubmissionsResult.row.downvotedSubmissions / totalSubmissionsResult.row.totalSubmissions) < 0.6 || 
+                (totalSubmissionsResult.row.voteSum > downvotedSubmissionsResult.row.downvotedSubmissions);
+    }
+
+    return true;
+}
 
 //This function will find sponsor times that are contained inside of eachother, called similar sponsor times
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
