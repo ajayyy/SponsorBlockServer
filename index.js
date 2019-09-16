@@ -642,9 +642,9 @@ async function isUserTrustworthy(userID) {
     if (totalSubmissionsResult.row.totalSubmissions > 5) {
         //check if they have a high downvote ratio
         let downvotedSubmissionsResult = await new Promise((resolve, reject) => {
-            db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND votes < 0").get(userID, (err, row) => resolve({err, row}));
+            db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND (votes < 0 OR shadowHidden > 0)").get(userID, (err, row) => resolve({err, row}));
         });
-
+        
         return (downvotedSubmissionsResult.row.downvotedSubmissions / totalSubmissionsResult.row.totalSubmissions) < 0.6 || 
                 (totalSubmissionsResult.row.voteSum > downvotedSubmissionsResult.row.downvotedSubmissions);
     }
