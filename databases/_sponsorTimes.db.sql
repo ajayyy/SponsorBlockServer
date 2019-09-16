@@ -1,4 +1,7 @@
 BEGIN TRANSACTION;
+CREATE TABLE IF NOT EXISTS "vipUsers" (
+	"userID"	TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
@@ -9,5 +12,9 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"timeSubmitted"	INTEGER NOT NULL,
 	"views"	INTEGER NOT NULL,
 	"shadowHidden"	INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "userNames" (
+	"userID"	TEXT NOT NULL,
+	"userName"	TEXT NOT NULL
 );
 COMMIT;
