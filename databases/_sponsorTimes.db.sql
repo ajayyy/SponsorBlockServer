@@ -11,8 +11,4 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"views"	INTEGER NOT NULL DEFAULT 0,
 	"shadowHidden"	INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS "userNames" (
-	"userID"	TEXT NOT NULL,
-	"userName"	TEXT NOT NULL
-);
 COMMIT;
