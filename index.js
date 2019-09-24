@@ -567,8 +567,6 @@ app.get('/api/getSavedTimeForUser', function (req, res) {
     db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
         if (err) console.log(err);
 
-        console.log(userID)
-
         if (row.minutesSaved != null) {
             res.send({
                 timeSaved: row.minutesSaved
