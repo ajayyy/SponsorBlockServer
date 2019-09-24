@@ -548,6 +548,37 @@ app.get('/api/getViewsForUser', function (req, res) {
     });
 });
 
+//Gets all the saved time added up (views * sponsor length) for one userID
+//Useful to see how much one user has contributed
+//In minutes
+app.get('/api/getSavedTimeForUser', function (req, res) {
+    let userID = req.query.userID;
+
+    if (userID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    userID = getHash(userID);
+
+    //up the view count by one
+    db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
+        if (err) console.log(err);
+
+        console.log(userID)
+
+        if (row.minutesSaved != null) {
+            res.send({
+                timeSaved: row.minutesSaved
+            });
+        } else {
+            res.sendStatus(404);
+        }
+    });
+});
+
 app.get('/api/getTopUsers', function (req, res) {
     let sortType = req.query.sortType;
 
