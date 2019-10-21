@@ -740,11 +740,9 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
 
     let voteSums = weightedRandomIndexes.weightSums;
     //convert these into the votes
-    for (let i = 0; i < voteSums.length; i++) {
-        if (voteSums[i] != undefined) {
-            //it should use the sum of votes, since anyone upvoting a similar sponsor is upvoting the existence of that sponsor.
-            votes[finalSponsorTimeIndexes[i]] = voteSums;
-        }
+    for (let i = 0; i < finalSponsorTimeIndexes.length; i++) {
+        //it should use the sum of votes, since anyone upvoting a similar sponsor is upvoting the existence of that sponsor.
+        votes[finalSponsorTimeIndexes[i]] = voteSums[i];
     }
 
     //find the indexes never dealt with and add them
