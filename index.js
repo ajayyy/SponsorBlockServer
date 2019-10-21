@@ -753,8 +753,8 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     }
 
     //if there are too many indexes, find the best 4
-    if (finalSponsorTimeIndexes.length > 4) {
-        finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 4).finalChoices;
+    if (finalSponsorTimeIndexes.length > 8) {
+        finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 8).finalChoices;
     }
 
     //convert this to a final array to return
