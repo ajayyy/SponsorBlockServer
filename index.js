@@ -548,6 +548,35 @@ app.get('/api/getViewsForUser', function (req, res) {
     });
 });
 
+//Gets all the saved time added up (views * sponsor length) for one userID
+//Useful to see how much one user has contributed
+//In minutes
+app.get('/api/getSavedTimeForUser', function (req, res) {
+    let userID = req.query.userID;
+
+    if (userID == undefined) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
+    //hash the userID
+    userID = getHash(userID);
+
+    //up the view count by one
+    db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
+        if (err) console.log(err);
+
+        if (row.minutesSaved != null) {
+            res.send({
+                timeSaved: row.minutesSaved
+            });
+        } else {
+            res.sendStatus(404);
+        }
+    });
+});
+
 app.get('/api/getTopUsers', function (req, res) {
     let sortType = req.query.sortType;
 
@@ -711,11 +740,9 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
 
     let voteSums = weightedRandomIndexes.weightSums;
     //convert these into the votes
-    for (let i = 0; i < voteSums.length; i++) {
-        if (voteSums[i] != undefined) {
-            //it should use the sum of votes, since anyone upvoting a similar sponsor is upvoting the existence of that sponsor.
-            votes[finalSponsorTimeIndexes[i]] = voteSums;
-        }
+    for (let i = 0; i < finalSponsorTimeIndexes.length; i++) {
+        //it should use the sum of votes, since anyone upvoting a similar sponsor is upvoting the existence of that sponsor.
+        votes[finalSponsorTimeIndexes[i]] = voteSums[i];
     }
 
     //find the indexes never dealt with and add them
@@ -726,8 +753,8 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
     }
 
     //if there are too many indexes, find the best 4
-    if (finalSponsorTimeIndexes.length > 4) {
-        finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 4).finalChoices;
+    if (finalSponsorTimeIndexes.length > 8) {
+        finalSponsorTimeIndexes = getWeightedRandomChoice(finalSponsorTimeIndexes, votes, 8).finalChoices;
     }
 
     //convert this to a final array to return
