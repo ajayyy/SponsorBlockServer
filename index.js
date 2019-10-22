@@ -190,12 +190,19 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
         
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned);
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned, function (err) {
+                                if (err) {
+                                    //a DB change probably occurred, respond as if it is a duplicate
+                                    res.sendStatus(409);
 
-                            //add to private db as well
-                            privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+                                    console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
+                                } else {
+                                    //add to private db as well
+                                    privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
 
-                            res.sendStatus(200);
+                                    res.sendStatus(200);
+                                }
+                            });
                         } else {
                             res.sendStatus(409);
                         }
