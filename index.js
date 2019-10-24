@@ -698,8 +698,8 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
 
     for (let i = 0; i < sponsorTimes.length; i++) {
         //see if the start time is located between the start and end time of the other sponsor time.
-        for (let j = 0; j < sponsorTimes.length; j++) {
-            if (sponsorTimes[j][0] > sponsorTimes[i][0] && sponsorTimes[j][0] < sponsorTimes[i][1]) {
+        for (let j = i + 1; j < sponsorTimes.length; j++) {
+            if (sponsorTimes[j][0] >= sponsorTimes[i][0] && sponsorTimes[j][0] <= sponsorTimes[i][1]) {
                 //sponsor j is contained in sponsor i
                 similarSponsors.push([i, j]);
             }
