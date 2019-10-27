@@ -7,13 +7,13 @@ var app = express();
 //hashing service
 var crypto = require('crypto');
 
+let config = JSON.parse(fs.readFileSync('config.json'));
+
 //load database
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database(config.db);
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new sqlite3.Database(config.privateDB);
-
-let config = JSON.parse(fs.readFileSync('config.json'));
 
 // Create an HTTP service.
 http.createServer(app).listen(config.port);
