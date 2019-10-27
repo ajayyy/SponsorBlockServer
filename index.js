@@ -9,9 +9,9 @@ var crypto = require('crypto');
 
 //load database
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('./databases/sponsorTimes.db');
+var db = new sqlite3.Database(config.db);
 //where the more sensitive data such as IP addresses are stored
-var privateDB = new sqlite3.Database('./databases/private.db');
+var privateDB = new sqlite3.Database(config.privateDB);
 
 let config = JSON.parse(fs.readFileSync('config.json'));
 
