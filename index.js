@@ -9,11 +9,17 @@ var crypto = require('crypto');
 
 let config = JSON.parse(fs.readFileSync('config.json'));
 
-//load database
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database(config.db);
+
+let dbMode = sqlite3.OPEN_READWRITE;
+if (config.readOnly) {
+    dbMode =  sqlite3.OPEN_READONLY;
+}
+
+//load database
+var db = new sqlite3.Database(config.db, dbMode);
 //where the more sensitive data such as IP addresses are stored
-var privateDB = new sqlite3.Database(config.privateDB);
+var privateDB = new sqlite3.Database(config.privateDB, dbMode);
 
 // Create an HTTP service.
 http.createServer(app).listen(config.port);
