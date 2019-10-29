@@ -4,16 +4,25 @@ var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
 
+//used to prevent database is busy errors
+var writeQueue = require('./writeQueue');
+
 //hashing service
 var crypto = require('crypto');
 
-//load database
-var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('./databases/sponsorTimes.db');
-//where the more sensitive data such as IP addresses are stored
-var privateDB = new sqlite3.Database('./databases/private.db');
-
 let config = JSON.parse(fs.readFileSync('config.json'));
+
+var sqlite3 = require('sqlite3').verbose();
+
+let dbMode = sqlite3.OPEN_READWRITE;
+if (config.readOnly) {
+    dbMode =  sqlite3.OPEN_READONLY;
+}
+
+//load database
+var db = new sqlite3.Database(config.db, dbMode);
+//where the more sensitive data such as IP addresses are stored
+var privateDB = new sqlite3.Database(config.privateDB, dbMode);
 
 // Create an HTTP service.
 http.createServer(app).listen(config.port);
@@ -190,7 +199,8 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
         
                         if (row == null) {
                             //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned, function (err) {
+                            let preparedStatement = db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                            let callback = function (err) {
                                 if (err) {
                                     //a DB change probably occurred, respond as if it is a duplicate
                                     res.sendStatus(409);
@@ -198,11 +208,14 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                                     console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
                                 } else {
                                     //add to private db as well
-                                    privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+                                    writeQueue.addToWriteQueue(new writeQueue.WriteQueue(privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)")), [videoID, hashedIP, timeSubmitted]);
 
                                     res.sendStatus(200);
                                 }
-                            });
+                            };
+
+                            writeQueue.addToWriteQueue(new writeQueue.WriteQueue(preparedStatement, [videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned], callback));
+                            
                         } else {
                             res.sendStatus(409);
                         }
@@ -298,7 +311,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             if (votesRow != undefined) {
                 privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
             } else {
-                privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
+                writeQueue.addToWriteQueue(new writeQueue.WriteQueue(privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)")), [UUID, userID, hashedIP, type]);
             }
 
             //update the vote count on this sponsorTime
@@ -387,7 +400,7 @@ app.post('/api/setUsername', function (req, res) {
             db.prepare("UPDATE userNames SET userName = ? WHERE userID = ?").run(userName, userID);
         } else {
             //add to the db
-            db.prepare("INSERT INTO userNames VALUES(?, ?)").run(userID, userName);
+            writeQueue.addToWriteQueue(new writeQueue.WriteQueue(db.prepare("INSERT INTO userNames VALUES(?, ?)")), [userID, userName]);
         }
 
         res.sendStatus(200);
@@ -467,7 +480,7 @@ app.post('/api/shadowBanUser', async function (req, res) {
         //add them to the shadow ban list
 
         //add it to the table
-        privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)").run(userID);
+        writeQueue.addToWriteQueue(new writeQueue.WriteQueue(privateDB.prepare("INSERT INTO shadowBannedUsers VALUES(?)")), [userID]);
 
         //find all previous submissions and hide them
         db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(userID);
@@ -518,7 +531,7 @@ app.post('/api/addUserAsVIP', async function (req, res) {
 
     if (enabled && result.row.userCount == 0) {
         //add them to the vip list
-        db.prepare("INSERT INTO vipUsers VALUES(?)").run(userID);
+        writeQueue.addToWriteQueue(new writeQueue.WriteQueue(db.prepare("INSERT INTO vipUsers VALUES(?)")), [userID]);
     } else if (!enabled && result.row.userCount > 0) {
         //remove them from the shadow ban list
         db.prepare("DELETE FROM vipUsers WHERE userID = ?").run(userID);
