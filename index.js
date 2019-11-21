@@ -625,7 +625,7 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 100").all(function(err, rows) {
+    db.prepare("SELECT sponsorTimes.userID as userID, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, userNames.userName as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID WHERE sponsorTimes.votes > -1 AND sponsorTimes.shadowHidden != 1 GROUP BY sponsorTimes.userID ORDER BY " + sortBy + " DESC LIMIT 100").all(function(err, rows) {
         for (let i = 0; i < rows.length; i++) {
             if (rows[i].userName != null) {
                 userNames[i] = rows[i].userName;
@@ -651,7 +651,7 @@ app.get('/api/getTopUsers', function (req, res) {
 //send out totals
 //send the total submissions, total views and total minutes saved
 app.get('/api/getTotalStats', function (req, res) {
-    db.prepare("SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes").get(function(err, row) {
+    db.prepare("SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1").get(function(err, row) {
         if (row != null) {
             //send this result
             res.send({
