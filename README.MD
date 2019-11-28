@@ -44,7 +44,7 @@ ________________________________________________________________________________
 **Response**:
 ```
 {
-  sponorTimes: array [float],
+  sponsorTimes: array [float],
   UUIDs: array [string] //The ID for this sponsor time, used to submit votes
 }
 ```
