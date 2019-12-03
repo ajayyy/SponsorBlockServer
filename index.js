@@ -577,7 +577,7 @@ app.get('/api/getSavedTimeForUser', function (req, res) {
     userID = getHash(userID);
 
     //up the view count by one
-    db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
+    db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ").get(userID, function(err, row) {
         if (err) console.log(err);
 
         if (row.minutesSaved != null) {
