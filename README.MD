@@ -63,7 +63,7 @@ __________________________________________________________________
   videoID: string,
   startTime: float,
   endTime: float,
-  userID: string //This should be a randomly generated UUID
+  localUserID: string //This should be a randomly generated UUID
 }
 ```
 
@@ -90,7 +90,7 @@ __________________________________________________________________
 ```
 {
   UUID: string, //id of the sponsor being voted on
-  userID: string,
+  userID: string, //the local user id
   type: int //0 for downvote, 1 for upvote
 }
 ```
@@ -137,7 +137,7 @@ __________________________________________________________________
 **Input**:
 ```
 {
-  userID: string
+  userID: string //the local user id
 }
 ```
 
@@ -154,12 +154,34 @@ __________________________________________________________________
 
 __________________________________________________________________
 
+**GET** `/api/getSavedTimeForUser`
+
+**Input**:
+```
+{
+  userID: string //the local user id
+}
+```
+
+**Response**:
+```
+{
+  timeSaved: float //in minutes
+}
+```
+
+**Error codes**:
+
+404: Not Found
+
+__________________________________________________________________
+
 **POST** `/api/setUsername`
 
 **Input**:
 ```
 {
-  userID: string,
+  userID: string, //local user id normally, public user id if adminUserID is specified
   userName: string,
   //optional
   adminUserID: string //This is if you want to change someone elses username from the admin account
@@ -184,7 +206,7 @@ __________________________________________________________________
 **Input**:
 ```
 {
-  userID: string
+  userID: string //the local user id
 }
 ```
 
