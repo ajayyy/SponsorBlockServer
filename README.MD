@@ -28,6 +28,8 @@ Run the server with `npm start`.
 
 # API Docs
 
+If you end up using the API, I'd love to know about how you're using it. Tell me about it by making a GitHub issue or emailing me :)
+
 Public API available at https://sponsor.ajay.app.
 
 ________________________________________________________________________________
