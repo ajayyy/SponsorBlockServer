@@ -65,7 +65,7 @@ __________________________________________________________________
   videoID: string,
   startTime: float,
   endTime: float,
-  userID: string //This should be a randomly generated UUID
+  userID: string //This should be a randomly generated UUID stored locally (not the public one)
 }
 ```
 
@@ -352,3 +352,8 @@ VIPs have extra privileges and their votes count more.
 
 400: Bad Request (Your inputs are wrong/impossible)
 403: Unauthorized (You are not an admin)
+
+
+### Local userID vs Public userID
+
+The local userID should be a randomly generated and saved client side. It is used to submit and vote. The public userID is what is used as an identifier in the database. This is the local userID with a SHA 256 hash 5000 times.
