@@ -65,7 +65,7 @@ __________________________________________________________________
   videoID: string,
   startTime: float,
   endTime: float,
-  localUserID: string //This should be a randomly generated UUID
+  userID: string //This should be a randomly generated UUID
 }
 ```
 
