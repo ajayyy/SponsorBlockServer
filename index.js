@@ -9,6 +9,15 @@ var crypto = require('crypto');
 
 let config = JSON.parse(fs.readFileSync('config.json'));
 
+var request = require('request');
+
+// YouTube API
+const YouTubeAPI = require("youtube-api");
+YouTubeAPI.authenticate({
+    type: "key",
+    key: config.youtubeAPIKey
+});
+
 var sqlite3 = require('sqlite3').verbose();
 
 let dbMode = sqlite3.OPEN_READWRITE;
@@ -298,6 +307,49 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
                 //multiply the power of this downvote
                 incrementAmount *= 4;
                 type = 2;
+            }
+
+            // Send discord message
+            if (type != 1) {
+                // Get video ID
+                let submissionInfoResult = await new Promise((resolve, reject) => {
+                    db.prepare("SELECT videoID, userID, startTime, endTime FROM sponsorTimes WHERE UUID = ?").get(UUID, (err, row) => resolve({err, row}));
+                });
+
+                let userSubmissionCountResult = await new Promise((resolve, reject) => {
+                    db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
+                });
+
+                if (config.youtubeAPIKey !== null && config.discordReportChannelWebhookURL !== null) {
+                    YouTubeAPI.videos.list({
+                        part: "snippet",
+                        id: submissionInfoResult.row.videoID
+                    }, function (err, data) {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        
+                        request.post(config.discordReportChannelWebhookURL, {
+                            json: {
+                                "embeds": [{
+                                    "title": data.items[0].snippet.title,
+                                    "url": "https://youtube.com/watch?v=" + submissionInfoResult.row.videoID + "&t=" + submissionInfoResult.row.startTime.toFixed(0),
+                                    "description": "**" + row.votes + " Votes | " + row.views + " Views**\n\nSubmission ID: " + UUID + 
+                                        "\n\nSubmission by  " + submissionInfoResult.row.userID + "\n\nTimestamp: " + 
+                                            getFormattedTime(submissionInfoResult.row.startTime) + " to " + getFormattedTime(submissionInfoResult.row.endTime),
+                                    "color": 10813440,
+                                    "author": {
+                                        "name": userSubmissionCountResult.row.submissionCount === 0 ? "Report by New User" : (vipResult.row.userCount !== 0 ? "Report by VIP User" : "")
+                                    },
+                                    "thumbnail": {
+                                        "url": data.items[0].snippet.thumbnails.maxres.url,
+                                    }
+                                }]
+                            }
+                        });
+                    });
+                }
             }
 
             //update the votes table
@@ -890,4 +942,18 @@ function getHash(value, times=5000) {
     }
 
     return value;
+}
+
+//converts time in seconds to minutes:seconds
+function getFormattedTime(seconds) {
+    let minutes = Math.floor(seconds / 60);
+    let secondsDisplay = Math.round(seconds - minutes * 60);
+    if (secondsDisplay < 10) {
+        //add a zero
+        secondsDisplay = "0" + secondsDisplay;
+    }
+
+    let formatted = minutes+ ":" + secondsDisplay;
+
+    return formatted;
 }
