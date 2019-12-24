@@ -207,8 +207,8 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                             //not a duplicate, execute query
                             db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned, function (err) {
                                 if (err) {
-                                    //a DB change probably occurred, respond as if it is a duplicate
-                                    res.sendStatus(409);
+                                    //a DB change probably occurred
+                                    res.sendStatus(502);
 
                                     console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
                                 } else {
