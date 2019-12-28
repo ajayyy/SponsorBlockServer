@@ -340,7 +340,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, async function(err, row) {
             if (vipResult.row.userCount != 0 && incrementAmount < 0) {
                 //this user is a vip and a downvote
-                incrementAmount = -Math.min(350, Math.floor(row.votes + 2));
+                incrementAmount = -Math.min(350, row.votes + 2 - oldIncrementAmount);
                 type = incrementAmount;
             } else if (row != null && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
                 //increase the power of this downvote
