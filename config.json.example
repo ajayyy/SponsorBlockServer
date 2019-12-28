@@ -4,6 +4,7 @@
     "adminUserID": "[the hashed id of the user who can perform admin actions]",
     "youtubeAPIKey": null, //get this from Google Cloud Platform [optional]
     "discordReportChannelWebhookURL": null, //URL from discord if you would like notifications when someone makes a report [optional]
+    "discordFirstTimeSubmissionsWebhookURL": null, //URL from discord if you would like notifications when someone makes a first time submission [optional]
     "behindProxy": true,
     "db": "./databases/sponsorTimes.db",
     "privateDB": "./databases/private.db",

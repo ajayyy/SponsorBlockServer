@@ -221,6 +221,46 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                         } else {
                             res.sendStatus(409);
                         }
+
+                        //check if they are a first time user
+                        //if so, send a notification to discord
+                        if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null) {
+                            let userSubmissionCountResult = await new Promise((resolve, reject) => {
+                                db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+                            });
+
+                            // If it is a first time submission
+                            if (userSubmissionCountResult.row.submissionCount === 0) {
+                                YouTubeAPI.videos.list({
+                                    part: "snippet",
+                                    id: videoID
+                                }, function (err, data) {
+                                    if (err) {
+                                        console.log(err);
+                                        return;
+                                    }
+                                    
+                                    request.post(config.discordFirstTimeSubmissionsWebhookURL, {
+                                        json: {
+                                            "embeds": [{
+                                                "title": data.items[0].snippet.title,
+                                                "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
+                                                "description": "Submission ID: " + UUID +
+                                                        "\n\nTimestamp: " + 
+                                                        getFormattedTime(startTime) + " to " + getFormattedTime(endTime),
+                                                "color": 10813440,
+                                                "author": {
+                                                    "name": userID
+                                                },
+                                                "thumbnail": {
+                                                    "url": data.items[0].snippet.thumbnails.maxres.url,
+                                                }
+                                            }]
+                                        }
+                                    });
+                                });
+                            }
+                        }
                     });
                 }
             });
@@ -334,9 +374,9 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
                             json: {
                                 "embeds": [{
                                     "title": data.items[0].snippet.title,
-                                    "url": "https://youtube.com/watch?v=" + submissionInfoResult.row.videoID + "&t=" + submissionInfoResult.row.startTime.toFixed(0),
+                                    "url": "https://www.youtube.com/watch?v=" + submissionInfoResult.row.videoID + "&t=" + (submissionInfoResult.row.startTime.toFixed(0) - 2),
                                     "description": "**" + row.votes + " Votes | " + row.views + " Views**\n\nSubmission ID: " + UUID + 
-                                        "\n\nSubmission by  " + submissionInfoResult.row.userID + "\n\nTimestamp: " + 
+                                        "\n\nSubmitted by: " + submissionInfoResult.row.userID + "\n\nTimestamp: " + 
                                             getFormattedTime(submissionInfoResult.row.startTime) + " to " + getFormattedTime(submissionInfoResult.row.endTime),
                                     "color": 10813440,
                                     "author": {
