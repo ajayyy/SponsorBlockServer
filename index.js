@@ -322,7 +322,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             } else if (votesRow.type == 0) {
                 //downvote
                 oldIncrementAmount = -1;
-            } else if (votesRow.type == 1) {
+            } else if (votesRow.type == 2) {
                 //extra downvote
                 oldIncrementAmount = -4;
             } else if (votesRow.type <= -25) {
