@@ -325,7 +325,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             } else if (votesRow.type == 2) {
                 //extra downvote
                 oldIncrementAmount = -4;
-            } else if (votesRow.type <= -25) {
+            } else if (votesRow.type < 0) {
                 //vip downvote
                 oldIncrementAmount = votesRow.type;
             }
@@ -340,13 +340,12 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, async function(err, row) {
             if (vipResult.row.userCount != 0 && incrementAmount < 0) {
                 //this user is a vip and a downvote
-                //their vote should be -25 or -80%
-                incrementAmount = -Math.max(25, Math.floor(row.votes * 0.8));
+                incrementAmount = -Math.min(350, Math.floor(row.votes + 2));
                 type = incrementAmount;
-            } else if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
-                //multiply the power of this downvote
-                incrementAmount *= 4;
-                type = 2;
+            } else if (row != null && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
+                //increase the power of this downvote
+                incrementAmount = -10;
+                type = incrementAmount;
             }
 
             // Send discord message
