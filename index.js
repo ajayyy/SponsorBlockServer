@@ -373,8 +373,10 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
                             json: {
                                 "embeds": [{
                                     "title": data.items[0].snippet.title,
-                                    "url": "https://www.youtube.com/watch?v=" + submissionInfoResult.row.videoID + "&t=" + (submissionInfoResult.row.startTime.toFixed(0) - 2),
-                                    "description": "**" + row.votes + " Votes | " + row.views + " Views**\n\nSubmission ID: " + UUID + 
+                                    "url": "https://www.youtube.com/watch?v=" + submissionInfoResult.row.videoID + 
+                                             "&t=" + (submissionInfoResult.row.startTime.toFixed(0) - 2),
+                                    "description": "**" + (row.votes + incrementAmount - oldIncrementAmount) + " Votes | " + row.views + 
+                                                    " Views**\n\nSubmission ID: " + UUID + 
                                         "\n\nSubmitted by: " + submissionInfoResult.row.userID + "\n\nTimestamp: " + 
                                             getFormattedTime(submissionInfoResult.row.startTime) + " to " + getFormattedTime(submissionInfoResult.row.endTime),
                                     "color": 10813440,
