@@ -9,6 +9,15 @@ var crypto = require('crypto');
 
 let config = JSON.parse(fs.readFileSync('config.json'));
 
+var request = require('request');
+
+// YouTube API
+const YouTubeAPI = require("youtube-api");
+YouTubeAPI.authenticate({
+    type: "key",
+    key: config.youtubeAPIKey
+});
+
 var sqlite3 = require('sqlite3').verbose();
 
 let dbMode = sqlite3.OPEN_READWRITE;
@@ -198,8 +207,8 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                             //not a duplicate, execute query
                             db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned, function (err) {
                                 if (err) {
-                                    //a DB change probably occurred, respond as if it is a duplicate
-                                    res.sendStatus(409);
+                                    //a DB change probably occurred
+                                    res.sendStatus(502);
 
                                     console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
                                 } else {
@@ -211,6 +220,46 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                             });
                         } else {
                             res.sendStatus(409);
+                        }
+
+                        //check if they are a first time user
+                        //if so, send a notification to discord
+                        if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null && row == null) {
+                            let userSubmissionCountResult = await new Promise((resolve, reject) => {
+                                db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
+                            });
+
+                            // If it is a first time submission
+                            if (userSubmissionCountResult.row.submissionCount === 0) {
+                                YouTubeAPI.videos.list({
+                                    part: "snippet",
+                                    id: videoID
+                                }, function (err, data) {
+                                    if (err) {
+                                        console.log(err);
+                                        return;
+                                    }
+                                    
+                                    request.post(config.discordFirstTimeSubmissionsWebhookURL, {
+                                        json: {
+                                            "embeds": [{
+                                                "title": data.items[0].snippet.title,
+                                                "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
+                                                "description": "Submission ID: " + UUID +
+                                                        "\n\nTimestamp: " + 
+                                                        getFormattedTime(startTime) + " to " + getFormattedTime(endTime),
+                                                "color": 10813440,
+                                                "author": {
+                                                    "name": userID
+                                                },
+                                                "thumbnail": {
+                                                    "url": data.items[0].snippet.thumbnails.maxres.url,
+                                                }
+                                            }]
+                                        }
+                                    });
+                                });
+                            }
                         }
                     });
                 }
@@ -273,10 +322,10 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             } else if (votesRow.type == 0) {
                 //downvote
                 oldIncrementAmount = -1;
-            } else if (votesRow.type == 1) {
+            } else if (votesRow.type == 2) {
                 //extra downvote
                 oldIncrementAmount = -4;
-            } else if (votesRow.type <= -25) {
+            } else if (votesRow.type < 0) {
                 //vip downvote
                 oldIncrementAmount = votesRow.type;
             }
@@ -291,13 +340,55 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
         db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, async function(err, row) {
             if (vipResult.row.userCount != 0 && incrementAmount < 0) {
                 //this user is a vip and a downvote
-                //their vote should be -25 or -80%
-                incrementAmount = -Math.max(25, Math.floor(row.votes * 0.8));
+                incrementAmount = -Math.min(350, row.votes + 2 - oldIncrementAmount);
                 type = incrementAmount;
-            } else if (row != null && (row.votes > 3 || row.views > 4) && incrementAmount < 0) {
-                //multiply the power of this downvote
-                incrementAmount *= 4;
-                type = 2;
+            } else if (row != null && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
+                //increase the power of this downvote
+                incrementAmount = -10;
+                type = incrementAmount;
+            }
+
+            // Send discord message
+            if (type != 1) {
+                // Get video ID
+                let submissionInfoResult = await new Promise((resolve, reject) => {
+                    db.prepare("SELECT videoID, userID, startTime, endTime FROM sponsorTimes WHERE UUID = ?").get(UUID, (err, row) => resolve({err, row}));
+                });
+
+                let userSubmissionCountResult = await new Promise((resolve, reject) => {
+                    db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
+                });
+
+                if (config.youtubeAPIKey !== null && config.discordReportChannelWebhookURL !== null) {
+                    YouTubeAPI.videos.list({
+                        part: "snippet",
+                        id: submissionInfoResult.row.videoID
+                    }, function (err, data) {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        
+                        request.post(config.discordReportChannelWebhookURL, {
+                            json: {
+                                "embeds": [{
+                                    "title": data.items[0].snippet.title,
+                                    "url": "https://www.youtube.com/watch?v=" + submissionInfoResult.row.videoID + "&t=" + (submissionInfoResult.row.startTime.toFixed(0) - 2),
+                                    "description": "**" + row.votes + " Votes | " + row.views + " Views**\n\nSubmission ID: " + UUID + 
+                                        "\n\nSubmitted by: " + submissionInfoResult.row.userID + "\n\nTimestamp: " + 
+                                            getFormattedTime(submissionInfoResult.row.startTime) + " to " + getFormattedTime(submissionInfoResult.row.endTime),
+                                    "color": 10813440,
+                                    "author": {
+                                        "name": userSubmissionCountResult.row.submissionCount === 0 ? "Report by New User" : (vipResult.row.userCount !== 0 ? "Report by VIP User" : "")
+                                    },
+                                    "thumbnail": {
+                                        "url": data.items[0].snippet.thumbnails.maxres.url,
+                                    }
+                                }]
+                            }
+                        });
+                    });
+                }
             }
 
             //update the votes table
@@ -890,4 +981,18 @@ function getHash(value, times=5000) {
     }
 
     return value;
+}
+
+//converts time in seconds to minutes:seconds
+function getFormattedTime(seconds) {
+    let minutes = Math.floor(seconds / 60);
+    let secondsDisplay = Math.round(seconds - minutes * 60);
+    if (secondsDisplay < 10) {
+        //add a zero
+        secondsDisplay = "0" + secondsDisplay;
+    }
+
+    let formatted = minutes+ ":" + secondsDisplay;
+
+    return formatted;
 }
