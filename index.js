@@ -224,7 +224,7 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
 
                         //check if they are a first time user
                         //if so, send a notification to discord
-                        if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null) {
+                        if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null && row == null) {
                             let userSubmissionCountResult = await new Promise((resolve, reject) => {
                                 db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
                             });
