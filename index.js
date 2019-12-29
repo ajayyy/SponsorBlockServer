@@ -253,7 +253,7 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
                                                     "name": userID
                                                 },
                                                 "thumbnail": {
-                                                    "url": data.items[0].snippet.thumbnails.maxres.url,
+                                                    "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                                                 }
                                             }]
                                         }
@@ -384,7 +384,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
                                         "name": userSubmissionCountResult.row.submissionCount === 0 ? "Report by New User" : (vipResult.row.userCount !== 0 ? "Report by VIP User" : "")
                                     },
                                     "thumbnail": {
-                                        "url": data.items[0].snippet.thumbnails.maxres.url,
+                                        "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                                     }
                                 }]
                             }
