@@ -441,7 +441,7 @@ function voteOnSponsorTime(req, res) {
 app.get('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
 app.post('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
 
-function viewedVideoSponsorTime (req, res) {
+function viewedVideoSponsorTime(req, res) {
     let UUID = req.query.UUID;
 
     if (UUID == undefined) {
