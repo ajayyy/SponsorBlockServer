@@ -90,6 +90,7 @@ typings/
 # Databases
 databases/sponsorTimes.db
 databases/private.db
+databases/sponsorTimesReal.db
 
 # Config files
 config.json
