@@ -269,7 +269,10 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
 });
 
 //voting endpoint
-app.get('/api/voteOnSponsorTime', function (req, res) {
+app.get('/api/voteOnSponsorTime', voteOnSponsorTime);
+app.post('/api/voteOnSponsorTime', voteOnSponsorTime);
+
+function voteOnSponsorTime(req, res) {
     let UUID = req.query.UUID;
     let userID = req.query.userID;
     let type = req.query.type;
@@ -432,10 +435,13 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
             res.sendStatus(200);
         });
     });
-});
+}
 
 //Endpoint when a sponsorTime is used up
-app.get('/api/viewedVideoSponsorTime', function (req, res) {
+app.get('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
+app.post('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
+
+function viewedVideoSponsorTime(req, res) {
     let UUID = req.query.UUID;
 
     if (UUID == undefined) {
@@ -448,7 +454,8 @@ app.get('/api/viewedVideoSponsorTime', function (req, res) {
     db.prepare("UPDATE sponsorTimes SET views = views + 1 WHERE UUID = ?").run(UUID);
 
     res.sendStatus(200);
-});
+}
+
 
 //To set your username for the stats view
 app.post('/api/setUsername', function (req, res) {
