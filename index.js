@@ -344,7 +344,7 @@ app.get('/api/voteOnSponsorTime', function (req, res) {
                 type = incrementAmount;
             } else if (row != null && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
                 //increase the power of this downvote
-                incrementAmount = -10;
+                incrementAmount = -Math.abs(Math.min(10, row.votes + 2 - oldIncrementAmount));
                 type = incrementAmount;
             }
 
