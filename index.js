@@ -39,6 +39,12 @@ var adminUserID = config.adminUserID;
 //if so, it will use the x-forwarded header instead of the ip address of the connection
 var behindProxy = config.behindProxy;
 
+// Enable WAL mode checkpoint number
+if (!config.readOnly && config.mode === "production") {
+    db.get("PRAGMA journal_mode=WAL;");
+    db.get("PRAGMA wal_autocheckpoint=1;");
+}
+
 //setup CORS correctly
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
