@@ -40,8 +40,9 @@ var adminUserID = config.adminUserID;
 var behindProxy = config.behindProxy;
 
 // Enable WAL mode checkpoint number
-if (!config.readOnly) {
-    db.get("PRAGMA wal_autocheckpoint=1");
+if (!config.readOnly && config.mode === "production") {
+    db.get("PRAGMA journal_mode=WAL;");
+    db.get("PRAGMA wal_autocheckpoint=1;");
 }
 
 //setup CORS correctly
