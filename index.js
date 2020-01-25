@@ -772,7 +772,7 @@ app.get('/api/getTotalStats', function (req, res) {
 
 //send out a formatted time saved total
 app.get('/api/getDaysSavedFormatted', function (req, res) {
-    let row = db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes").get();
+    let row = db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes WHERE shadowHidden != 1").get();
         
     if (row !== undefined) {
         //send this result
