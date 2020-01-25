@@ -38,6 +38,11 @@ var adminUserID = config.adminUserID;
 //if so, it will use the x-forwarded header instead of the ip address of the connection
 var behindProxy = config.behindProxy;
 
+// A cache of the number of chrome web store users
+var chromeUsersCache = null;
+var firefoxUsersCache = null;
+var lastUserCountCheck = 0;
+
 // Enable WAL mode checkpoint number
 if (!config.readOnly && config.mode === "production") {
     db.exec("PRAGMA journal_mode=WAL;");
@@ -763,10 +768,40 @@ app.get('/api/getTotalStats', function (req, res) {
         //send this result
         res.send({
             userCount: row.userCount,
+            activeUsers: chromeUsersCache + firefoxUsersCache,
             viewCount: row.viewCount,
             totalSubmissions: row.totalSubmissions,
             minutesSaved: row.minutesSaved
         });
+
+        // Check if the cache should be updated (every ~14 hours)
+        let now = Date.now();
+        if (now - lastUserCountCheck > 5000000) {
+            lastUserCountCheck = now;
+
+            // Get total users
+            request.get("https://addons.mozilla.org/api/v3/addons/addon/sponsorblock/", function (err, firefoxResponse, body) {
+                try {
+                    firefoxUsersCache = parseInt(JSON.parse(body).average_daily_users);
+
+                    request.get("https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone", function(err, chromeResponse, body) {
+                        if (body !== undefined) {
+                            try {
+                                chromeUsersCache = parseInt(body.match(/(?<=\<span class=\"e-f-ih\" title=\").*?(?= users\">)/)[0].replace(",", ""));
+                            } catch (error) {
+                                // Re-check later
+                                lastUserCountCheck = 0;
+                            }
+                        } else {
+                            lastUserCountCheck = 0;
+                        }
+                    });
+                } catch (error) {
+                    // Re-check later
+                    lastUserCountCheck = 0;
+                }
+            });
+        }
     }
 });
 
