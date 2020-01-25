@@ -418,7 +418,7 @@ async function voteOnSponsorTime(req, res) {
         //for each positive vote, see if a hidden submission can be shown again
         if (incrementAmount > 0) {
             //find the UUID that submitted the submission that was voted on
-            let submissionUserID = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").userID;
+            let submissionUserID = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID).userID;
 
             //check if any submissions are hidden
             let hiddenSubmissionsRow = db.prepare("SELECT count(*) as hiddenSubmissions FROM sponsorTimes WHERE userID = ? AND shadowHidden > 0").get(submissionUserID);
