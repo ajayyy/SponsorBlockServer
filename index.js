@@ -18,17 +18,16 @@ YouTubeAPI.authenticate({
     key: config.youtubeAPIKey
 });
 
-var sqlite3 = require('sqlite3').verbose();
+var Sqlite3 = require('better-sqlite3');
 
-let dbMode = sqlite3.OPEN_READWRITE;
-if (config.readOnly) {
-    dbMode =  sqlite3.OPEN_READONLY;
-}
+let options = {
+    readonly: config.readOnly
+};
 
 //load database
-var db = new sqlite3.Database(config.db, dbMode);
+var db = new Sqlite3(config.db, options);
 //where the more sensitive data such as IP addresses are stored
-var privateDB = new sqlite3.Database(config.privateDB, dbMode);
+var privateDB = new Sqlite3(config.privateDB, options);
 
 // Create an HTTP service.
 http.createServer(app).listen(config.port);
@@ -41,8 +40,8 @@ var behindProxy = config.behindProxy;
 
 // Enable WAL mode checkpoint number
 if (!config.readOnly && config.mode === "production") {
-    db.get("PRAGMA journal_mode=WAL;");
-    db.get("PRAGMA wal_autocheckpoint=1;");
+    db.exec("PRAGMA journal_mode=WAL;");
+    db.exec("PRAGMA wal_autocheckpoint=1;");
 }
 
 //setup CORS correctly
@@ -62,9 +61,9 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
 
     let hashedIP = getHash(getIP(req) + globalSalt);
 
-    db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID, async function(err, rows) {
-        if (err) console.log(err);
-
+    try {
+        let rows = db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID);
+        
         for (let i = 0; i < rows.length; i++) {
             //check if votes are above -1
             if (rows[i].votes < -1) {
@@ -77,11 +76,9 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
             if (rows[i].shadowHidden == 1) {
                 //get the ip
                 //await the callback
-                let result = await new Promise((resolve, reject) => {
-                    privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID, (err, rows) => resolve({err, rows}));
-                });
+                let hashedIPRow = privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID);
 
-                if (!result.rows.some((e) => e.hashedIP === hashedIP)) {
+                if (!hashedIPRow.some((e) => e.hashedIP === hashedIP)) {
                     //this isn't their ip, don't send it to them
                     continue;
                 }
@@ -116,7 +113,12 @@ app.get('/api/getVideoSponsorTimes', function (req, res) {
                 UUIDs: UUIDs
             })
         }
-    });
+    } catch(error) {
+        console.error(error);
+        res.send(500);
+    }
+
+    
 });
 
 function getIP(req) {
@@ -159,126 +161,125 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
         return;
     }
 
-    //check if this user is on the vip list
-    let vipResult = await new Promise((resolve, reject) => {
-        db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-    });
+    try {
+        //check if this user is on the vip list
+        let vipRow = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID);
 
-    //this can just be a hash of the data
-    //it's better than generating an actual UUID like what was used before
-    //also better for duplication checking
-    let hashCreator = crypto.createHash('sha256');
-    let UUID = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
+        //this can just be a hash of the data
+        //it's better than generating an actual UUID like what was used before
+        //also better for duplication checking
+        let hashCreator = crypto.createHash('sha256');
+        let UUID = hashCreator.update(videoID + startTime + endTime + userID).digest('hex');
 
-    //get current time
-    let timeSubmitted = Date.now();
+        //get current time
+        let timeSubmitted = Date.now();
 
-    let yesterday = timeSubmitted - 86400000;
+        let yesterday = timeSubmitted - 86400000;
 
-    //check to see if this ip has submitted too many sponsors today
-    privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday], function(err, row) {
-        if (row.count >= 10) {
+        //check to see if this ip has submitted too many sponsors today
+        let rateLimitCheckRow = privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday]);
+        
+        if (rateLimitCheckRow.count >= 10) {
             //too many sponsors for the same video from the same ip address
             res.sendStatus(429);
         } else {
             //check to see if the user has already submitted sponsors for this video
-            db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID], function(err, row) {
-                if (row.count >= 8) {
-                    //too many sponsors for the same video from the same user
-                    res.sendStatus(429);
+            let duplicateCheckRow = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID]);
+            
+            if (duplicateCheckRow.count >= 8) {
+                //too many sponsors for the same video from the same user
+                res.sendStatus(429);
+            } else {
+                //check if this info has already been submitted first
+                let duplicateCheck2Row = db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID]);
+
+                //check to see if this user is shadowbanned
+                let shadowBanRow = privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID);
+
+                let shadowBanned = shadowBanRow.userCount;
+
+                if (!(await isUserTrustworthy(userID))) {
+                    //hide this submission as this user is untrustworthy
+                    shadowBanned = 1;
+                }
+
+                let startingVotes = 0;
+                if (vipRow.userCount > 0) {
+                    //this user is a vip, start them at a higher approval rating
+                    startingVotes = 10;
+                }
+
+                if (duplicateCheck2Row == null) {
+                    //not a duplicate, execute query
+                    try {
+                        db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned);
+                    
+                        //add to private db as well
+                        privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+
+                        res.sendStatus(200);
+                    } catch (err) {
+                        //a DB change probably occurred
+                        res.sendStatus(502);
+                        console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
+                        
+                        return;
+                    }
                 } else {
-                    //check if this info has already been submitted first
-                    db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID], async function(err, row) {
-                        if (err) console.log(err);
+                    res.sendStatus(409);
+                }
 
-                        //check to see if this user is shadowbanned
-                        let shadowBanResult = await new Promise((resolve, reject) => {
-                            privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-                        });
+                //check if they are a first time user
+                //if so, send a notification to discord
+                if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null && duplicateCheck2Row == null) {
+                    let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID);
 
-                        let shadowBanned = shadowBanResult.row.userCount;
-
-                        if (!(await isUserTrustworthy(userID))) {
-                            //hide this submission as this user is untrustworthy
-                            shadowBanned = 1;
-                        }
-
-                        let startingVotes = 0;
-                        if (vipResult.row.userCount > 0) {
-                            //this user is a vip, start them at a higher approval rating
-                            startingVotes = 10;
-                        }
-        
-                        if (row == null) {
-                            //not a duplicate, execute query
-                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned, function (err) {
-                                if (err) {
-                                    //a DB change probably occurred
-                                    res.sendStatus(502);
-
-                                    console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
-                                } else {
-                                    //add to private db as well
-                                    privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
-
-                                    res.sendStatus(200);
+                    // If it is a first time submission
+                    if (userSubmissionCountRow.submissionCount === 0) {
+                        YouTubeAPI.videos.list({
+                            part: "snippet",
+                            id: videoID
+                        }, function (err, data) {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+                            
+                            request.post(config.discordFirstTimeSubmissionsWebhookURL, {
+                                json: {
+                                    "embeds": [{
+                                        "title": data.items[0].snippet.title,
+                                        "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
+                                        "description": "Submission ID: " + UUID +
+                                                "\n\nTimestamp: " + 
+                                                getFormattedTime(startTime) + " to " + getFormattedTime(endTime),
+                                        "color": 10813440,
+                                        "author": {
+                                            "name": userID
+                                        },
+                                        "thumbnail": {
+                                            "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                                        }
+                                    }]
                                 }
                             });
-                        } else {
-                            res.sendStatus(409);
-                        }
-
-                        //check if they are a first time user
-                        //if so, send a notification to discord
-                        if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null && row == null) {
-                            let userSubmissionCountResult = await new Promise((resolve, reject) => {
-                                db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-                            });
-
-                            // If it is a first time submission
-                            if (userSubmissionCountResult.row.submissionCount === 0) {
-                                YouTubeAPI.videos.list({
-                                    part: "snippet",
-                                    id: videoID
-                                }, function (err, data) {
-                                    if (err) {
-                                        console.log(err);
-                                        return;
-                                    }
-                                    
-                                    request.post(config.discordFirstTimeSubmissionsWebhookURL, {
-                                        json: {
-                                            "embeds": [{
-                                                "title": data.items[0].snippet.title,
-                                                "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
-                                                "description": "Submission ID: " + UUID +
-                                                        "\n\nTimestamp: " + 
-                                                        getFormattedTime(startTime) + " to " + getFormattedTime(endTime),
-                                                "color": 10813440,
-                                                "author": {
-                                                    "name": userID
-                                                },
-                                                "thumbnail": {
-                                                    "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                                                }
-                                            }]
-                                        }
-                                    });
-                                });
-                            }
-                        }
-                    });
+                        });
+                    }
                 }
-            });
+            }
         }
-    });
+    } catch (err) {
+        console.error(err);
+
+        res.send(500);
+    }
 });
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime);
 app.post('/api/voteOnSponsorTime', voteOnSponsorTime);
 
-function voteOnSponsorTime(req, res) {
+async function voteOnSponsorTime(req, res) {
     let UUID = req.query.UUID;
     let userID = req.query.userID;
     let type = req.query.type;
@@ -299,11 +300,12 @@ function voteOnSponsorTime(req, res) {
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(ip + globalSalt);
 
-    //check if vote has already happened
-    privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID, async function(err, votesRow) {
-        if (err) console.log(err);
-                
-        if (votesRow != undefined && votesRow.type == type) {
+    try {
+        //check if vote has already happened
+        let votesRow = privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID);
+        
+        // A downvote is anything below type 0
+        if (votesRow !== undefined && (votesRow.type == type || (votesRow.type < 0 && type == 0))) {
             //they have already done this exact vote
             res.status(405).send("Duplicate Vote");
             return;
@@ -341,106 +343,96 @@ function voteOnSponsorTime(req, res) {
         }
 
         //check if this user is on the vip list
-        let vipResult = await new Promise((resolve, reject) => {
-            db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
-        });
+        let vipRow = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID);
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID, async function(err, row) {
-            if (vipResult.row.userCount != 0 && incrementAmount < 0) {
-                //this user is a vip and a downvote
-                incrementAmount = - (row.votes + 2 - oldIncrementAmount);
-                type = incrementAmount;
-            } else if (row != null && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
-                //increase the power of this downvote
-                incrementAmount = -Math.abs(Math.min(10, row.votes + 2 - oldIncrementAmount));
-                type = incrementAmount;
-            }
+        let row = db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID);
+        
+        if (vipRow.userCount != 0 && incrementAmount < 0) {
+            //this user is a vip and a downvote
+            incrementAmount = - (row.votes + 2 - oldIncrementAmount);
+            type = incrementAmount;
+        } else if (row !== undefined && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
+            //increase the power of this downvote
+            incrementAmount = -Math.abs(Math.min(10, row.votes + 2 - oldIncrementAmount));
+            type = incrementAmount;
+        }
 
-            // Send discord message
-            if (type != 1) {
-                // Get video ID
-                let submissionInfoResult = await new Promise((resolve, reject) => {
-                    db.prepare("SELECT videoID, userID, startTime, endTime FROM sponsorTimes WHERE UUID = ?").get(UUID, (err, row) => resolve({err, row}));
-                });
+        // Send discord message
+        if (type != 1) {
+            // Get video ID
+            let submissionInfoRow = db.prepare("SELECT videoID, userID, startTime, endTime FROM sponsorTimes WHERE UUID = ?").get(UUID);
 
-                let userSubmissionCountResult = await new Promise((resolve, reject) => {
-                    db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(nonAnonUserID, (err, row) => resolve({err, row}));
-                });
+            let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(nonAnonUserID);
 
-                if (config.youtubeAPIKey !== null && config.discordReportChannelWebhookURL !== null) {
-                    YouTubeAPI.videos.list({
-                        part: "snippet",
-                        id: submissionInfoResult.row.videoID
-                    }, function (err, data) {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        
-                        request.post(config.discordReportChannelWebhookURL, {
-                            json: {
-                                "embeds": [{
-                                    "title": data.items[0].snippet.title,
-                                    "url": "https://www.youtube.com/watch?v=" + submissionInfoResult.row.videoID + 
-                                             "&t=" + (submissionInfoResult.row.startTime.toFixed(0) - 2),
-                                    "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views + 
-                                                    " Views**\n\nSubmission ID: " + UUID + 
-                                        "\n\nSubmitted by: " + submissionInfoResult.row.userID + "\n\nTimestamp: " + 
-                                            getFormattedTime(submissionInfoResult.row.startTime) + " to " + getFormattedTime(submissionInfoResult.row.endTime),
-                                    "color": 10813440,
-                                    "author": {
-                                        "name": userSubmissionCountResult.row.submissionCount === 0 ? "Report by New User" : (vipResult.row.userCount !== 0 ? "Report by VIP User" : "")
-                                    },
-                                    "thumbnail": {
-                                        "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                                    }
-                                }]
-                            }
-                        });
-                    });
-                }
-            }
-
-            //update the votes table
-            if (votesRow != undefined) {
-                privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
-            } else {
-                privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
-            }
-
-            //update the vote count on this sponsorTime
-            //oldIncrementAmount will be zero is row is null
-            db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
-
-            //for each positive vote, see if a hidden submission can be shown again
-            if (incrementAmount > 0) {
-                //find the UUID that submitted the submission that was voted on
-                let userIDSubmittedResult = await new Promise((resolve, reject) => {
-                    db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID, (err, row) => resolve({err, row}));
-                });
-
-                let submissionUserID = userIDSubmittedResult.row.userID;
-
-                //check if any submissions are hidden
-                let hiddenSubmissionsResult = await new Promise((resolve, reject) => {
-                    db.prepare("SELECT count(*) as hiddenSubmissions FROM sponsorTimes WHERE userID = ? AND shadowHidden > 0").get(submissionUserID, (err, row) => resolve({err, row}));
-                });
-
-                if (hiddenSubmissionsResult.row.hiddenSubmissions > 0) {
-                    //see if some of this users submissions should be visible again
-                    
-                    if (await isUserTrustworthy(submissionUserID)) {
-                        //they are trustworthy again, show 2 of their submissions again, if there are two to show
-                        db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE ROWID IN (SELECT ROWID FROM sponsorTimes WHERE userID = ? AND shadowHidden = 1 LIMIT 2)").run(submissionUserID)
+            if (config.youtubeAPIKey !== null && config.discordReportChannelWebhookURL !== null) {
+                YouTubeAPI.videos.list({
+                    part: "snippet",
+                    id: submissionInfoRow.videoID
+                }, function (err, data) {
+                    if (err) {
+                        console.log(err);
+                        return;
                     }
+                    
+                    request.post(config.discordReportChannelWebhookURL, {
+                        json: {
+                            "embeds": [{
+                                "title": data.items[0].snippet.title,
+                                "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID + 
+                                            "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
+                                "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views + 
+                                                " Views**\n\nSubmission ID: " + UUID + 
+                                    "\n\nSubmitted by: " + submissionInfoRow.userID + "\n\nTimestamp: " + 
+                                        getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
+                                "color": 10813440,
+                                "author": {
+                                    "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (vipRow.userCount !== 0 ? "Report by VIP User" : "")
+                                },
+                                "thumbnail": {
+                                    "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                                }
+                            }]
+                        }
+                    });
+                });
+            }
+        }
+
+        //update the votes table
+        if (votesRow != undefined) {
+            privateDB.prepare("UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?").run(type, userID, UUID);
+        } else {
+            privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
+        }
+
+        //update the vote count on this sponsorTime
+        //oldIncrementAmount will be zero is row is null
+        db.prepare("UPDATE sponsorTimes SET votes = votes + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+
+        //for each positive vote, see if a hidden submission can be shown again
+        if (incrementAmount > 0) {
+            //find the UUID that submitted the submission that was voted on
+            let submissionUserID = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").userID;
+
+            //check if any submissions are hidden
+            let hiddenSubmissionsRow = db.prepare("SELECT count(*) as hiddenSubmissions FROM sponsorTimes WHERE userID = ? AND shadowHidden > 0").get(submissionUserID);
+
+            if (hiddenSubmissionsRow.hiddenSubmissions > 0) {
+                //see if some of this users submissions should be visible again
+                
+                if (await isUserTrustworthy(submissionUserID)) {
+                    //they are trustworthy again, show 2 of their submissions again, if there are two to show
+                    db.prepare("UPDATE sponsorTimes SET shadowHidden = 0 WHERE ROWID IN (SELECT ROWID FROM sponsorTimes WHERE userID = ? AND shadowHidden = 1 LIMIT 2)").run(submissionUserID)
                 }
             }
+        }
 
-            //added to db
-            res.sendStatus(200);
-        });
-    });
+        //added to db
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 //Endpoint when a sponsorTime is used up
@@ -490,10 +482,10 @@ app.post('/api/setUsername', function (req, res) {
         userID = getHash(userID);
     }
 
-    //check if username is already set
-    db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID, function(err, row) {
-        if (err) console.log(err);
-                
+    try {
+        //check if username is already set
+        let row = db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID);
+
         if (row.count > 0) {
             //already exists, update this row
             db.prepare("UPDATE userNames SET userName = ? WHERE userID = ?").run(userName, userID);
@@ -503,7 +495,12 @@ app.post('/api/setUsername', function (req, res) {
         }
 
         res.sendStatus(200);
-    });
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+
+        return;
+    }
 });
 
 //get what username this user has
@@ -519,10 +516,10 @@ app.get('/api/getUsername', function (req, res) {
     //hash the userID
     userID = getHash(userID);
 
-    db.prepare("SELECT userName FROM userNames WHERE userID = ?").get(userID, function(err, row) {
-        if (err) console.log(err);
-        
-        if (row != null) {
+    try {
+        let row = db.prepare("SELECT userName FROM userNames WHERE userID = ?").get(userID);
+
+        if (row !== undefined) {
             res.send({
                 userName: row.userName
             });
@@ -532,7 +529,12 @@ app.get('/api/getUsername', function (req, res) {
                 userName: userID
             });
         }
-    });
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+
+        return;
+    }
 });
 
 //Endpoint used to hide a certain user's data
@@ -571,11 +573,9 @@ app.post('/api/shadowBanUser', async function (req, res) {
     }
 
     //check to see if this user is already shadowbanned
-    let result = await new Promise((resolve, reject) => {
-        privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-    });
+    let row = privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID);
 
-    if (enabled && result.row.userCount == 0) {
+    if (enabled && row.userCount == 0) {
         //add them to the shadow ban list
 
         //add it to the table
@@ -583,7 +583,7 @@ app.post('/api/shadowBanUser', async function (req, res) {
 
         //find all previous submissions and hide them
         db.prepare("UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?").run(userID);
-    } else if (!enabled && result.row.userCount > 0) {
+    } else if (!enabled && row.userCount > 0) {
         //remove them from the shadow ban list
         privateDB.prepare("DELETE FROM shadowBannedUsers WHERE userID = ?").run(userID);
 
@@ -624,14 +624,12 @@ app.post('/api/addUserAsVIP', async function (req, res) {
     }
 
     //check to see if this user is already a vip
-    let result = await new Promise((resolve, reject) => {
-        db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-    });
+    let row = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID);
 
-    if (enabled && result.row.userCount == 0) {
+    if (enabled && row.userCount == 0) {
         //add them to the vip list
         db.prepare("INSERT INTO vipUsers VALUES(?)").run(userID);
-    } else if (!enabled && result.row.userCount > 0) {
+    } else if (!enabled && row.userCount > 0) {
         //remove them from the shadow ban list
         db.prepare("DELETE FROM vipUsers WHERE userID = ?").run(userID);
     }
@@ -653,10 +651,10 @@ app.get('/api/getViewsForUser', function (req, res) {
     //hash the userID
     userID = getHash(userID);
 
-    //up the view count by one
-    db.prepare("SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?").get(userID, function(err, row) {
-        if (err) console.log(err);
+    try {
+        let row = db.prepare("SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?").get(userID);
 
+        //increase the view count by one
         if (row.viewCount != null) {
             res.send({
                 viewCount: row.viewCount
@@ -664,7 +662,12 @@ app.get('/api/getViewsForUser', function (req, res) {
         } else {
             res.sendStatus(404);
         }
-    });
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+
+        return;
+    }
 });
 
 //Gets all the saved time added up (views * sponsor length) for one userID
@@ -682,9 +685,8 @@ app.get('/api/getSavedTimeForUser', function (req, res) {
     //hash the userID
     userID = getHash(userID);
 
-    //up the view count by one
-    db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ").get(userID, function(err, row) {
-        if (err) console.log(err);
+    try {
+        let row = db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ").get(userID);
 
         if (row.minutesSaved != null) {
             res.send({
@@ -693,7 +695,12 @@ app.get('/api/getSavedTimeForUser', function (req, res) {
         } else {
             res.sendStatus(404);
         }
-    });
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+
+        return;
+    }
 });
 
 app.get('/api/getTopUsers', function (req, res) {
@@ -724,54 +731,55 @@ app.get('/api/getTopUsers', function (req, res) {
     let totalSubmissions = [];
     let minutesSaved = [];
 
-    db.prepare("SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount," + 
+    let rows = db.prepare("SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount," + 
                     "SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, " +
-                        "IFNULL(userNames.userName, sponsorTimes.userID) as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID " +
-                            "WHERE sponsorTimes.votes > -1 AND sponsorTimes.shadowHidden != 1 GROUP BY IFNULL(userName, sponsorTimes.userID) ORDER BY " + sortBy + " DESC LIMIT 100").all(function(err, rows) {
-        for (let i = 0; i < rows.length; i++) {
-            userNames[i] = rows[i].userName;
+                    "IFNULL(userNames.userName, sponsorTimes.userID) as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID " +
+                    "WHERE sponsorTimes.votes > -1 AND sponsorTimes.shadowHidden != 1 GROUP BY IFNULL(userName, sponsorTimes.userID) ORDER BY " + sortBy + " DESC LIMIT 100").all();
+    
+    for (let i = 0; i < rows.length; i++) {
+        userNames[i] = rows[i].userName;
 
-            viewCounts[i] = rows[i].viewCount;
-            totalSubmissions[i] = rows[i].totalSubmissions;
-            minutesSaved[i] = rows[i].minutesSaved;
-        }
+        viewCounts[i] = rows[i].viewCount;
+        totalSubmissions[i] = rows[i].totalSubmissions;
+        minutesSaved[i] = rows[i].minutesSaved;
+    }
 
-        //send this result
-        res.send({
-            userNames: userNames,
-            viewCounts: viewCounts,
-            totalSubmissions: totalSubmissions,
-            minutesSaved: minutesSaved
-        });
+    //send this result
+    res.send({
+        userNames: userNames,
+        viewCounts: viewCounts,
+        totalSubmissions: totalSubmissions,
+        minutesSaved: minutesSaved
     });
 });
 
 //send out totals
 //send the total submissions, total views and total minutes saved
 app.get('/api/getTotalStats', function (req, res) {
-    db.prepare("SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1").get(function(err, row) {
-        if (row != null) {
-            //send this result
-            res.send({
-                userCount: row.userCount,
-                viewCount: row.viewCount,
-                totalSubmissions: row.totalSubmissions,
-                minutesSaved: row.minutesSaved
-            });
-        }
-    });
+    let row = db.prepare("SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, " +
+                "SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1").get();
+
+    if (row !== undefined) {
+        //send this result
+        res.send({
+            userCount: row.userCount,
+            viewCount: row.viewCount,
+            totalSubmissions: row.totalSubmissions,
+            minutesSaved: row.minutesSaved
+        });
+    }
 });
 
 //send out a formatted time saved total
 app.get('/api/getDaysSavedFormatted', function (req, res) {
-    db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes").get(function(err, row) {
-        if (row != null) {
-            //send this result
-            res.send({
-                daysSaved: row.daysSaved.toFixed(2)
-            });
-        }
-    });
+    let row = db.prepare("SELECT SUM((endTime - startTime) / 60 / 60 / 24 * views) as daysSaved FROM sponsorTimes").get();
+        
+    if (row !== undefined) {
+        //send this result
+        res.send({
+            daysSaved: row.daysSaved.toFixed(2)
+        });
+    }
 });
 
 app.get('/database.db', function (req, res) {
@@ -782,18 +790,14 @@ app.get('/database.db', function (req, res) {
 //this happens after a user has made 5 submissions and has less than 60% downvoted submissions
 async function isUserTrustworthy(userID) {
     //check to see if this user how many submissions this user has submitted
-    let totalSubmissionsResult = await new Promise((resolve, reject) => {
-        db.prepare("SELECT count(*) as totalSubmissions, sum(votes) as voteSum FROM sponsorTimes WHERE userID = ?").get(userID, (err, row) => resolve({err, row}));
-    });
+    let totalSubmissionsRow = db.prepare("SELECT count(*) as totalSubmissions, sum(votes) as voteSum FROM sponsorTimes WHERE userID = ?").get(userID);
 
-    if (totalSubmissionsResult.row.totalSubmissions > 5) {
+    if (totalSubmissionsRow.totalSubmissions > 5) {
         //check if they have a high downvote ratio
-        let downvotedSubmissionsResult = await new Promise((resolve, reject) => {
-            db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND (votes < 0 OR shadowHidden > 0)").get(userID, (err, row) => resolve({err, row}));
-        });
+        let downvotedSubmissionsRow = db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND (votes < 0 OR shadowHidden > 0)").get(userID);
         
-        return (downvotedSubmissionsResult.row.downvotedSubmissions / totalSubmissionsResult.row.totalSubmissions) < 0.6 || 
-                (totalSubmissionsResult.row.voteSum > downvotedSubmissionsResult.row.downvotedSubmissions);
+        return (downvotedSubmissionsRow.downvotedSubmissions / totalSubmissionsRow.totalSubmissions) < 0.6 || 
+                (totalSubmissionsRow.voteSum > downvotedSubmissionsRow.downvotedSubmissions);
     }
 
     return true;
