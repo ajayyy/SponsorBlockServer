@@ -131,7 +131,10 @@ function getIP(req) {
 }
 
 //add the post function
-app.get('/api/postVideoSponsorTimes', async function (req, res) {
+app.get('/api/postVideoSponsorTimes', submitSponsorTimes);
+app.post('/api/postVideoSponsorTimes', submitSponsorTimes);
+
+async function submitSponsorTimes(req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
@@ -278,7 +281,7 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
 
         res.send(500);
     }
-});
+}
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime);
