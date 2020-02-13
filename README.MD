@@ -22,7 +22,7 @@ This is a node.js server, so clone this repo and run `npm install` to install al
 
 Make sure to create the databases in the `databases` folder out of the database schemas.
 
-Rename `config.json.example` to `config.json` and fill the parameters inside.
+Rename `config.json.example` to `config.json` and fill the parameters inside. Make sure to remove the comments as comments are not supported in JSON.
 
 Run the server with `npm start`.
 
