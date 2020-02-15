@@ -29,7 +29,7 @@ var db = new Sqlite3(config.db, options);
 //where the more sensitive data such as IP addresses are stored
 var privateDB = new Sqlite3(config.privateDB, options);
 
-if (config.createDatabaseIfNotExist && (config.mode === "development")) {
+if (config.createDatabaseIfNotExist && !config.readOnly) {
     db.exec(fs.readFileSync(config.dbSchema).toString());
     privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
 }
