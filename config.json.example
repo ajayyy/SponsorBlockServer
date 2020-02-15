@@ -8,7 +8,7 @@
     "behindProxy": true,
     "db": "./databases/sponsorTimes.db",
     "privateDB": "./databases/private.db",
-    "createDatabaseIfNotExist": true, //depends on mode='development' //This will run on startup every time - so ensure "create table if not exists" is used in the schema
+    "createDatabaseIfNotExist": true, //This will run on startup every time (unless readOnly is true) - so ensure "create table if not exists" is used in the schema
     "dbSchema": "./databases/_sponsorTimes.db.sql",
     "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",
