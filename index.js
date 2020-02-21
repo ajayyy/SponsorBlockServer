@@ -131,7 +131,10 @@ function getIP(req) {
 }
 
 //add the post function
-app.get('/api/postVideoSponsorTimes', async function (req, res) {
+app.get('/api/postVideoSponsorTimes', submitSponsorTimes);
+app.post('/api/postVideoSponsorTimes', submitSponsorTimes);
+
+async function submitSponsorTimes(req, res) {
     let videoID = req.query.videoID;
     let startTime = req.query.startTime;
     let endTime = req.query.endTime;
@@ -278,7 +281,7 @@ app.get('/api/postVideoSponsorTimes', async function (req, res) {
 
         res.send(500);
     }
-});
+}
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime);
@@ -309,13 +312,6 @@ async function voteOnSponsorTime(req, res) {
         //check if vote has already happened
         let votesRow = privateDB.prepare("SELECT type FROM votes WHERE userID = ? AND UUID = ?").get(userID, UUID);
         
-        // A downvote is anything below type 0
-        if (votesRow !== undefined && (votesRow.type == type || (votesRow.type < 0 && type == 0))) {
-            //they have already done this exact vote
-            res.status(405).send("Duplicate Vote");
-            return;
-        }
-
         //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
         let incrementAmount = 0;
         let oldIncrementAmount = 0;
