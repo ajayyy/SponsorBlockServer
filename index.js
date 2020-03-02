@@ -49,6 +49,9 @@ if (!config.readOnly && config.mode === "production") {
     db.exec("PRAGMA wal_autocheckpoint=1;");
 }
 
+// Enable Memory-Mapped IO
+db.exec("pragma mmap_size= 500000000;");
+
 //setup CORS correctly
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
