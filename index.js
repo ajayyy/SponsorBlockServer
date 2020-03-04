@@ -51,6 +51,7 @@ if (!config.readOnly && config.mode === "production") {
 
 // Enable Memory-Mapped IO
 db.exec("pragma mmap_size= 500000000;");
+privateDB.exec("pragma mmap_size= 500000000;");
 
 //setup CORS correctly
 app.use(function(req, res, next) {

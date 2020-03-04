@@ -17,4 +17,6 @@ CREATE TABLE IF NOT EXISTS "userNames" (
 	"userID"	TEXT NOT NULL,
 	"userName"	TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS sponsorTimes_videoID on sponsorTimes(videoID);
+CREATE INDEX IF NOT EXISTS sponsorTimes_UUID on sponsorTimes(UUID);
 COMMIT;
