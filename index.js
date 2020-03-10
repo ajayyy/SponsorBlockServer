@@ -21,7 +21,8 @@ YouTubeAPI.authenticate({
 var Sqlite3 = require('better-sqlite3');
 
 let options = {
-    readonly: config.readOnly
+    readonly: config.readOnly,
+    fileMustExist: !config.createDatabaseIfNotExist
 };
 
 //load database
@@ -30,8 +31,8 @@ var db = new Sqlite3(config.db, options);
 var privateDB = new Sqlite3(config.privateDB, options);
 
 if (config.createDatabaseIfNotExist && !config.readOnly) {
-    db.exec(fs.readFileSync(config.dbSchema).toString());
-    privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
+    if (fs.existsSync(config.dbSchema)) db.exec(fs.readFileSync(config.dbSchema).toString());
+    if (fs.existsSync(config.privateDBSchema)) privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
 }
 
 // Create an HTTP service.
