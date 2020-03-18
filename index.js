@@ -167,6 +167,12 @@ async function submitSponsorTimes(req, res) {
         return;
     }
 
+    if (startTime === Infinity || endTime === Infinity) {
+        //invalid request
+        res.sendStatus(400);
+        return;
+    }
+
     if (startTime > endTime) {
         //time can't go backwards
         res.sendStatus(400);
