@@ -4,14 +4,10 @@ var http = require('http');
 // Create a service (the app object is just a callback).
 var app = express();
 
-
 let config = JSON.parse(fs.readFileSync('config.json'));
 
-
-// Utils
-var getHash = require('./src/utils/getHash.js');
-var getIP = require('./src/utils/getIP.js');
-var getFormattedTime = require('./src/utils/getFormattedTime.js');
+// Routes
+var corsMiddleware = require('./src/routes/corsMiddleware.js');
 
 // Routes
 var getVideoSponsorTimes = require('./src/routes/getVideoSponsorTimes.js');
@@ -35,26 +31,11 @@ YouTubeAPI.authenticate({
     key: config.youtubeAPIKey
 });
 
-var Sqlite3 = require('better-sqlite3');
-
-let options = {
-    readonly: config.readOnly
-};
-
-//load database
-var db = new Sqlite3(config.db, options);
-//where the more sensitive data such as IP addresses are stored
-var privateDB = new Sqlite3(config.privateDB, options);
-
 // Create an HTTP service.
 http.createServer(app).listen(config.port);
 
 //setup CORS correctly
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
+app.use(corsMiddleware);
 
 //add the get function
 app.get('/api/getVideoSponsorTimes', getVideoSponsorTimes);

@@ -4,6 +4,7 @@ var config = JSON.parse(fs.readFileSync('config.json'));
 var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
+var YouTubeAPI = require('../utils/youtubeAPI.js');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');

@@ -7,6 +7,7 @@ var getIP = require('../utils/getIP.js');
 var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
+var YouTubeAPI = require('../utils/youtubeAPI.js');
 
 module.exports = async function voteOnSponsorTime(req, res) {
   let UUID = req.query.UUID;
