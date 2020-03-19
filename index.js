@@ -7,7 +7,8 @@ var app = express();
 let config = JSON.parse(fs.readFileSync('config.json'));
 
 // Routes
-var corsMiddleware = require('./src/routes/corsMiddleware.js');
+var corsMiddleware = require('./src/middleware/cors.js');
+var loggerMiddleware = require('./src/middleware/logger.js');
 
 // Routes
 var getVideoSponsorTimes = require('./src/routes/getVideoSponsorTimes.js');
@@ -24,18 +25,13 @@ var getTopUsers = require('./src/routes/getTopUsers.js');
 var getTotalStats = require('./src/routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./src/routes/getDaysSavedFormatted.js');
 
-// YouTube API
-const YouTubeAPI = require("youtube-api");
-YouTubeAPI.authenticate({
-    type: "key",
-    key: config.youtubeAPIKey
-});
 
 // Create an HTTP service.
 http.createServer(app).listen(config.port);
 
 //setup CORS correctly
 app.use(corsMiddleware);
+app.use(loggerMiddleware);
 
 //add the get function
 app.get('/api/getVideoSponsorTimes', getVideoSponsorTimes);
