@@ -19,8 +19,6 @@ if (!config.readOnly && config.mode === "production") {
 db.exec("pragma mmap_size= 500000000;");
 privateDB.exec("pragma mmap_size= 500000000;");
 
-console.log('databases.js has been executed...');
-
 module.exports = {
   db: db,
   privateDB: privateDB
