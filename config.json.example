@@ -1,4 +1,6 @@
 {
+    // Remove all comments from the config when using it!
+
     "port": 80,
     "globalSalt": "[global salt (pepper) that is added to every ip before hashing to make it even harder for someone to decode the ip]",
     "adminUserID": "[the hashed id of the user who can perform admin actions]",
@@ -8,6 +10,9 @@
     "behindProxy": true,
     "db": "./databases/sponsorTimes.db",
     "privateDB": "./databases/private.db",
+    "createDatabaseIfNotExist": true, //This will run on startup every time (unless readOnly is true) - so ensure "create table if not exists" is used in the schema
+    "dbSchema": "./databases/_sponsorTimes.db.sql",
+    "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",
     "readOnly": false
 }
