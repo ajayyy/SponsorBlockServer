@@ -286,6 +286,11 @@ async function submitSponsorTimes(req, res) {
                                         }
                                     }]
                                 }
+                            }, (err) => {
+                                if (err) {
+                                    console.log("Error sending first time submission discord hook");
+                                    console.log(JSON.stringify(err));
+                                }
                             });
                         });
                     }
@@ -410,6 +415,11 @@ async function voteOnSponsorTime(req, res) {
                                     "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                                 }
                             }]
+                        }
+                    }, (err) => {
+                        if (err) {
+                            console.log("Error sending downvote discord hook");
+                            console.log(JSON.stringify(err));
                         }
                     });
                 });
