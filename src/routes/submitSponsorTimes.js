@@ -8,6 +8,7 @@ var YouTubeAPI = require('../utils/youtubeAPI.js');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
+var getFormattedTime = require('../utils/getFormattedTime.js');
 
 // TODO: might need to be a util
 //returns true if the user is considered trustworthy
@@ -146,8 +147,8 @@ module.exports = async function submitSponsorTimes(req, res) {
                           part: "snippet",
                           id: videoID
                       }, function (err, data) {
-                          if (err) {
-                              console.log(err);
+                          if (err || data.items.length === 0) {
+                              err && console.log(err);
                               return;
                           }
                           

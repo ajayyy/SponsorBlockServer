@@ -3,11 +3,13 @@ var config = JSON.parse(fs.readFileSync('config.json'));
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
+var getFormattedTime = require('../utils/getFormattedTime.js');
 
 var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
+var request = require('request');
 
 module.exports = async function voteOnSponsorTime(req, res) {
   let UUID = req.query.UUID;
@@ -93,8 +95,8 @@ module.exports = async function voteOnSponsorTime(req, res) {
                   part: "snippet",
                   id: submissionInfoRow.videoID
               }, function (err, data) {
-                  if (err) {
-                      console.log(err);
+                  if (err || data.items.length === 0) {
+                      err && console.log(err);
                       return;
                   }
                   
@@ -117,7 +119,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
                               }
                           }]
                       }
-                  });
+                  }, () => {});
               });
           }
       }
