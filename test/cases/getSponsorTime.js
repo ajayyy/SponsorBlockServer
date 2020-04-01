@@ -32,7 +32,7 @@ describe('getVideoSponsorTime', () => {
       });
   });
 
-  it('Should be able to get the correct', (done) => {
+  it('Should be able to get the correct time', (done) => {
     request.get(utils.getbaseURL() 
      + "/api/getVideoSponsorTimes?videoID=testtesttest", null, 
       (err, res, body) => {
