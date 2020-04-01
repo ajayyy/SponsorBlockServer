@@ -91,6 +91,8 @@ typings/
 databases/sponsorTimes.db
 databases/private.db
 databases/sponsorTimesReal.db
+test/databases/sponsorTimes.db
+test/databases/private.db
 
 # Config files
 config.json
