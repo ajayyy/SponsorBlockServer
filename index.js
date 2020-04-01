@@ -288,11 +288,11 @@ async function submitSponsorTimes(req, res) {
                                 }
                             }, (err, res) => {
                                 if (err) {
-                                    console.log("Failed to send first time submission discord hook.");
+                                    console.log("Failed to send first time submission Discord hook.");
                                     console.log(JSON.stringify(err));
                                     console.log("\n");
                                 } else if (res && res.statusCode >= 400) {
-                                    console.log("Error sending first time submission discord hook");
+                                    console.log("Error sending first time submission Discord hook");
                                     console.log(JSON.stringify(res));
                                     console.log("\n");
                                 }
@@ -423,11 +423,11 @@ async function voteOnSponsorTime(req, res) {
                         }
                     }, (err, res) => {
                         if (err) {
-                            console.log("Failed to send first time submission discord hook.");
+                            console.log("Failed to send reported submission Discord hook.");
                             console.log(JSON.stringify(err));
                             console.log("\n");
                         } else if (res && res.statusCode >= 400) {
-                            console.log("Error sending first time submission discord hook");
+                            console.log("Error sending reported submission Discord hook");
                             console.log(JSON.stringify(res));
                             console.log("\n");
                         }
