@@ -1,7 +1,7 @@
 BEGIN TRANSACTION;
-DROP TABLE "shadowBannedUsers";
-DROP TABLE "votes";
-DROP TABLE "sponsorTimes";
+DROP TABLE IF EXISTS "shadowBannedUsers";
+DROP TABLE IF EXISTS "votes";
+DROP TABLE IF EXISTS "sponsorTimes";
 
 CREATE TABLE IF NOT EXISTS "shadowBannedUsers" (
 	"userID"	TEXT NOT NULL

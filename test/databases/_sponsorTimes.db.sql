@@ -1,7 +1,7 @@
 BEGIN TRANSACTION;
-DROP TABLE "vipUsers";
-DROP TABLE "sponsorTimes";
-DROP TABLE "userNames";
+DROP TABLE IF EXISTS "vipUsers";
+DROP TABLE IF EXISTS "sponsorTimes";
+DROP TABLE IF EXISTS "userNames";
 
 CREATE TABLE IF NOT EXISTS "vipUsers" (
 	"userID"	TEXT NOT NULL

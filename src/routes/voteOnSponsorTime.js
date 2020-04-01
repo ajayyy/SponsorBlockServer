@@ -99,7 +99,6 @@ module.exports = async function voteOnSponsorTime(req, res) {
                       err && console.log(err);
                       return;
                   }
-                  console.log(config.test);
                   
                   request.post(config.discordReportChannelWebhookURL, {
                       json: {
@@ -120,7 +119,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
                               }
                           }]
                       }
-                  }, () => {});
+                  });
               });
           }
       }
