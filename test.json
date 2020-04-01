@@ -12,6 +12,6 @@
     "createDatabaseIfNotExist": true,
     "dbSchema": "./test/databases/_sponsorTimes.db.sql",
     "privateDBSchema": "./test/databases/_private.db.sql",
-    "mode": "development",
+    "mode": "test",
     "readOnly": false
 }
