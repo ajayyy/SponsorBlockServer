@@ -1,6 +1,6 @@
-var fs = require('fs');
-var config = JSON.parse(fs.readFileSync('config.json'));
+var config = require('../config.js');
 var Sqlite3 = require('better-sqlite3');
+var fs = require('fs');
 
 let options = {
   readonly: config.readOnly
@@ -8,6 +8,11 @@ let options = {
 
 var db = new Sqlite3(config.db, options);
 var privateDB = new Sqlite3(config.privateDB, options);
+
+if (config.createDatabaseIfNotExist && !config.readOnly) {
+  if (fs.existsSync(config.dbSchema)) db.exec(fs.readFileSync(config.dbSchema).toString());
+  if (fs.existsSync(config.privateDBSchema)) privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
+}
 
 // Enable WAL mode checkpoint number
 if (!config.readOnly && config.mode === "production") {

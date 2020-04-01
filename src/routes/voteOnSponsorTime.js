@@ -1,5 +1,5 @@
 var fs = require('fs');
-var config = JSON.parse(fs.readFileSync('config.json'));
+var config = require('../config.js');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
@@ -99,6 +99,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
                       err && console.log(err);
                       return;
                   }
+                  console.log(config.test);
                   
                   request.post(config.discordReportChannelWebhookURL, {
                       json: {

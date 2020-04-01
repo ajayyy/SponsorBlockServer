@@ -1,5 +1,5 @@
 var fs = require('fs');
-var config = JSON.parse(fs.readFileSync('config.json'));
+var config = require('../config.js');
 
 var databases = require('../databases/databases.js');
 var db = databases.db;

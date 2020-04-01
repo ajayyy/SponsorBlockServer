@@ -4,7 +4,7 @@
   "description": "Server that holds the SponsorBlock database",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test.js",
     "start": "node index.js"
   },
   "author": "Ajay Ramachandran",
@@ -15,5 +15,8 @@
     "http": "0.0.0",
     "uuid": "^3.3.2",
     "youtube-api": "^2.0.10"
+  },
+  "devDependencies": {
+    "mocha": "^7.1.1"
   }
 }

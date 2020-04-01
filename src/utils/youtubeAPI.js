@@ -1,5 +1,4 @@
-var fs = require('fs');
-var config = JSON.parse(fs.readFileSync('config.json'));
+var config = require('../config.js');
 
 // YouTube API
 const YouTubeAPI = require("youtube-api");
