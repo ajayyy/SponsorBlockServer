@@ -89,9 +89,13 @@ typings/
 
 # Databases
 databases/sponsorTimes.db
+databases/sponsorTimes.db-shm
+databases/sponsorTimes.db-wal
 databases/private.db
 databases/sponsorTimesReal.db
 test/databases/sponsorTimes.db
+test/databases/sponsorTimes.db-shm
+test/databases/sponsorTimes.db-wal
 test/databases/private.db
 
 # Config files

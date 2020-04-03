@@ -19,7 +19,8 @@ var utils = require('../utils.js');
 
 describe('getVideoSponsorTime', () => {
   before(() => {
-    db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest', 1, 11, 2, 'abc123', 'testman', 0, 50, 0)");
+    db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 0)");
+    db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 0)");
   }); 
 
   it('Should be able to get a time', (done) => {
@@ -29,6 +30,37 @@ describe('getVideoSponsorTime', () => {
         if (err) done(false);
         else if (res.statusCode !== 200) done("non 200");
         else done();
+      });
+  });
+
+  it('Should return 404 if no segment found', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/getVideoSponsorTimes?videoID=notarealvideo", null, 
+      (err, res, body) => {
+        if (err) done(false);
+        else if (res.statusCode !== 404) done("non 404 respone code: " + res.statusCode);
+        else done();
+      });
+  });
+
+
+  it('Should be possible to send unexpected query parameters', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/getVideoSponsorTimes?videoID=testtesttest&fakeparam=hello", null, 
+      (err, res, body) => {
+        if (err) done(false);
+        else if (res.statusCode !== 200) done("non 200");
+        else done();
+      });
+  });
+
+  it('Should be able send a comma in a query param', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/getVideoSponsorTimes?videoID=testtesttest,test", null, 
+      (err, res, body) => {
+        if (err) done(false);
+        else if (res.statusCode !== 200) done("non 200 response: " + res.statusCode);
+        else (JSON.parse(body).UUIDs[0] === 'uuid-1') && done();
       });
   });
 
@@ -42,7 +74,7 @@ describe('getVideoSponsorTime', () => {
           let parsedBody = JSON.parse(body);
           if (parsedBody.sponsorTimes[0][0] === 1
             && parsedBody.sponsorTimes[0][1] === 11
-            && parsedBody.UUIDs[0] === 'abc123') {
+            && parsedBody.UUIDs[0] === 'uuid-0') {
             done();
           } else {
             done("Wrong data was returned + " + parsedBody);

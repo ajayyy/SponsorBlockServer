@@ -3,7 +3,8 @@ var Sqlite3 = require('better-sqlite3');
 var fs = require('fs');
 
 let options = {
-  readonly: config.readOnly
+  readonly: config.readOnly,
+  fileMustExist: !config.createDatabaseIfNotExist
 };
 
 var db = new Sqlite3(config.db, options);

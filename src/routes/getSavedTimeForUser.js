@@ -1,4 +1,5 @@
 var db = require('../databases/databases.js').db;
+var getHash = require('../utils/getHash.js');
 
 module.exports = function getSavedTimeForUser (req, res) {
   let userID = req.query.userID;
