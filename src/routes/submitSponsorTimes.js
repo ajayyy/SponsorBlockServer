@@ -4,6 +4,8 @@ var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
+var request = require('request');
+var isoDurations = require('iso8601-duration');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
@@ -116,32 +118,77 @@ module.exports = async function submitSponsorTimes(req, res) {
               }
 
               if (duplicateCheck2Row == null) {
-                  //not a duplicate, execute query
-                  try {
-                      db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned);
-                  
-                      //add to private db as well
-                      privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+                //not a duplicate
+                 
+                autoModerateSubmission({videoID, startTime, endTime}, (reject) => {
+                    if (!reject) {
+                        try {
+                            db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, startTime, endTime, startingVotes, UUID, userID, timeSubmitted, 0, shadowBanned);
 
-                      res.sendStatus(200);
-                  } catch (err) {
-                      //a DB change probably occurred
-                      res.sendStatus(502);
-                      console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
-                      
-                      return;
-                  }
+                            //add to private db as well
+                            privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+                            res.sendStatus(200);
+                        } catch (err) {
+                            //a DB change probably occurred
+                            console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + startTime + ", " + "endTime" + ", " + userID);
+                            res.sendStatus(502);
+                        }
+                    } else {
+                        res.status(403).send("Request rejected by auto moderator: " + reject);
+                    }
+                });
               } else {
                   res.sendStatus(409);
               }
+          }
+      }
+  } catch (err) {
+      console.error(err);
+      res.send(500);
+  }
+}
 
+// submission: {videoID, startTime, endTime}
+// callback:  function(reject: "String containing reason the submission was rejected")
+const autoModerateSubmission = (submission, callback) => {
+    // Get the video information from the youtube API
+    if (config.youtubeAPI !== null) {
+        YouTubeAPI.videos.list({
+            part: "contentDetails",
+            id: submission.videoID
+        }, (err, data) => {
+            if (err) callback("Couldn't get video information.");
+            else {
+                // Check to see if video exists
+                if (data.pageInfo.totalResults === 0) {
+                    callback("No video exists with id " + submission.videoID);
+                } else {
+                    let duration = data.items[0].contentDetails.duration;
+                    duration = isoDurations.toSeconds(isoDurations.parse(duration));
+
+                    // Reject submission if over 80% of the video
+                    if ((submission.endTime - submission.startTime) > (duration/100)*80) {
+                        callback ("Sponsor segment is over 80% of the video.");
+                    } else {
+                        callback();
+                    }
+                }
+            }
+        }); 
+    } else {
+        console.log("skip youtube api");
+        // Can't moderate the submission without calling the youtube API
+        // so allow by default.
+        callback();
+    }
+}
+/*
               //check if they are a first time user
               //if so, send a notification to discord
               if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null && duplicateCheck2Row == null) {
                   let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID);
-
                   // If it is a first time submission
-                  if (userSubmissionCountRow.submissionCount === 0) {
+                  if (userSubmissionCountRow.submissionCount <= 1) {
                       YouTubeAPI.videos.list({
                           part: "snippet",
                           id: videoID
@@ -150,6 +197,8 @@ module.exports = async function submitSponsorTimes(req, res) {
                               err && console.log(err);
                               return;
                           }
+
+                          console.log(JSON.stringify(data));
                           
                           request.post(config.discordFirstTimeSubmissionsWebhookURL, {
                               json: {
@@ -181,12 +230,4 @@ module.exports = async function submitSponsorTimes(req, res) {
                           });
                       });
                   }
-              }
-          }
-      }
-  } catch (err) {
-      console.error(err);
-
-      res.send(500);
-  }
-}
+              }*/

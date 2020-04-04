@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node test.js",
     "dev": "nodemon -x \"(npm test || echo test failed) && npm start\"",
+    "dev:bash": "nodemon -x 'npm test ; npm start'",
     "start": "node index.js"
   },
   "author": "Ajay Ramachandran",
@@ -14,6 +15,7 @@
     "better-sqlite3": "^5.4.3",
     "express": "^4.17.1",
     "http": "0.0.0",
+    "iso8601-duration": "^1.2.0",
     "uuid": "^3.3.2",
     "youtube-api": "^2.0.10"
   },
