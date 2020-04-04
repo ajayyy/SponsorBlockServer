@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test.js",
-    "dev" : "nodemon -x '(npm test || echo failed) ; npm start'",
+    "dev": "nodemon -x \"(npm test || echo failed) && npm start\"",
     "start": "node index.js"
   },
   "author": "Ajay Ramachandran",
