@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test.js",
+    "dev": "nodemon -x \"(npm test || echo test failed) & npm start\"",
     "start": "node index.js"
   },
   "author": "Ajay Ramachandran",
@@ -17,6 +18,7 @@
     "youtube-api": "^2.0.10"
   },
   "devDependencies": {
-    "mocha": "^7.1.1"
+    "mocha": "^7.1.1",
+    "nodemon": "^2.0.2"
   }
 }
