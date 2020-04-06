@@ -12,9 +12,9 @@ describe('getSavedTimeForUser', () => {
     request.get(utils.getbaseURL() 
      + "/api/getSavedTimeForUser?userID=testman", null, 
       (err, res, body) => {
-        if (err) done(false);
+        if (err) done("couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200");
-        else done();
+        else done(); // pass
       });
   });
 });
