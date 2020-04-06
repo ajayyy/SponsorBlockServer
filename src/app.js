@@ -9,7 +9,8 @@ var loggerMiddleware = require('./middleware/logger.js');
 
 // Routes
 var getVideoSponsorTimes = require('./routes/getVideoSponsorTimes.js');
-var submitSponsorTimes = require('./routes/submitSponsorTimes.js');
+var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
+var postSkipSegments = require('./routes/postSkipSegments.js');
 var voteOnSponsorTime = require('./routes/voteOnSponsorTime.js');
 var viewedVideoSponsorTime = require('./routes/viewedVideoSponsorTime.js');
 var setUsername = require('./routes/setUsername.js');
@@ -26,13 +27,17 @@ var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 //setup CORS correctly
 app.use(corsMiddleware);
 app.use(loggerMiddleware);
+app.use(express.json())
 
 //add the get function
 app.get('/api/getVideoSponsorTimes', getVideoSponsorTimes);
 
+//add the oldpost function
+app.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+
 //add the post function
-app.get('/api/postVideoSponsorTimes', submitSponsorTimes);
-app.post('/api/postVideoSponsorTimes', submitSponsorTimes);
+app.post('/api/skipSegments', postSkipSegments);
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime);

@@ -3,9 +3,19 @@ var request = require('request');
 
 var utils = require('../utils.js');
 
-describe('postVideoSponsorTime', () => {
-  it('Should be able to create a time', (done) => {
+describe('postVideoSponsorTime (Old submission method)', () => {
+  it('Should be able to submit a time (GET)', (done) => {
     request.get(utils.getbaseURL() 
+     + "/api/postVideoSponsorTimes?videoID=djgofQKWmXc&startTime=1&endTime=10&userID=test", null, 
+      (err, res, body) => {
+        if (err) done(false);
+        else if (res.statusCode === 200) done();
+        else done(false);
+      });
+  });
+
+  it('Should be able to submit a time (POST)', (done) => {
+    request.post(utils.getbaseURL() 
      + "/api/postVideoSponsorTimes?videoID=djgofQKWmXc&startTime=1&endTime=10&userID=test", null, 
       (err, res, body) => {
         if (err) done(false);
