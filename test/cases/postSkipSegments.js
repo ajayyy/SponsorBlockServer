@@ -3,14 +3,24 @@ var request = require('request');
 
 var utils = require('../utils.js');
 
+var databases = require('../../src/databases/databases.js');
+var db = databases.db;
+
 describe('postSkipSegments', () => {
   it('Should be able to submit a single time (Params method)', (done) => {
     request.post(utils.getbaseURL() 
      + "/api/postVideoSponsorTimes?videoID=djgofQKWmXc&startTime=1&endTime=10&userID=test&category=sponsor", null, 
       (err, res, body) => {
         if (err) done(false);
-        else if (res.statusCode === 200) done();
-        else done(false);
+        else if (res.statusCode === 200) {
+          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get(videoID);
+          if (row.startTime === 1 && row.endTime === 10 && row.category === "sponsor") {
+            done()
+            return;
+          }
+        }
+        
+        done(false);
       });
   });
 
@@ -27,8 +37,15 @@ describe('postSkipSegments', () => {
      }), 
       (err, res, body) => {
         if (err) done(false);
-        else if (res.statusCode === 200) done();
-        else done(false);
+        else if (res.statusCode === 200) {
+          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get(videoID);
+          if (row.startTime === 0 && row.endTime === 10 && row.category === "sponsor") {
+            done()
+            return;
+          }
+        }
+        
+        done(false);
       });
   });
 
@@ -48,8 +65,21 @@ describe('postSkipSegments', () => {
      }), 
       (err, res, body) => {
         if (err) done(false);
-        else if (res.statusCode === 200) done();
-        else done(false);
+        else if (res.statusCode === 200) {
+          let rows = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").all(videoID);
+
+          if (rows.length !== 2) done(false);
+          for (const row of rows) {
+            if (row.startTime !== 1 || row.endTime !== 10 || row.category !== "sponsor") {
+              done(false)
+              return;
+            }
+          }
+
+          done()
+        }
+        
+        done(false);
       });
   });
 
