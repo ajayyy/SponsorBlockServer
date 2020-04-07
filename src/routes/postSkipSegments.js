@@ -243,8 +243,6 @@ module.exports = async function postSkipSegments(req, res) {
             
                 //add to private db as well
                 privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
-    
-                res.sendStatus(200);
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(502);
@@ -261,5 +259,9 @@ module.exports = async function postSkipSegments(req, res) {
         console.error(err);
 
         res.sendStatus(500);
+
+        return;
     }
+
+    res.sendStatus(200);
 }
