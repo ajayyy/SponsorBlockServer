@@ -17,7 +17,7 @@ var utils = require('../utils.js');
 );
  */
 
-describe('getVideoSponsorTime', () => {
+describe('getVideoSponsorTime (Old get method)', () => {
   before(() => {
     db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0)");
     db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0)");
