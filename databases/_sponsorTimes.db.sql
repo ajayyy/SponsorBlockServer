@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"userID"	TEXT NOT NULL,
 	"timeSubmitted"	INTEGER NOT NULL,
 	"views"	INTEGER NOT NULL,
-    "category" TEXT NOT NULL;
+    "category" TEXT NOT NULL,
 	"shadowHidden"	INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS "userNames" (

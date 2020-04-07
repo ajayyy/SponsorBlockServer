@@ -4,6 +4,8 @@ var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
+var request = require('request');
+var isoDurations = require('iso8601-duration');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
@@ -34,7 +36,7 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
         let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID);
 
         // If it is a first time submission
-        if (userSubmissionCountRow.submissionCount === 0) {
+        if (userSubmissionCountRow.submissionCount <= 1) {
             YouTubeAPI.videos.list({
                 part: "snippet",
                 id: videoID
@@ -75,6 +77,47 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
                 });
             });
         }
+    }
+}
+
+// submission: {videoID, startTime, endTime}
+// callback:  function(reject: "String containing reason the submission was rejected")
+// returns: string when an error, false otherwise
+async function autoModerateSubmission(submission, callback) {
+    // Get the video information from the youtube API
+    if (config.youtubeAPI !== null) {
+        let {err, data} = await new Promise((resolve, reject) => {
+            YouTubeAPI.videos.list({
+                part: "contentDetails",
+                id: submission.videoID
+            }, (err, data) => resolve({err, data}));
+        });
+
+        if (err) {
+            return "Couldn't get video information.";
+        } else {
+            // Check to see if video exists
+            if (data.pageInfo.totalResults === 0) {
+                callback("No video exists with id " + submission.videoID);
+            } else {
+                let duration = data.items[0].contentDetails.duration;
+                duration = isoDurations.toSeconds(isoDurations.parse(duration));
+
+                // Reject submission if over 80% of the video
+                if ((submission.endTime - submission.startTime) > (duration/100)*80) {
+                    return "Sponsor segment is over 80% of the video.";
+                } else {
+                    return false;
+                }
+            }
+        }
+         
+    } else {
+        console.log("Skipped YouTube API");
+
+        // Can't moderate the submission without calling the youtube API
+        // so allow by default.
+        return;
     }
 }
 
@@ -124,10 +167,17 @@ module.exports = async function postSkipSegments(req, res) {
         }
 
         //check if this info has already been submitted before
-        let duplicateCheck2Row = 
-            db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get([startTime, endTime, videoID]);
-        if (duplicateCheck2Row == null) {
-            res.sendStatus(409);
+        let duplicateCheck2Row = db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").get(startTime, endTime, videoID);
+        if (duplicateCheck2Row !== null) {
+            // console.log(duplicateCheck2Row)
+            // console.log(db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").all(1,10,"dQw4w9WgXcQ"))
+            // res.sendStatus(409);
+            // return;
+        }
+
+        let autoModerateResult = await autoModerateSubmission({videoID, startTime, endTime});
+        if (autoModerateResult) {
+            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult);
             return;
         }
     }
@@ -184,8 +234,10 @@ module.exports = async function postSkipSegments(req, res) {
             let UUID = getHash("v2-categories" + videoID + segmentInfo.segment[0] + 
                 segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
 
+            console.log(UUID)
+
             try {
-                db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 
+                db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 
                     segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned);
             
                 //add to private db as well
@@ -196,7 +248,7 @@ module.exports = async function postSkipSegments(req, res) {
                 //a DB change probably occurred
                 res.sendStatus(502);
                 console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " + 
-                    segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category);
+                    segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
                 
                 return;
             }
@@ -207,6 +259,6 @@ module.exports = async function postSkipSegments(req, res) {
     } catch (err) {
         console.error(err);
 
-        res.send(500);
+        res.sendStatus(500);
     }
 }

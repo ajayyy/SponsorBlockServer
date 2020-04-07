@@ -1,8 +1,4 @@
 BEGIN TRANSACTION;
-DROP TABLE IF EXISTS "vipUsers";
-DROP TABLE IF EXISTS "sponsorTimes";
-DROP TABLE IF EXISTS "userNames";
-
 CREATE TABLE IF NOT EXISTS "vipUsers" (
 	"userID"	TEXT NOT NULL
 );
@@ -15,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"userID"	TEXT NOT NULL,
 	"timeSubmitted"	INTEGER NOT NULL,
 	"views"	INTEGER NOT NULL,
+    "category" TEXT NOT NULL,
 	"shadowHidden"	INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS "userNames" (
