@@ -200,9 +200,17 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
   };
 }
 
-
-
-module.exports = function (req, res) {
+/**
+ * 
+ * Returns what would be sent to the client.
+ * Will resond with errors if required. Returns false if it errors.
+ * 
+ * @param req 
+ * @param res 
+ * 
+ * @returns
+ */
+function handleGetSegments(req, res) {
     const videoID = req.body.videoID || req.query.videoID;
     // Default to sponsor
     // If using params instead of JSON, only one category can be pulled
@@ -256,7 +264,7 @@ module.exports = function (req, res) {
     
             if (sponsorTimes.length == 0) {
                 res.sendStatus(404);
-                return;
+                return false;
             }
     
             organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs);
@@ -275,13 +283,26 @@ module.exports = function (req, res) {
         console.error(error);
         res.send(500);
 
-        return;
+        return false;
     }
 
     if (segments.length == 0) {
         res.sendStatus(404);
-    } else {
-        //send result
-        res.send(segments)
+        return false;
+    }
+
+    return segments;
+}
+
+
+module.exports = {
+    handleGetSegments,
+    endpoint: function (req, res) {
+        let segments = handleGetSegments(req, res);
+
+        if (segments) {
+            //send result
+            res.send(segments)
+        }
     }
 }

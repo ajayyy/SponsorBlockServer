@@ -43,7 +43,7 @@ app.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
 app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
 
 //add the skip segments functions
-app.get('/api/skipSegments', getSkipSegments);
+app.get('/api/skipSegments', getSkipSegments.endpoint);
 app.post('/api/skipSegments', postSkipSegments);
 
 //voting endpoint
