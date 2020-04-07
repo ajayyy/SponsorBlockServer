@@ -173,8 +173,6 @@ module.exports = async function postSkipSegments(req, res) {
         let duplicateCheck2Row = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE startTime = ? " +
             "and endTime = ? and category = ? and videoID = ?").get(startTime, endTime, segments[i].category, videoID);
         if (duplicateCheck2Row.count > 0) {
-            console.log(duplicateCheck2Row.count)
-            // console.log(db.prepare("SELECT UUID FROM sponsorTimes WHERE startTime = ? and endTime = ? and videoID = ?").all(1,10,"dQw4w9WgXcQ"))
             res.sendStatus(409);
             return;
         }
