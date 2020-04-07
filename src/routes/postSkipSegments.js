@@ -45,15 +45,18 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
                     err && console.log(err);
                     return;
                 }
+
+                let startTime = parseFloat(segmentInfo.segment[0]);
+                let endTime = parseFloat(segmentInfo.segment[1]);
                 
                 request.post(config.discordFirstTimeSubmissionsWebhookURL, {
                     json: {
                         "embeds": [{
                             "title": data.items[0].snippet.title,
-                            "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (segmentInfo.segment.toFixed(0) - 2),
+                            "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
                             "description": "Submission ID: " + UUID +
                                     "\n\nTimestamp: " + 
-                                    getFormattedTime(segmentInfo.segment[0]) + " to " + getFormattedTime(segmentInfo.segment[1]) +
+                                    getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
                                     "\n\nCategory: " + segmentInfo.category,
                             "color": 10813440,
                             "author": {
@@ -233,8 +236,6 @@ module.exports = async function postSkipSegments(req, res) {
             //also better for duplication checking
             let UUID = getHash("v2-categories" + videoID + segmentInfo.segment[0] + 
                 segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
-
-            console.log(UUID)
 
             try {
                 db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 

@@ -26,6 +26,14 @@ const YouTubeAPI = {
             {
               contentDetails: {
                 duration: "PT1H23M30S"
+              },
+              snippet: {
+                title: "Example Title",
+                thumbnails: {
+                  maxres: {
+                    url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"
+                  }
+                }
               }
             }
           ]
