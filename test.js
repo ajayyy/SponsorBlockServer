@@ -2,6 +2,11 @@ var Mocha = require('mocha'),
     fs = require('fs'),
     path = require('path');
 
+var config = require('./src/config.js');
+// delete old test database
+if (fs.existsSync(config.db)) fs.unlinkSync(config.db);
+if (fs.existsSync(config.privateDB)) fs.unlinkSync(config.privateDB);
+
 var createServer = require('./src/app.js');
 var createMockServer = require('./test/mocks.js');
 

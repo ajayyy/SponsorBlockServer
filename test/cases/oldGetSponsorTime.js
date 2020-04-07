@@ -17,15 +17,15 @@ var utils = require('../utils.js');
 );
  */
 
-describe('getVideoSponsorTime', () => {
+describe('getVideoSponsorTime (Old get method)', () => {
   before(() => {
-    db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 0)");
-    db.exec("INSERT INTO sponsorTimes VALUES ('testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 0)");
+    db.exec("INSERT INTO sponsorTimes VALUES ('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0)");
+    db.exec("INSERT INTO sponsorTimes VALUES ('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0)");
   }); 
 
   it('Should be able to get a time', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getVideoSponsorTimes?videoID=testtesttest", null, 
+     + "/api/getVideoSponsorTimes?videoID=old-testtesttest", null, 
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200");
@@ -46,7 +46,7 @@ describe('getVideoSponsorTime', () => {
 
   it('Should be possible to send unexpected query parameters', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getVideoSponsorTimes?videoID=testtesttest&fakeparam=hello", null, 
+     + "/api/getVideoSponsorTimes?videoID=old-testtesttest&fakeparam=hello", null, 
       (err, res, body) => {
         if (err) done("couldn't callendpoint");
         else if (res.statusCode !== 200) done("non 200");
@@ -56,7 +56,7 @@ describe('getVideoSponsorTime', () => {
 
   it('Should be able send a comma in a query param', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getVideoSponsorTimes?videoID=testtesttest,test", null, 
+     + "/api/getVideoSponsorTimes?videoID=old-testtesttest,test", null, 
       (err, res, body) => {
         if (err) done("couln't call endpoint");
         else if (res.statusCode !== 200) done("non 200 response: " + res.statusCode);
@@ -67,7 +67,7 @@ describe('getVideoSponsorTime', () => {
 
   it('Should be able to get the correct time', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getVideoSponsorTimes?videoID=testtesttest", null, 
+     + "/api/getVideoSponsorTimes?videoID=old-testtesttest", null, 
       (err, res, body) => {
         if (err) done("couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200");

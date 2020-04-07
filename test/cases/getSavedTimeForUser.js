@@ -5,7 +5,7 @@ var getHash = require('../../src/utils/getHash.js');
 
 describe('getSavedTimeForUser', () => {
   before(() => {
-    db.exec("INSERT INTO sponsorTimes VALUES ('getSavedTimeForUser', 1, 11, 2, 'abc1239999', '"+getHash("testman")+"', 0, 50, 0)");
+    db.exec("INSERT INTO sponsorTimes VALUES ('getSavedTimeForUser', 1, 11, 2, 'abc1239999', '" + getHash("testman") + "', 0, 50, 'sponsor', 0)");
   }); 
 
   it('Should be able to get a 200', (done) => {

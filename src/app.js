@@ -8,8 +8,8 @@ var corsMiddleware = require('./middleware/cors.js');
 var loggerMiddleware = require('./middleware/logger.js');
 
 // Routes
-var getVideoSponsorTimes = require('./routes/getVideoSponsorTimes.js');
-var submitSponsorTimes = require('./routes/submitSponsorTimes.js');
+var getSkipSegments = require('./routes/getSkipSegments.js').endpoint;
+var postSkipSegments = require('./routes/postSkipSegments.js');
 var voteOnSponsorTime = require('./routes/voteOnSponsorTime.js');
 var viewedVideoSponsorTime = require('./routes/viewedVideoSponsorTime.js');
 var setUsername = require('./routes/setUsername.js');
@@ -22,17 +22,29 @@ var getTopUsers = require('./routes/getTopUsers.js');
 var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 
+// Old Routes
+var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
+var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
+
 
 //setup CORS correctly
 app.use(corsMiddleware);
 app.use(loggerMiddleware);
+app.use(express.json())
+
+// Setup pretty JSON
+if (config.mode === "development") app.set('json spaces', 2);
 
 //add the get function
-app.get('/api/getVideoSponsorTimes', getVideoSponsorTimes);
+app.get('/api/getVideoSponsorTimes', oldGetVideoSponsorTimes);
 
-//add the post function
-app.get('/api/postVideoSponsorTimes', submitSponsorTimes);
-app.post('/api/postVideoSponsorTimes', submitSponsorTimes);
+//add the oldpost function
+app.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+
+//add the skip segments functions
+app.get('/api/skipSegments', getSkipSegments);
+app.post('/api/skipSegments', postSkipSegments);
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime);

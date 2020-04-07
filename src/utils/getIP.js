@@ -1,5 +1,5 @@
 var fs = require('fs');
-var config = JSON.parse(fs.readFileSync('config.json'));
+var config = require('../config.js');
 
 module.exports = function getIP(req) {
   return config.behindProxy ? req.headers['x-forwarded-for'] : req.connection.remoteAddress;

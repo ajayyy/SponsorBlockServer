@@ -200,71 +200,109 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
   };
 }
 
+/**
+ * 
+ * Returns what would be sent to the client.
+ * Will resond with errors if required. Returns false if it errors.
+ * 
+ * @param req 
+ * @param res 
+ * 
+ * @returns
+ */
+function handleGetSegments(req, res) {
+    const videoID = req.body.videoID || req.query.videoID;
+    // Default to sponsor
+    // If using params instead of JSON, only one category can be pulled
+    const categories = req.body.categories || (req.query.category ? [req.query.category] : ["sponsor"]);
+
+    /**
+     * @type {Array<{
+     *                 segment: number[], 
+     *                 category: string, 
+     *                 UUID: string
+     *              }>
+     *       }
+     */
+    let segments = [];
+
+    let hashedIP = getHash(getIP(req) + config.globalSalt);
+
+    try {
+        for (const category of categories) {
+            let rows = db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? and category = ? ORDER BY startTime")
+                .all(videoID, category);
+
+            let sponsorTimes = [];
+            let votes = []
+            let UUIDs = [];
+    
+            for (let i = 0; i < rows.length; i++) {
+                //check if votes are above -1
+                if (rows[i].votes < -1) {
+                    //too untrustworthy, just ignore it
+                    continue;
+                }
+    
+                //check if shadowHidden
+                //this means it is hidden to everyone but the original ip that submitted it
+                if (rows[i].shadowHidden == 1) {
+                    //get the ip
+                    //await the callback
+                    let hashedIPRow = privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID);
+    
+                    if (!hashedIPRow.some((e) => e.hashedIP === hashedIP)) {
+                        //this isn't their ip, don't send it to them
+                        continue;
+                    }
+                }
+    
+                sponsorTimes.push([rows[i].startTime, rows[i].endTime]);
+                votes.push(rows[i].votes);
+                UUIDs.push(rows[i].UUID);
+            }
+    
+            if (sponsorTimes.length == 0) {
+                res.sendStatus(404);
+                return false;
+            }
+    
+            organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs);
+            sponsorTimes = organisedData.sponsorTimes;
+            UUIDs = organisedData.UUIDs;
+    
+            for (let i = 0; i < sponsorTimes.length; i++) {
+                segments.push({
+                    segment: sponsorTimes[i],
+                    category: category,
+                    UUID: UUIDs[i]
+                });
+            }
+        }
+    } catch(error) {
+        console.error(error);
+        res.send(500);
+
+        return false;
+    }
+
+    if (segments.length == 0) {
+        res.sendStatus(404);
+        return false;
+    }
+
+    return segments;
+}
 
 
-module.exports = function (req, res) {
-  let videoID = req.query.videoID;
+module.exports = {
+    handleGetSegments,
+    endpoint: function (req, res) {
+        let segments = handleGetSegments(req, res);
 
-  let sponsorTimes = [];
-  let votes = []
-  let UUIDs = [];
-
-  let hashedIP = getHash(getIP(req) + config.globalSalt);
-
-  try {
-      let rows = db.prepare("SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? ORDER BY startTime").all(videoID);
-      
-      for (let i = 0; i < rows.length; i++) {
-          //check if votes are above -1
-          if (rows[i].votes < -1) {
-              //too untrustworthy, just ignore it
-              continue;
-          }
-
-          //check if shadowHidden
-          //this means it is hidden to everyone but the original ip that submitted it
-          if (rows[i].shadowHidden == 1) {
-              //get the ip
-              //await the callback
-              let hashedIPRow = privateDB.prepare("SELECT hashedIP FROM sponsorTimes WHERE videoID = ?").all(videoID);
-
-              if (!hashedIPRow.some((e) => e.hashedIP === hashedIP)) {
-                  //this isn't their ip, don't send it to them
-                  continue;
-              }
-          }
-
-          sponsorTimes.push([]);
-          
-          let index = sponsorTimes.length - 1;
-  
-          sponsorTimes[index][0] = rows[i].startTime;
-          sponsorTimes[index][1] = rows[i].endTime;
-
-          votes[index] = rows[i].votes;
-          UUIDs[index] = rows[i].UUID;
-      }
-
-      if (sponsorTimes.length == 0) {
-          res.sendStatus(404);
-          return;
-      }
-
-      organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs);
-      sponsorTimes = organisedData.sponsorTimes;
-      UUIDs = organisedData.UUIDs;
-
-      if (sponsorTimes.length == 0) {
-          res.sendStatus(404);
-      } else {
-          //send result
-          res.send({
-              sponsorTimes: sponsorTimes,
-              UUIDs: UUIDs
-          })
-      }
-  } catch(error) {
-      console.error(error);
-      res.send(500);
-  }
+        if (segments) {
+            //send result
+            res.send(segments)
+        }
+    }
 }
