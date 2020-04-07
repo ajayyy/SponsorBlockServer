@@ -66,7 +66,7 @@ describe('getSkipSegments', () => {
 
   it('Should be able to get a time by category (JSON Method) 1', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=testtesttest&category=sponsor", {
+     + "/api/skipSegments", {
         json: {
            videoID: "testtesttest",
            categories: ["sponsor"]
@@ -89,7 +89,7 @@ describe('getSkipSegments', () => {
 
   it('Should be able to get a time by category (JSON Method) 2', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=testtesttest&category=sponsor", {
+     + "/api/skipSegments", {
         json: {
            videoID: "testtesttest",
            categories: ["intro"]
@@ -112,7 +112,7 @@ describe('getSkipSegments', () => {
 
   it('Should be able to get multiple times by category (JSON Method) 1', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=testtesttest&category=sponsor", {
+     + "/api/skipSegments", {
         json: {
            videoID: "multiple",
            categories: ["intro"]
@@ -131,6 +131,41 @@ describe('getSkipSegments', () => {
                         || segment.category !== "intro" || segment.UUID !== "1-uuid-7") &&
                         (segment.segment[0] !== 1 || segment.segment[1] !== 11
                             || segment.category !== "intro" || segment.UUID !== "1-uuid-6")) {
+                        success = false;
+                        break;
+                    }
+                }
+
+                if (success) done();
+                else done("Received incorrect body: " + JSON.stringify(res.body));
+            } else {
+                done("Received incorrect body: " + JSON.stringify(res.body));
+            }
+        }
+      });
+  });
+
+  it('Should be able to get multiple times by multiple categories (JSON Method)', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/skipSegments", {
+        json: {
+           videoID: "testtesttest",
+           categories: ["sponsor", "intro"]
+        }
+      }, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 200) done("Status code was: " + res.statusCode);
+        else {
+            let data = res.body;
+            if (data.length === 2) {
+
+                let success = true;
+                for (const segment of data) {
+                    if ((segment.segment[0] !== 20 || segment.segment[1] !== 33
+                        || segment.category !== "intro" || segment.UUID !== "1-uuid-2") &&
+                        (segment.segment[0] !== 1 || segment.segment[1] !== 11
+                            || segment.category !== "sponsor" || segment.UUID !== "1-uuid-0")) {
                         success = false;
                         break;
                     }
