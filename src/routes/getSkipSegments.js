@@ -211,10 +211,12 @@ function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
  * @returns
  */
 function handleGetSegments(req, res) {
-    const videoID = req.body.videoID || req.query.videoID;
+    const videoID = req.query.videoID;
     // Default to sponsor
     // If using params instead of JSON, only one category can be pulled
-    const categories = req.body.categories || (req.query.category ? [req.query.category] : ["sponsor"]);
+    const categories = req.query.categories ? JSON.parse(req.query.categories) 
+        : (req.query.category ? [req.query.category] : ["sponsor"]);
+
 
     /**
      * @type {Array<{
