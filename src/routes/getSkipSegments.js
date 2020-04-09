@@ -217,7 +217,6 @@ function handleGetSegments(req, res) {
     const categories = req.query.categories ? JSON.parse(req.query.categories) 
         : (req.query.category ? [req.query.category] : ["sponsor"]);
 
-
     /**
      * @type {Array<{
      *                 segment: number[], 
@@ -262,11 +261,6 @@ function handleGetSegments(req, res) {
                 sponsorTimes.push([rows[i].startTime, rows[i].endTime]);
                 votes.push(rows[i].votes);
                 UUIDs.push(rows[i].UUID);
-            }
-    
-            if (sponsorTimes.length == 0) {
-                res.sendStatus(404);
-                return false;
             }
     
             organisedData = getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs);

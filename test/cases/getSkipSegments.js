@@ -28,7 +28,7 @@ describe('getSkipSegments', () => {
   }); 
   
 
-  it('Should be able to get a time by category (Query Method) 1', (done) => {
+  it('Should be able to get a time by category 1', (done) => {
     request.get(utils.getbaseURL() 
      + "/api/skipSegments?videoID=testtesttest&category=sponsor", null, 
       (err, res, body) => {
@@ -46,7 +46,7 @@ describe('getSkipSegments', () => {
       });
   });
 
-  it('Should be able to get a time by category (Query Method) 2', (done) => {
+  it('Should be able to get a time by category 2', (done) => {
     request.get(utils.getbaseURL() 
      + "/api/skipSegments?videoID=testtesttest&category=intro", null, 
       (err, res, body) => {
@@ -64,65 +64,50 @@ describe('getSkipSegments', () => {
       });
   });
 
-  it('Should be able to get a time by category (JSON Method) 1', (done) => {
+  it('Should be able to get a time by categories array', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments", {
-        json: {
-           videoID: "testtesttest",
-           categories: ["sponsor"]
-        }
-      }, 
+    + "/api/skipSegments?videoID=testtesttest&categories=[\"sponsor\"]", null, 
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode !== 200) done("Status code was: " + res.statusCode);
         else {
-            let data = res.body;
+            let data = JSON.parse(res.body);
             if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                 && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0") {
                     done();
             } else {
-                done("Received incorrect body: " + JSON.stringify(res.body));
+                done("Received incorrect body: " + res.body);
             }
         }
       });
   });
 
-  it('Should be able to get a time by category (JSON Method) 2', (done) => {
+  it('Should be able to get a time by categories array 2', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments", {
-        json: {
-           videoID: "testtesttest",
-           categories: ["intro"]
-        }
-      }, 
+    + "/api/skipSegments?videoID=testtesttest&categories=[\"intro\"]", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode !== 200) done("Status code was: " + res.statusCode);
         else {
-            let data = res.body;
+            let data = JSON.parse(res.body);
             if (data.length === 1 && data[0].segment[0] === 20 && data[0].segment[1] === 33
                 && data[0].category === "intro" && data[0].UUID === "1-uuid-2") {
                     done();
             } else {
-                done("Received incorrect body: " + JSON.stringify(res.body));
+                done("Received incorrect body: " + res.body);
             }
         }
       });
   });
 
-  it('Should be able to get multiple times by category (JSON Method) 1', (done) => {
+  it('Should be able to get multiple times by category', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments", {
-        json: {
-           videoID: "multiple",
-           categories: ["intro"]
-        }
-      }, 
+    + "/api/skipSegments?videoID=multiple&categories=[\"intro\"]", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode !== 200) done("Status code was: " + res.statusCode);
         else {
-            let data = res.body;
+            let data = JSON.parse(res.body);
             if (data.length === 2) {
 
                 let success = true;
@@ -137,27 +122,22 @@ describe('getSkipSegments', () => {
                 }
 
                 if (success) done();
-                else done("Received incorrect body: " + JSON.stringify(res.body));
+                else done("Received incorrect body: " + res.body);
             } else {
-                done("Received incorrect body: " + JSON.stringify(res.body));
+                done("Received incorrect body: " + res.body);
             }
         }
       });
   });
 
-  it('Should be able to get multiple times by multiple categories (JSON Method)', (done) => {
+  it('Should be able to get multiple times by multiple categories', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/skipSegments", {
-        json: {
-           videoID: "testtesttest",
-           categories: ["sponsor", "intro"]
-        }
-      }, 
+      + "/api/skipSegments?videoID=testtesttest&categories=[\"sponsor\", \"intro\"]", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode !== 200) done("Status code was: " + res.statusCode);
         else {
-            let data = res.body;
+            let data = JSON.parse(res.body);
             if (data.length === 2) {
 
                 let success = true;
@@ -172,9 +152,9 @@ describe('getSkipSegments', () => {
                 }
 
                 if (success) done();
-                else done("Received incorrect body: " + JSON.stringify(res.body));
+                else done("Received incorrect body: " + res.body);
             } else {
-                done("Received incorrect body: " + JSON.stringify(res.body));
+                done("Received incorrect body: " + res.body);
             }
         }
       });
