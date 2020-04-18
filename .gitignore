@@ -100,3 +100,6 @@ test/databases/private.db
 
 # Config files
 config.json
+
+# Mac files
+.DS_Store
