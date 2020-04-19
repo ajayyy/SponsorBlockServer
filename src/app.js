@@ -26,7 +26,6 @@ var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
 var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
 
-
 //setup CORS correctly
 app.use(corsMiddleware);
 app.use(loggerMiddleware);
@@ -34,6 +33,9 @@ app.use(express.json())
 
 // Setup pretty JSON
 if (config.mode === "development") app.set('json spaces', 2);
+
+// Set production mode
+app.set('env', config.mode || 'production');
 
 //add the get function
 app.get('/api/getVideoSponsorTimes', oldGetVideoSponsorTimes);
