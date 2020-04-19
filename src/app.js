@@ -85,7 +85,7 @@ app.get('/api/getTotalStats', getTotalStats);
 app.get('/api/getdayssavedformatted', getDaysSavedFormatted);
 
 app.get('/database.db', function (req, res) {
-    res.sendfile("./databases/sponsortimes.db", { root: __dirname });
+    res.sendFile("./databases/sponsorTimes.db", { root: __dirname });
 });
 
 // Create an HTTP service.
