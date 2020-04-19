@@ -20,11 +20,17 @@ The client web browser extension is available here: https://github.com/ajayyy/Sp
 
 This is a node.js server, so clone this repo and run `npm install` to install all dependencies.
 
-Make sure to create the databases in the `databases` folder out of the database schemas.
+Make sure to put the database files in the `./databases` folder if you want to use a pre-existing database. Otherwise, a fresh database will be created.
 
 Rename `config.json.example` to `config.json` and fill the parameters inside. Make sure to remove the comments as comments are not supported in JSON.
 
+Ensure all the tests pass with `npm test`
+
 Run the server with `npm start`.
+
+# Developing
+
+If you want to make changes, run `npm run dev` to automatically reload the server and run tests whenever a file is saved.
 
 # API Docs
 

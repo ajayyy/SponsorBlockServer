@@ -1,0 +1,17 @@
+{
+    "port": 8080,
+    "mockPort": 8081,
+    "globalSalt": "testSalt",
+    "adminUserID": "testUserId",
+    "youtubeAPIKey": "",
+    "discordReportChannelWebhookURL": "http://127.0.0.1:8081/ReportChannelWebhook", 
+    "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/FirstTimeSubmissionsWebhook", 
+    "behindProxy": true,
+    "db": "./test/databases/sponsorTimes.db",
+    "privateDB": "./test/databases/private.db",
+    "createDatabaseIfNotExist": true,
+    "dbSchema": "./test/databases/_sponsorTimes.db.sql",
+    "privateDBSchema": "./test/databases/_private.db.sql",
+    "mode": "test",
+    "readOnly": false
+}

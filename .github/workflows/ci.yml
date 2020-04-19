@@ -1,0 +1,18 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+
+  build:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Initialization
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+      - run: npm install
+
+      - name: Run Tests
+        run: npm test
