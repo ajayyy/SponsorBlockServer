@@ -10,6 +10,7 @@ var isoDurations = require('iso8601-duration');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
+const fetch = require('node-fetch');
 
 // TODO: might need to be a util
 //returns true if the user is considered trustworthy
@@ -21,8 +22,8 @@ async function isUserTrustworthy(userID) {
     if (totalSubmissionsRow.totalSubmissions > 5) {
         //check if they have a high downvote ratio
         let downvotedSubmissionsRow = db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND (votes < 0 OR shadowHidden > 0)").get(userID);
-        
-        return (downvotedSubmissionsRow.downvotedSubmissions / totalSubmissionsRow.totalSubmissions) < 0.6 || 
+
+        return (downvotedSubmissionsRow.downvotedSubmissions / totalSubmissionsRow.totalSubmissions) < 0.6 ||
                 (totalSubmissionsRow.voteSum > downvotedSubmissionsRow.downvotedSubmissions);
     }
 
@@ -48,14 +49,14 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
 
                 let startTime = parseFloat(segmentInfo.segment[0]);
                 let endTime = parseFloat(segmentInfo.segment[1]);
-                
+
                 request.post(config.discordFirstTimeSubmissionsWebhookURL, {
                     json: {
                         "embeds": [{
                             "title": data.items[0].snippet.title,
                             "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
                             "description": "Submission ID: " + UUID +
-                                    "\n\nTimestamp: " + 
+                                    "\n\nTimestamp: " +
                                     getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
                                     "\n\nCategory: " + segmentInfo.category,
                             "color": 10813440,
@@ -110,11 +111,30 @@ async function autoModerateSubmission(submission, callback) {
                 if ((submission.endTime - submission.startTime) > (duration/100)*80) {
                     return "Sponsor segment is over 80% of the video.";
                 } else {
-                    return false;
+                  let overlap = false;
+                  nb_predictions = fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID).then().then();
+                  for (nb_seg in nb_predictions.sponsorSegments){
+                    let head = 0;
+                    let tail = 0;
+                    // If there's an overlap, find the percentage of overlap.
+                    if (submission.startTime <= nb_seg[1] && nb_seg[0] <= submission.endTime){
+                      head = Math.max(submission.startTime, nb_seg[0]);
+                      tail = Math.min(submission.endTime, nb_seg[1]);
+                    }
+                    if ((tail-head)/(nb_seg[1]-nb_seg[0]) > 0.65){
+                      overlap = true;
+                      break;
+                    }
+                  }
+                  if (overlap){
+                    return "Sponsor segment has passed checks.";
+                  } else{
+                    return "Sponsor segment doesn't have at least 65% match.";
+                  }
                 }
             }
         }
-         
+
     } else {
         console.log("Skipped YouTube API");
 
@@ -195,7 +215,7 @@ module.exports = async function postSkipSegments(req, res) {
 
         //check to see if this ip has submitted too many sponsors today
         let rateLimitCheckRow = privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday]);
-        
+
         if (rateLimitCheckRow.count >= 10) {
             //too many sponsors for the same video from the same ip address
             res.sendStatus(429);
@@ -205,7 +225,7 @@ module.exports = async function postSkipSegments(req, res) {
 
         //check to see if the user has already submitted sponsors for this video
         let duplicateCheckRow = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID]);
-        
+
         if (duplicateCheckRow.count >= 8) {
             //too many sponsors for the same video from the same user
             res.sendStatus(429);
@@ -233,24 +253,24 @@ module.exports = async function postSkipSegments(req, res) {
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            let UUID = getHash("v2-categories" + videoID + segmentInfo.segment[0] + 
+            let UUID = getHash("v2-categories" + videoID + segmentInfo.segment[0] +
                 segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
 
             try {
-                db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 
+                db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0],
                     segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned);
-            
+
                 //add to private db as well
                 privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(502);
-                console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " + 
+                console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
-                
+
                 return;
             }
-    
+
             // Discord notification
             sendDiscordNotification(userID, videoID, UUID, segmentInfo);
         }
