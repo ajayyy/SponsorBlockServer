@@ -10,14 +10,35 @@ YouTubeAPI.videos.list({
 const YouTubeAPI = {
   videos: {
     list: (obj, callback) => {
-      if (obj.videoID === "knownWrongID") {
+      if (obj.id === "knownWrongID") {
         callback(undefined, {
           pageInfo: {
             totalResults: 0
           },
           items: []
         });
-      } else {
+      } if (obj.id === "noDuration") {
+        callback(undefined, {
+          pageInfo: {
+            totalResults: 1
+          },
+          items: [
+            {
+              contentDetails: {
+                duration: "PT0S"
+              },
+              snippet: {
+                title: "Example Title",
+                thumbnails: {
+                  maxres: {
+                    url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"
+                  }
+                }
+              }
+            }
+          ]
+        });
+      } else  {
         callback(undefined, {
           pageInfo: {
             totalResults: 1

@@ -101,11 +101,11 @@ async function autoModerateSubmission(submission, callback) {
         } else {
             // Check to see if video exists
             if (data.pageInfo.totalResults === 0) {
-                callback("No video exists with id " + submission.videoID);
+                return "No video exists with id " + submission.videoID;
             } else {
                 let duration = data.items[0].contentDetails.duration;
                 duration = isoDurations.toSeconds(isoDurations.parse(duration));
-                if (duration === 0) {
+                if (duration == 0) {
                     // Allow submission if the duration is 0 (bug in youtube api)
                     return false;
                 } else if ((submission.endTime - submission.startTime) > (duration/100)*80) {
