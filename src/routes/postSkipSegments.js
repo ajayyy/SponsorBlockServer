@@ -112,8 +112,11 @@ async function autoModerateSubmission(submission, callback) {
                     return "Sponsor segment is over 80% of the video.";
                 } else {
                   let overlap = false;
-                  nb_predictions = fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID).then().then();
-                  for (nb_seg in nb_predictions.sponsorSegments){
+                  http = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
+                  if (http.status === 500) return false;
+                  nb_predictions = await http.json();
+
+                  for (const nb_seg of nb_predictions.sponsorSegments){
                     let head = 0;
                     let tail = 0;
                     // If there's an overlap, find the percentage of overlap.
@@ -121,13 +124,13 @@ async function autoModerateSubmission(submission, callback) {
                       head = Math.max(submission.startTime, nb_seg[0]);
                       tail = Math.min(submission.endTime, nb_seg[1]);
                     }
-                    if ((tail-head)/(nb_seg[1]-nb_seg[0]) > 0.65){
+                    if ((tail-head)/(nb_seg[1]-nb_seg[0]) >= 0.65){
                       overlap = true;
                       break;
                     }
                   }
                   if (overlap){
-                    return "Sponsor segment has passed checks.";
+                    return false;
                   } else{
                     return "Sponsor segment doesn't have at least 65% match.";
                   }
