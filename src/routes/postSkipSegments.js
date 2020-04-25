@@ -114,19 +114,16 @@ async function autoModerateSubmission(submission, callback) {
                   let overlap = false;
                   http = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
                   if (http.status === 500) return false;
-                  nb_predictions = await http.json();
 
+                  nb_predictions = await http.json();
                   for (const nb_seg of nb_predictions.sponsorSegments){
-                    let head = 0;
-                    let tail = 0;
-                    // If there's an overlap, find the percentage of overlap.
-                    if (submission.startTime <= nb_seg[1] && nb_seg[0] <= submission.endTime){
-                      head = Math.max(submission.startTime, nb_seg[0]);
-                      tail = Math.min(submission.endTime, nb_seg[1]);
-                    }
-                    if ((tail-head)/(nb_seg[1]-nb_seg[0]) >= 0.65){
-                      overlap = true;
-                      break;
+                    // The submission needs to be a subset of the widened NB prediction
+                    // and at least 65% of NB's prediction.
+                    if (nb_seg[0]-2 <= submission.startTime  && submission.endTime <= nb_seg[1]+2){
+                      if ((submission.endTime - submission.startTime)/(nb_seg[1]-nb_seg[0] >= 0.65)){
+                        overlap=true;
+                        break;
+                      }
                     }
                   }
                   if (overlap){
