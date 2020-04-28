@@ -108,10 +108,10 @@ module.exports = async function voteOnSponsorTime(req, res) {
                       json: {
                           "embeds": [{
                               "title": data.items[0].snippet.title,
-                              "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID + 
-                                          "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
-                              "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views + 
-                                              " Views**\n\n**Submission ID:** " + UUID 
+                              "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID 
+                                  + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
+                              "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views 
+                                  + " Views**\n\n**Submission ID:** " + UUID 
                                   + "\n\n**Submitted by:** "+submissionInfoRow.userName+"\n " + submissionInfoRow.userID 
                                   + "\n\n**Total User Submissions:** "+submissionInfoRow.count
                                   + "\n**Disregarded User Submissions:** "+submissionInfoRow.disregarded
