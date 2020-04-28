@@ -186,7 +186,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
         db.prepare("UPDATE sponsorTimes SET " + tableName + " += ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
 
         //for each positive vote, see if a hidden submission can be shown again
-        if (incrementAmount > 0) {
+        if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
             //find the UUID that submitted the submission that was voted on
             let submissionUserID = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID).userID;
 
