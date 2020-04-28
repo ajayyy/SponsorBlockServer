@@ -100,11 +100,9 @@ module.exports = async function voteOnSponsorTime(req, res) {
                   id: submissionInfoRow.videoID
               }, function (err, data) {
                   if (err || data.items.length === 0) {
-                      console.log('pre-err');
                       err && console.log(err);
                       return;
                   }
-                  console.log('presend' + submissionInfoRow.count);
                   
                   request.post(config.discordReportChannelWebhookURL, {
                       json: {
