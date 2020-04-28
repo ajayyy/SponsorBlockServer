@@ -7,10 +7,12 @@
     "youtubeAPIKey": null, //get this from Google Cloud Platform [optional]
     "discordReportChannelWebhookURL": null, //URL from discord if you would like notifications when someone makes a report [optional]
     "discordFirstTimeSubmissionsWebhookURL": null, //URL from discord if you would like notifications when someone makes a first time submission [optional]
+    "discordCompletelyIncorrectReportWebhookURL": null, //URL from discord if you would like notifications when someone reports a submission as completely incorrect [optional]
     "behindProxy": true,
     "db": "./databases/sponsorTimes.db",
     "privateDB": "./databases/private.db",
     "createDatabaseIfNotExist": true, //This will run on startup every time (unless readOnly is true) - so ensure "create table if not exists" is used in the schema
+    "schemaFolder": "./databases",
     "dbSchema": "./databases/_sponsorTimes.db.sql",
     "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",

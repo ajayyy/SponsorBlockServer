@@ -18,6 +18,11 @@ CREATE TABLE IF NOT EXISTS "userNames" (
 	"userID"	TEXT NOT NULL,
 	"userName"	TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS "version" (
+    "code" INTEGER NOT NULL default '0'
+);
+
 CREATE INDEX IF NOT EXISTS sponsorTimes_videoID on sponsorTimes(videoID);
 CREATE INDEX IF NOT EXISTS sponsorTimes_UUID on sponsorTimes(UUID);
 COMMIT;

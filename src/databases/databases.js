@@ -15,6 +15,13 @@ if (config.createDatabaseIfNotExist && !config.readOnly) {
   if (fs.existsSync(config.privateDBSchema)) privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
 }
 
+// Upgrade database if required
+let versionCode = db.prepare("SELECT code FROM version").get() || 0;
+let path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
+if (fs.existsSync(path)) {
+  db.exec(fs.readFileSync(path).toString());
+}
+
 // Enable WAL mode checkpoint number
 if (!config.readOnly && config.mode === "production") {
   db.exec("PRAGMA journal_mode=WAL;");
