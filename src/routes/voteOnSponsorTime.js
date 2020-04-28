@@ -174,6 +174,6 @@ module.exports = async function voteOnSponsorTime(req, res) {
       res.sendStatus(200);
   } catch (err) {
       console.error(err);
-      res.status(400).json({error: 'Think of something to return'});
+      res.status(500).json({error: 'Internal error creating segment vote'});
   }
 }
