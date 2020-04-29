@@ -114,12 +114,12 @@ module.exports = async function voteOnSponsorTime(req, res) {
                                   + " Views**\n\n**Submission ID:** " + UUID 
                                   + "\n\n**Submitted by:** "+submissionInfoRow.userName+"\n " + submissionInfoRow.userID 
                                   + "\n\n**Total User Submissions:** "+submissionInfoRow.count
-                                  + "\n**Disregarded User Submissions:** "+submissionInfoRow.disregarded
+                                  + "\n**Ignored User Submissions:** "+submissionInfoRow.disregarded
                                   +"\n\n**Timestamp:** " + 
                                       getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                               "color": 10813440,
                               "author": {
-                                  "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (vipRow.userCount !== 0 && "Report by VIP User")
+                                  "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (vipRow.userCount !== 0 ? "Report by VIP User" : "")
                               },
                               "thumbnail": {
                                   "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
