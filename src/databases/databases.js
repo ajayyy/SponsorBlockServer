@@ -16,13 +16,15 @@ if (config.createDatabaseIfNotExist && !config.readOnly) {
 }
 
 // Upgrade database if required
-let versionCode = db.prepare("SELECT code FROM version").get() || 0;
-let path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
-while (fs.existsSync(path)) {
-  db.exec(fs.readFileSync(path).toString());
+if (!config.readOnly) {
+  let versionCode = db.prepare("SELECT code FROM version").get() || 0;
+  let path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
+  while (fs.existsSync(path)) {
+    db.exec(fs.readFileSync(path).toString());
 
-  versionCode = db.prepare("SELECT code FROM version").get();
-  path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
+    versionCode = db.prepare("SELECT code FROM version").get();
+    path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
+  }
 }
 
 // Enable WAL mode checkpoint number
