@@ -11,11 +11,6 @@ var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
 
-function completelyIncorrectVote(req, res, params) {
-
-
-}
-
 module.exports = async function voteOnSponsorTime(req, res) {
     let UUID = req.query.UUID;
     let userID = req.query.userID;
