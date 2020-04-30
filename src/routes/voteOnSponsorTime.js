@@ -86,7 +86,11 @@ module.exports = async function voteOnSponsorTime(req, res) {
       // Send discord message
       if (type != 1) {
           // Get video ID
-          let submissionInfoRow = db.prepare("SELECT videoID, userID, startTime, endTime FROM sponsorTimes WHERE UUID = ?").get(UUID);
+          let submissionInfoRow = db.prepare("SELECT s.videoID, s.userID, s.startTime, s.endTime, u.userName, "+
+            "(select count(1) from sponsorTimes where userID = s.userID) count, "+
+            "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded "+
+            "FROM sponsorTimes s inner join userNames u on s.userID = u.userID where s.UUID=?"
+          ).get(UUID);
 
           let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(nonAnonUserID);
 
@@ -104,11 +108,14 @@ module.exports = async function voteOnSponsorTime(req, res) {
                       json: {
                           "embeds": [{
                               "title": data.items[0].snippet.title,
-                              "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID + 
-                                          "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
-                              "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views + 
-                                              " Views**\n\nSubmission ID: " + UUID + 
-                                  "\n\nSubmitted by: " + submissionInfoRow.userID + "\n\nTimestamp: " + 
+                              "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID 
+                                  + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
+                              "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views 
+                                  + " Views**\n\n**Submission ID:** " + UUID 
+                                  + "\n\n**Submitted by:** "+submissionInfoRow.userName+"\n " + submissionInfoRow.userID 
+                                  + "\n\n**Total User Submissions:** "+submissionInfoRow.count
+                                  + "\n**Ignored User Submissions:** "+submissionInfoRow.disregarded
+                                  +"\n\n**Timestamp:** " + 
                                       getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                               "color": 10813440,
                               "author": {
@@ -167,5 +174,6 @@ module.exports = async function voteOnSponsorTime(req, res) {
       res.sendStatus(200);
   } catch (err) {
       console.error(err);
+      res.status(500).json({error: 'Internal error creating segment vote'});
   }
 }

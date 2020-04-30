@@ -130,6 +130,16 @@ describe('postSkipSegments', () => {
       });
   }).timeout(5000);
 
+  it('Should be allowed if youtube thinks duration is 0', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 200) done(); // pass
+        else done("non 200 status code: " + res.statusCode + " ("+body+")");
+      });
+  }).timeout(5000);
+
   it('Should be rejected if not a valid videoID', (done) => {
     request.get(utils.getbaseURL()
      + "/api/postVideoSponsorTimes?videoID=knownWrongID&startTime=30&endTime=1000000&userID=testing", null,

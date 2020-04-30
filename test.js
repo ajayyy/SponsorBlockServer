@@ -34,7 +34,7 @@ var mockServer = createMockServer(() => {
     mocha.run(function(failures) {
       mockServer.close();
       server.close();
-      process.exitCode = failures ? 1 : 0;  // exit with non-zero status if there were failures
+      process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
     });
   });
 });
