@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "userNames" (
 	"userName"	TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS "categoryVotes" (
-	"UUID"	TEXT NOT NULL UNIQUE,
+	"UUID"	TEXT NOT NULL,
 	"category"	TEXT NOT NULL,
 	"votes"	INTEGER NOT NULL default '0'
 );

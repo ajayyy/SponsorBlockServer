@@ -13,7 +13,7 @@ var request = require('request');
 
 function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Check if they've already made a vote
-    let previousVoteInfo = privateDB.prepare("select count(*) as votes, category from categoryVotes where UUID = ? and userID = ?").get(UUID, userID, category);
+    let previousVoteInfo = privateDB.prepare("select count(*) as votes, category from categoryVotes where UUID = ? and userID = ?").get(UUID, userID);
 
     if (previousVoteInfo > 0 && previousVoteInfo.category === category) {
         // Double vote, ignore
@@ -28,10 +28,10 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Add the vote
     if (db.prepare("select count(*) as count from categoryVotes where UUID = ? and category = ?").get(UUID, category).count > 0) {
         // Update the already existing db entry
-        db.prepare("update categoryVotes set count += 1 where UUID = ? and category = ?").run(UUID, category);
+        db.prepare("update categoryVotes set votes = votes + ? where UUID = ? and category = ?").run(voteAmount, UUID, category);
     } else {
         // Add a db entry
-        db.prepare("insert into categoryVotes (UUID, category, count) values (?, ?, 1)").run(UUID, category);
+        db.prepare("insert into categoryVotes (UUID, category, votes) values (?, ?, ?)").run(UUID, category, voteAmount);
     }
 
     // Add the info into the private db
@@ -46,10 +46,11 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
 
     // See if the submissions categort is ready to change
     let currentCategory = db.prepare("select category from sponsorTimes where UUID = ?").get(UUID);
-    let currentCategoryCount = db.prepare("select votes from categoryVotes where UUID = ? and category = ?").get(UUID, currentCategory).votes;
+    let currentCategoryInfo = db.prepare("select votes from categoryVotes where UUID = ? and category = ?").get(UUID, currentCategory.category);
+
     // Change this value from 1 in the future to make it harder to change categories
     // Done this way without ORs incase the value is zero
-    if (currentCategoryCount === undefined || currentCategoryCount === null) currentCategoryCount = 1;
+    let currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? 1 : currentCategoryInfo.votes;
 
     let nextCategoryCount = (previousVoteInfo.votes || 0) + 1;
 
@@ -119,22 +120,22 @@ module.exports = async function voteOnSponsorTime(req, res) {
             return;
         }
         if (votesRow != undefined) {
-            if (votesRow.type == 1 || type == 11) {
+            if (votesRow.type === 1 || type === 11) {
                 //upvote
                 oldIncrementAmount = 1;
-            } else if (votesRow.type == 0 || type == 10) {
+            } else if (votesRow.type === 0 || type === 10) {
                 //downvote
                 oldIncrementAmount = -1;
-            } else if (votesRow.type == 2) {
+            } else if (votesRow.type === 2) {
                 //extra downvote
                 oldIncrementAmount = -4;
             } else if (votesRow.type < 0) {
                 //vip downvote
                 oldIncrementAmount = votesRow.type;
-            } else if (votesRow.type == 12) {
+            } else if (votesRow.type === 12) {
                 // VIP downvote for completely incorrect
                 oldIncrementAmount = -500;
-            } else if (votesRow.type == 13) {
+            } else if (votesRow.type === 13) {
                 // VIP upvote for completely incorrect
                 oldIncrementAmount = 500;
             }
@@ -142,8 +143,8 @@ module.exports = async function voteOnSponsorTime(req, res) {
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
         let row = db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID);
-        
-        if (voteTypeEnum == voteTypes.normal) {
+
+        if (voteTypeEnum === voteTypes.normal) {
             if (isVIP && incrementAmount < 0) {
                 //this user is a vip and a downvote
                 incrementAmount = - (row.votes + 2 - oldIncrementAmount);
@@ -164,65 +165,67 @@ module.exports = async function voteOnSponsorTime(req, res) {
         // Send discord message
         if (incrementAmount < 0) {
             // Get video ID
-            let submissionInfoRow = db.prepare("SELECT s.videoID, s.userID, s.startTime, s.endTime, u.userName, "+
-                "(select count(1) from sponsorTimes where userID = s.userID) count, "+
-                "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded "+
-                "FROM sponsorTimes s inner join userNames u on s.userID = u.userID where s.UUID=?"
+            let submissionInfoRow = db.prepare("SELECT s.videoID, s.userID, s.startTime, s.endTime, u.userName, " +
+                "(select count(1) from sponsorTimes where userID = s.userID) count, " +
+                "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
+                "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.UUID=?"
             ).get(UUID);
 
             let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(nonAnonUserID);
 
-            let webhookURL = null;
-            if (voteTypeEnum === voteTypes.normal) {
-                webhookURL = config.discordReportChannelWebhookURL;
-            } else if (voteTypeEnum === voteTypes.incorrect) {
-                webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
-            }
-
-            if (config.youtubeAPIKey !== null && webhookURL !== null) {
-                YouTubeAPI.videos.list({
-                    part: "snippet",
-                    id: submissionInfoRow.videoID
-                }, function (err, data) {
-                    if (err || data.items.length === 0) {
-                        err && console.log(err);
-                        return;
-                    }
-                    
-                    request.post(webhookURL, {
-                        json: {
-                            "embeds": [{
-                                "title": data.items[0].snippet.title,
-                                "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID 
-                                  + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
-                                "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views 
-                                    + " Views**\n\n**Submission ID:** " + UUID 
-                                    + "\n\n**Submitted by:** "+submissionInfoRow.userName+"\n " + submissionInfoRow.userID 
-                                    + "\n\n**Total User Submissions:** "+submissionInfoRow.count
-                                    + "\n**Ignored User Submissions:** "+submissionInfoRow.disregarded
-                                    +"\n\n**Timestamp:** " + 
-                                        getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
-                                "color": 10813440,
-                                "author": {
-                                    "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (isVIP ? "Report by VIP User" : "")
-                                },
-                                "thumbnail": {
-                                    "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                                }
-                            }]
+            if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
+                let webhookURL = null;
+                if (voteTypeEnum === voteTypes.normal) {
+                    webhookURL = config.discordReportChannelWebhookURL;
+                } else if (voteTypeEnum === voteTypes.incorrect) {
+                    webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
+                }
+    
+                if (config.youtubeAPIKey !== null && webhookURL !== null) {
+                    YouTubeAPI.videos.list({
+                        part: "snippet",
+                        id: submissionInfoRow.videoID
+                    }, function (err, data) {
+                        if (err || data.items.length === 0) {
+                            err && console.log(err);
+                            return;
                         }
-                    }, (err, res) => {
-                        if (err) {
-                            console.log("Failed to send reported submission Discord hook.");
-                            console.log(JSON.stringify(err));
-                            console.log("\n");
-                        } else if (res && res.statusCode >= 400) {
-                            console.log("Error sending reported submission Discord hook");
-                            console.log(JSON.stringify(res));
-                            console.log("\n");
-                        }
+                        
+                        request.post(webhookURL, {
+                            json: {
+                                "embeds": [{
+                                    "title": data.items[0].snippet.title,
+                                    "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID 
+                                      + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
+                                    "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views 
+                                        + " Views**\n\n**Submission ID:** " + UUID 
+                                        + "\n\n**Submitted by:** "+submissionInfoRow.userName+"\n " + submissionInfoRow.userID 
+                                        + "\n\n**Total User Submissions:** "+submissionInfoRow.count
+                                        + "\n**Ignored User Submissions:** "+submissionInfoRow.disregarded
+                                        +"\n\n**Timestamp:** " + 
+                                            getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
+                                    "color": 10813440,
+                                    "author": {
+                                        "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (isVIP ? "Report by VIP User" : "")
+                                    },
+                                    "thumbnail": {
+                                        "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                                    }
+                                }]
+                            }
+                        }, (err, res) => {
+                            if (err) {
+                                console.log("Failed to send reported submission Discord hook.");
+                                console.log(JSON.stringify(err));
+                                console.log("\n");
+                            } else if (res && res.statusCode >= 400) {
+                                console.log("Error sending reported submission Discord hook");
+                                console.log(JSON.stringify(res));
+                                console.log("\n");
+                            }
+                        });
                     });
-                });
+                }
             }
         }
 
@@ -242,7 +245,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
 
         //update the vote count on this sponsorTime
         //oldIncrementAmount will be zero is row is null
-        db.prepare("UPDATE sponsorTimes SET " + columnName + " += ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+        db.prepare("UPDATE sponsorTimes SET " + columnName + " = " + columnName + " + ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
 
         //for each positive vote, see if a hidden submission can be shown again
         if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
