@@ -113,7 +113,7 @@ async function autoModerateSubmission(submission, callback) {
                 } else {
                   let overlap = false;
                   http = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
-                  if (http.status === 500) return false;
+                  if (http.status >= 500 && http.status < 600) return false;
 
                   nb_predictions = await http.json();
                   for (const nb_seg of nb_predictions.sponsorSegments){
