@@ -7,6 +7,9 @@ let options = {
   fileMustExist: !config.createDatabaseIfNotExist
 };
 
+fs.mkdirSync(config.db);
+fs.mkdirSync(config.db);
+
 var db = new Sqlite3(config.db, options);
 var privateDB = new Sqlite3(config.privateDB, options);
 
