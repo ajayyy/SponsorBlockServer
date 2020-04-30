@@ -112,10 +112,10 @@ async function autoModerateSubmission(submission, callback) {
                     return "Sponsor segment is over 80% of the video.";
                 } else {
                   let overlap = false;
-                  http = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
-                  if (http.status >= 500 && http.status < 600) return false;
+                  let response = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
+                  if (!response.ok) return false;
 
-                  nb_predictions = await http.json();
+                  nb_predictions = await response.json();
                   for (const nb_seg of nb_predictions.sponsorSegments){
                     // The submission needs to be a subset of the widened NB prediction
                     // and at least 65% of NB's prediction.
