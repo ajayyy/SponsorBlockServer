@@ -11,12 +11,59 @@ var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
 
+function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
+    // Check if they've already made a vote
+    let previousVoteInfo = privateDB.prepare("select count(*) as votes, category from categoryVotes where UUID = ? and userID = ?").get(UUID, userID, category);
+
+    if (previousVoteInfo > 0 && previousVoteInfo.category === category) {
+        // Double vote, ignore
+        res.sendStatus(200);
+        return;
+    }
+
+    let timeSubmitted = Date.now();
+
+    // Add the vote
+    if (db.prepare("select count(*) as count from categoryVotes where UUID = ? and category = ?").get(UUID, category).count > 0) {
+        // Update the already existing db entry
+        db.prepare("update categoryVotes set count += 1 where UUID = ? and category = ?").run(UUID, category);
+    } else {
+        // Add a db entry
+        db.prepare("insert into categoryVotes (UUID, category, count) values (?, ?, 1)").run(UUID, category);
+    }
+
+    // Add the info into the private db
+    if (previousVoteInfo > 0) {
+        // Reverse the previous vote
+        db.prepare("update categoryVotes set votes -= 1 where UUID = ? and category = ?").run(UUID, previousVoteInfo.category);
+
+        privateDB.prepare("update categoryVotes set category = ?, timeSubmitted = ?, hashedIP = ?").run(category, timeSubmitted, hashedIP)
+    } else {
+        privateDB.prepare("insert into categoryVotes (UUID, userID, hashedIP, category, timeSubmitted) values (?, ?, ?, ?, ?)").run(UUID, userID, hashedIP, category, timeSubmitted);
+    }
+
+    // See if the submissions categort is ready to change
+    let currentCategory = db.prepare("select category from sponsorTimes where UUID = ?").get(UUID);
+    // Change this value from 1 in the future to make it harder to change categories
+    let currentCategoryCount = db.prepare("select votes from categoryVotes where UUID = ? and category = ?").get(UUID, currentCategory).votes ?? 1;
+    let nextCategoryCount = previousVoteInfo.votes ?? 1;
+
+    //TODO: In the future, raise this number from zero to make it harder to change categories
+    if (nextCategoryCount - currentCategoryCount >= 0) {
+        // Replace the category
+        db.prepare("update sponsorTimes set category = ? where UUID = ?").run(category, UUID);
+    }
+
+    res.sendStatus(200);
+}
+
 module.exports = async function voteOnSponsorTime(req, res) {
     let UUID = req.query.UUID;
     let userID = req.query.userID;
     let type = req.query.type;
+    let category = req.query.category;
 
-    if (UUID == undefined || userID == undefined || type == undefined) {
+    if (UUID === undefined || userID === undefined || (type === undefined && category === undefined)) {
         //invalid request
         res.sendStatus(400);
         return;
@@ -31,6 +78,13 @@ module.exports = async function voteOnSponsorTime(req, res) {
 
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(ip + config.globalSalt);
+
+    //check if this user is on the vip list
+    let isVIP = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID).userCount > 0;
+
+    if (type === undefined && category !== undefined) {
+        return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
+    }
 
     let voteTypes = {
         normal: 0,
@@ -80,14 +134,11 @@ module.exports = async function voteOnSponsorTime(req, res) {
             }
         }
 
-        //check if this user is on the vip list
-        let vipRow = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(nonAnonUserID);
-
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
         let row = db.prepare("SELECT votes, views FROM sponsorTimes WHERE UUID = ?").get(UUID);
         
         if (voteTypeEnum == voteTypes.normal) {
-            if (vipRow.userCount != 0 && incrementAmount < 0) {
+            if (isVIP && incrementAmount < 0) {
                 //this user is a vip and a downvote
                 incrementAmount = - (row.votes + 2 - oldIncrementAmount);
                 type = incrementAmount;
@@ -97,7 +148,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
                 type = incrementAmount;
             }
         } else if (voteTypeEnum == voteTypes.incorrect) {
-            if (vipRow.userCount != 0) {
+            if (isVIP) {
                 //this user is a vip and a downvote
                 incrementAmount = 500 * incrementAmount;
                 type = incrementAmount < 0 ? 12 : 13;
@@ -147,7 +198,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
                                         getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                                 "color": 10813440,
                                 "author": {
-                                    "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (vipRow.userCount !== 0 ? "Report by VIP User" : "")
+                                    "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (isVIP ? "Report by VIP User" : "")
                                 },
                                 "thumbnail": {
                                     "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
@@ -176,16 +227,16 @@ module.exports = async function voteOnSponsorTime(req, res) {
             privateDB.prepare("INSERT INTO votes VALUES(?, ?, ?, ?)").run(UUID, userID, hashedIP, type);
         }
 
-        let tableName = "";
+        let columnName = "";
         if (voteTypeEnum === voteTypes.normal) {
-            tableName = "votes";
+            columnName = "votes";
         } else if (voteTypeEnum === voteTypes.incorrect) {
-            tableName = "incorrectVotes";
+            columnName = "incorrectVotes";
         }
 
         //update the vote count on this sponsorTime
         //oldIncrementAmount will be zero is row is null
-        db.prepare("UPDATE sponsorTimes SET " + tableName + " += ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
+        db.prepare("UPDATE sponsorTimes SET " + columnName + " += ? WHERE UUID = ?").run(incrementAmount - oldIncrementAmount, UUID);
 
         //for each positive vote, see if a hidden submission can be shown again
         if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
