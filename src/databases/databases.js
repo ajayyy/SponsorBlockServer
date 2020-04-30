@@ -1,14 +1,20 @@
 var config = require('../config.js');
 var Sqlite3 = require('better-sqlite3');
 var fs = require('fs');
+var path = require('path');
 
 let options = {
   readonly: config.readOnly,
   fileMustExist: !config.createDatabaseIfNotExist
 };
 
-fs.mkdirSync(config.db);
-fs.mkdirSync(config.db);
+// Make dirs if required
+if (!fs.existsSync(path.join(config.db, "../"))) {
+  fs.mkdirSync(path.join(config.db, "../"));
+}
+if (!fs.existsSync(path.join(config.privateDB, "../"))) {
+  fs.mkdirSync(path.join(config.privateDB, "../"));
+}
 
 var db = new Sqlite3(config.db, options);
 var privateDB = new Sqlite3(config.privateDB, options);
