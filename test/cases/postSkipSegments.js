@@ -100,7 +100,7 @@ describe('postSkipSegments', () => {
       });
   });
 
-  it('Should be *rejected* if there\'s not at least 65% overlap with NB' , (done) => {
+  it("Should be rejected if there's not at least 65% overlap with NB", (done) => {
     request.get(utils.getbaseURL()
      + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testing", null,
       (err, res, body) => {
@@ -110,7 +110,17 @@ describe('postSkipSegments', () => {
       });
   }).timeout(5000);
 
-  it('Should be *accepted* if there\'s at least 65% overlap with NB' , (done) => {
+  it("Should be accepted if only off by 5s", (done) => {
+    request.get(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=0&endTime=12&userID=testing", null,
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 200) done(); // pass
+        else done("non 403 status code: " + res.statusCode + " ("+body+")");
+      });
+  }).timeout(5000);
+
+  it("Should be accepted if there's at least 65% overlap with NB" , (done) => {
     request.get(utils.getbaseURL()
      + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=0&endTime=6&userID=testing", null,
       (err, res, body) => {

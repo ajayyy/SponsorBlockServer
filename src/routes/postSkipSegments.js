@@ -118,15 +118,15 @@ async function autoModerateSubmission(submission, callback) {
 
                     let nbPredictions = await response.json();
                     for (const nbSegment of nbPredictions.sponsorSegments) {
-                        // The submission needs to be a subset of the widened NB prediction
-                        // and at least 65% of NB's prediction.
-                        if (nbSegment[0] - 2 <= submission.startTime  && submission.endTime <= nbSegment[1] + 2){
-                            if ((submission.endTime - submission.startTime) / (nbSegment[1]-nbSegment[0]) >= 0.65){
-                                overlap = true;
-                                break;
-                            }
+                        // The submission needs to be similar to the NB prediction by 65% or off by less than 7 seconds
+                        // This calculated how off it is
+                        let offAmount = Math.abs(nbSegment[0] - submission.startTime) + Math.abs(nbSegment[1] - submission.endTime);
+                        if (offAmount / (nbSegment[1] - nbSegment[0]) <= 0.45 || offAmount <= 7) {
+                            overlap = true;
+                            break;
                         }
                     }
+
                     if (overlap) {
                         return false;
                     } else{
