@@ -84,16 +84,15 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
     }
 }
 
-// submission: {videoID, startTime, endTime}
 // callback:  function(reject: "String containing reason the submission was rejected")
 // returns: string when an error, false otherwise
-async function autoModerateSubmission(submission, callback) {
+async function autoModerateSubmission(videoID, segments) {
     // Get the video information from the youtube API
     if (config.youtubeAPI !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
             YouTubeAPI.videos.list({
                 part: "contentDetails",
-                id: submission.videoID
+                id: videoID
             }, (err, data) => resolve({err, data}));
         });
 
@@ -102,39 +101,44 @@ async function autoModerateSubmission(submission, callback) {
         } else {
             // Check to see if video exists
             if (data.pageInfo.totalResults === 0) {
-                return "No video exists with id " + submission.videoID;
+                return "No video exists with id " + videoID;
             } else {
                 let duration = data.items[0].contentDetails.duration;
                 duration = isoDurations.toSeconds(isoDurations.parse(duration));
-
                 if (duration == 0) {
                     // Allow submission if the duration is 0 (bug in youtube api)
                     return false;
-                } else if ((submission.endTime - submission.startTime) > (duration / 100) * 80) {
-                    // Reject submission if over 80% of the video
-                    return "Sponsor segment is over 80% of the video.";
-                } else {
-                    let overlap = false;
+                }
 
-                    let response = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
-                    if (!response.ok) return false;
+                for (const segment of segments) {
+                    if ((segment.segment[1] - segment.segment[0]) > (duration / 100) * 80) {
+                        // Reject submission if over 80% of the video
+                        return "One of your submitted segments is over 80% of the video.";
+                    }
+                }
+                
+                let overlap = false;
 
-                    let nbPredictions = await response.json();
-                    for (const nbSegment of nbPredictions.sponsorSegments) {
+                let response = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + videoID);
+                if (!response.ok) return false;
+
+                let nbPredictions = await response.json();
+                for (const nbSegment of nbPredictions.sponsorSegments) {
+                    for (const segment of segments) {
                         // The submission needs to be similar to the NB prediction by 65% or off by less than 7 seconds
                         // This calculated how off it is
-                        let offAmount = Math.abs(nbSegment[0] - submission.startTime) + Math.abs(nbSegment[1] - submission.endTime);
+                        let offAmount = Math.abs(nbSegment[0] - segment.segment[0]) + Math.abs(nbSegment[1] - segment.segment[1]);
                         if (offAmount / (nbSegment[1] - nbSegment[0]) <= 0.45 || offAmount <= 7) {
                             overlap = true;
                             break;
                         }
                     }
+                }
 
-                    if (overlap) {
-                        return false;
-                    } else{
-                        return "Sponsor segment doesn't have at least 65% match.";
-                    }
+                if (overlap) {
+                    return false;
+                } else{
+                    return "One of your submitted segments doesn't have at least 65% match.";
                 }
             }
         }
@@ -200,12 +204,12 @@ module.exports = async function postSkipSegments(req, res) {
             res.sendStatus(409);
             return;
         }
-
-        let autoModerateResult = await autoModerateSubmission({videoID, startTime, endTime});
-        if (autoModerateResult) {
-            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult);
-            return;
-        }
+    }
+    // Auto moderator check
+    let autoModerateResult = await autoModerateSubmission(videoID, segments);
+    if (autoModerateResult) {
+        res.status(403).send("Request rejected by auto moderator: " + autoModerateResult);
+        return;
     }
 
     try {
