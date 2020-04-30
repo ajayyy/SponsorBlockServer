@@ -23,6 +23,8 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
 
     let timeSubmitted = Date.now();
 
+    let voteAmount = isVIP ? 500 : 1;
+
     // Add the vote
     if (db.prepare("select count(*) as count from categoryVotes where UUID = ? and category = ?").get(UUID, category).count > 0) {
         // Update the already existing db entry
@@ -52,7 +54,8 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     let nextCategoryCount = (previousVoteInfo.votes || 0) + 1;
 
     //TODO: In the future, raise this number from zero to make it harder to change categories
-    if (nextCategoryCount - currentCategoryCount >= 0) {
+    // VIPs change it every time
+    if (nextCategoryCount - currentCategoryCount >= 0 || isVIP) {
         // Replace the category
         db.prepare("update sponsorTimes set category = ? where UUID = ?").run(category, UUID);
     }
