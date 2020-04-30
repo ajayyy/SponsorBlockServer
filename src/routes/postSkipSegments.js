@@ -181,6 +181,9 @@ module.exports = async function postSkipSegments(req, res) {
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
 
+    //check if this user is on the vip list
+    let isVIP = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID).userCount > 0;
+
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -207,17 +210,17 @@ module.exports = async function postSkipSegments(req, res) {
             return;
         }
     }
+
     // Auto moderator check
-    let autoModerateResult = await autoModerateSubmission(videoID, segments);
-    if (autoModerateResult) {
-        res.status(403).send("Request rejected by auto moderator: " + autoModerateResult);
-        return;
+    if (!isVIP) {
+        let autoModerateResult = await autoModerateSubmission(videoID, segments);
+        if (autoModerateResult) {
+            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult);
+            return;
+        }
     }
 
     try {
-        //check if this user is on the vip list
-        let vipRow = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID);
-
         //get current time
         let timeSubmitted = Date.now();
 
@@ -254,7 +257,7 @@ module.exports = async function postSkipSegments(req, res) {
         }
 
         let startingVotes = 0;
-        if (vipRow.userCount > 0) {
+        if (isVIP) {
             //this user is a vip, start them at a higher approval rating
             startingVotes = 10;
         }
