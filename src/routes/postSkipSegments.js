@@ -108,29 +108,30 @@ async function autoModerateSubmission(submission, callback) {
                 duration = isoDurations.toSeconds(isoDurations.parse(duration));
 
                 // Reject submission if over 80% of the video
-                if ((submission.endTime - submission.startTime) > (duration/100)*80) {
+                if ((submission.endTime - submission.startTime) > (duration/100) * 80) {
                     return "Sponsor segment is over 80% of the video.";
                 } else {
-                  let overlap = false;
-                  let response = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
-                  if (!response.ok) return false;
+                    let overlap = false;
 
-                  nb_predictions = await response.json();
-                  for (const nb_seg of nb_predictions.sponsorSegments){
-                    // The submission needs to be a subset of the widened NB prediction
-                    // and at least 65% of NB's prediction.
-                    if (nb_seg[0]-2 <= submission.startTime  && submission.endTime <= nb_seg[1]+2){
-                      if ((submission.endTime - submission.startTime)/(nb_seg[1]-nb_seg[0]) >= 0.65){
-                        overlap=true;
-                        break;
-                      }
+                    let response = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + submission.videoID);
+                    if (!response.ok) return false;
+
+                    let nbPredictions = await response.json();
+                    for (const nbSegment of nbPredictions.sponsorSegments) {
+                        // The submission needs to be a subset of the widened NB prediction
+                        // and at least 65% of NB's prediction.
+                        if (nbSegment[0] - 2 <= submission.startTime  && submission.endTime <= nbSegment[1] + 2){
+                            if ((submission.endTime - submission.startTime) / (nbSegment[1]-nbSegment[0]) >= 0.65){
+                                overlap = true;
+                                break;
+                            }
+                        }
                     }
-                  }
-                  if (overlap){
-                    return false;
-                  } else{
-                    return "Sponsor segment doesn't have at least 65% match.";
-                  }
+                    if (overlap) {
+                        return false;
+                    } else{
+                        return "Sponsor segment doesn't have at least 65% match.";
+                    }
                 }
             }
         }
