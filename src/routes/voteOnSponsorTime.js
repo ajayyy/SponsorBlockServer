@@ -44,9 +44,12 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
 
     // See if the submissions categort is ready to change
     let currentCategory = db.prepare("select category from sponsorTimes where UUID = ?").get(UUID);
+    let currentCategoryCount = db.prepare("select votes from categoryVotes where UUID = ? and category = ?").get(UUID, currentCategory).votes;
     // Change this value from 1 in the future to make it harder to change categories
-    let currentCategoryCount = db.prepare("select votes from categoryVotes where UUID = ? and category = ?").get(UUID, currentCategory).votes ?? 1;
-    let nextCategoryCount = previousVoteInfo.votes ?? 1;
+    // Done this way without ORs incase the value is zero
+    if (currentCategoryCount === undefined || currentCategoryCount === null) currentCategoryCount = 1;
+
+    let nextCategoryCount = (previousVoteInfo.votes || 0) + 1;
 
     //TODO: In the future, raise this number from zero to make it harder to change categories
     if (nextCategoryCount - currentCategoryCount >= 0) {

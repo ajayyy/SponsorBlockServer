@@ -20,9 +20,9 @@ CREATE TABLE IF NOT EXISTS "userNames" (
 	"userName"	TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS "categoryVotes" (
-	"UUID" TEXT NOT NULL UNIQUE,
-	"category" TEXT NOT NULL,
-	"votes" INTEGER NOT NULL default '0'
+	"UUID"	TEXT NOT NULL UNIQUE,
+	"category"	TEXT NOT NULL,
+	"votes"	INTEGER NOT NULL default '0'
 );
 
 CREATE TABLE IF NOT EXISTS "version" (

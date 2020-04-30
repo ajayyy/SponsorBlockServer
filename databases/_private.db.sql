@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "categoryVotes" (
 	"userID"	TEXT NOT NULL,
 	"hashedIP"	TEXT NOT NULL,
 	"category"	TEXT NOT NULL,
-	"timeSubmitted"	INTEGER NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "sponsorTimes" (
