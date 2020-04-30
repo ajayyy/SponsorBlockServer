@@ -116,10 +116,12 @@ async function autoModerateSubmission(videoID, segments) {
                         return "One of your submitted segments is over 80% of the video.";
                     }
                 }
+
+                let neuralBlockURL = config.neuralBlockURL || "https://ai.neuralblock.app";
                 
                 let overlap = false;
 
-                let response = await fetch("https://ai.neuralblock.app/api/getSponsorSegments?vid=" + videoID);
+                let response = await fetch(neuralBlockURL + "/api/getSponsorSegments?vid=" + videoID);
                 if (!response.ok) return false;
 
                 let nbPredictions = await response.json();

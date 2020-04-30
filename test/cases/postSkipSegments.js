@@ -108,7 +108,7 @@ describe('postSkipSegments', () => {
         else if (res.statusCode === 403) done(); // pass
         else done("non 403 status code: " + res.statusCode + " ("+body+")");
       });
-  }).timeout(5000);
+  });
 
   it("Should be accepted if only off by 5s", (done) => {
     request.get(utils.getbaseURL()
@@ -118,7 +118,7 @@ describe('postSkipSegments', () => {
         else if (res.statusCode === 200) done(); // pass
         else done("non 403 status code: " + res.statusCode + " ("+body+")");
       });
-  }).timeout(5000);
+  });
 
   it("Should be accepted if there's at least 65% overlap with NB" , (done) => {
     request.get(utils.getbaseURL()
@@ -128,7 +128,7 @@ describe('postSkipSegments', () => {
         else if (res.statusCode === 200) done(); // pass
         else done("non 200 status code: " + res.statusCode + " ("+body+")");
       });
-  }).timeout(5000);
+  });
 
   it('Should be allowed if youtube thinks duration is 0', (done) => {
     request.get(utils.getbaseURL() 
@@ -138,7 +138,7 @@ describe('postSkipSegments', () => {
         else if (res.statusCode === 200) done(); // pass
         else done("non 200 status code: " + res.statusCode + " ("+body+")");
       });
-  }).timeout(5000);
+  });
 
   it('Should be rejected if not a valid videoID', (done) => {
     request.get(utils.getbaseURL()
