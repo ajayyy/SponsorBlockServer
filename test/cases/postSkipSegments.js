@@ -110,9 +110,9 @@ describe('postSkipSegments', () => {
       });
   });
 
-  it("Should be accepted if only off by 5s", (done) => {
+  it("Should be accepted if only off by 7s", (done) => {
     request.get(utils.getbaseURL()
-     + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=0&endTime=12&userID=testing", null,
+     + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=0&endTime=14.079&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 200) done(); // pass
