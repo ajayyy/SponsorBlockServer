@@ -130,7 +130,7 @@ async function autoModerateSubmission(videoID, segments) {
                         // The submission needs to be similar to the NB prediction by 65% or off by less than 7 seconds
                         // This calculated how off it is
                         let offAmount = Math.abs(nbSegment[0] - segment.segment[0]) + Math.abs(nbSegment[1] - segment.segment[1]);
-                        if (offAmount / (nbSegment[1] - nbSegment[0]) <= 0.45 || offAmount <= 7) {
+                        if (offAmount / (nbSegment[1] - nbSegment[0]) <= 0.35 || offAmount <= 7) {
                             overlap = true;
                             break;
                         }
