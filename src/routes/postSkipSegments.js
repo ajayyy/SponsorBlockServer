@@ -215,7 +215,7 @@ module.exports = async function postSkipSegments(req, res) {
     if (!isVIP) {
         let autoModerateResult = await autoModerateSubmission(videoID, segments);
         if (autoModerateResult) {
-            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult);
+            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
             return;
         }
     }
