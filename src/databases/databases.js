@@ -26,12 +26,16 @@ if (config.createDatabaseIfNotExist && !config.readOnly) {
 
 // Upgrade database if required
 if (!config.readOnly) {
-  let versionCode = db.prepare("SELECT code FROM version").get() || 0;
+  let versionCodeInfo = db.prepare("SELECT value FROM config WHERE key = ?").get("version");
+  let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
+
+  console.log(versionCode)
+
   let path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
   while (fs.existsSync(path)) {
     db.exec(fs.readFileSync(path).toString());
 
-    versionCode = db.prepare("SELECT code FROM version").get();
+    versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
     path = config.schemaFolder + "/_upgrade_" + versionCode + ".sql";
   }
 }

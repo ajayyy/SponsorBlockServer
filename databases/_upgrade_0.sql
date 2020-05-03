@@ -19,7 +19,7 @@ INSERT INTO sqlb_temp_table_1 SELECT videoID,startTime,endTime,votes,"1",UUID,us
 DROP TABLE sponsorTimes;
 ALTER TABLE sqlb_temp_table_1 RENAME TO "sponsorTimes";
 
-/* Increase version number */
-INSERT INTO version VALUES(1);
+/* Add version to config */
+INSERT INTO config (key, value) VALUES("version", 1);
 
 COMMIT;
