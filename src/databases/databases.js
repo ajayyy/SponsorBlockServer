@@ -26,16 +26,8 @@ if (config.createDatabaseIfNotExist && !config.readOnly) {
 
 // Upgrade database if required
 if (!config.readOnly) {
-  let versionCodeInfo = db.prepare("SELECT value FROM config WHERE key = ?").get("version");
-  let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
-
-  let path = config.schemaFolder + "/_upgrade_" + (versionCode + 1) + ".sql";
-  while (fs.existsSync(path)) {
-    db.exec(fs.readFileSync(path).toString());
-
-    versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
-    path = config.schemaFolder + "/_upgrade_" + (versionCode + 1) + ".sql";
-  }
+  ugradeDB(db, "sponsorTimes");
+  ugradeDB(privateDB, "private")
 }
 
 // Enable WAL mode checkpoint number
@@ -52,3 +44,16 @@ module.exports = {
   db: db,
   privateDB: privateDB
 };
+
+function ugradeDB(db, prefix) {
+  let versionCodeInfo = db.prepare("SELECT value FROM config WHERE key = ?").get("version");
+  let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
+
+  let path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (versionCode + 1) + ".sql";
+  while (fs.existsSync(path)) {
+    db.exec(fs.readFileSync(path).toString());
+
+    versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
+    path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (versionCode + 1) + ".sql";
+  }
+}

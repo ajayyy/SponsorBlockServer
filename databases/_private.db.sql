@@ -24,6 +24,11 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"timeSubmitted"	INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "config" (
+    "key" TEXT NOT NULL,
+	"value" TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS sponsorTimes_hashedIP on sponsorTimes(hashedIP);
 CREATE INDEX IF NOT EXISTS votes_userID on votes(UUID);
 
