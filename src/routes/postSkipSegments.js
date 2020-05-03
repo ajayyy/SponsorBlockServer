@@ -117,7 +117,8 @@ async function autoModerateSubmission(videoID, segments) {
                     }
                 }
 
-                let neuralBlockURL = config.neuralBlockURL || "https://ai.neuralblock.app";
+                let neuralBlockURL = config.neuralBlockURL;
+                if (!neuralBlockURL) return false;
                 
                 let overlap = false;
 
