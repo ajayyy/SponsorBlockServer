@@ -127,4 +127,35 @@ describe('voteOnSponsorTime', () => {
     });
   });
 
+  it('Non-VIP should not be able to upvote "dead" submission', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=1", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 403) {
+          done();
+        } else {
+          done("Status code was " + res.statusCode + " instead of 403");
+        }
+    });
+  });
+
+  it('VIP should be able to upvote "dead" submission', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&type=1", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare("SELECT votes FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-5");
+          if (row.votes > -3) {
+            done()
+          } else {
+            done("Vote did not succeed. Votes raised from -3 to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
 });

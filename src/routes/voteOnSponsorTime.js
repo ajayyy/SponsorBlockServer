@@ -93,6 +93,16 @@ module.exports = async function voteOnSponsorTime(req, res) {
         return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
     }
 
+    if (type == 1 && !isVIP) {
+        // Check if upvoting hidden segment
+        let voteInfo = db.prepare("SELECT votes FROM sponsorTimes WHERE UUID = ?").get(UUID);
+
+        if (voteInfo && voteInfo.votes <= -2) {
+            res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.")
+            return;
+        }
+    }
+
     let voteTypes = {
         normal: 0,
         incorrect: 1
