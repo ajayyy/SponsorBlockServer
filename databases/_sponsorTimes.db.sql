@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "categoryVotes" (
 );
 
 CREATE TABLE IF NOT EXISTS "config" (
-    "key" TEXT NOT NULL,
+    "key" TEXT NOT NULL UNIQUE,
 	"value" TEXT NOT NULL
 );
 
