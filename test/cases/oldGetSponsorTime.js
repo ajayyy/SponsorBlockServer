@@ -19,8 +19,9 @@ var utils = require('../utils.js');
 
 describe('getVideoSponsorTime (Old get method)', () => {
   before(() => {
-    db.exec("INSERT INTO sponsorTimes VALUES ('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec("INSERT INTO sponsorTimes VALUES ('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0)");
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
+    db.exec(startOfQuery + "('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0)");
   }); 
 
   it('Should be able to get a time', (done) => {

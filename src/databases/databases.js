@@ -1,11 +1,20 @@
 var config = require('../config.js');
 var Sqlite3 = require('better-sqlite3');
 var fs = require('fs');
+var path = require('path');
 
 let options = {
   readonly: config.readOnly,
   fileMustExist: !config.createDatabaseIfNotExist
 };
+
+// Make dirs if required
+if (!fs.existsSync(path.join(config.db, "../"))) {
+  fs.mkdirSync(path.join(config.db, "../"));
+}
+if (!fs.existsSync(path.join(config.privateDB, "../"))) {
+  fs.mkdirSync(path.join(config.privateDB, "../"));
+}
 
 var db = new Sqlite3(config.db, options);
 var privateDB = new Sqlite3(config.privateDB, options);
@@ -13,6 +22,12 @@ var privateDB = new Sqlite3(config.privateDB, options);
 if (config.createDatabaseIfNotExist && !config.readOnly) {
   if (fs.existsSync(config.dbSchema)) db.exec(fs.readFileSync(config.dbSchema).toString());
   if (fs.existsSync(config.privateDBSchema)) privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
+}
+
+// Upgrade database if required
+if (!config.readOnly) {
+  ugradeDB(db, "sponsorTimes");
+  ugradeDB(privateDB, "private")
 }
 
 // Enable WAL mode checkpoint number
@@ -29,3 +44,16 @@ module.exports = {
   db: db,
   privateDB: privateDB
 };
+
+function ugradeDB(db, prefix) {
+  let versionCodeInfo = db.prepare("SELECT value FROM config WHERE key = ?").get("version");
+  let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
+
+  let path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (versionCode + 1) + ".sql";
+  while (fs.existsSync(path)) {
+    db.exec(fs.readFileSync(path).toString());
+
+    versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
+    path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (versionCode + 1) + ".sql";
+  }
+}
