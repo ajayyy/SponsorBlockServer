@@ -21,6 +21,13 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
         return;
     }
 
+    let currentCategory = db.prepare("select category from sponsorTimes where UUID = ?").get(UUID);
+    if (!currentCategory) {
+        // Submission doesn't exist
+        res.status("400").send("Submission doesn't exist.");
+        return;
+    }
+
     let timeSubmitted = Date.now();
 
     let voteAmount = isVIP ? 500 : 1;
@@ -44,8 +51,7 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
         privateDB.prepare("insert into categoryVotes (UUID, userID, hashedIP, category, timeSubmitted) values (?, ?, ?, ?, ?)").run(UUID, userID, hashedIP, category, timeSubmitted);
     }
 
-    // See if the submissions categort is ready to change
-    let currentCategory = db.prepare("select category from sponsorTimes where UUID = ?").get(UUID);
+    // See if the submissions category is ready to change
     let currentCategoryInfo = db.prepare("select votes from categoryVotes where UUID = ? and category = ?").get(UUID, currentCategory.category);
 
     // Change this value from 1 in the future to make it harder to change categories

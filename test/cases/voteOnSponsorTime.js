@@ -127,6 +127,19 @@ describe('voteOnSponsorTime', () => {
     });
   });
 
+  it('Should not be able to category-vote on an invalid UUID submission', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=randomID3&UUID=invalid-uuid&category=intro", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 400) {
+          done();
+        } else {
+          done("Status code was " + res.statusCode + " instead of 400.");
+        }
+    });
+  });
+
   it('Non-VIP should not be able to upvote "dead" submission', (done) => {
     request.get(utils.getbaseURL() 
      + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=1", null, 
