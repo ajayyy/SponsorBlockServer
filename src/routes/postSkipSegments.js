@@ -120,22 +120,29 @@ async function autoModerateSubmission(videoID, segments) {
                 let neuralBlockURL = config.neuralBlockURL;
                 if (!neuralBlockURL) return false;
                 
-                let overlap = false;
+                let overlap = true;
 
                 let response = await fetch(neuralBlockURL + "/api/getSponsorSegments?vid=" + videoID);
                 if (!response.ok) return false;
 
                 let nbPredictions = await response.json();
-                for (const nbSegment of nbPredictions.sponsorSegments) {
-                    for (const segment of segments) {
+                for (const segment of segments) {
+                    if (segment.category !== "sponsor") continue;
+
+                    let thisSegmentOverlaps = false;
+                    for (const nbSegment of nbPredictions.sponsorSegments) {
                         // The submission needs to be similar to the NB prediction by 65% or off by less than 7 seconds
                         // This calculated how off it is
                         let offAmount = Math.abs(nbSegment[0] - segment.segment[0]) + Math.abs(nbSegment[1] - segment.segment[1]);
                         if (offAmount / (nbSegment[1] - nbSegment[0]) <= 0.35 || offAmount <= 7) {
-                            overlap = true;
-                            break;
+                            thisSegmentOverlaps = true;
                         }
                     }
+
+                    if (!thisSegmentOverlaps){
+                        overlap = false;
+                        break;
+                    } 
                 }
 
                 if (overlap) {
