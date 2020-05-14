@@ -4,7 +4,6 @@ var config = require('../config.js');
 var db = require('../databases/databases.js').db;
 var getHash = require('../utils/getHash.js');
 
-
 module.exports = async function addUserAsVIP (req, res) {
     let userID = req.query.userID;
     let adminUserIDInput = req.query.adminUserID;
@@ -25,7 +24,7 @@ module.exports = async function addUserAsVIP (req, res) {
     //hash the userID
     adminUserIDInput = getHash(adminUserIDInput);
 
-    if (adminUserIDInput !== adminUserID) {
+    if (adminUserIDInput !== config.adminUserID) {
         //not authorized
         res.sendStatus(403);
         return;
