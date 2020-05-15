@@ -239,7 +239,9 @@ module.exports = async function postSkipSegments(req, res) {
                 segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
 
             try {
-                db.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 
+                db.prepare("INSERT INTO sponsorTimes " + 
+                    "(videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden)" +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 
                     segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned);
             
                 //add to private db as well
