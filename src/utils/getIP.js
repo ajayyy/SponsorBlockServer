@@ -2,7 +2,7 @@ var fs = require('fs');
 var config = require('../config.js');
 
 module.exports = function getIP(req) {
-  if (config.behindProxy === true) config.behindProxy = "X-Forwarded-For";
+  if (config.behindProxy === true || config.behindProxy === "true") config.behindProxy = "X-Forwarded-For";
 
   switch (config.behindProxy) {
     case "X-Forwarded-For":
