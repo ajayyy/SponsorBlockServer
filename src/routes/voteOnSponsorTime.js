@@ -270,7 +270,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
             let submissionUserIDInfo = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID);
             if (!submissionUserIDInfo) {
                 // They are voting on a non-existent submission
-                res.status("Voting on a non-existent submission").send(400);
+                res.status(400).send("Voting on a non-existent submission");
                 return;
             }
 
