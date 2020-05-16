@@ -147,10 +147,16 @@ module.exports = async function postSkipSegments(req, res) {
         let startTime = parseFloat(segments[i].segment[0]);
         let endTime = parseFloat(segments[i].segment[1]);
 
-        if (Math.abs(startTime - endTime) < 1 || isNaN(startTime) || isNaN(endTime)
+        if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime > endTime) {
             //invalid request
             res.sendStatus(400);
+            return;
+        }
+
+        if (segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
+            // Too short
+            res.status(400).send("Sponsors must be longer than 1 second long");
             return;
         }
 
