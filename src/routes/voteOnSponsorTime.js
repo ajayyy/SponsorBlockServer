@@ -266,7 +266,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
         //for each positive vote, see if a hidden submission can be shown again
         if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
             //find the UUID that submitted the submission that was voted on
-            let submissionUserIDInfo = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID).userID;
+            let submissionUserIDInfo = db.prepare("SELECT userID FROM sponsorTimes WHERE UUID = ?").get(UUID);
             if (!submissionUserIDInfo) {
                 // They are voting on a non-existent submission
                 res.status("Voting on a non-existent submission").send(400);
