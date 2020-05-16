@@ -228,7 +228,7 @@ module.exports = async function postSkipSegments(req, res) {
         let startingVotes = 0;
         if (vipRow.userCount > 0) {
             //this user is a vip, start them at a higher approval rating
-            startingVotes = 10;
+            startingVotes = 10000;
         }
 
         for (const segmentInfo of segments) {
