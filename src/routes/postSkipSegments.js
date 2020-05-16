@@ -178,14 +178,17 @@ module.exports = async function postSkipSegments(req, res) {
 
         let yesterday = timeSubmitted - 86400000;
 
-        //check to see if this ip has submitted too many sponsors today
-        let rateLimitCheckRow = privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday]);
-        
-        if (rateLimitCheckRow.count >= 10) {
-            //too many sponsors for the same video from the same ip address
-            res.sendStatus(429);
+        // Disable IP ratelimiting for now
+        if (false) {
+            //check to see if this ip has submitted too many sponsors today
+            let rateLimitCheckRow = privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday]);
+                    
+            if (rateLimitCheckRow.count >= 10) {
+                //too many sponsors for the same video from the same ip address
+                res.sendStatus(429);
 
-            return;
+                return;
+            }
         }
 
         //check to see if the user has already submitted sponsors for this video
