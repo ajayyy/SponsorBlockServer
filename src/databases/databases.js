@@ -26,6 +26,10 @@ if (config.createDatabaseIfNotExist && !config.readOnly) {
 
 // Upgrade database if required
 if (!config.readOnly) {
+  // Register hashing function needed for running database upgrade
+  db.function("sha256", function (string) {
+    return require('crypto').createHash("sha256").update(string).digest("hex");
+  });
   ugradeDB(db, "sponsorTimes");
   ugradeDB(privateDB, "private")
 }

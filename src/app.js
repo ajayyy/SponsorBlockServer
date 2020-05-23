@@ -10,6 +10,7 @@ var loggerMiddleware = require('./middleware/logger.js');
 // Routes
 var getSkipSegments = require('./routes/getSkipSegments.js').endpoint;
 var postSkipSegments = require('./routes/postSkipSegments.js');
+var getSkipSegmentsByHash = require('./routes/getSkipSegmentsByHash.js');
 var voteOnSponsorTime = require('./routes/voteOnSponsorTime.js');
 var viewedVideoSponsorTime = require('./routes/viewedVideoSponsorTime.js');
 var setUsername = require('./routes/setUsername.js');
@@ -47,6 +48,9 @@ app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
 //add the skip segments functions
 app.get('/api/skipSegments', getSkipSegments);
 app.post('/api/skipSegments', postSkipSegments);
+
+// add the privacy protecting skip segments functions
+app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime);
