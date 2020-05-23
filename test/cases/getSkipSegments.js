@@ -1,6 +1,7 @@
 var request = require('request');
 var db = require('../../src/databases/databases.js').db;
 var utils = require('../utils.js');
+var getHash = require('../../src/utils/getHash.js');
 
 /*
  *CREATE TABLE IF NOT EXISTS "sponsorTimes" (
@@ -18,14 +19,14 @@ var utils = require('../utils.js');
 
 describe('getSkipSegments', () => {
   before(() => {
-    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
-    db.exec(startOfQuery + "('testtesttest', 1, 11, 2, '1-uuid-0', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('testtesttest', 20, 33, 2, '1-uuid-2', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('testtesttest,test', 1, 11, 2, '1-uuid-1', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('test3', 1, 11, 2, '1-uuid-4', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('test3', 7, 22, -3, '1-uuid-5', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('multiple', 1, 11, 2, '1-uuid-6', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('multiple', 20, 33, 2, '1-uuid-7', 'testman', 0, 50, 'intro', 0)");
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+    db.exec(startOfQuery + "('testtesttest', 1, 11, 2, '1-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest', 0) + "')");
+    db.exec(startOfQuery + "('testtesttest', 20, 33, 2, '1-uuid-2', 'testman', 0, 50, 'intro', 0, '" + getHash('testtesttest', 0) + "')");
+    db.exec(startOfQuery + "('testtesttest,test', 1, 11, 2, '1-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest,test', 0) + "')");
+    db.exec(startOfQuery + "('test3', 1, 11, 2, '1-uuid-4', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 0) + "')");
+    db.exec(startOfQuery + "('test3', 7, 22, -3, '1-uuid-5', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 0) + "')");
+    db.exec(startOfQuery + "('multiple', 1, 11, 2, '1-uuid-6', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 0) + "')");
+    db.exec(startOfQuery + "('multiple', 20, 33, 2, '1-uuid-7', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 0) + "')");
   }); 
   
 

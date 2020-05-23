@@ -5,14 +5,14 @@ var getHash = require('../../src/utils/getHash.js')
 
 describe('voteOnSponsorTime', () => {
   before(() => {
-    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
-    db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest', 20, 33, 10, 'vote-uuid-2', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest,test', 1, 11, 100, 'vote-uuid-3', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-test3', 1, 11, 2, 'vote-uuid-4', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('vote-multiple', 1, 11, 2, 'vote-uuid-6', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0)");
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+    db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest', 0) + "')");
+    db.exec(startOfQuery + "('vote-testtesttest', 20, 33, 10, 'vote-uuid-2', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-testtesttest', 0) + "')");
+    db.exec(startOfQuery + "('vote-testtesttest,test', 1, 11, 100, 'vote-uuid-3', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest,test', 0) + "')");
+    db.exec(startOfQuery + "('vote-test3', 1, 11, 2, 'vote-uuid-4', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-test3', 0) + "')");
+    db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-test3', 0) + "')");
+    db.exec(startOfQuery + "('vote-multiple', 1, 11, 2, 'vote-uuid-6', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-multiple', 0) + "')");
+    db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-multiple', 0) + "')");
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
   }); 
