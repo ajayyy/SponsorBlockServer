@@ -12,8 +12,8 @@ CREATE TABLE "sqlb_temp_table_1" (
 	"timeSubmitted"	INTEGER NOT NULL,
 	"views"	INTEGER NOT NULL,
 	"category"	TEXT NOT NULL DEFAULT "sponsor",
-	"shadowHidden"	INTEGER NOT NULL,
-	"hashedVideoID"	TEXT NOT NULL
+	"hashedVideoID"	TEXT NOT NULL,
+	"shadowHidden"	INTEGER NOT NULL
 );
 INSERT INTO sqlb_temp_table_1 SELECT *, sha256(videoID) FROM sponsorTimes;
 
