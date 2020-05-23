@@ -117,7 +117,9 @@ module.exports = async function (req, res) {
         getHash(getIP(req) + config.globalSalt)
     );
 
-    if (segments) {
-        res.send(segments)
+    if (Object.keys(segments).length > 0) {
+        res.send(segments);
+    } else {
+        res.sendStatus(404); // No skipable segments within this prefix
     }
 }
