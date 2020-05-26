@@ -197,14 +197,17 @@ module.exports = async function postSkipSegments(req, res) {
             }
         }
 
-        //check to see if the user has already submitted sponsors for this video
-        let duplicateCheckRow = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID]);
-        
-        if (duplicateCheckRow.count >= 16) {
-            //too many sponsors for the same video from the same user
-            res.sendStatus(429);
+        // Disable max submissions for now
+        if (false) {
+            //check to see if the user has already submitted sponsors for this video
+            let duplicateCheckRow = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID]);
+                    
+            if (duplicateCheckRow.count >= 16) {
+                //too many sponsors for the same video from the same user
+                res.sendStatus(429);
 
-            return;
+                return;
+            }
         }
 
         //check to see if this user is shadowbanned
