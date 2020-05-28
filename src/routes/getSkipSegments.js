@@ -112,23 +112,24 @@ function getWeightedRandomChoice(choices, weights, amountOfChoices) {
 //Sponsor times with less than -1 votes are already ignored before this function is called
 function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
   //create groups of sponsor times that are similar to eachother
-  const groups = []
+  const groups = [];
   sponsorTimes.forEach(([startTime, endTime], i) => {
       //find a group that overlaps with the current segment
       //sponsorTimes are sorted by their startTime so there should never be more than 1 similar group
-      const similarGroup = groups.find(group => group.start < endTime && startTime < group.end)
+      const similarGroup = groups.find(group => group.start < endTime && startTime < group.end);
+      
       //add the sponsor to that group or create a new group if there aren't any
       if (similarGroup === undefined) {
-          groups.push({ start: startTime, end: endTime, sponsors: [i] })
+          groups.push({ start: startTime, end: endTime, sponsors: [i] });
       } else {
           similarGroup.sponsors.push(i)
-          similarGroup.start = Math.min(similarGroup.start, startTime)
-          similarGroup.end = Math.max(similarGroup.end, endTime)
+          similarGroup.start = Math.min(similarGroup.start, startTime);
+          similarGroup.end = Math.max(similarGroup.end, endTime);
       }
   })
 
   //once all the groups have been created, get rid of the metadata and remove single-sponsor groups
-  const similarSponsorsGroups = groups.map(group => group.sponsors).filter(group => group.length > 1)
+  const similarSponsorsGroups = groups.map(group => group.sponsors).filter(group => group.length > 1);
 
   let weightedRandomIndexes = getWeightedRandomChoiceForArray(similarSponsorsGroups, votes);
 
