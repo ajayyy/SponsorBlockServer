@@ -111,51 +111,24 @@ function getWeightedRandomChoice(choices, weights, amountOfChoices) {
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Sponsor times with less than -1 votes are already ignored before this function is called
 function getVoteOrganisedSponsorTimes(sponsorTimes, votes, UUIDs) {
-  //list of sponsors that are contained inside eachother
-  let similarSponsors = [];
-
-  for (let i = 0; i < sponsorTimes.length; i++) {
-      //see if the start time is located between the start and end time of the other sponsor time.
-      for (let j = i + 1; j < sponsorTimes.length; j++) {
-          if (sponsorTimes[j][0] >= sponsorTimes[i][0] && sponsorTimes[j][0] <= sponsorTimes[i][1]) {
-              //sponsor j is contained in sponsor i
-              similarSponsors.push([i, j]);
-          }
+  //create groups of sponsor times that are similar to eachother
+  const groups = []
+  sponsorTimes.forEach(([sponsorStart, sponsorEnd], i) => {
+      //find a group that overlaps with the current segment
+      //sponsorTimes are sorted by their startTime so there should never be more than 1 similar group
+      const similarGroup = groups.find(group => group.start < sponsorEnd && sponsorStart < group.end)
+      //add the sponsor to that group or create a new group if there aren't any
+      if (similarGroup === undefined) {
+          groups.push({ start: sponsorStart, end: sponsorEnd, sponsors: [i] })
+      } else {
+          similarGroup.sponsors.push(i)
+          similarGroup.start = Math.min(similarGroup.start, sponsorStart)
+          similarGroup.end = Math.max(similarGroup.end, sponsorEnd)
       }
-  }
+  })
 
-  let similarSponsorsGroups = [];
-  //once they have been added to a group, they don't need to be dealt with anymore
-  let dealtWithSimilarSponsors = [];
-
-  //create lists of all the similar groups (if 1 and 2 are similar, and 2 and 3 are similar, the group is 1, 2, 3)
-  for (let i = 0; i < similarSponsors.length; i++) {
-      if (dealtWithSimilarSponsors.includes(i)) {
-          //dealt with already
-          continue;
-      }
-
-      //this is the group of indexes that are similar
-      let group = similarSponsors[i];
-      for (let j = 0; j < similarSponsors.length; j++) {
-          if (group.includes(similarSponsors[j][0]) || group.includes(similarSponsors[j][1])) {
-              //this is a similar group
-              group.push(similarSponsors[j][0]);
-              group.push(similarSponsors[j][1]);
-              dealtWithSimilarSponsors.push(j);
-          }
-      }
-      similarSponsorsGroups.push(group);
-  }
-
-  //remove duplicate indexes in group arrays
-  for (let i = 0; i < similarSponsorsGroups.length; i++) {
-      uniqueArray = similarSponsorsGroups[i].filter(function(item, pos, self) {
-          return self.indexOf(item) == pos;
-      });
-
-      similarSponsorsGroups[i] = uniqueArray;
-  }
+  //once all the groups have been created, get rid of the metadata and remove single-sponsor groups
+  const similarSponsorsGroups = groups.map(group => group.sponsors).filter(group => group.length > 1)
 
   let weightedRandomIndexes = getWeightedRandomChoiceForArray(similarSponsorsGroups, votes);
 
