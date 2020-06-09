@@ -182,7 +182,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
         // Send discord message
         if (incrementAmount < 0) {
             // Get video ID
-            let submissionInfoRow = db.prepare("SELECT s.videoID, s.userID, s.startTime, s.endTime, u.userName, " +
+            let submissionInfoRow = db.prepare("SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
                 "(select count(1) from sponsorTimes where userID = s.userID) count, " +
                 "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
                 "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.UUID=?"
@@ -216,6 +216,7 @@ module.exports = async function voteOnSponsorTime(req, res) {
                                       + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
                                     "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views 
                                         + " Views**\n\n**Submission ID:** " + UUID 
+                                        + "\n**Category:** " + submissionInfoRow.category
                                         + "\n\n**Submitted by:** "+submissionInfoRow.userName+"\n " + submissionInfoRow.userID 
                                         + "\n\n**Total User Submissions:** "+submissionInfoRow.count
                                         + "\n**Ignored User Submissions:** "+submissionInfoRow.disregarded
