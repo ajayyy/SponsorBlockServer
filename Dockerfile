@@ -3,7 +3,7 @@ WORKDIR /usr/src/app
 COPY package.json .
 RUN npm install
 COPY index.js .
-COPY src .
+COPY src src
 COPY entrypoint.sh .
 EXPOSE 8080
-ENTRYPOINT ./entrypoint.sh
+CMD ./entrypoint.sh
