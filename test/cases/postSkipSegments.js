@@ -13,7 +13,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get("dQw4w9WgXcR");
+          let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
           if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
             done()
           } else {
@@ -40,7 +40,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get("dQw4w9WgXcF");
+          let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
           if (row.startTime === 0 && row.endTime === 10 && row.category === "sponsor") {
             done()
           } else {
@@ -70,7 +70,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let rows = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").all("dQw4w9WgXcR");
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
           let success = true;
           if (rows.length === 2) {
             for (const row of rows) {

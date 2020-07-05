@@ -10,7 +10,7 @@ module.exports = function viewedVideoSponsorTime(req, res) {
   }
 
   //up the view count by one
-  db.prepare("UPDATE sponsorTimes SET views = views + 1 WHERE UUID = ?").run(UUID);
+  db.prepare('run', "UPDATE sponsorTimes SET views = views + 1 WHERE UUID = ?", [UUID]);
 
   res.sendStatus(200);
 }

@@ -24,7 +24,7 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT votes FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-0");
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-0"]);
           if (row.votes === 3) {
             done()
           } else {
@@ -42,7 +42,7 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT votes FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-2");
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
           if (row.votes < 10) {
             done()
           } else {
@@ -60,7 +60,7 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT votes FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-3");
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-3"]);
           if (row.votes <= -2) {
             done()
           } else {
@@ -78,7 +78,7 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT category FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-4");
+          let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
           if (row.category === "intro") {
             done()
           } else {
@@ -96,7 +96,7 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT category FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-4");
+          let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
           if (row.category === "outro") {
             done()
           } else {
@@ -114,8 +114,8 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT category FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-5");
-          let row2 = db.prepare("SELECT votes FROM categoryVotes WHERE UUID = ? and category = ?").get("vote-uuid-5", "outro");
+          let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
+          let row2 = db.prepare('get', "SELECT votes FROM categoryVotes WHERE UUID = ? and category = ?", ["vote-uuid-5", "outro"]);
           if (row.category === "outro" && row2.votes === 500) {
             done()
           } else {
@@ -159,7 +159,7 @@ describe('voteOnSponsorTime', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT votes FROM sponsorTimes WHERE UUID = ?").get("vote-uuid-5");
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
           if (row.votes > -3) {
             done()
           } else {

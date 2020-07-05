@@ -120,9 +120,10 @@ function handleGetSegments(req, res) {
     for (const category of categories) {
       const categorySegments = db
         .prepare(
-          'SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? and category = ? ORDER BY startTime'
+          'all',
+          'SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? and category = ? ORDER BY startTime',
+          [videoID, category]
         )
-        .all(videoID, category)
         .filter(segment => {
           if (segment.votes < -1) {
             return false; //too untrustworthy, just ignore it
@@ -135,9 +136,7 @@ function handleGetSegments(req, res) {
           }
 
           if (shadowHiddenSegments === undefined) {
-            shadowHiddenSegments = privateDB
-              .prepare('SELECT hashedIP FROM sponsorTimes WHERE videoID = ?')
-              .all(videoID);
+            shadowHiddenSegments = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
           }
 
           //if this isn't their ip, don't send it to them

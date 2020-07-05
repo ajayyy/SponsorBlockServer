@@ -15,7 +15,7 @@ module.exports = function getUsername (req, res) {
     userID = getHash(userID);
 
     try {
-        let row = db.prepare("SELECT userName FROM userNames WHERE userID = ?").get(userID);
+        let row = db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
 
         if (row !== undefined) {
             res.send({

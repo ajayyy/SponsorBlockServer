@@ -28,10 +28,10 @@ module.exports = function getTopUsers (req, res) {
   let totalSubmissions = [];
   let minutesSaved = [];
 
-  let rows = db.prepare("SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount," + 
+  let rows = db.prepare('all', "SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount," + 
                   "SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, " +
                   "IFNULL(userNames.userName, sponsorTimes.userID) as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID " +
-                  "WHERE sponsorTimes.votes > -1 AND sponsorTimes.shadowHidden != 1 GROUP BY IFNULL(userName, sponsorTimes.userID) ORDER BY " + sortBy + " DESC LIMIT 100").all();
+                  "WHERE sponsorTimes.votes > -1 AND sponsorTimes.shadowHidden != 1 GROUP BY IFNULL(userName, sponsorTimes.userID) ORDER BY " + sortBy + " DESC LIMIT 100", []);
   
   for (let i = 0; i < rows.length; i++) {
       userNames[i] = rows[i].userName;
