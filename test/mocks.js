@@ -4,11 +4,15 @@ var app = express();
 var config = require('../src/config.js');
 
 app.post('/ReportChannelWebhook', (req, res) => {
-  res.status(200);
+  res.sendStatus(200);
 });
 
 app.post('/FirstTimeSubmissionsWebhook', (req, res) => {
-  res.status(200);
+  res.sendStatus(200);
+});
+
+app.post('/CompletelyIncorrectReportWebhook', (req, res) => {
+  res.sendStatus(200);
 });
 
 module.exports = function createMockServer(callback) {

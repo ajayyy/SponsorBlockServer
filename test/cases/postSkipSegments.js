@@ -13,7 +13,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get("dQw4w9WgXcR");
+          let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
           if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
             done()
           } else {
@@ -40,7 +40,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get("dQw4w9WgXcF");
+          let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
           if (row.startTime === 0 && row.endTime === 10 && row.category === "sponsor") {
             done()
           } else {
@@ -70,7 +70,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let rows = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").all("dQw4w9WgXcR");
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
           let success = true;
           if (rows.length === 2) {
             for (const row of rows) {
@@ -90,6 +90,26 @@ describe('postSkipSegments', () => {
       });
   });
 
+  it('Should be accepted if a non-sponsor is less than 1 second', (done) => {
+    request.post(utils.getbaseURL() 
+     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 200) done(); // pass
+        else done("non 200 status code: " + res.statusCode + " ("+body+")");
+      });
+  });
+
+  it('Should be rejected if a sponsor is less than 1 second', (done) => {
+    request.post(utils.getbaseURL() 
+     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 400) done(); // pass
+        else done("non 403 status code: " + res.statusCode + " ("+body+")");
+      });
+  });
+
   it('Should be rejected if over 80% of the video', (done) => {
     request.get(utils.getbaseURL() 
      + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testing", null, 
@@ -97,6 +117,16 @@ describe('postSkipSegments', () => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 403) done(); // pass
         else done("non 403 status code: " + res.statusCode + " ("+body+")");
+      });
+  });
+
+  it('Should be allowed if youtube thinks duration is 0', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 200) done(); // pass
+        else done("non 200 status code: " + res.statusCode + " ("+body+")");
       });
   });
   

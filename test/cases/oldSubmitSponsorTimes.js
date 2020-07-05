@@ -13,7 +13,7 @@ describe('postVideoSponsorTime (Old submission method)', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get("dQw4w9WgXcQ");
+          let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcQ"]);
           if (row.startTime === 1 && row.endTime === 10 && row.category === "sponsor") {
             done()
           } else {
@@ -31,7 +31,7 @@ describe('postVideoSponsorTime (Old submission method)', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let row = db.prepare("SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?").get("dQw4w9WgXcE");
+          let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcE"]);
           if (row.startTime === 1 && row.endTime === 11 && row.category === "sponsor") {
             done()
           } else {

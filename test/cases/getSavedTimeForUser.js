@@ -1,11 +1,12 @@
 var request = require('request');
 var utils = require('../utils.js');
-var db = require('../../src/databases/databases.js').db;
+var db = require('../../src/databases/databases.js').db.getConnection();
 var getHash = require('../../src/utils/getHash.js');
 
 describe('getSavedTimeForUser', () => {
   before(() => {
-    db.exec("INSERT INTO sponsorTimes VALUES ('getSavedTimeForUser', 1, 11, 2, 'abc1239999', '" + getHash("testman") + "', 0, 50, 'sponsor', 0)");
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
+    db.exec(startOfQuery + "('getSavedTimeForUser', 1, 11, 2, 'abc1239999', '" + getHash("testman") + "', 0, 50, 'sponsor', 0)");
   }); 
 
   it('Should be able to get a 200', (done) => {
