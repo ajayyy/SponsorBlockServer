@@ -1,4 +1,4 @@
 #!bin/bash
 set -e
-cp /etc/config.json .
+cp /etc/sponsorblock/config.json .
 node index.js
