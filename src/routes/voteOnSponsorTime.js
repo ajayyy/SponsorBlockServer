@@ -166,10 +166,6 @@ module.exports = async function voteOnSponsorTime(req, res) {
                 //this user is a vip and a downvote
                 incrementAmount = - (row.votes + 2 - oldIncrementAmount);
                 type = incrementAmount;
-            } else if (row !== undefined && (row.votes > 8 || row.views > 15) && incrementAmount < 0) {
-                //increase the power of this downvote
-                incrementAmount = -Math.abs(Math.min(10, row.votes + 2 - oldIncrementAmount));
-                type = incrementAmount;
             }
         } else if (voteTypeEnum == voteTypes.incorrect) {
             if (isVIP) {
