@@ -1,6 +1,6 @@
 var request = require('request');
 var utils = require('../utils.js');
-var db = require('../../src/databases/databases.js').db.getConnection();
+var db = require('../../src/databases/databases.js').db;
 var getHash = require('../../src/utils/getHash.js');
 
 describe('getSavedTimeForUser', () => {

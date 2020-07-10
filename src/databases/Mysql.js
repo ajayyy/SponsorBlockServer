@@ -10,7 +10,7 @@ class Mysql {
   }
 
   prepare (type, query, params) {
-    console.log("prepare (mysql): type: " + type + ", query: " + query + ", params: " + params);
+    (config.mode === "development") && console.log("prepare (mysql): type: " + type + ", query: " + query + ", params: " + params);
     if (type === 'get') {
       return this.connection.query(query, params)[0];
     } else if (type === 'run') {

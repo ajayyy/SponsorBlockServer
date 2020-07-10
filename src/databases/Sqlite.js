@@ -10,7 +10,6 @@ class Sqlite {
   }
 
   prepare(type, query, params) {
-    //console.log("prepare:        type: " + type + ", query: " + query + ", params: " + params);
     if (type === 'get') {
       return this.connection.prepare(query).get(...params);
     } else if (type === 'run') {
@@ -18,8 +17,8 @@ class Sqlite {
     } else if (type === 'all') {
       return this.connection.prepare(query).all(...params); 
     } else {
-      console.log('returning undefined...')
-      console.log("prepare:        type: " + type + ", query: " + query + ", params: " + params);
+      (config.mode === "development") && console.log('returning undefined...')
+      (config.mode === "development") && console.log("prepare:        type: " + type + ", query: " + query + ", params: " + params);
       return undefined;
     }
   }
