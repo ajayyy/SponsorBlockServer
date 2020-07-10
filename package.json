@@ -16,7 +16,6 @@
     "express": "^4.17.1",
     "http": "0.0.0",
     "iso8601-duration": "^1.2.0",
-    "mysql": "^2.18.1",
     "sync-mysql": "^3.0.1",
     "uuid": "^3.3.2",
     "youtube-api": "^2.0.10"
