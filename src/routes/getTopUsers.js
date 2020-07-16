@@ -2,7 +2,7 @@ var db = require('../databases/databases.js').db;
 
 module.exports = function getTopUsers (req, res) {
   let sortType = req.query.sortType;
-  let categoryStatsEnabled = req.query.categoryStats == undefined ? false : true;
+  let categoryStatsEnabled = req.query.categoryStats;
 
   if (sortType == undefined) {
       //invalid request
