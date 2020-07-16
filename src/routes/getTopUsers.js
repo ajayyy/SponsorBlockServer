@@ -28,7 +28,7 @@ module.exports = function getTopUsers (req, res) {
   let viewCounts = [];
   let totalSubmissions = [];
   let minutesSaved = [];
-  let categoryStats = [];
+  let categoryStats = categoryStatsEnabled ? [] : undefined;
   
   let additionalFields = '';
   if (categoryStatsEnabled) {
@@ -66,10 +66,10 @@ module.exports = function getTopUsers (req, res) {
 
   //send this result
   res.send({
-      userNames: userNames,
-      viewCounts: viewCounts,
-      totalSubmissions: totalSubmissions,
-      minutesSaved: minutesSaved,
-      categoryStats: categoryStats
+      userNames,
+      viewCounts,
+      totalSubmissions,
+      minutesSaved,
+      categoryStats
   });
 }
