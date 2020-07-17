@@ -55,9 +55,9 @@ module.exports = function getTopUsers (req, res) {
       if (categoryStatsEnabled) {
         categoryStats[i] = [
           rows[i].categorySponsor,
-          rows[i].categorySumInteraction,
           rows[i].categorySumIntro,
           rows[i].categorySumOutro,
+          rows[i].categorySumInteraction,
           rows[i].categorySelfpromo,
           rows[i].categoryMusicOfftopic,
         ];
