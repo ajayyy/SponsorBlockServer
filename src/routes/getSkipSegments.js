@@ -43,6 +43,7 @@ function getWeightedRandomChoice(choices, amountOfChoices) {
 
     //add it to the chosen ones and remove it from the choices before the next iteration
     chosen.push(choices[i]);
+    totalWeight -= choices[i].weight;
     choices.splice(i, 1);
   }
 
