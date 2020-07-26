@@ -31,14 +31,14 @@ module.exports = async function addUserAsVIP (req, res) {
     }
 
     //check to see if this user is already a vip
-    let row = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID);
+    let row = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]);
 
     if (enabled && row.userCount == 0) {
         //add them to the vip list
-        db.prepare("INSERT INTO vipUsers VALUES(?)").run(userID);
+        db.prepare('run', "INSERT INTO vipUsers VALUES(?)", [userID]);
     } else if (!enabled && row.userCount > 0) {
         //remove them from the shadow ban list
-        db.prepare("DELETE FROM vipUsers WHERE userID = ?").run(userID);
+        db.prepare('run', "DELETE FROM vipUsers WHERE userID = ?", [userID]);
     }
 
     res.sendStatus(200);

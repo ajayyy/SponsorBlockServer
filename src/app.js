@@ -49,8 +49,8 @@ app.get('/api/skipSegments', getSkipSegments);
 app.post('/api/skipSegments', postSkipSegments);
 
 //voting endpoint
-app.get('/api/voteOnSponsorTime', voteOnSponsorTime);
-app.post('/api/voteOnSponsorTime', voteOnSponsorTime);
+app.get('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
+app.post('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
 
 //Endpoint when a sponsorTime is used up
 app.get('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
