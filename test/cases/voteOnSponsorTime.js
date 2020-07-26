@@ -17,6 +17,7 @@ describe('voteOnSponsorTime', () => {
     db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0)");
     db.exec(startOfQuery + "('voter-submitter', 1, 11, 2, 'vote-uuid-8', '" + getHash("randomID") + "', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-9', '" + getHash("randomID2") + "', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-10', '" + getHash("randomID3") + "', 0, 50, 'sponsor', 0)");
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
   }); 
@@ -50,6 +51,24 @@ describe('voteOnSponsorTime', () => {
             done()
           } else {
             done("Vote did not succeed. Submission went from 10 votes to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it('Should not be able to downvote the same segment when voting from a different user on the same IP', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=randomID3&UUID=vote-uuid-2&type=0", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
+          if (row.votes === 9) {
+            done()
+          } else {
+            done("Vote did not fail. Submission went from 9 votes to " + row.votes);
           }
         } else {
           done("Status code was " + res.statusCode);

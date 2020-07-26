@@ -248,8 +248,8 @@ async function voteOnSponsorTime(req, res) {
 
         // Only change the database if they have made a submission before and haven't voted recently
         let ableToVote = isVIP 
-                        || (db.prepare("get", "SELECT count(*) as count FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]).count > 0
-                        && privateDB.prepare("get", "SELECT count(*) as count FROM votes WHERE UUID = ? AND hashedIP = ? AND userID != ?", [UUID, hashedIP, userID]).count === 0);
+                        || (db.prepare("get", "SELECT userID FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]) !== undefined
+                        && privateDB.prepare("get", "SELECT UUID FROM votes WHERE UUID = ? AND hashedIP = ? AND userID != ?", [UUID, hashedIP, userID]) === undefined);
 
         if (ableToVote) {
             //update the votes table
