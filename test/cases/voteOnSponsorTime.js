@@ -7,16 +7,20 @@ describe('voteOnSponsorTime', () => {
   before(() => {
     let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
     db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest', 20, 33, 10, 'vote-uuid-2', 'testman', 0, 50, 'intro', 0)");
+    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.5', 'testman', 0, 50, 'outro', 0)");
+    db.exec(startOfQuery + "('vote-testtesttest3', 20, 33, 10, 'vote-uuid-2', 'testman', 0, 50, 'intro', 0)");
     db.exec(startOfQuery + "('vote-testtesttest,test', 1, 11, 100, 'vote-uuid-3', 'testman', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('vote-test3', 1, 11, 2, 'vote-uuid-4', 'testman', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5', 'testman', 0, 50, 'intro', 0)");
     db.exec(startOfQuery + "('vote-multiple', 1, 11, 2, 'vote-uuid-6', 'testman', 0, 50, 'intro', 0)");
     db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0)");
+    db.exec(startOfQuery + "('voter-submitter', 1, 11, 2, 'vote-uuid-8', '" + getHash("randomID") + "', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-9', '" + getHash("randomID2") + "', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-10', '" + getHash("randomID3") + "', 0, 50, 'sponsor', 0)");
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
   }); 
-  
 
   it('Should be able to upvote a segment', (done) => {
     request.get(utils.getbaseURL() 
@@ -47,6 +51,60 @@ describe('voteOnSponsorTime', () => {
             done()
           } else {
             done("Vote did not succeed. Submission went from 10 votes to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it('Should not be able to downvote the same segment when voting from a different user on the same IP', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=randomID3&UUID=vote-uuid-2&type=0", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
+          if (row.votes === 9) {
+            done()
+          } else {
+            done("Vote did not fail. Submission went from 9 votes to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it("Should not be able to upvote a segment if the user hasn't submitted yet", (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1&type=1", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1"]);
+          if (row.votes === 2) {
+            done()
+          } else {
+            done("Vote did not fail. Submission went from 2 votes to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it("Should not be able to downvote a segment if the user hasn't submitted yet", (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1.5&type=0", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1.5"]);
+          if (row.votes === 10) {
+            done()
+          } else {
+            done("Vote did not fail. Submission went from 10 votes to " + row.votes);
           }
         } else {
           done("Status code was " + res.statusCode);
