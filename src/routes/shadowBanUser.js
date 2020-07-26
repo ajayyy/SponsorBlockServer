@@ -18,12 +18,7 @@ module.exports = async function shadowBanUser(req, res) {
   }
 
   //if enabled is false and the old submissions should be made visible again
-  let unHideOldSubmissions = req.query.unHideOldSubmissions;
-  if (enabled === undefined){
-      unHideOldSubmissions = true;
-  } else {
-      unHideOldSubmissions = unHideOldSubmissions === "true";
-  }
+  let unHideOldSubmissions = req.query.unHideOldSubmissions !== "false";
 
   if (adminUserIDInput == undefined || userID == undefined) {
       //invalid request
@@ -50,7 +45,9 @@ module.exports = async function shadowBanUser(req, res) {
       privateDB.prepare('run', "INSERT INTO shadowBannedUsers VALUES(?)", [userID]);
 
       //find all previous submissions and hide them
-      db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?", [userID]);
+      if (unHideOldSubmissions) {
+        db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?", [userID]);
+      }
   } else if (!enabled && row.userCount > 0) {
       //remove them from the shadow ban list
       privateDB.prepare('run', "DELETE FROM shadowBannedUsers WHERE userID = ?", [userID]);
