@@ -32,10 +32,13 @@ if (config.mysql) {
     if (fs.existsSync(config.privateDBSchema)) privateDB.exec(fs.readFileSync(config.privateDBSchema).toString());
   }
 
-  // Upgrade database if required
   if (!config.readOnly) {
+    // Upgrade database if required
     ugradeDB(db, "sponsorTimes");
     ugradeDB(privateDB, "private")
+
+    // Attach private db to main db
+    db.prepare("ATTACH ? as privateDB").run(config.privateDB);
   }
 
   // Enable WAL mode checkpoint number
