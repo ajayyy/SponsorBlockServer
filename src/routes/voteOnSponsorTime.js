@@ -71,7 +71,7 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     res.sendStatus(200);
 }
 
-module.exports = async function voteOnSponsorTime(req, res) {
+async function voteOnSponsorTime(req, res) {
     let UUID = req.query.UUID;
     let userID = req.query.userID;
     let type = req.query.type;
@@ -131,6 +131,9 @@ module.exports = async function voteOnSponsorTime(req, res) {
         } else if (type == 0 || type == 10) {
             //downvote
             incrementAmount = -1;
+        } else if (type == 20) {
+            //undo/cancel vote
+            incrementAmount = 0;
         } else {
             //unrecongnised type of vote
             res.sendStatus(400);
@@ -243,50 +246,56 @@ module.exports = async function voteOnSponsorTime(req, res) {
             }
         }
 
-        //update the votes table
-        if (votesRow != undefined) {
-            privateDB.prepare('run', "UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?", [type, userID, UUID]);
-        } else {
-            privateDB.prepare('run', "INSERT INTO votes VALUES(?, ?, ?, ?)", [UUID, userID, hashedIP, type]);
-        }
+        // Only change the database if they have made a submission before and haven't voted recently
+        let ableToVote = isVIP 
+                        || (db.prepare("get", "SELECT count(*) as count FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]).count > 0
+                        && privateDB.prepare("get", "SELECT count(*) as count FROM votes WHERE UUID = ? AND hashedIP = ? AND userID != ?", [UUID, hashedIP, userID]).count === 0);
 
-        let columnName = "";
-        if (voteTypeEnum === voteTypes.normal) {
-            columnName = "votes";
-        } else if (voteTypeEnum === voteTypes.incorrect) {
-            columnName = "incorrectVotes";
-        }
-
-        //update the vote count on this sponsorTime
-        //oldIncrementAmount will be zero is row is null
-        db.prepare('run', "UPDATE sponsorTimes SET " + columnName + " = " + columnName + " + ? WHERE UUID = ?", [incrementAmount - oldIncrementAmount, UUID]);
-
-        //for each positive vote, see if a hidden submission can be shown again
-        if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
-            //find the UUID that submitted the submission that was voted on
-            let submissionUserIDInfo = db.prepare('get', "SELECT userID FROM sponsorTimes WHERE UUID = ?", [UUID]);
-            if (!submissionUserIDInfo) {
-                // They are voting on a non-existent submission
-                res.status(400).send("Voting on a non-existent submission");
-                return;
+        if (ableToVote) {
+            //update the votes table
+            if (votesRow != undefined) {
+                privateDB.prepare('run', "UPDATE votes SET type = ? WHERE userID = ? AND UUID = ?", [type, userID, UUID]);
+            } else {
+                privateDB.prepare('run', "INSERT INTO votes VALUES(?, ?, ?, ?)", [UUID, userID, hashedIP, type]);
             }
 
-            let submissionUserID = submissionUserIDInfo.userID;
+            let columnName = "";
+            if (voteTypeEnum === voteTypes.normal) {
+                columnName = "votes";
+            } else if (voteTypeEnum === voteTypes.incorrect) {
+                columnName = "incorrectVotes";
+            }
 
-            //check if any submissions are hidden
-            let hiddenSubmissionsRow = db.prepare('get', "SELECT count(*) as hiddenSubmissions FROM sponsorTimes WHERE userID = ? AND shadowHidden > 0", [submissionUserID]);
+            //update the vote count on this sponsorTime
+            //oldIncrementAmount will be zero is row is null
+            db.prepare('run', "UPDATE sponsorTimes SET " + columnName + " = " + columnName + " + ? WHERE UUID = ?", [incrementAmount - oldIncrementAmount, UUID]);
 
-            if (hiddenSubmissionsRow.hiddenSubmissions > 0) {
-                //see if some of this users submissions should be visible again
-                
-                if (await isUserTrustworthy(submissionUserID)) {
-                    //they are trustworthy again, show 2 of their submissions again, if there are two to show
-                    db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 0 WHERE ROWID IN (SELECT ROWID FROM sponsorTimes WHERE userID = ? AND shadowHidden = 1 LIMIT 2)", [submissionUserID]);
+            //for each positive vote, see if a hidden submission can be shown again
+            if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
+                //find the UUID that submitted the submission that was voted on
+                let submissionUserIDInfo = db.prepare('get', "SELECT userID FROM sponsorTimes WHERE UUID = ?", [UUID]);
+                if (!submissionUserIDInfo) {
+                    // They are voting on a non-existent submission
+                    res.status(400).send("Voting on a non-existent submission");
+                    return;
+                }
+
+                let submissionUserID = submissionUserIDInfo.userID;
+
+                //check if any submissions are hidden
+                let hiddenSubmissionsRow = db.prepare('get', "SELECT count(*) as hiddenSubmissions FROM sponsorTimes WHERE userID = ? AND shadowHidden > 0", [submissionUserID]);
+
+                if (hiddenSubmissionsRow.hiddenSubmissions > 0) {
+                    //see if some of this users submissions should be visible again
+                    
+                    if (await isUserTrustworthy(submissionUserID)) {
+                        //they are trustworthy again, show 2 of their submissions again, if there are two to show
+                        db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 0 WHERE ROWID IN (SELECT ROWID FROM sponsorTimes WHERE userID = ? AND shadowHidden = 1 LIMIT 2)", [submissionUserID]);
+                    }
                 }
             }
         }
 
-        //added to db
         res.sendStatus(200);
     } catch (err) {
         console.error(err);
@@ -294,3 +303,10 @@ module.exports = async function voteOnSponsorTime(req, res) {
         res.status(500).json({error: 'Internal error creating segment vote'});
     }
 }
+
+module.exports = {
+    voteOnSponsorTime,
+    endpoint: function (req, res) {
+       voteOnSponsorTime(req, res);
+    },
+  };
