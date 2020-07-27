@@ -114,10 +114,9 @@ async function autoModerateSubmission(submission, callback) {
 }
 
 function proxySubmission(req) {
-    console.log(req.body);
     request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
         if (!err) {
-            console.log('Proxy Sunmission: ' + result.statusCode + ' ('+result.body+')');
+            console.log('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
         } else {
             console.log("Proxy Submission: Failed to make call");
         }
