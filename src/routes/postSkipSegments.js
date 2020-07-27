@@ -72,7 +72,7 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
 
 // Looks like this was broken for no defined youtube key - fixed but IMO we shouldn't return 
 //   false for a pass - it was confusing and lead to this bug - any use of this function in 
-//   the furute could have the same problem. 
+//   the future could have the same problem. 
 async function autoModerateSubmission(submission, callback) {
     // Get the video information from the youtube API
     if (config.youtubeAPIKey !== null) {
@@ -105,7 +105,7 @@ async function autoModerateSubmission(submission, callback) {
         }
          
     } else {
-        (config.mode === 'development') && console.log("Skipped YouTube API");
+        if (config.mode === 'development') console.log("Skipped YouTube API");
 
         // Can't moderate the submission without calling the youtube API
         // so allow by default.
@@ -115,10 +115,12 @@ async function autoModerateSubmission(submission, callback) {
 
 function proxySubmission(req) {
     request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
-        if (!err) {
-            console.log('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
-        } else {
-            console.log("Proxy Submission: Failed to make call");
+        if (config.mode === 'development') {
+            if (!err) {
+                console.log('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
+            } else {
+                console.log("Proxy Submission: Failed to make call");
+            }
         }
     });
 }
