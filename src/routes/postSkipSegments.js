@@ -127,7 +127,7 @@ function proxySubmission(req) {
 
 module.exports = async function postSkipSegments(req, res) {
     if (config.proxySubmission) {
-        return proxySubmission(req);
+        proxySubmission(req);
     }
 
     let videoID = req.query.videoID || req.body.videoID;
