@@ -69,9 +69,13 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
 // submission: {videoID, startTime, endTime}
 // callback:  function(reject: "String containing reason the submission was rejected")
 // returns: string when an error, false otherwise
+
+// Looks like this was broken for no defined youtube key - fixed but IMO we shouldn't return 
+//   false for a pass - it was confusing and lead to this bug - any use of this function in 
+//   the future could have the same problem. 
 async function autoModerateSubmission(submission, callback) {
     // Get the video information from the youtube API
-    if (config.youtubeAPI !== null) {
+    if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
             YouTubeAPI.videos.list({
                 part: "contentDetails",
@@ -101,15 +105,31 @@ async function autoModerateSubmission(submission, callback) {
         }
          
     } else {
-        console.log("Skipped YouTube API");
+        if (config.mode === 'development') console.log("Skipped YouTube API");
 
         // Can't moderate the submission without calling the youtube API
         // so allow by default.
-        return;
+        return false;
     }
 }
 
+function proxySubmission(req) {
+    request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
+        if (config.mode === 'development') {
+            if (!err) {
+                console.log('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
+            } else {
+                console.log("Proxy Submission: Failed to make call");
+            }
+        }
+    });
+}
+
 module.exports = async function postSkipSegments(req, res) {
+    if (config.proxySubmission) {
+        proxySubmission(req);
+    }
+
     let videoID = req.query.videoID || req.body.videoID;
     let userID = req.query.userID || req.body.userID;
 
