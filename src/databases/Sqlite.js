@@ -1,4 +1,5 @@
 const { db } = require("./databases");
+var config = require('../config.js');
 
 class Sqlite {
   constructor(connection) {

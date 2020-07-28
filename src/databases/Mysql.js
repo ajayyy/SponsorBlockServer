@@ -1,8 +1,9 @@
 var MysqlInterface = require('sync-mysql');
+var config = require('../config.js');
 
 class Mysql {
-  constructor(config) {
-    this.connection = new MysqlInterface(config);
+  constructor(msConfig) {
+    this.connection = new MysqlInterface(msConfig);
   }
 
   exec(query) {
