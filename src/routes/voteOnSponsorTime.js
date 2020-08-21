@@ -11,6 +11,7 @@ var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
+const logger = require('../utils/logger.js');
 
 function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Check if they've already made a vote
@@ -203,7 +204,7 @@ async function voteOnSponsorTime(req, res) {
                         id: submissionInfoRow.videoID
                     }, function (err, data) {
                         if (err || data.items.length === 0) {
-                            err && console.log(err);
+                            err && logger.error(err);
                             return;
                         }
                         
@@ -232,13 +233,13 @@ async function voteOnSponsorTime(req, res) {
                             }
                         }, (err, res) => {
                             if (err) {
-                                console.log("Failed to send reported submission Discord hook.");
-                                console.log(JSON.stringify(err));
-                                console.log("\n");
+                                logger.error("Failed to send reported submission Discord hook.");
+                                logger.error(JSON.stringify(err));
+                                logger.error("\n");
                             } else if (res && res.statusCode >= 400) {
-                                console.log("Error sending reported submission Discord hook");
-                                console.log(JSON.stringify(res));
-                                console.log("\n");
+                                logger.error("Error sending reported submission Discord hook");
+                                logger.error(JSON.stringify(res));
+                                logger.error("\n");
                             }
                         });
                     });
@@ -299,7 +300,7 @@ async function voteOnSponsorTime(req, res) {
 
         res.sendStatus(200);
     } catch (err) {
-        console.error(err);
+        logger.error(err);
 
         res.status(500).json({error: 'Internal error creating segment vote'});
     }
