@@ -22,6 +22,7 @@ var getTopUsers = require('./routes/getTopUsers.js');
 var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 var postNoSegments = require('./routes/postNoSegments.js');
+var getIsUserVIP = require('./routes/getIsUserVIP.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
@@ -89,6 +90,10 @@ app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
 //submit video containing no segments
 app.post('/api/postNoSegments', postNoSegments);
+
+//get if user is a vip
+app.get('/api/getIsUserVIP', getIsUserVIP);
+
 
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: "./" });
