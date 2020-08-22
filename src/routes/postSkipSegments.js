@@ -157,6 +157,8 @@ module.exports = async function postSkipSegments(req, res) {
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
 
+    let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]);
+
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -164,6 +166,14 @@ module.exports = async function postSkipSegments(req, res) {
             res.sendStatus(400);
             return;
         }
+
+        // Reject segemnt if it's in the no segments list
+        if (noSegmentList.indexOf(segments[i].category) !== -1) {
+            // TODO: Do something about the fradulent submission
+            res.sendStatus(403);
+            return;
+        }
+        
 
         let startTime = parseFloat(segments[i].segment[0]);
         let endTime = parseFloat(segments[i].segment[1]);
