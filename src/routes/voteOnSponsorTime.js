@@ -98,7 +98,7 @@ async function voteOnSponsorTime(req, res) {
     let isVIP = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [nonAnonUserID]).userCount > 0;
 
     //check if user voting on own submission
-    let isOwnSubmission = !!db.prepare('all', 'SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?', [nonAnonUserID, UUID]).length;
+    let isOwnSubmission = db.prepare("get", "SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?", [nonAnonUserID, UUID]) !== undefined;
         
     if (type === undefined && category !== undefined) {
         return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
