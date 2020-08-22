@@ -3,6 +3,7 @@ var config = require('../config.js');
 
 var db = require('../databases/databases.js').db;
 var getHash = require('../utils/getHash.js');
+const logger = require('../utils/logger.js');
 
 
 module.exports = function setUsername(req, res) {
@@ -45,7 +46,7 @@ module.exports = function setUsername(req, res) {
 
       res.sendStatus(200);
   } catch (err) {
-      console.log(err);
+      logger.error(err);
       res.sendStatus(500);
 
       return;
