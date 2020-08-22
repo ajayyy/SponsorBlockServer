@@ -17,6 +17,8 @@ const settings = {
 if (config.mode === 'development') {
   settings.INFO = true;
   settings.DEBUG = true;
+} else if (config.mode === 'test') {
+  settings.DEBUG = true;
 }
 
 function log(level, string) {

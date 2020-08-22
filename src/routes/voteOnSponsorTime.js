@@ -4,7 +4,7 @@ var config = require('../config.js');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
-var isUserTrustworthy = require('../utils/isUserTrustworthy.js')
+var isUserTrustworthy = require('../utils/isUserTrustworthy.js');
 
 var databases = require('../databases/databases.js');
 var db = databases.db;
