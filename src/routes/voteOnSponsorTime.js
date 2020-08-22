@@ -97,6 +97,9 @@ async function voteOnSponsorTime(req, res) {
     //check if this user is on the vip list
     let isVIP = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [nonAnonUserID]).userCount > 0;
 
+    //check if user voting on own submission
+    let isOwnSubmission = db.prepare("get", "SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?", [nonAnonUserID, UUID]) !== undefined;
+        
     if (type === undefined && category !== undefined) {
         return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
     }
@@ -166,13 +169,13 @@ async function voteOnSponsorTime(req, res) {
         let row = db.prepare('get', "SELECT votes, views FROM sponsorTimes WHERE UUID = ?", [UUID]);
 
         if (voteTypeEnum === voteTypes.normal) {
-            if (isVIP && incrementAmount < 0) {
+            if ((isVIP || isOwnSubmission) && incrementAmount < 0) {
                 //this user is a vip and a downvote
                 incrementAmount = - (row.votes + 2 - oldIncrementAmount);
                 type = incrementAmount;
             }
         } else if (voteTypeEnum == voteTypes.incorrect) {
-            if (isVIP) {
+            if (isVIP || isOwnSubmission) {
                 //this user is a vip and a downvote
                 incrementAmount = 500 * incrementAmount;
                 type = incrementAmount < 0 ? 12 : 13;
