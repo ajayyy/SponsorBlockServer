@@ -1,4 +1,3 @@
-var fs = require('fs');
 var config = require('../config.js');
 
 var databases = require('../databases/databases.js');

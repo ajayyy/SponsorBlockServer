@@ -9,6 +9,9 @@ var db = databases.db;
 describe('postNoSegments', () => {
   before(() => {
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser-noSegments") + "')");
+
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'sponsor')");
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'intro')");
   });
 
   it('should update the database version when starting the application', (done) => {
@@ -17,12 +20,23 @@ describe('postNoSegments', () => {
     else done('Version isn\'t greater that 1. Version is ' + version);
   });
 
-  it('Should be able to submit no segments', (done) => {
+  it('Should be able to submit categorys not in video', (done) => {
     let json = {
-      videoID: 'noSegmentsTestVideoID',
+      videoID: 'no-segments-video-id',
       userID: 'VIPUser-noSegments',
       categorys: [
-        'sponsor'
+        'outro',
+        'shilling',
+        'shilling',
+        'intro'
+      ]
+    };
+
+    let expected = {
+      status: 200,
+      submitted: [
+        'outro',
+        'shilling'
       ]
     };
 
@@ -31,12 +45,11 @@ describe('postNoSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          //let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["noSegmentsTestVideoID"]);
-          //if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
-            done()
-          //} else {
-          //  done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-          //}
+          if (JSON.stringify(body) === JSON.stringify(expected)) {
+            done();
+          } else {
+            done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(body));
+          }
         } else {
           console.log(body);
           done("Status code was " + res.statusCode);
@@ -166,7 +179,7 @@ describe('postNoSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 403) {
-          done()
+          done();
         } else {
           done("Status code was " + res.statusCode);
         }
