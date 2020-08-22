@@ -12,6 +12,9 @@ describe('postNoSegments', () => {
 
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'sponsor')");
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'intro')");
+
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'sponsor')");
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'intro')");
   });
 
   it('should update the database version when starting the application', (done) => {
@@ -20,7 +23,7 @@ describe('postNoSegments', () => {
     else done('Version isn\'t greater that 1. Version is ' + version);
   });
 
-  it('Should be able to submit categorys not in video', (done) => {
+  it('Should be able to submit categorys not in video (http response)', (done) => {
     let json = {
       videoID: 'no-segments-video-id',
       userID: 'VIPUser-noSegments',
@@ -49,6 +52,37 @@ describe('postNoSegments', () => {
             done();
           } else {
             done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(body));
+          }
+        } else {
+          console.log(body);
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
+  it('Should be able to submit categorys not in video (sql check)', (done) => {
+    let json = {
+      videoID: 'no-segments-video-id-1',
+      userID: 'VIPUser-noSegments',
+      categorys: [
+        'outro',
+        'shilling',
+        'shilling',
+        'intro'
+      ]
+    };
+
+    request.post(utils.getbaseURL() 
+     + "/api/postNoSegments", {json}, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['no-segments-video-id-1']);
+          if (result.length !== 4) {
+            console.log(result);
+            done("Expected 4 entrys in db, got " + result.length);
+          } else {
+            done();
           }
         } else {
           console.log(body);
