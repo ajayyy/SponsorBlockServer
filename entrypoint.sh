@@ -5,33 +5,20 @@ cd /usr/src/app
 cp /etc/sponsorblock/config.json . || cat <<EOF > config.json
 {
     "port": 8080,
-    "mysql": {
-        "host": "127.0.0.1",
-        "port": 3306,
-        "database": "sponsorblock",
-        "user": "sponsorblock",
-        "password": "sponsorblock"
-    },
-    "privateMysql": {
-        "host": "127.0.0.1",
-        "port": 3306,
-        "database": "sponsorblock_private",
-        "user": "sponsorblock",
-        "password": "sponsorblock"
-    },
-    "globalSalt": "",
-    "adminUserID": "",
-    "youtubeAPIKey": "",
+    "globalSalt": "[CHANGE THIS]",
+    "adminUserID": "[CHANGE THIS]",
+    "youtubeAPIKey": null,
     "discordReportChannelWebhookURL": null, 
     "discordFirstTimeSubmissionsWebhookURL": null, 
     "discordAutoModWebhookURL": null,
-    "behindProxy": true,
-    "db": null,
-    "privateDB": null,
+    "proxySubmission": null,
+    "behindProxy": "X-Forwarded-For",
+    "db": "./databases/sponsorTimes.db",
+    "privateDB": "./databases/private.db",
     "createDatabaseIfNotExist": true,
-    "schemaFolder": null,
-    "dbSchema": null,
-    "privateDBSchema": null,
+    "schemaFolder": "./databases",
+    "dbSchema": "./databases/_sponsorTimes.db.sql",
+    "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",
     "readOnly": false
 }
