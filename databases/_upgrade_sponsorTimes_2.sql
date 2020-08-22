@@ -1,6 +1,6 @@
 BEGIN TRANSACTION;
 
-/* Add incorrectVotes field */
+/* Add new table: noSegments */
 CREATE TABLE "noSegments" (
 	"videoID"	TEXT NOT NULL,
 	"userID"	TEXT NOT NULL,
