@@ -16,7 +16,10 @@ module.exports = (req, res) => {
         || !Array.isArray(categorys) 
         || categorys.length === 0
     ) {
-        res.status(400).json({});
+        res.status(400).json({
+            status: 400,
+            message: 'Bad Format'
+        });
         return;
     }
 
@@ -25,7 +28,10 @@ module.exports = (req, res) => {
     let userIsVIP = isUserVIP(userID);
 
     if (!userIsVIP) {
-        res.status(403).json({});
+        res.status(403).json({
+            status: 403,
+            message: 'Must be a VIP to mark videos.'
+        });
         return;
     }
 
@@ -39,8 +45,10 @@ module.exports = (req, res) => {
         });
     }
 
-    // get user categorys not already submitted
+    // get user categorys not already submitted that match accepted format
     let categorysToMark = categorys.filter((category) => {
+        return !!category.match(/^[a-zA-Z]+$/);
+    }).filter((category) => {
         return noSegmentList.indexOf(category) === -1;
     });
 
@@ -51,8 +59,16 @@ module.exports = (req, res) => {
 
     // create database entry
     categorysToMark.forEach((category) => {
-        db.prepare('run', "INSERT INTO noSegments (videoID, userID, category) VALUES(?, ?, ?)", [videoID, userID, category]);
-        //ogger.debug('submitting ' + category);
+        try {
+            db.prepare('run', "INSERT INTO noSegments (videoID, userID, category) VALUES(?, ?, ?)", [videoID, userID, category]);
+        } catch (err) {
+            logger.error("Error submitting 'noSegment' marker for category '" + category + "' for video '" + videoID + "'");
+            logger.error(err);
+            res.status(500).json({
+                status: 500,
+                message: "Internal Server Error: Could not write marker to the database."
+            });
+        }
     });
 
     res.status(200).json({

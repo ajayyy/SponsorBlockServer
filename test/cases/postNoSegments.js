@@ -31,6 +31,8 @@ describe('postNoSegments', () => {
         'outro',
         'shilling',
         'shilling',
+        'shil ling',
+        '',
         'intro'
       ]
     };
@@ -68,6 +70,8 @@ describe('postNoSegments', () => {
         'outro',
         'shilling',
         'shilling',
+        'shil ling',
+        '',
         'intro'
       ]
     };
