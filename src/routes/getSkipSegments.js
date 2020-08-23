@@ -5,6 +5,7 @@ var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
 
+var logger = require('../utils/logger.js');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 
@@ -166,7 +167,7 @@ function handleGetSegments(req, res) {
 
     return segments;
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.sendStatus(500);
 
     return false;

@@ -11,6 +11,19 @@ var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
+const logger = require('../utils/logger.js');
+
+function getVoteAuthor(submissionCount, isVIP, isOwnSubmission) {
+    if (submissionCount === 0) {
+        return "Report by New User";
+    } else if (isVIP) {
+        return "Report by VIP User";
+    } else if (isOwnSubmission) {
+        return "Report by Submitter";
+    }
+
+    return "";
+}
 
 function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Check if they've already made a vote
@@ -96,6 +109,9 @@ async function voteOnSponsorTime(req, res) {
     //check if this user is on the vip list
     let isVIP = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [nonAnonUserID]).userCount > 0;
 
+    //check if user voting on own submission
+    let isOwnSubmission = db.prepare("get", "SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?", [nonAnonUserID, UUID]) !== undefined;
+        
     if (type === undefined && category !== undefined) {
         return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
     }
@@ -165,19 +181,20 @@ async function voteOnSponsorTime(req, res) {
         let row = db.prepare('get', "SELECT votes, views FROM sponsorTimes WHERE UUID = ?", [UUID]);
 
         if (voteTypeEnum === voteTypes.normal) {
-            if (isVIP && incrementAmount < 0) {
+            if ((isVIP || isOwnSubmission) && incrementAmount < 0) {
                 //this user is a vip and a downvote
                 incrementAmount = - (row.votes + 2 - oldIncrementAmount);
                 type = incrementAmount;
             }
         } else if (voteTypeEnum == voteTypes.incorrect) {
-            if (isVIP) {
+            if (isVIP || isOwnSubmission) {
                 //this user is a vip and a downvote
                 incrementAmount = 500 * incrementAmount;
                 type = incrementAmount < 0 ? 12 : 13;
             }
         }
 
+<<<<<<< HEAD
         // Get video ID
         let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
             "(select count(1) from sponsorTimes where userID = s.userID) count, " +
@@ -255,6 +272,37 @@ async function voteOnSponsorTime(req, res) {
                     }
                     // Send discord message
                     if (webhookURL !== null && !isUpvote) {
+=======
+        // Send discord message
+        if (incrementAmount < 0) {
+            // Get video ID
+            let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
+                "(select count(1) from sponsorTimes where userID = s.userID) count, " +
+                "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
+                "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.UUID=?",
+            [UUID]);
+
+            let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]);
+
+            if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
+                let webhookURL = null;
+                if (voteTypeEnum === voteTypes.normal) {
+                    webhookURL = config.discordReportChannelWebhookURL;
+                } else if (voteTypeEnum === voteTypes.incorrect) {
+                    webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
+                }
+    
+                if (config.youtubeAPIKey !== null && webhookURL !== null) {
+                    YouTubeAPI.videos.list({
+                        part: "snippet",
+                        id: submissionInfoRow.videoID
+                    }, function (err, data) {
+                        if (err || data.items.length === 0) {
+                            err && logger.error(err);
+                            return;
+                        }
+                        
+>>>>>>> origin/master
                         request.post(webhookURL, {
                             json: {
                                 "embeds": [{
@@ -271,7 +319,7 @@ async function voteOnSponsorTime(req, res) {
                                             getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                                     "color": 10813440,
                                     "author": {
-                                        "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (isVIP ? "Report by VIP User" : "")
+                                        "name": getVoteAuthor(userSubmissionCountRow.submissionCount, isVIP, isOwnSubmission)
                                     },
                                     "thumbnail": {
                                         "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
@@ -280,13 +328,13 @@ async function voteOnSponsorTime(req, res) {
                             }
                         }, (err, res) => {
                             if (err) {
-                                console.log("Failed to send reported submission Discord hook.");
-                                console.log(JSON.stringify(err));
-                                console.log("\n");
+                                logger.error("Failed to send reported submission Discord hook.");
+                                logger.error(JSON.stringify(err));
+                                logger.error("\n");
                             } else if (res && res.statusCode >= 400) {
-                                console.log("Error sending reported submission Discord hook");
-                                console.log(JSON.stringify(res));
-                                console.log("\n");
+                                logger.error("Error sending reported submission Discord hook");
+                                logger.error(JSON.stringify(res));
+                                logger.error("\n");
                             }
                         });
                     }
@@ -348,7 +396,7 @@ async function voteOnSponsorTime(req, res) {
 
         res.sendStatus(200);
     } catch (err) {
-        console.error(err);
+        logger.error(err);
 
         res.status(500).json({error: 'Internal error creating segment vote'});
     }
