@@ -223,7 +223,7 @@ async function voteOnSponsorTime(req, res) {
                     let isUpvote = incrementAmount > 0
                     // Send custom webhooks
                     if (config.webhooks.size !== 0) {
-                        console.log("Dispatching webhooks");
+                        logger.debug("Dispatching webhooks");
                         config.webhooks.forEach(customWebhook => {
                             let customWebhookURL = customWebhook.url;
                             let scopes = customWebhook.scopes;
