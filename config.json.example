@@ -8,6 +8,7 @@
     "discordReportChannelWebhookURL": null, //URL from discord if you would like notifications when someone makes a report [optional]
     "discordFirstTimeSubmissionsWebhookURL": null, //URL from discord if you would like notifications when someone makes a first time submission [optional]
     "discordCompletelyIncorrectReportWebhookURL": null, //URL from discord if you would like notifications when someone reports a submission as completely incorrect [optional]
+    "proxySubmission": null, // Base url to proxy submissions to persist // e.g. https://sponsor.ajay.app (no trailing slash)
     "behindProxy": "X-Forwarded-For", //Options: "X-Forwarded-For", "Cloudflare", "X-Real-IP", anything else will mean it is not behind a proxy. True defaults to "X-Forwarded-For"
     "db": "./databases/sponsorTimes.db",
     "privateDB": "./databases/private.db",

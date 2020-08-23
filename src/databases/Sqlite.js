@@ -1,4 +1,6 @@
 const { db } = require("./databases");
+var config = require('../config.js');
+const logger = require('../utils/logger.js');
 
 class Sqlite {
   constructor(connection) {
@@ -17,8 +19,8 @@ class Sqlite {
     } else if (type === 'all') {
       return this.connection.prepare(query).all(...params); 
     } else {
-      (config.mode === "development") && console.log('returning undefined...')
-      (config.mode === "development") && console.log("prepare:        type: " + type + ", query: " + query + ", params: " + params);
+      logger.debug('sqlite query: returning undefined')
+      logger.debug("prepare:        type: " + type + ", query: " + query + ", params: " + params);
       return undefined;
     }
   }

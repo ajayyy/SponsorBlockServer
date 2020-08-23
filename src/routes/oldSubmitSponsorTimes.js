@@ -1,5 +1,3 @@
-var config = require('../config.js');
-
 var postSkipSegments = require('./postSkipSegments.js');
 
 module.exports = async function submitSponsorTimes(req, res) {

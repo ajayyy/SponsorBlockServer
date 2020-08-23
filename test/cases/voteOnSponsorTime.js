@@ -20,6 +20,8 @@ describe('voteOnSponsorTime', () => {
     db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-9', '" + getHash("randomID2") + "', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-10', '" + getHash("randomID3") + "', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-11', '" + getHash("randomID4") + "', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('own-submission-video', 1, 11, 500, 'own-submission-uuid', '"+ getHash('own-submission-id') +"', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('not-own-submission-video', 1, 11, 500, 'not-own-submission-uuid', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0)");
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
     privateDB.exec("INSERT INTO shadowBannedUsers (userID) VALUES ('" + getHash("randomID4") + "')");
@@ -144,6 +146,42 @@ describe('voteOnSponsorTime', () => {
             done()
           } else {
             done("Vote did not succeed. Submission went from 100 votes to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it('should be able to completely downvote your own segment', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=own-submission-id&UUID=own-submission-uuid&type=0", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["own-submission-uuid"]);
+          if (row.votes <= -2) {
+            done()
+          } else {
+            done("Vote did not succeed. Submission went from 500 votes to " + row.votes);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it('should not be able to completely downvote somebody elses segment', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=randomID2&UUID=not-own-submission-uuid&type=0", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["not-own-submission-uuid"]);
+          if (row.votes === 499) {
+            done()
+          } else {
+            done("Vote did not succeed. Submission went from 500 votes to " + row.votes);
           }
         } else {
           done("Status code was " + res.statusCode);
