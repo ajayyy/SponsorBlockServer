@@ -5,7 +5,7 @@ const request = require('request');
 
 function dispatchEvent(scope, data) {
     let webhooks = config.webhooks;
-    if (webhooks === undefined || webhooks.size === 0) return;
+    if (webhooks === undefined || webhooks.length === 0) return;
     logger.debug("Dispatching webhooks");
     webhooks.forEach(webhook => {
         let webhookURL = webhook.url;
