@@ -203,7 +203,7 @@ async function voteOnSponsorTime(req, res) {
                 webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
             }
 
-            if (config.youtubeAPIKey !== null && (webhookURL !== null || config.webhooks.size !== 0)) {
+            if (config.youtubeAPIKey !== null) {
                 YouTubeAPI.videos.list({
                     part: "snippet",
                     id: submissionInfoRow.videoID
