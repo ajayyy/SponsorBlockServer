@@ -5,7 +5,7 @@ var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
 var isUserTrustworthy = require('../utils/isUserTrustworthy.js');
-const dispatchWebhooks = require('../utils/dispatchWebhooks.js')
+const dispatchWebhooks = require('../utils/dispatchWebhooks.js');
 
 
 var databases = require('../databases/databases.js');
