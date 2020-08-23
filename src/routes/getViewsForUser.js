@@ -1,6 +1,6 @@
 var db = require('../databases/databases.js').db;
 var getHash = require('../utils/getHash.js');
-
+var logger = require('../utils/logger.js');
 module.exports = function getViewsForUser(req, res) {
   let userID = req.query.userID;
 
@@ -25,7 +25,7 @@ module.exports = function getViewsForUser(req, res) {
           res.sendStatus(404);
       }
   } catch (err) {
-      console.log(err);
+      logger.error(err);
       res.sendStatus(500);
 
       return;

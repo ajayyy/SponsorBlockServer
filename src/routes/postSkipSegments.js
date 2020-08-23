@@ -4,6 +4,7 @@ var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
+var logger = require('../utils/logger.js');
 var request = require('request');
 var isoDurations = require('iso8601-duration');
 
@@ -25,7 +26,7 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
                 id: videoID
             }, function (err, data) {
                 if (err || data.items.length === 0) {
-                    err && console.log(err);
+                    err && logger.error(err);
                     return;
                 }
 
@@ -52,13 +53,13 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
                     }
                     }, (err, res) => {
                         if (err) {
-                            console.log("Failed to send first time submission Discord hook.");
-                            console.log(JSON.stringify(err));
-                            console.log("\n");
+                            logger.error("Failed to send first time submission Discord hook.");
+                            logger.error(JSON.stringify(err));
+                            logger.error("\n");
                         } else if (res && res.statusCode >= 400) {
-                            console.log("Error sending first time submission Discord hook");
-                            console.log(JSON.stringify(res));
-                            console.log("\n");
+                            logger.error("Error sending first time submission Discord hook");
+                            logger.error(JSON.stringify(res));
+                            logger.error("\n");
                         }
                 });
             });
@@ -69,9 +70,13 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
 // submission: {videoID, startTime, endTime}
 // callback:  function(reject: "String containing reason the submission was rejected")
 // returns: string when an error, false otherwise
+
+// Looks like this was broken for no defined youtube key - fixed but IMO we shouldn't return 
+//   false for a pass - it was confusing and lead to this bug - any use of this function in 
+//   the future could have the same problem. 
 async function autoModerateSubmission(submission, callback) {
     // Get the video information from the youtube API
-    if (config.youtubeAPI !== null) {
+    if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
             YouTubeAPI.videos.list({
                 part: "contentDetails",
@@ -101,15 +106,31 @@ async function autoModerateSubmission(submission, callback) {
         }
          
     } else {
-        console.log("Skipped YouTube API");
+        logger.debug("Skipped YouTube API");
 
         // Can't moderate the submission without calling the youtube API
         // so allow by default.
-        return;
+        return false;
     }
 }
 
+function proxySubmission(req) {
+    request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
+        if (config.mode === 'development') {
+            if (!err) {
+                logger.error('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
+            } else {
+                logger.debug("Proxy Submission: Failed to make call");
+            }
+        }
+    });
+}
+
 module.exports = async function postSkipSegments(req, res) {
+    if (config.proxySubmission) {
+        proxySubmission(req);
+    }
+
     let videoID = req.query.videoID || req.body.videoID;
     let userID = req.query.userID || req.body.userID;
 
@@ -244,7 +265,7 @@ module.exports = async function postSkipSegments(req, res) {
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(502);
-                console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " + 
+                logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " + 
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
                 
                 return;
@@ -254,7 +275,7 @@ module.exports = async function postSkipSegments(req, res) {
             sendDiscordNotification(userID, videoID, UUID, segmentInfo);
         }
     } catch (err) {
-        console.error(err);
+        logger.error(err);
 
         res.sendStatus(500);
 
