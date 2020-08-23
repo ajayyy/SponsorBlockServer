@@ -224,9 +224,20 @@ async function voteOnSponsorTime(req, res) {
                     }
                     let isUpvote = incrementAmount > 0;
                     // Send custom webhooks
+                    let userStatus;
+                    if (isOwnSubmission) {
+                        userStatus = "self";
+                    } else if (isVIP) {
+                        userStatus = "vip";
+                    } else if (userSubmissionCountRow.submissionCount === 0) {
+                        userStatus = "new";
+                    } else {
+                        userStatus = "other";
+                    }
                     dispatchWebhooks(isUpvote ? "vote.up" : "vote.down", {
+                        "isOwnSubmission": isOwnSubmission,
                         "user": {
-                            "status": userSubmissionCountRow.submissionCount === 0 ? "new" : (isVIP ? "vip" : "normal")
+                            "status": userStatus
                         },
                         "video": {
                             "id": submissionInfoRow.videoID,
