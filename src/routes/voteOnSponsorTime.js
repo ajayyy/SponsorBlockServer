@@ -235,7 +235,7 @@ async function voteOnSponsorTime(req, res) {
                             "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : ""
                         },
                         "submission": {
-                            "id": UUID,
+                            "UUID": UUID,
                             "views": row.views,
                             "category": category,
                             "startTime": submissionInfoRow.startTime,
