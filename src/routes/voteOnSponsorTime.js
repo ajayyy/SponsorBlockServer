@@ -235,7 +235,6 @@ async function voteOnSponsorTime(req, res) {
                         userStatus = "other";
                     }
                     dispatchWebhooks(isUpvote ? "vote.up" : "vote.down", {
-                        "isOwnSubmission": isOwnSubmission,
                         "user": {
                             "status": userStatus
                         },
