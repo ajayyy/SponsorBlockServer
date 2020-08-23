@@ -178,41 +178,89 @@ async function voteOnSponsorTime(req, res) {
             }
         }
 
-        // Send discord message
-        if (incrementAmount < 0) {
-            // Get video ID
-            let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
-                "(select count(1) from sponsorTimes where userID = s.userID) count, " +
-                "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
-                "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.UUID=?",
-            [UUID]);
+        // Get video ID
+        let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
+            "(select count(1) from sponsorTimes where userID = s.userID) count, " +
+            "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
+            "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.UUID=?",
+        [UUID]);
 
-            let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]);
+        let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]);
 
-            if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
-                let webhookURL = null;
-                if (voteTypeEnum === voteTypes.normal) {
-                    webhookURL = config.discordReportChannelWebhookURL;
-                } else if (voteTypeEnum === voteTypes.incorrect) {
-                    webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
-                }
-    
-                if (config.youtubeAPIKey !== null && webhookURL !== null) {
-                    YouTubeAPI.videos.list({
-                        part: "snippet",
-                        id: submissionInfoRow.videoID
-                    }, function (err, data) {
-                        if (err || data.items.length === 0) {
-                            err && console.log(err);
-                            return;
-                        }
-                        
+        if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
+            let webhookURL = null;
+            if (voteTypeEnum === voteTypes.normal) {
+                webhookURL = config.discordReportChannelWebhookURL;
+            } else if (voteTypeEnum === voteTypes.incorrect) {
+                webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
+            }
+
+            if (config.youtubeAPIKey !== null && (webhookURL !== null || config.webhooks.size !== 0)) {
+                YouTubeAPI.videos.list({
+                    part: "snippet",
+                    id: submissionInfoRow.videoID
+                }, function (err, data) {
+                    if (err || data.items.length === 0) {
+                        err && console.log(err);
+                        return;
+                    }
+                    let isUpvote = incrementAmount > 0
+                    // Send custom webhooks
+                    if (config.webhooks.size !== 0) {
+                        console.log("Dispatching webhooks");
+                        config.webhooks.forEach(customWebhook => {
+                            let customWebhookURL = customWebhook.url;
+                            let scopes = customWebhook.scopes;
+                            let key = customWebhook.key;
+                            if ((!isUpvote && !scopes.includes("vote.down")) || (isUpvote && !scopes.includes("vote.up"))) {
+                                return;
+                            }
+                            request.post(customWebhookURL, {
+                                json: {
+                                    "user": {
+                                        "status": userSubmissionCountRow.submissionCount === 0 ? "new" : (isVIP ? "vip" : "normal")
+                                    },
+                                    "video": {
+                                        "id": submissionInfoRow.videoID,
+                                        "title": data.items[0].snippet.title,
+                                        "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
+                                        "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : ""
+                                    },
+                                    "submission": {
+                                        "id": UUID,
+                                        "views": row.views,
+                                        "category": category,
+                                        "startTime": submissionInfoRow.startTime,
+                                        "endTime": submissionInfoRow.endTime,
+                                        "user": {
+                                            "uuid": submissionInfoRow.userID,
+                                            "username": submissionInfoRow.userName,
+                                            "submissions": {
+                                                "total": submissionInfoRow.count,
+                                                "ignored": submissionInfoRow.disregarded
+                                            }
+                                        }
+                                    },
+                                    "votes": {
+                                        "before": row.votes,
+                                        "after": (row.votes + incrementAmount - oldIncrementAmount)
+                                    }
+                                },
+                                headers: {
+                                    "Authorization": key,
+                                    "Event-Type": isUpvote ? "upvote" : "downvote"
+                                }
+                            });
+                        });
+                    }
+                    // Send discord message
+                    if (webhookURL !== null && !isUpvote) {
                         request.post(webhookURL, {
                             json: {
                                 "embeds": [{
                                     "title": data.items[0].snippet.title,
                                     "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID 
-                                      + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
+                                        + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
                                     "description": "**" + row.votes + " Votes Prior | " + (row.votes + incrementAmount - oldIncrementAmount) + " Votes Now | " + row.views 
                                         + " Views**\n\n**Submission ID:** " + UUID 
                                         + "\n**Category:** " + submissionInfoRow.category
@@ -241,8 +289,9 @@ async function voteOnSponsorTime(req, res) {
                                 console.log("\n");
                             }
                         });
-                    });
-                }
+                    }
+
+                });
             }
         }
 
