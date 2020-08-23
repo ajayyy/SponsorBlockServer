@@ -6,6 +6,7 @@ var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
 var isUserTrustworthy = require('../utils/isUserTrustworthy.js');
 const dispatchWebhooks = require('../utils/dispatchWebhooks.js');
+const {getVoteAuthor, getVoteAuthorRaw} = require('../utils/webhookUtils.js');
 
 
 var databases = require('../databases/databases.js');
@@ -15,17 +16,6 @@ var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
 const logger = require('../utils/logger.js');
 
-function getVoteAuthor(submissionCount, isVIP, isOwnSubmission) {
-    if (submissionCount === 0) {
-        return "Report by New User";
-    } else if (isVIP) {
-        return "Report by VIP User";
-    } else if (isOwnSubmission) {
-        return "Report by Submitter";
-    }
-
-    return "";
-}
 
 function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Check if they've already made a vote
@@ -224,19 +214,9 @@ async function voteOnSponsorTime(req, res) {
                     }
                     let isUpvote = incrementAmount > 0;
                     // Send custom webhooks
-                    let userStatus;
-                    if (isOwnSubmission) {
-                        userStatus = "self";
-                    } else if (isVIP) {
-                        userStatus = "vip";
-                    } else if (userSubmissionCountRow.submissionCount === 0) {
-                        userStatus = "new";
-                    } else {
-                        userStatus = "other";
-                    }
                     dispatchWebhooks(isUpvote ? "vote.up" : "vote.down", {
                         "user": {
-                            "status": userStatus
+                            "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, isVIP, isOwnSubmission)
                         },
                         "video": {
                             "id": submissionInfoRow.videoID,
