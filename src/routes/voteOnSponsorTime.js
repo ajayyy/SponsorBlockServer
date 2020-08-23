@@ -194,7 +194,6 @@ async function voteOnSponsorTime(req, res) {
             }
         }
 
-<<<<<<< HEAD
         // Get video ID
         let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
             "(select count(1) from sponsorTimes where userID = s.userID) count, " +
@@ -272,37 +271,6 @@ async function voteOnSponsorTime(req, res) {
                     }
                     // Send discord message
                     if (webhookURL !== null && !isUpvote) {
-=======
-        // Send discord message
-        if (incrementAmount < 0) {
-            // Get video ID
-            let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
-                "(select count(1) from sponsorTimes where userID = s.userID) count, " +
-                "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
-                "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.UUID=?",
-            [UUID]);
-
-            let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [nonAnonUserID]);
-
-            if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
-                let webhookURL = null;
-                if (voteTypeEnum === voteTypes.normal) {
-                    webhookURL = config.discordReportChannelWebhookURL;
-                } else if (voteTypeEnum === voteTypes.incorrect) {
-                    webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
-                }
-    
-                if (config.youtubeAPIKey !== null && webhookURL !== null) {
-                    YouTubeAPI.videos.list({
-                        part: "snippet",
-                        id: submissionInfoRow.videoID
-                    }, function (err, data) {
-                        if (err || data.items.length === 0) {
-                            err && logger.error(err);
-                            return;
-                        }
-                        
->>>>>>> origin/master
                         request.post(webhookURL, {
                             json: {
                                 "embeds": [{
