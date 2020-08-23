@@ -169,7 +169,7 @@ module.exports = async function postSkipSegments(req, res) {
         let endTime = parseFloat(segments[i].segment[1]);
 
         if (isNaN(startTime) || isNaN(endTime)
-                || startTime === Infinity || endTime === Infinity || startTime > endTime) {
+                || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
             //invalid request
             res.sendStatus(400);
             return;

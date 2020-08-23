@@ -13,6 +13,18 @@ var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
 const logger = require('../utils/logger.js');
 
+function getVoteAuthor(submissionCount, isVIP, isOwnSubmission) {
+    if (submissionCount === 0) {
+        return "Report by New User";
+    } else if (isVIP) {
+        return "Report by VIP User";
+    } else if (isOwnSubmission) {
+        return "Report by Submitter";
+    }
+
+    return "";
+}
+
 function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Check if they've already made a vote
     let previousVoteInfo = privateDB.prepare('get', "select count(*) as votes, category from categoryVotes where UUID = ? and userID = ?", [UUID, userID]);
@@ -227,7 +239,7 @@ async function voteOnSponsorTime(req, res) {
                                             getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                                     "color": 10813440,
                                     "author": {
-                                        "name": userSubmissionCountRow.submissionCount === 0 ? "Report by New User" : (isVIP ? "Report by VIP User" : "")
+                                        "name": getVoteAuthor(userSubmissionCountRow.submissionCount, isVIP, isOwnSubmission)
                                     },
                                     "thumbnail": {
                                         "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
