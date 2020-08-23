@@ -4,7 +4,9 @@ var config = require('../config.js');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
-var isUserTrustworthy = require('../utils/isUserTrustworthy.js')
+var isUserTrustworthy = require('../utils/isUserTrustworthy.js');
+const dispatchWebhooks = require('../utils/dispatchWebhooks.js')
+
 
 var databases = require('../databases/databases.js');
 var db = databases.db;
@@ -217,58 +219,41 @@ async function voteOnSponsorTime(req, res) {
                     id: submissionInfoRow.videoID
                 }, function (err, data) {
                     if (err || data.items.length === 0) {
-                        err && console.log(err);
+                        err && logger.error(err);
                         return;
                     }
-                    let isUpvote = incrementAmount > 0
+                    let isUpvote = incrementAmount > 0;
                     // Send custom webhooks
-                    if (config.webhooks.size !== 0) {
-                        logger.debug("Dispatching webhooks");
-                        config.webhooks.forEach(customWebhook => {
-                            let customWebhookURL = customWebhook.url;
-                            let scopes = customWebhook.scopes;
-                            let key = customWebhook.key;
-                            if ((!isUpvote && !scopes.includes("vote.down")) || (isUpvote && !scopes.includes("vote.up"))) {
-                                return;
-                            }
-                            request.post(customWebhookURL, {
-                                json: {
-                                    "user": {
-                                        "status": userSubmissionCountRow.submissionCount === 0 ? "new" : (isVIP ? "vip" : "normal")
-                                    },
-                                    "video": {
-                                        "id": submissionInfoRow.videoID,
-                                        "title": data.items[0].snippet.title,
-                                        "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
-                                        "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : ""
-                                    },
-                                    "submission": {
-                                        "id": UUID,
-                                        "views": row.views,
-                                        "category": category,
-                                        "startTime": submissionInfoRow.startTime,
-                                        "endTime": submissionInfoRow.endTime,
-                                        "user": {
-                                            "uuid": submissionInfoRow.userID,
-                                            "username": submissionInfoRow.userName,
-                                            "submissions": {
-                                                "total": submissionInfoRow.count,
-                                                "ignored": submissionInfoRow.disregarded
-                                            }
-                                        }
-                                    },
-                                    "votes": {
-                                        "before": row.votes,
-                                        "after": (row.votes + incrementAmount - oldIncrementAmount)
-                                    }
-                                },
-                                headers: {
-                                    "Authorization": key,
-                                    "Event-Type": isUpvote ? "upvote" : "downvote"
+                    dispatchWebhooks(isUpvote ? "vote.up" : "vote.down", {
+                        "user": {
+                            "status": userSubmissionCountRow.submissionCount === 0 ? "new" : (isVIP ? "vip" : "normal")
+                        },
+                        "video": {
+                            "id": submissionInfoRow.videoID,
+                            "title": data.items[0].snippet.title,
+                            "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
+                            "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : ""
+                        },
+                        "submission": {
+                            "id": UUID,
+                            "views": row.views,
+                            "category": category,
+                            "startTime": submissionInfoRow.startTime,
+                            "endTime": submissionInfoRow.endTime,
+                            "user": {
+                                "UUID": submissionInfoRow.userID,
+                                "username": submissionInfoRow.userName,
+                                "submissions": {
+                                    "total": submissionInfoRow.count,
+                                    "ignored": submissionInfoRow.disregarded
                                 }
-                            });
-                        });
-                    }
+                            }
+                        },
+                        "votes": {
+                            "before": row.votes,
+                            "after": (row.votes + incrementAmount - oldIncrementAmount)
+                        }
+                    });
                     // Send discord message
                     if (webhookURL !== null && !isUpvote) {
                         request.post(webhookURL, {
