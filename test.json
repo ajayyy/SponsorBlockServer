@@ -16,12 +16,21 @@
     "privateDBSchema": "./databases/_private.db.sql",
     "mode": "test",
     "readOnly": false,
-    "webhooks": [{
-        "url": "http://127.0.0.1:8081/CustomWebhook",
-        "key": "superSecretKey",
-        "scopes": [
-            "vote.up",
-            "vote.down"
-        ]
-    }]
+    "webhooks": [
+        {
+            "url": "http://127.0.0.1:8081/CustomWebhook",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
+        }, {
+            "url": "http://127.0.0.1:8081/FailedWebhook",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
+        }
+]
 }
