@@ -15,6 +15,12 @@ app.post('/CompletelyIncorrectReportWebhook', (req, res) => {
   res.sendStatus(200);
 });
 
+
+app.post('/CustomWebhook', (req, res) => {
+  res.sendStatus(200);
+});
+
+
 module.exports = function createMockServer(callback) {
   return app.listen(config.mockPort, callback);
 } 
