@@ -45,7 +45,7 @@ const settings = {
 if (config.mode === 'development') {
   settings.INFO = true;
   settings.DEBUG = true;
-} if (config.mode === 'test') {
+} else if (config.mode === 'test') {
     settings.WARN = false;
 }
 
