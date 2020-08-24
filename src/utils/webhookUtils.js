@@ -35,10 +35,13 @@ function dispatchEvent(scope, data) {
         let authKey = webhook.key;
         let scopes = webhook.scopes || [];
         if (!scopes.includes(scope.toLowerCase())) return;
-        request.post(webhookURL, {json: data, headers: {
+        let hookRequest = request.post(webhookURL, {json: data, headers: {
             "Authorization": authKey,
             "Event-Type": scope // Maybe change this in the future? 
-        }});
+        }}).on('error', (e) => {
+            logger.warn('Couldn\'t send webhook to ' + webhook.url);
+            logger.warn(e);
+        });
     });
 }
 
