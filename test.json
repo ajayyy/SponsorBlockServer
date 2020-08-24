@@ -32,6 +32,13 @@
                 "vote.down"
             ]
         }, {
+            "url": "http://127.0.0.1:8099/WrongPort",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
+        }, {
             "url": "http://unresolvable.host:8081/FailedWebhook",
             "key": "superSecretKey",
             "scopes": [
