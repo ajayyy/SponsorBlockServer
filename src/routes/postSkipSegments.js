@@ -44,9 +44,7 @@ function sendWebhookNotification(userID, videoID, UUID, submissionCount, youtube
     });
 }
 
-function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
-    //check if they are a first time user
-    //if so, send a notification to discord
+function sendWebhooks(userID, videoID, UUID, segmentInfo) {
     if (config.youtubeAPIKey !== null) {
         let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
@@ -64,6 +62,7 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
             sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, data, {submissionStart: startTime, submissionEnd: endTime}, segmentInfo);
             
             // If it is a first time submission
+            // Then send a notification to discord
             if (config.discordFirstTimeSubmissionsWebhookURL === null) return;
             request.post(config.discordFirstTimeSubmissionsWebhookURL, {
                 json: {
@@ -293,7 +292,7 @@ module.exports = async function postSkipSegments(req, res) {
             
                 //add to private db as well
                 privateDB.prepare('run', "INSERT INTO sponsorTimes VALUES(?, ?, ?)", [videoID, hashedIP, timeSubmitted]);
-            } catch (err) {
+            } catch (err) {s
                 //a DB change probably occurred
                 res.sendStatus(502);
                 logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " + 
@@ -302,8 +301,8 @@ module.exports = async function postSkipSegments(req, res) {
                 return;
             }
     
-            // Discord notification
-            sendDiscordNotification(userID, videoID, UUID, segmentInfo);
+            // Webhooks
+            sendWebhooks(userID, videoID, UUID, segmentInfo);
         }
     } catch (err) {
         logger.error(err);
