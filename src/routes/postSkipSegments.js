@@ -292,7 +292,7 @@ module.exports = async function postSkipSegments(req, res) {
             
                 //add to private db as well
                 privateDB.prepare('run', "INSERT INTO sponsorTimes VALUES(?, ?, ?)", [videoID, hashedIP, timeSubmitted]);
-            } catch (err) {s
+            } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(502);
                 logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " + 
