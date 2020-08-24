@@ -5,8 +5,7 @@ var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
 var isUserTrustworthy = require('../utils/isUserTrustworthy.js');
-const dispatchWebhooks = require('../utils/dispatchWebhooks.js');
-const {getVoteAuthor, getVoteAuthorRaw} = require('../utils/webhookUtils.js');
+const {getVoteAuthor, getVoteAuthorRaw, dispatchEvent} = require('../utils/webhookUtils.js');
 
 
 var databases = require('../databases/databases.js');
@@ -214,7 +213,7 @@ async function voteOnSponsorTime(req, res) {
                     }
                     let isUpvote = incrementAmount > 0;
                     // Send custom webhooks
-                    dispatchWebhooks(isUpvote ? "vote.up" : "vote.down", {
+                    dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
                         "user": {
                             "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, isVIP, isOwnSubmission)
                         },
