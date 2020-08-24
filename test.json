@@ -31,6 +31,13 @@
                 "vote.up",
                 "vote.down"
             ]
+        }, {
+            "url": "http://unresolvable.host:8081/FailedWebhook",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
         }
-]
+    ]
 }
