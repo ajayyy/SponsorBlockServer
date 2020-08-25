@@ -116,7 +116,7 @@ async function voteOnSponsorTime(req, res) {
         return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
     }
 
-    if (type == 1 && !isVIP) {
+    if (type == 1 && !isVIP && !isOwnSubmission) {
         // Check if upvoting hidden segment
         let voteInfo = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", [UUID]);
 
