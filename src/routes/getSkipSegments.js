@@ -21,11 +21,10 @@ function getWeightedRandomChoice(choices, amountOfChoices) {
   //assign a weight to each choice
   let totalWeight = 0;
   choices = choices.map(choice => {
-    //multiplying by 10 makes around 13 votes the point where it the votes start not mattering as much (10 + 3)
     //The 3 makes -2 the minimum votes before being ignored completely
-    //https://www.desmos.com/calculator/ljftxolg9j
+    //https://www.desmos.com/calculator/c1duhfrmts
     //this can be changed if this system increases in popularity.
-    const weight = Math.sqrt((choice.votes + 3) * 10);
+    const weight = Math.exp((choice.votes + 3), 0.85);
     totalWeight += weight;
 
     return { ...choice, weight };
