@@ -238,9 +238,6 @@ module.exports = async function postSkipSegments(req, res) {
     }
 
     try {
-        //check if this user is on the vip list
-        let vipRow = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]);
-
         //get current time
         let timeSubmitted = Date.now();
 
