@@ -18,6 +18,12 @@ module.exports = function setUsername(req, res) {
       return;
   }
 
+  if (userName.contains("discord")) {
+      // Don't allow
+      res.sendStatus(200);
+      return;
+  }
+
   if (adminUserIDInput != undefined) {
       //this is the admin controlling the other users account, don't hash the controling account's ID
       adminUserIDInput = getHash(adminUserIDInput);
