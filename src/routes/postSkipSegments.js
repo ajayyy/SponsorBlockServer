@@ -226,6 +226,9 @@ module.exports = async function postSkipSegments(req, res) {
         }
     }
 
+    // Will be filled when submitting
+    let UUIDs = [];
+
     try {
         //check if this user is on the vip list
         let vipRow = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]);
@@ -301,8 +304,7 @@ module.exports = async function postSkipSegments(req, res) {
                 return;
             }
     
-            // Webhooks
-            sendWebhooks(userID, videoID, UUID, segmentInfo);
+            UUIDs.push(UUID);
         }
     } catch (err) {
         logger.error(err);
@@ -313,4 +315,8 @@ module.exports = async function postSkipSegments(req, res) {
     }
 
     res.sendStatus(200);
+
+    for (let i = 0; i < segments.length; i++) {
+        sendWebhooks(userID, videoID, UUIDs[i], segments[i]);
+    }
 }
