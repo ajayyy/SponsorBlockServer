@@ -97,47 +97,25 @@ async function autoModerateSubmission(submission, callback) {
                 if (duration == 0) {
                     // Allow submission if the duration is 0 (bug in youtube api)
                     return false;
-                }
+                } else if ((submission.endTime - submission.startTime) > (duration/100)*80) {
+                    // Reject submission if over 80% of the video
+                    return "Sponsor segment is over 80% of the video.";
+                } else {
+                    // Check NeuralBlock
+                    let neuralBlockURL = config.neuralBlockURL;
+                    if (!neuralBlockURL) return false;
 
-                for (const segment of segments) {
-                    if ((segment.segment[1] - segment.segment[0]) > (duration / 100) * 80) {
-                        // Reject submission if over 80% of the video
-                        return "One of your submitted segments is over 80% of the video.";
+                    let response = await fetch(neuralBlockURL + "/api/checkSponsorSegments?vid=" + submission.videoID +
+                                              "&segments=" + submission.startTime + "," + submission.endTime);
+                    if (!response.ok) return false;
+
+                    let nbPredictions = await response.json();
+                    if (nbPredictions.probabilities[0] >= 0.70){
+                      return false;
+                    } else {
+                      // Send to Discord
+                      return "Automoderator has rejected the segment. Sending to Discord for manual review.";
                     }
-                }
-
-                let neuralBlockURL = config.neuralBlockURL;
-                if (!neuralBlockURL) return false;
-
-                let overlap = true;
-
-                let response = await fetch(neuralBlockURL + "/api/getSponsorSegments?vid=" + videoID);
-                if (!response.ok) return false;
-
-                let nbPredictions = await response.json();
-                for (const segment of segments) {
-                    if (segment.category !== "sponsor") continue;
-
-                    let thisSegmentOverlaps = false;
-                    for (const nbSegment of nbPredictions.sponsorSegments) {
-                        // The submission needs to be similar to the NB prediction by 65% or off by less than 7 seconds
-                        // This calculated how off it is
-                        let offAmount = Math.abs(nbSegment[0] - segment.segment[0]) + Math.abs(nbSegment[1] - segment.segment[1]);
-                        if (offAmount / (nbSegment[1] - nbSegment[0]) <= 0.35 || offAmount <= 7) {
-                            thisSegmentOverlaps = true;
-                        }
-                    }
-
-                    if (!thisSegmentOverlaps){
-                        overlap = false;
-                        break;
-                    }
-                }
-
-                if (overlap) {
-                    return false;
-                } else{
-                    return "One of your submitted segments doesn't have at least 65% match.";
                 }
             }
         }
