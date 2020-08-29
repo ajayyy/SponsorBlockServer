@@ -14,7 +14,7 @@ module.exports = function getSavedTimeForUser (req, res) {
   userID = getHash(userID);
 
   try {
-      let row = db.prepare("SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ").get(userID);
+      let row = db.prepare("get", "SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ", [userID]);
 
       if (row.minutesSaved != null) {
           res.send({

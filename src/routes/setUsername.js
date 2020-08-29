@@ -3,6 +3,7 @@ var config = require('../config.js');
 
 var db = require('../databases/databases.js').db;
 var getHash = require('../utils/getHash.js');
+const logger = require('../utils/logger.js');
 
 
 module.exports = function setUsername(req, res) {
@@ -14,6 +15,12 @@ module.exports = function setUsername(req, res) {
   if (userID == undefined || userName == undefined || userID === "undefined") {
       //invalid request
       res.sendStatus(400);
+      return;
+  }
+
+  if (userName.includes("discord")) {
+      // Don't allow
+      res.sendStatus(200);
       return;
   }
 
@@ -33,19 +40,19 @@ module.exports = function setUsername(req, res) {
 
   try {
       //check if username is already set
-      let row = db.prepare("SELECT count(*) as count FROM userNames WHERE userID = ?").get(userID);
+      let row = db.prepare('get', "SELECT count(*) as count FROM userNames WHERE userID = ?", [userID]);
 
       if (row.count > 0) {
           //already exists, update this row
-          db.prepare("UPDATE userNames SET userName = ? WHERE userID = ?").run(userName, userID);
+          db.prepare('run', "UPDATE userNames SET userName = ? WHERE userID = ?", [userName, userID]);
       } else {
           //add to the db
-          db.prepare("INSERT INTO userNames VALUES(?, ?)").run(userID, userName);
+          db.prepare('run', "INSERT INTO userNames VALUES(?, ?)", [userID, userName]);
       }
 
       res.sendStatus(200);
   } catch (err) {
-      console.log(err);
+      logger.error(err);
       res.sendStatus(500);
 
       return;

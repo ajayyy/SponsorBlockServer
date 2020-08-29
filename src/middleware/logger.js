@@ -1,7 +1,6 @@
-var fs = require('fs');
-var config = require('../config.js');
+const log = require('../utils/logger.js'); // log not logger to not interfere with function name
 
 module.exports = function logger (req, res, next) {
-  (config.mode === "development") && console.log('Request recieved: ' + req.url);
+  log.info("Request recieved: " + req.method + " " + req.url);
   next();
 }

@@ -4,37 +4,20 @@ var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
+var logger = require('../utils/logger.js');
 var request = require('request');
 var isoDurations = require('iso8601-duration');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
-const fetch = require('node-fetch');
-
-// TODO: might need to be a util
-//returns true if the user is considered trustworthy
-//this happens after a user has made 5 submissions and has less than 60% downvoted submissions
-async function isUserTrustworthy(userID) {
-    //check to see if this user how many submissions this user has submitted
-    let totalSubmissionsRow = db.prepare("SELECT count(*) as totalSubmissions, sum(votes) as voteSum FROM sponsorTimes WHERE userID = ?").get(userID);
-
-    if (totalSubmissionsRow.totalSubmissions > 5) {
-        //check if they have a high downvote ratio
-        let downvotedSubmissionsRow = db.prepare("SELECT count(*) as downvotedSubmissions FROM sponsorTimes WHERE userID = ? AND (votes < 0 OR shadowHidden > 0)").get(userID);
-
-        return (downvotedSubmissionsRow.downvotedSubmissions / totalSubmissionsRow.totalSubmissions) < 0.6 ||
-                (totalSubmissionsRow.voteSum > downvotedSubmissionsRow.downvotedSubmissions);
-    }
-
-    return true;
-}
+var isUserTrustworthy = require('../utils/isUserTrustworthy.js')
 
 function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
     //check if they are a first time user
     //if so, send a notification to discord
     if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null) {
-        let userSubmissionCountRow = db.prepare("SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?").get(userID);
+        let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
         // If it is a first time submission
         if (userSubmissionCountRow.submissionCount <= 1) {
@@ -43,7 +26,7 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
                 id: videoID
             }, function (err, data) {
                 if (err || data.items.length === 0) {
-                    err && console.log(err);
+                    err && logger.error(err);
                     return;
                 }
 
@@ -70,13 +53,13 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
                     }
                     }, (err, res) => {
                         if (err) {
-                            console.log("Failed to send first time submission Discord hook.");
-                            console.log(JSON.stringify(err));
-                            console.log("\n");
+                            logger.error("Failed to send first time submission Discord hook.");
+                            logger.error(JSON.stringify(err));
+                            logger.error("\n");
                         } else if (res && res.statusCode >= 400) {
-                            console.log("Error sending first time submission Discord hook");
-                            console.log(JSON.stringify(res));
-                            console.log("\n");
+                            logger.error("Error sending first time submission Discord hook");
+                            logger.error(JSON.stringify(res));
+                            logger.error("\n");
                         }
                 });
             });
@@ -86,9 +69,13 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
 
 // callback:  function(reject: "String containing reason the submission was rejected")
 // returns: string when an error, false otherwise
-async function autoModerateSubmission(videoID, segments) {
+
+// Looks like this was broken for no defined youtube key - fixed but IMO we shouldn't return
+//   false for a pass - it was confusing and lead to this bug - any use of this function in
+//   the future could have the same problem.
+async function autoModerateSubmission(submission, callback) {
     // Get the video information from the youtube API
-    if (config.youtubeAPI !== null) {
+    if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
             YouTubeAPI.videos.list({
                 part: "contentDetails",
@@ -119,7 +106,7 @@ async function autoModerateSubmission(videoID, segments) {
 
                 let neuralBlockURL = config.neuralBlockURL;
                 if (!neuralBlockURL) return false;
-                
+
                 let overlap = true;
 
                 let response = await fetch(neuralBlockURL + "/api/getSponsorSegments?vid=" + videoID);
@@ -142,7 +129,7 @@ async function autoModerateSubmission(videoID, segments) {
                     if (!thisSegmentOverlaps){
                         overlap = false;
                         break;
-                    } 
+                    }
                 }
 
                 if (overlap) {
@@ -154,15 +141,31 @@ async function autoModerateSubmission(videoID, segments) {
         }
 
     } else {
-        console.log("Skipped YouTube API");
+        logger.debug("Skipped YouTube API");
 
         // Can't moderate the submission without calling the youtube API
         // so allow by default.
-        return;
+        return false;
     }
 }
 
+function proxySubmission(req) {
+    request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
+        if (config.mode === 'development') {
+            if (!err) {
+                logger.error('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
+            } else {
+                logger.debug("Proxy Submission: Failed to make call");
+            }
+        }
+    });
+}
+
 module.exports = async function postSkipSegments(req, res) {
+    if (config.proxySubmission) {
+        proxySubmission(req);
+    }
+
     let videoID = req.query.videoID || req.body.videoID;
     let userID = req.query.userID || req.body.userID;
 
@@ -203,16 +206,22 @@ module.exports = async function postSkipSegments(req, res) {
         let startTime = parseFloat(segments[i].segment[0]);
         let endTime = parseFloat(segments[i].segment[1]);
 
-        if (Math.abs(startTime - endTime) < 1 || isNaN(startTime) || isNaN(endTime)
-                || startTime === Infinity || endTime === Infinity || startTime > endTime) {
+        if (isNaN(startTime) || isNaN(endTime)
+                || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
             //invalid request
             res.sendStatus(400);
             return;
         }
 
+        if (segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
+            // Too short
+            res.status(400).send("Sponsors must be longer than 1 second long");
+            return;
+        }
+
         //check if this info has already been submitted before
-        let duplicateCheck2Row = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE startTime = ? " +
-            "and endTime = ? and category = ? and videoID = ?").get(startTime, endTime, segments[i].category, videoID);
+        let duplicateCheck2Row = db.prepare('get', "SELECT COUNT(*) as count FROM sponsorTimes WHERE startTime = ? " +
+            "and endTime = ? and category = ? and videoID = ?", [startTime, endTime, segments[i].category, videoID]);
         if (duplicateCheck2Row.count > 0) {
             res.sendStatus(409);
             return;
@@ -229,33 +238,42 @@ module.exports = async function postSkipSegments(req, res) {
     }
 
     try {
+        //check if this user is on the vip list
+        let vipRow = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]);
+
         //get current time
         let timeSubmitted = Date.now();
 
         let yesterday = timeSubmitted - 86400000;
 
-        //check to see if this ip has submitted too many sponsors today
-        let rateLimitCheckRow = privateDB.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?").get([hashedIP, videoID, yesterday]);
+        // Disable IP ratelimiting for now
+        if (false) {
+            //check to see if this ip has submitted too many sponsors today
+            let rateLimitCheckRow = privateDB.prepare('get', "SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?", [hashedIP, videoID, yesterday]);
 
-        if (rateLimitCheckRow.count >= 10) {
-            //too many sponsors for the same video from the same ip address
-            res.sendStatus(429);
+            if (rateLimitCheckRow.count >= 10) {
+                //too many sponsors for the same video from the same ip address
+                res.sendStatus(429);
 
-            return;
+                return;
+            }
         }
 
-        //check to see if the user has already submitted sponsors for this video
-        let duplicateCheckRow = db.prepare("SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?").get([userID, videoID]);
+        // Disable max submissions for now
+        if (false) {
+            //check to see if the user has already submitted sponsors for this video
+            let duplicateCheckRow = db.prepare('get', "SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?", [userID, videoID]);
 
-        if (duplicateCheckRow.count >= 8) {
-            //too many sponsors for the same video from the same user
-            res.sendStatus(429);
+            if (duplicateCheckRow.count >= 16) {
+                //too many sponsors for the same video from the same user
+                res.sendStatus(429);
 
-            return;
+                return;
+            }
         }
 
         //check to see if this user is shadowbanned
-        let shadowBanRow = privateDB.prepare("SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?").get(userID);
+        let shadowBanRow = privateDB.prepare('get', "SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?", [userID]);
 
         let shadowBanned = shadowBanRow.userCount;
 
@@ -267,7 +285,7 @@ module.exports = async function postSkipSegments(req, res) {
         let startingVotes = 0;
         if (isVIP) {
             //this user is a vip, start them at a higher approval rating
-            startingVotes = 10;
+            startingVotes = 10000;
         }
 
         for (const segmentInfo of segments) {
@@ -278,17 +296,17 @@ module.exports = async function postSkipSegments(req, res) {
                 segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
 
             try {
-                db.prepare("INSERT INTO sponsorTimes " + 
+                db.prepare('run', "INSERT INTO sponsorTimes " +
                     "(videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden)" +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(videoID, segmentInfo.segment[0], 
-                    segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned);
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [videoID, segmentInfo.segment[0],
+                    segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned]);
 
                 //add to private db as well
-                privateDB.prepare("INSERT INTO sponsorTimes VALUES(?, ?, ?)").run(videoID, hashedIP, timeSubmitted);
+                privateDB.prepare('run', "INSERT INTO sponsorTimes VALUES(?, ?, ?)", [videoID, hashedIP, timeSubmitted]);
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(502);
-                console.log("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
+                logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
 
                 return;
@@ -298,7 +316,7 @@ module.exports = async function postSkipSegments(req, res) {
             sendDiscordNotification(userID, videoID, UUID, segmentInfo);
         }
     } catch (err) {
-        console.error(err);
+        logger.error(err);
 
         res.sendStatus(500);
 

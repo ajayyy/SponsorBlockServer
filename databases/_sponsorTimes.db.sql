@@ -25,8 +25,9 @@ CREATE TABLE IF NOT EXISTS "categoryVotes" (
 	"votes"	INTEGER NOT NULL default '0'
 );
 
-CREATE TABLE IF NOT EXISTS "version" (
-    "code" INTEGER NOT NULL default '0'
+CREATE TABLE IF NOT EXISTS "config" (
+    "key" TEXT NOT NULL UNIQUE,
+	"value" TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS sponsorTimes_videoID on sponsorTimes(videoID);

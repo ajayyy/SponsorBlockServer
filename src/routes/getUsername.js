@@ -1,6 +1,7 @@
 var db = require('../databases/databases.js').db;
 
 var getHash = require('../utils/getHash.js');
+const logger = require('../utils/logger.js');
 
 module.exports = function getUsername (req, res) {
     let userID = req.query.userID;
@@ -15,7 +16,7 @@ module.exports = function getUsername (req, res) {
     userID = getHash(userID);
 
     try {
-        let row = db.prepare("SELECT userName FROM userNames WHERE userID = ?").get(userID);
+        let row = db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
 
         if (row !== undefined) {
             res.send({
@@ -28,7 +29,7 @@ module.exports = function getUsername (req, res) {
             });
         }
     } catch (err) {
-        console.log(err);
+        logger.error(err);
         res.sendStatus(500);
 
         return;
