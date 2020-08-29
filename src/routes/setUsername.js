@@ -18,7 +18,7 @@ module.exports = function setUsername(req, res) {
       return;
   }
 
-  if (userName.contains("discord")) {
+  if (userName.includes("discord")) {
       // Don't allow
       res.sendStatus(200);
       return;
