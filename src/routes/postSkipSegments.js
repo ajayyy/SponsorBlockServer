@@ -13,6 +13,8 @@ var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
 var isUserTrustworthy = require('../utils/isUserTrustworthy.js')
 
+const fetch = require('node-fetch');
+
 function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
     //check if they are a first time user
     //if so, send a notification to discord
