@@ -79,7 +79,7 @@ async function autoModerateSubmission(submission, callback) {
         let {err, data} = await new Promise((resolve, reject) => {
             YouTubeAPI.videos.list({
                 part: "contentDetails",
-                id: videoID
+                id: submission.videoID
             }, (err, data) => resolve({err, data}));
         });
 
@@ -88,7 +88,7 @@ async function autoModerateSubmission(submission, callback) {
         } else {
             // Check to see if video exists
             if (data.pageInfo.totalResults === 0) {
-                return "No video exists with id " + videoID;
+                return "No video exists with id " + submission.videoID;
             } else {
                 let duration = data.items[0].contentDetails.duration;
                 duration = isoDurations.toSeconds(isoDurations.parse(duration));
@@ -193,7 +193,7 @@ module.exports = async function postSkipSegments(req, res) {
     let hashedIP = getHash(getIP(req) + config.globalSalt);
 
     //check if this user is on the vip list
-    let isVIP = db.prepare("SELECT count(*) as userCount FROM vipUsers WHERE userID = ?").get(userID).userCount > 0;
+    let isVIP = db.prepare("get", "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]).userCount > 0;
 
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
