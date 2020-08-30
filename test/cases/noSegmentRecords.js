@@ -4,9 +4,10 @@ var utils = require('../utils.js');
 const getHash = require('../../src/utils/getHash.js');
 
 var databases = require('../../src/databases/databases.js');
+const logger = require('../../src/utils/logger.js');
 var db = databases.db;
 
-describe('postNoSegments', () => {
+describe('noSegmentRecords', () => {
   before(() => {
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser-noSegments") + "')");
 
@@ -15,9 +16,10 @@ describe('postNoSegments', () => {
 
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'sponsor')");
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'intro')");
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'noSubmitVideo', 'sponsor')");
   });
 
-  it('should update the database version when starting the application', (done) => {
+  it('Should update the database version when starting the application', (done) => {
     let version = db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version']).value;
     if (version > 1) done();
     else done('Version isn\'t greater that 1. Version is ' + version);
@@ -222,5 +224,102 @@ describe('postNoSegments', () => {
           done("Status code was " + res.statusCode);
         }
       });
+  });
+
+  /*
+   * Submission tests in this file do not check database records, only status codes.
+   * To test the submission code properly see ./test/cases/postSkipSegments.js
+   */
+
+  it('Should not be able to submit a segment to a video with a no-segment record (single submission)', (done) => {
+    request.post(utils.getbaseURL() 
+    + "/api/postVideoSponsorTimes", {
+      json: {
+         userID: "testman42",
+         videoID: "noSubmitVideo",
+         segments: [{
+           segment: [20, 40],
+           category: "sponsor"
+         }]
+      }
+    }, 
+     (err, res, body) => {
+       if (err) done(err);
+       else if (res.statusCode === 403) {
+        done()
+       } else {
+         done("Status code was " + res.statusCode);
+       }
+     });
+  });
+
+  it('Should not be able to submit segments to a video where any of the submissions with a no-segment record', (done) => {
+    request.post(utils.getbaseURL() 
+    + "/api/postVideoSponsorTimes", {
+      json: {
+         userID: "testman42",
+         videoID: "noSubmitVideo",
+         segments: [{
+           segment: [20, 40],
+           category: "sponsor"
+         },{
+          segment: [50, 60],
+          category: "intro"
+        }]
+      }
+    }, 
+     (err, res, body) => {
+       if (err) done(err);
+       else if (res.statusCode === 403) {
+           done()
+       } else {
+         done("Status code was " + res.statusCode);
+       }
+     });
+  });
+
+
+  it('Should  be able to submit a segment to a video with a different no-segment record', (done) => {
+    request.post(utils.getbaseURL() 
+    + "/api/postVideoSponsorTimes", {
+      json: {
+         userID: "testman42",
+         videoID: "noSubmitVideo",
+         segments: [{
+           segment: [20, 40],
+           category: "intro"
+         }]
+      }
+    }, 
+     (err, res, body) => {
+       if (err) done(err);
+       else if (res.statusCode === 200) {
+           done()
+       } else {
+         done("Status code was " + res.statusCode);
+       }
+     });
+  });
+
+  it('Should be able to submit a segment to a video with no no-segment records', (done) => {
+    request.post(utils.getbaseURL() 
+    + "/api/postVideoSponsorTimes", {
+      json: {
+         userID: "testman42",
+         videoID: "normalVideo",
+         segments: [{
+           segment: [20, 40],
+           category: "intro"
+         }]
+      }
+    }, 
+     (err, res, body) => {
+       if (err) done(err);
+       else if (res.statusCode === 200) {
+           done()
+       } else {
+         done("Status code was " + res.statusCode);
+       }
+     });
   });
 });

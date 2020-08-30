@@ -187,8 +187,7 @@ module.exports = async function postSkipSegments(req, res) {
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
 
-    let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]);
-
+    let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list) => { return list.category });
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -200,7 +199,11 @@ module.exports = async function postSkipSegments(req, res) {
         // Reject segemnt if it's in the no segments list
         if (noSegmentList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
-            res.sendStatus(403);
+            logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
+            res.status(403).send(
+              "Request rejected by auto moderator: This video has been reported as not containing any segments with the category '"
+              + segments[i].category + "'. If you believe this is incorrect, contact someone on Discord."
+            );
             return;
         }
         
