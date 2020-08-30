@@ -15,6 +15,17 @@ app.post('/CompletelyIncorrectReportWebhook', (req, res) => {
   res.sendStatus(200);
 });
 
+app.get('/NeuralBlock/api/checkSponsorSegments', (req, res) => {
+  if (req.query.vid === "LevkAjUE6d4") {
+    res.json({
+      probabilities: [0.69]
+    });
+    return;
+  }
+  res.sendStatus(500);
+});
+
+//getSponsorSegments is no longer being used for automod
 app.get('/NeuralBlock/api/getSponsorSegments', (req, res) => {
   if (req.query.vid === "LevkAjUE6d4") {
     res.json({
@@ -22,7 +33,6 @@ app.get('/NeuralBlock/api/getSponsorSegments', (req, res) => {
     });
     return;
   }
-
   res.sendStatus(500);
 });
 
