@@ -60,12 +60,12 @@ if (config.mysql) {
     let versionCodeInfo = db.prepare("SELECT value FROM config WHERE key = ?").get("version");
     let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
 
-    let path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (versionCode + 1) + ".sql";
+    let path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (parseInt(versionCode) + 1) + ".sql";
     while (fs.existsSync(path)) {
       db.exec(fs.readFileSync(path).toString());
 
       versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
-      path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (versionCode + 1) + ".sql";
+      path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (parseInt(versionCode) + 1) + ".sql";
     }
   }
 }
