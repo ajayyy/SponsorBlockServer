@@ -1,19 +1,18 @@
-var config = require('../config.js');
+const config = require('../config.js');
 
-var databases = require('../databases/databases.js');
-var db = databases.db;
-var privateDB = databases.privateDB;
-var YouTubeAPI = require('../utils/youtubeAPI.js');
-var logger = require('../utils/logger.js');
-var request = require('request');
-var isoDurations = require('iso8601-duration');
-
-var getHash = require('../utils/getHash.js');
-var getIP = require('../utils/getIP.js');
-var getFormattedTime = require('../utils/getFormattedTime.js');
-var isUserTrustworthy = require('../utils/isUserTrustworthy.js')
-
+const databases = require('../databases/databases.js');
+const db = databases.db;
+const privateDB = databases.privateDB;
+const YouTubeAPI = require('../utils/youtubeAPI.js');
+const logger = require('../utils/logger.js');
+const request = require('request');
+const isoDurations = require('iso8601-duration');
 const fetch = require('node-fetch');
+
+const getHash = require('../utils/getHash.js');
+const getIP = require('../utils/getIP.js');
+const getFormattedTime = require('../utils/getFormattedTime.js');
+const isUserTrustworthy = require('../utils/isUserTrustworthy.js')
 
 function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
     //check if they are a first time user
@@ -75,7 +74,7 @@ function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
 // Looks like this was broken for no defined youtube key - fixed but IMO we shouldn't return
 //   false for a pass - it was confusing and lead to this bug - any use of this function in
 //   the future could have the same problem.
-async function autoModerateSubmission(submission, callback) {
+async function autoModerateSubmission(submission) {
     // Get the video information from the youtube API
     if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
@@ -99,7 +98,7 @@ async function autoModerateSubmission(submission, callback) {
                     return false;
                 } else if ((submission.endTime - submission.startTime) > (duration/100)*80) {
                     // Reject submission if over 80% of the video
-                    return "Sponsor segment is over 80% of the video.";
+                    return "One of your submitted segments is over 80% of the video.";
                 } else {
                     // Check NeuralBlock
                     let neuralBlockURL = config.neuralBlockURL;
@@ -114,7 +113,7 @@ async function autoModerateSubmission(submission, callback) {
                       return false;
                     } else {
                       // Send to Discord
-                      return "Automoderator has rejected the segment. Sending to Discord for manual review.";
+                      return "NB disagreement.";
                     }
                 }
             }
@@ -206,14 +205,14 @@ module.exports = async function postSkipSegments(req, res) {
             res.sendStatus(409);
             return;
         }
-    }
 
-    // Auto moderator check
-    if (!isVIP) {
-        let autoModerateResult = await autoModerateSubmission(videoID, segments);
-        if (autoModerateResult) {
-            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
-            return;
+        // Auto moderator check
+        if (!isVIP) {
+            let autoModerateResult = await autoModerateSubmission({videoID, startTime, endTime, category: segments[i].category});
+            if (autoModerateResult) {
+                res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
+                return;
+            }
         }
     }
 
