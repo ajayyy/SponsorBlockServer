@@ -18,5 +18,6 @@
     "dbSchema": "./databases/_sponsorTimes.db.sql",
     "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",
-    "readOnly": false
+    "readOnly": false,
+    "webhooks": []
 }

@@ -15,6 +15,8 @@ app.post('/CompletelyIncorrectReportWebhook', (req, res) => {
   res.sendStatus(200);
 });
 
+// Testing NeuralBlock
+
 app.get('/NeuralBlock/api/checkSponsorSegments', (req, res) => {
   if (req.query.vid === "LevkAjUE6d4") {
     res.json({
@@ -34,6 +36,11 @@ app.get('/NeuralBlock/api/getSponsorSegments', (req, res) => {
     return;
   }
   res.sendStatus(500);
+});
+
+// Testing webhooks
+app.post('/CustomWebhook', (req, res) => {
+  res.sendStatus(200);
 });
 
 module.exports = function createMockServer(callback) {

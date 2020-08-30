@@ -12,7 +12,7 @@ module.exports = function setUsername(req, res) {
 
   let adminUserIDInput = req.query.adminUserID;
 
-  if (userID == undefined || userName == undefined || userID === "undefined") {
+  if (userID == undefined || userName == undefined || userID === "undefined" || username.length > 50) {
       //invalid request
       res.sendStatus(400);
       return;

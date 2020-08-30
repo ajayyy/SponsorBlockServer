@@ -13,58 +13,88 @@ const getHash = require('../utils/getHash.js');
 const getIP = require('../utils/getIP.js');
 const getFormattedTime = require('../utils/getFormattedTime.js');
 const isUserTrustworthy = require('../utils/isUserTrustworthy.js')
+const { dispatchEvent } = require('../utils/webhookUtils.js');
 
-function sendDiscordNotification(userID, videoID, UUID, segmentInfo) {
-    //check if they are a first time user
-    //if so, send a notification to discord
-    if (config.youtubeAPIKey !== null && config.discordFirstTimeSubmissionsWebhookURL !== null) {
+function sendWebhookNotification(userID, videoID, UUID, submissionCount, youtubeData, {submissionStart, submissionEnd}, segmentInfo) {
+    let row = db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
+    let userName = row !== undefined ? row.userName : null;
+    let video = youtubeData.items[0];
+
+    let scopeName = "submissions.other";
+    if (submissionCount <= 1) {
+        scopeName = "submissions.new";
+    }
+
+    dispatchEvent(scopeName, {
+        "video": {
+            "id": videoID,
+            "title": video.snippet.title,
+            "thumbnail": video.snippet.thumbnails.maxres ? video.snippet.thumbnails.maxres : null,
+            "url": "https://www.youtube.com/watch?v=" + videoID
+        },
+        "submission": {
+            "UUID": UUID,
+            "category": segmentInfo.category,
+            "startTime": submissionStart,
+            "endTime": submissionEnd,
+            "user": {
+                "UUID": userID,
+                "username": userName
+            }
+        }
+    });
+}
+
+function sendWebhooks(userID, videoID, UUID, segmentInfo) {
+    if (config.youtubeAPIKey !== null) {
         let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
-        // If it is a first time submission
-        if (userSubmissionCountRow.submissionCount <= 1) {
-            YouTubeAPI.videos.list({
-                part: "snippet",
-                id: videoID
-            }, function (err, data) {
-                if (err || data.items.length === 0) {
-                    err && logger.error(err);
-                    return;
-                }
-
-                let startTime = parseFloat(segmentInfo.segment[0]);
-                let endTime = parseFloat(segmentInfo.segment[1]);
-
-                request.post(config.discordFirstTimeSubmissionsWebhookURL, {
-                    json: {
-                        "embeds": [{
-                            "title": data.items[0].snippet.title,
-                            "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
-                            "description": "Submission ID: " + UUID +
-                                    "\n\nTimestamp: " +
-                                    getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
-                                    "\n\nCategory: " + segmentInfo.category,
-                            "color": 10813440,
-                            "author": {
-                                "name": userID
-                            },
-                            "thumbnail": {
-                                "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                            }
-                        }]
-                    }
-                    }, (err, res) => {
-                        if (err) {
-                            logger.error("Failed to send first time submission Discord hook.");
-                            logger.error(JSON.stringify(err));
-                            logger.error("\n");
-                        } else if (res && res.statusCode >= 400) {
-                            logger.error("Error sending first time submission Discord hook");
-                            logger.error(JSON.stringify(res));
-                            logger.error("\n");
+        YouTubeAPI.videos.list({
+            part: "snippet",
+            id: videoID
+        }, function (err, data) {
+            if (err || data.items.length === 0) {
+                err && logger.error(err);
+                return;
+            }
+            
+            let startTime = parseFloat(segmentInfo.segment[0]);
+            let endTime = parseFloat(segmentInfo.segment[1]);
+            sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, data, {submissionStart: startTime, submissionEnd: endTime}, segmentInfo);
+            
+            // If it is a first time submission
+            // Then send a notification to discord
+            if (config.discordFirstTimeSubmissionsWebhookURL === null) return;
+            request.post(config.discordFirstTimeSubmissionsWebhookURL, {
+                json: {
+                    "embeds": [{
+                        "title": data.items[0].snippet.title,
+                        "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
+                        "description": "Submission ID: " + UUID +
+                                "\n\nTimestamp: " + 
+                                getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
+                                "\n\nCategory: " + segmentInfo.category,
+                        "color": 10813440,
+                        "author": {
+                            "name": userID
+                        },
+                        "thumbnail": {
+                            "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                         }
-                });
+                    }]
+                }
+            }, (err, res) => {
+                    if (err) {
+                        logger.error("Failed to send first time submission Discord hook.");
+                        logger.error(JSON.stringify(err));
+                        logger.error("\n");
+                    } else if (res && res.statusCode >= 400) {
+                        logger.error("Error sending first time submission Discord hook");
+                        logger.error(JSON.stringify(res));
+                        logger.error("\n");
+                    }
             });
-        }
+        });
     }
 }
 
@@ -216,6 +246,9 @@ module.exports = async function postSkipSegments(req, res) {
         }
     }
 
+    // Will be filled when submitting
+    let UUIDs = [];
+
     try {
         //get current time
         let timeSubmitted = Date.now();
@@ -289,7 +322,9 @@ module.exports = async function postSkipSegments(req, res) {
             }
 
             // Discord notification
-            sendDiscordNotification(userID, videoID, UUID, segmentInfo);
+            sendWebhooks(userID, videoID, UUID, segmentInfo);
+    
+            UUIDs.push(UUID);
         }
     } catch (err) {
         logger.error(err);
@@ -300,4 +335,8 @@ module.exports = async function postSkipSegments(req, res) {
     }
 
     res.sendStatus(200);
+
+    for (let i = 0; i < segments.length; i++) {
+        sendWebhooks(userID, videoID, UUIDs[i], segments[i]);
+    }
 }
