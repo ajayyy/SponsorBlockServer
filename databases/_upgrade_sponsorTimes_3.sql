@@ -1,7 +1,7 @@
 BEGIN TRANSACTION;
 
 /* Add hash field */
-CREATE TABLE "sqlb_temp_table_1" (
+CREATE TABLE "sqlb_temp_table_3" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
 	"endTime"	REAL NOT NULL,
@@ -12,15 +12,15 @@ CREATE TABLE "sqlb_temp_table_1" (
 	"timeSubmitted"	INTEGER NOT NULL,
 	"views"	INTEGER NOT NULL,
 	"category"	TEXT NOT NULL DEFAULT "sponsor",
-	"hashedVideoID"	TEXT NOT NULL,
-	"shadowHidden"	INTEGER NOT NULL
+	"shadowHidden"	INTEGER NOT NULL,
+	"hashedVideoID"	TEXT NOT NULL 
 );
-INSERT INTO sqlb_temp_table_1 SELECT *, sha256(videoID) FROM sponsorTimes;
+INSERT INTO sqlb_temp_table_3 SELECT *, sha256(videoID) FROM sponsorTimes;
 
 DROP TABLE sponsorTimes;
-ALTER TABLE sqlb_temp_table_1 RENAME TO "sponsorTimes";
+ALTER TABLE sqlb_temp_table_3 RENAME TO "sponsorTimes";
 
 /* Bump version in config */
-UPDATE config SET value = 2 WHERE key = "version";
+UPDATE config SET value = 3 WHERE key = "version";
 
 COMMIT;

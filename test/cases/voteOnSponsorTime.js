@@ -5,7 +5,7 @@ const getHash = require('../../src/utils/getHash.js');
 
 describe('voteOnSponsorTime', () => {
   before(() => {
-    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
     db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '"+getHash('vote-testtesttest')+"')");
     db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0, '"+getHash('vote-testtesttest')+"')");
     db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.5', 'testman', 0, 50, 'outro', 0, '"+getHash('vote-testtesttest')+"')");

@@ -3,7 +3,8 @@ var Sqlite3 = require('better-sqlite3');
 var fs = require('fs');
 var path = require('path');
 var Sqlite = require('./Sqlite.js')
-var Mysql = require('./Mysql.js')
+var Mysql = require('./Mysql.js');
+const logger = require('../utils/logger.js');
 
 let options = {
   readonly: config.readOnly,
@@ -33,6 +34,10 @@ if (config.mysql) {
   }
 
   if (!config.readOnly) {
+    db.function("sha256", function (string) {
+      return require('crypto').createHash("sha256").update(string).digest("hex");
+    });
+    
     // Upgrade database if required
     ugradeDB(db, "sponsorTimes");
     ugradeDB(privateDB, "private")
@@ -61,11 +66,15 @@ if (config.mysql) {
     let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
 
     let path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (parseInt(versionCode) + 1) + ".sql";
+    logger.debug('db update: trying ' + path);
     while (fs.existsSync(path)) {
+      logger.debug('db update: updating ' + path);
       db.exec(fs.readFileSync(path).toString());
 
       versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
       path = config.schemaFolder + "/_upgrade_" + prefix + "_" + (parseInt(versionCode) + 1) + ".sql";
+      logger.debug('db update: trying ' + path);
     }
+    logger.debug('db update: no file ' + path);
   }
 }
