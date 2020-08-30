@@ -6,6 +6,7 @@ var config = require('./config.js');
 // Middleware 
 var corsMiddleware = require('./middleware/cors.js');
 var loggerMiddleware = require('./middleware/logger.js');
+const userCounter = require('./middleware/userCounter.js');
 
 // Routes
 var getSkipSegments = require('./routes/getSkipSegments.js').endpoint;
@@ -32,6 +33,8 @@ var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
 app.use(corsMiddleware);
 app.use(loggerMiddleware);
 app.use(express.json())
+
+if (config.userCounterURL) app.use(userCounter);
 
 // Setup pretty JSON
 if (config.mode === "development") app.set('json spaces', 2);

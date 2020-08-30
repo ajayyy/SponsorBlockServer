@@ -1,6 +1,5 @@
 var MysqlInterface = require('sync-mysql');
-var config = require('../config.js');
-var logger = require('../utils/logger.js');
+const logger = require('../utils/logger.js');
 
 class Mysql {
   constructor(msConfig) {
