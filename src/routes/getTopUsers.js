@@ -47,7 +47,7 @@ module.exports = function getTopUsers (req, res) {
                   "IFNULL(userNames.userName, sponsorTimes.userID) as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID " +
                   "LEFT JOIN privateDB.shadowBannedUsers ON sponsorTimes.userID=privateDB.shadowBannedUsers.userID " +
                   "WHERE sponsorTimes.votes > -1 AND sponsorTimes.shadowHidden != 1 AND privateDB.shadowBannedUsers.userID IS NULL " +
-                  "GROUP BY IFNULL(userName, sponsorTimes.userID) HAVING userVotes > 50 " +
+                  "GROUP BY IFNULL(userName, sponsorTimes.userID) HAVING userVotes > 20 " +
                   "ORDER BY " + sortBy + " DESC LIMIT 100", []);
   
   for (let i = 0; i < rows.length; i++) {
