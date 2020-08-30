@@ -39,7 +39,7 @@ module.exports = function getTotalStats (req, res) {
 function updateExtensionUsers() {
     if (config.userCounterURL) {
         request.get(config.userCounterURL + "/api/v1/userCount", (err, response, body) => {
-            apiUsersCache = JSON.parse(body).userCount;
+            apiUsersCache = Math.max(apiUsersCache, JSON.parse(body).userCount);
         });
     }
 
