@@ -12,6 +12,12 @@ describe('getSegmentsByHash', () => {
     db.exec(startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
   }); 
 
+  it('Should update the database version when starting the application', (done) => {
+    let version = db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version']).value;
+    if (version > 2) done();
+    else done('Version isn\'t greater than 2. Version is ' + version);
+  });
+
   it('Should be able to get a 200', (done) => {
     request.get(utils.getbaseURL() 
      + '/api/skipSegments/3272f?categories=["sponsor", "intro"]', null, 
