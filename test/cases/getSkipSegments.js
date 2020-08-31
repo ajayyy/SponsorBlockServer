@@ -3,19 +3,6 @@ var db = require('../../src/databases/databases.js').db;
 var utils = require('../utils.js');
 var getHash = require('../../src/utils/getHash.js');
 
-/*
- *CREATE TABLE IF NOT EXISTS "sponsorTimes" (
-	"videoID"	TEXT NOT NULL,
-	"startTime"	REAL NOT NULL,
-	"endTime"	REAL NOT NULL,
-	"votes"	INTEGER NOT NULL,
-	"UUID"	TEXT NOT NULL UNIQUE,
-	"userID"	TEXT NOT NULL,
-	"timeSubmitted"	INTEGER NOT NULL,
-	"views"	INTEGER NOT NULL,
-	"shadowHidden"	INTEGER NOT NULL
-);
- */
 
 describe('getSkipSegments', () => {
   before(() => {

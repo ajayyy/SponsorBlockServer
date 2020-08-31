@@ -3,21 +3,6 @@ var db = require('../../src/databases/databases.js').db;
 var utils = require('../utils.js');
 var getHash = require('../../src/utils/getHash.js');
 
-
-/*
- *CREATE TABLE IF NOT EXISTS "sponsorTimes" (
-	"videoID"	TEXT NOT NULL,
-	"startTime"	REAL NOT NULL,
-	"endTime"	REAL NOT NULL,
-	"votes"	INTEGER NOT NULL,
-	"UUID"	TEXT NOT NULL UNIQUE,
-	"userID"	TEXT NOT NULL,
-	"timeSubmitted"	INTEGER NOT NULL,
-	"views"	INTEGER NOT NULL,
-	"shadowHidden"	INTEGER NOT NULL
-);
- */
-
 describe('getSegmentsByHash', () => {
   before(() => {
     let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
@@ -90,7 +75,6 @@ describe('getSegmentsByHash', () => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
         else {
-          console.log(body);
           body = JSON.parse(body);
           if (body.length !== 2) done("expected 2 videos, got " + body.length);
           else if (body[0].segments.length !== 1) done("expected 1 segments for first video, got " + body[0].segments.length);
