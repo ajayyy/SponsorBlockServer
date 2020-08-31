@@ -2,6 +2,7 @@ const hashPrefixTester = require('../utils/hashPrefixTester.js');
 const getSegments = require('./getSkipSegments.js').cleanGetSegments;
 
 const databases = require('../databases/databases.js');
+const logger = require('../utils/logger.js');
 const db = databases.db;
 
 module.exports = async function (req, res) {

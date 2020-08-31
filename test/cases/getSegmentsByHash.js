@@ -100,6 +100,30 @@ describe('getSegmentsByHash', () => {
       });
   });
 
+  it('Should return 404 for no hash', (done) => {
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/?categories=["shilling"]', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 404) done("expected 404, got " + res.statusCode);
+        else {
+          done(); // pass
+        }
+      });
+  });
+
+  it('Should return 500 for bad format categories', (done) => { // should probably be 400
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/?categories=shilling', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 500) done("expected 500 got " + res.statusCode);
+        else {
+          done(); // pass
+        }
+      });
+  });
+
   it('Should be able to get multiple videos', (done) => {
     request.get(utils.getbaseURL() 
      + '/api/skipSegments/fdaf?categories=["sponsor","intro"]', null, 
