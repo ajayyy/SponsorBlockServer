@@ -82,4 +82,22 @@ describe('getSegmentsByHash', () => {
         }
       });
   });
+
+  it('Should be able to get 200 for no categories (default sponsor)', (done) => {
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/fdaf', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
+        else {
+          console.log(body);
+          body = JSON.parse(body);
+          if (body.length !== 2) done("expected 2 videos, got " + body.length);
+          else if (body[0].segments.length !== 1) done("expected 1 segments for first video, got " + body[0].segments.length);
+          else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
+          else if (body[0].segments[0].category !== 'sponsor' || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
+          else done();
+        }
+      });
+  });
 });
