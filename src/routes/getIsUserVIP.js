@@ -4,7 +4,7 @@ var getHash = require('../utils/getHash.js');
 const logger = require('../utils/logger.js');
 const isUserVIP = require('../utils/isUserVIP.js');
 
-module.exports = function getUsername (req, res) {
+module.exports = (req, res) => {
     let userID = req.query.userID;
 
     if (userID == undefined) {
