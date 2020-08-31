@@ -58,6 +58,48 @@ describe('getSegmentsByHash', () => {
       });
   });
 
+  it('Should return 400 prefix too short', (done) => {
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/11?categories=["shilling"]', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 400) done("non 400 status code, was " + res.statusCode);
+        else {
+          done(); // pass
+        }
+      });
+  });
+
+  it('Should return 400 prefix too long', (done) => {
+    let prefix = new Array(50).join('1');
+    if (prefix.length <= 32) { // default value, config can change this
+      done('failed to generate a long enough string for the test ' + prefix.length);
+      return;
+    }
+
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/'+prefix+'?categories=["shilling"]', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 400) done("non 400 status code, was " + res.statusCode);
+        else {
+          done(); // pass
+        }
+      });
+  });
+
+  it('Should not return 400 prefix in range', (done) => {
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/11111?categories=["shilling"]', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 400) done("prefix length 5 gave 400 " + res.statusCode);
+        else {
+          done(); // pass
+        }
+      });
+  });
+
   it('Should be able to get multiple videos', (done) => {
     request.get(utils.getbaseURL() 
      + '/api/skipSegments/fdaf?categories=["sponsor","intro"]', null, 
