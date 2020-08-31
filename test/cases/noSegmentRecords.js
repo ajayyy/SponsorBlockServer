@@ -25,11 +25,11 @@ describe('noSegmentRecords', () => {
     else done('Version isn\'t greater that 1. Version is ' + version);
   });
 
-  it('Should be able to submit categorys not in video (http response)', (done) => {
+  it('Should be able to submit categories not in video (http response)', (done) => {
     let json = {
       videoID: 'no-segments-video-id',
       userID: 'VIPUser-noSegments',
-      categorys: [
+      categories: [
         'outro',
         'shilling',
         'shilling',
@@ -64,11 +64,11 @@ describe('noSegmentRecords', () => {
       });
   });
 
-  it('Should be able to submit categorys not in video (sql check)', (done) => {
+  it('Should be able to submit categories not in video (sql check)', (done) => {
     let json = {
       videoID: 'no-segments-video-id-1',
       userID: 'VIPUser-noSegments',
-      categorys: [
+      categories: [
         'outro',
         'shilling',
         'shilling',
@@ -110,11 +110,11 @@ describe('noSegmentRecords', () => {
       });
   });
 
-  it('Should return 400 for no categorys', (done) => {
+  it('Should return 400 for no categories', (done) => {
     let json = {
       videoID: 'test',
       userID: 'test',
-      categorys: []
+      categories: []
     };
 
     request.post(utils.getbaseURL() 
@@ -133,7 +133,7 @@ describe('noSegmentRecords', () => {
     let json = {
       videoID: 'test',
       userID: null,
-      categorys: ['sponsor']
+      categories: ['sponsor']
     };
 
     request.post(utils.getbaseURL() 
@@ -152,7 +152,7 @@ describe('noSegmentRecords', () => {
     let json = {
       videoID: null,
       userID: 'test',
-      categorys: ['sponsor']
+      categories: ['sponsor']
     };
 
     request.post(utils.getbaseURL() 
@@ -167,11 +167,11 @@ describe('noSegmentRecords', () => {
       });
   });
 
-  it('Should return 400 object categorys)', (done) => {
+  it('Should return 400 object categories)', (done) => {
     let json = {
       videoID: 'test',
       userID: 'test',
-      categorys: {}
+      categories: {}
     };
 
     request.post(utils.getbaseURL() 
@@ -186,11 +186,11 @@ describe('noSegmentRecords', () => {
       });
   });
 
-  it('Should return 400 bad format categorys', (done) => {
+  it('Should return 400 bad format categories', (done) => {
     let json = {
       videoID: 'test',
       userID: 'test',
-      categorys: 'sponsor'
+      categories: 'sponsor'
     };
 
     request.post(utils.getbaseURL() 
@@ -209,7 +209,7 @@ describe('noSegmentRecords', () => {
     let json = {
       videoID: 'test',
       userID: 'test',
-      categorys: [
+      categories: [
         'sponsor'
       ]
     };

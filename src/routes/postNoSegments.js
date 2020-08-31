@@ -7,14 +7,14 @@ module.exports = (req, res) => {
     // Collect user input data
     let videoID = req.body.videoID;
     let userID = req.body.userID;
-    let categorys = req.body.categorys;
+    let categories = req.body.categories;
 
     // Check input data is valid
     if (!videoID 
         || !userID 
-        || !categorys 
-        || !Array.isArray(categorys) 
-        || categorys.length === 0
+        || !categories 
+        || !Array.isArray(categories) 
+        || categories.length === 0
     ) {
         res.status(400).json({
             status: 400,
@@ -45,20 +45,20 @@ module.exports = (req, res) => {
         });
     }
 
-    // get user categorys not already submitted that match accepted format
-    let categorysToMark = categorys.filter((category) => {
+    // get user categories not already submitted that match accepted format
+    let categoriesToMark = categories.filter((category) => {
         return !!category.match(/^[a-zA-Z]+$/);
     }).filter((category) => {
         return noSegmentList.indexOf(category) === -1;
     });
 
     // remove any duplicates
-    categorysToMark = categorysToMark.filter((category, index) => {
-        return categorysToMark.indexOf(category) === index;
+    categoriesToMark = categoriesToMark.filter((category, index) => {
+        return categoriesToMark.indexOf(category) === index;
     });
 
     // create database entry
-    categorysToMark.forEach((category) => {
+    categoriesToMark.forEach((category) => {
         try {
             db.prepare('run', "INSERT INTO noSegments (videoID, userID, category) VALUES(?, ?, ?)", [videoID, userID, category]);
         } catch (err) {
@@ -73,6 +73,6 @@ module.exports = (req, res) => {
 
     res.status(200).json({
         status: 200,
-        submitted: categorysToMark
+        submitted: categoriesToMark
     }); 
 };
