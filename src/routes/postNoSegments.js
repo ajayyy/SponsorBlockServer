@@ -17,7 +17,6 @@ module.exports = (req, res) => {
         || categories.length === 0
     ) {
         res.status(400).json({
-            status: 400,
             message: 'Bad Format'
         });
         return;
@@ -29,7 +28,6 @@ module.exports = (req, res) => {
 
     if (!userIsVIP) {
         res.status(403).json({
-            status: 403,
             message: 'Must be a VIP to mark videos.'
         });
         return;
@@ -65,14 +63,12 @@ module.exports = (req, res) => {
             logger.error("Error submitting 'noSegment' marker for category '" + category + "' for video '" + videoID + "'");
             logger.error(err);
             res.status(500).json({
-                status: 500,
                 message: "Internal Server Error: Could not write marker to the database."
             });
         }
     });
 
     res.status(200).json({
-        status: 200,
         submitted: categoriesToMark
     }); 
 };

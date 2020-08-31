@@ -40,7 +40,6 @@ describe('noSegmentRecords', () => {
     };
 
     let expected = {
-      status: 200,
       submitted: [
         'outro',
         'shilling'
