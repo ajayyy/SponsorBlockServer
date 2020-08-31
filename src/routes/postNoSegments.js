@@ -45,7 +45,7 @@ module.exports = (req, res) => {
 
     // get user categories not already submitted that match accepted format
     let categoriesToMark = categories.filter((category) => {
-        return !!category.match(/^[a-zA-Z]+$/);
+        return !!category.match(/^[_a-zA-Z]+$/);
     }).filter((category) => {
         return noSegmentList.indexOf(category) === -1;
     });

@@ -96,6 +96,90 @@ describe('noSegmentRecords', () => {
       });
   });
 
+  it('Should be able to submit categories with _ in the category', (done) => {
+    let json = {
+      videoID: 'underscore',
+      userID: 'VIPUser-noSegments',
+      categories: [
+        'word_word',
+      ]
+    };
+
+    request.post(utils.getbaseURL() 
+     + "/api/postNoSegments", {json}, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['underscore']);
+          if (result.length !== 1) {
+            console.log(result);
+            done("Expected 1 entrys in db, got " + result.length);
+          } else {
+            done();
+          }
+        } else {
+          console.log(body);
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
+  it('Should be able to submit categories with upper and lower case in the category', (done) => {
+    let json = {
+      videoID: 'bothCases',
+      userID: 'VIPUser-noSegments',
+      categories: [
+        'wordWord',
+      ]
+    };
+
+    request.post(utils.getbaseURL() 
+     + "/api/postNoSegments", {json}, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['bothCases']);
+          if (result.length !== 1) {
+            console.log(result);
+            done("Expected 1 entrys in db, got " + result.length);
+          } else {
+            done();
+          }
+        } else {
+          console.log(body);
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
+  it('Should not be able to submit categories with $ in the category', (done) => {
+    let json = {
+      videoID: 'specialChar',
+      userID: 'VIPUser-noSegments',
+      categories: [
+        'word&word',
+      ]
+    };
+
+    request.post(utils.getbaseURL() 
+     + "/api/postNoSegments", {json}, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['specialChar']);
+          if (result.length !== 0) {
+            console.log(result);
+            done("Expected 0 entrys in db, got " + result.length);
+          } else {
+            done();
+          }
+        } else {
+          console.log(body);
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
   it('Should return 400 for missing params', (done) => {
     request.post(utils.getbaseURL() 
      + "/api/postNoSegments", {json: {}}, 
