@@ -5,6 +5,7 @@ var path = require('path');
 var Sqlite = require('./Sqlite.js')
 var Mysql = require('./Mysql.js');
 const logger = require('../utils/logger.js');
+const getHash = require('../utils/getHash.js');
 
 let options = {
   readonly: config.readOnly,
@@ -34,8 +35,8 @@ if (config.mysql) {
   }
 
   if (!config.readOnly) {
-    db.function("sha256", function (string) {
-      return require('crypto').createHash("sha256").update(string).digest("hex");
+    db.function("sha256", (string) => {
+      return getHash(string, 1);
     });
     
     // Upgrade database if required

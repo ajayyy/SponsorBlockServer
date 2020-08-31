@@ -84,4 +84,40 @@ describe('getSegmentsByHash', () => {
         }
       });
   });
+
+  it('Should be able to post a segment and get it using endpoint', (done) => {
+    let testID = 'abc123goodVideo';
+    request.post(utils.getbaseURL() 
+      + "/api/postVideoSponsorTimes", {
+        json: {
+          userID: "test",
+          videoID: testID,
+          segments: [{
+            segment: [13, 17],
+            category: "sponsor"
+          }]
+        }
+      }, 
+      (err, res, body) => {
+        if (err) done('(post) ' + err);
+        else if (res.statusCode === 200) {
+          request.get(utils.getbaseURL() 
+            + '/api/skipSegments/'+getHash(testID, 1).substring(0,3), null, 
+              (err, res, body) => {
+                if (err) done("(get) Couldn't call endpoint");
+                else if (res.statusCode !== 200) done("(get) non 200 status code, was " + res.statusCode);
+                else {
+                  body = JSON.parse(body);
+                  if (body.length !== 1) done("(get) expected 1 video, got " + body.length);
+                  else if (body[0].segments.length !== 1) done("(get) expected 1 segments for first video, got " + body[0].segments.length);
+                  else if (body[0].segments[0].category !== 'sponsor') done("(get) segment should be sponsor, was "+body[0].segments[0].category);
+                  else done();
+                }
+              });
+        } else {
+          done("(post) non 200 status code, was " + res.statusCode);
+        }
+      }
+    );
+  });
 });

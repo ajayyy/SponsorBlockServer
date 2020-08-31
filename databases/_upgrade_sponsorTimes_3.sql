@@ -15,6 +15,8 @@ CREATE TABLE "sqlb_temp_table_3" (
 	"shadowHidden"	INTEGER NOT NULL,
 	"hashedVideoID"	TEXT NOT NULL 
 );
+
+/* hash upgade test sha256('vid') = '1ff838dc6ca9680d88455341118157d59a055fe6d0e3870f9c002847bebe4663' */
 INSERT INTO sqlb_temp_table_3 SELECT *, sha256(videoID) FROM sponsorTimes;
 
 DROP TABLE sponsorTimes;
