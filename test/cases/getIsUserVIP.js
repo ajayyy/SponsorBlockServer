@@ -3,7 +3,7 @@ var utils = require('../utils.js');
 var db = require('../../src/databases/databases.js').db;
 var getHash = require('../../src/utils/getHash.js');
 
-describe('getSavedTimeForUser', () => {
+describe('getIsUserVIP', () => {
   before(() => {
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("supertestman") + "')");
   }); 
