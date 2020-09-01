@@ -12,28 +12,30 @@ let apiUsersCache = null;
 let lastUserCountCheck = 0;
 
 module.exports = function getTotalStats (req, res) {
-  let row = db.prepare('get', "SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, " +
+    let row = db.prepare('get', "SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, " +
               "SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1 AND votes >= 0", []);
 
-  if (row !== undefined) {
-      //send this result
-      res.send({
-          userCount: row.userCount,
-          activeUsers: chromeUsersCache + firefoxUsersCache,
-          apiUsers: apiUsersCache,
-          viewCount: row.viewCount,
-          totalSubmissions: row.totalSubmissions,
-          minutesSaved: row.minutesSaved
-      });
+    if (row !== undefined) {
+        let extensionUsers = chromeUsersCache + firefoxUsersCache;
 
-      // Check if the cache should be updated (every ~14 hours)
-      let now = Date.now();
-      if (now - lastUserCountCheck > 5000000) {
-          lastUserCountCheck = now;
+        //send this result
+        res.send({
+            userCount: row.userCount,
+            activeUsers: extensionUsers,
+            apiUsers: Math.max(apiUsersCache, extensionUsers),
+            viewCount: row.viewCount,
+            totalSubmissions: row.totalSubmissions,
+            minutesSaved: row.minutesSaved
+        });
 
-          updateExtensionUsers();
-      }
-  }
+        // Check if the cache should be updated (every ~14 hours)
+        let now = Date.now();
+        if (now - lastUserCountCheck > 5000000) {
+            lastUserCountCheck = now;
+
+            updateExtensionUsers();
+        }
+    }
 }
 
 function updateExtensionUsers() {
