@@ -10,7 +10,7 @@ describe('getIsUserVIP', () => {
 
   it('Should be able to get a 200', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getIsUserVIP?userID=supertestman", null, 
+     + "/api/isUserVIP?userID=supertestman", null, 
       (err, res, body) => {
         if (err) done("couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200: " + res.statusCode);
@@ -21,7 +21,7 @@ describe('getIsUserVIP', () => {
 
   it('Should get a 400 if no userID', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getIsUserVIP", null, 
+     + "/api/isUserVIP", null, 
       (err, res, body) => {
         if (err) done("couldn't call endpoint");
         else if (res.statusCode !== 400) done("non 400: " + res.statusCode);
@@ -31,7 +31,7 @@ describe('getIsUserVIP', () => {
 
   it('Should say a VIP is a VIP', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getIsUserVIP?userID=supertestman", null, 
+     + "/api/isUserVIP?userID=supertestman", null, 
       (err, res, body) => {
         if (err) done("couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200: " + res.statusCode);
@@ -44,7 +44,7 @@ describe('getIsUserVIP', () => {
 
   it('Should say a normal user is not a VIP', (done) => {
     request.get(utils.getbaseURL() 
-     + "/api/getIsUserVIP?userID=regulartestman", null, 
+     + "/api/isUserVIP?userID=regulartestman", null, 
       (err, res, body) => {
         if (err) done("couldn't call endpoint");
         else if (res.statusCode !== 200) done("non 200: " + res.statusCode);

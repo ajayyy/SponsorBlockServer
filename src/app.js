@@ -92,10 +92,10 @@ app.get('/api/getTotalStats', getTotalStats);
 app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
 //submit video containing no segments
-app.post('/api/postNoSegments', postNoSegments);
+app.post('/api/noSegments', postNoSegments);
 
 //get if user is a vip
-app.get('/api/getIsUserVIP', getIsUserVIP);
+app.get('/api/isUserVIP', getIsUserVIP);
 
 
 app.get('/database.db', function (req, res) {

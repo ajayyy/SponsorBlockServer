@@ -47,7 +47,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -78,7 +78,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -106,7 +106,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -134,7 +134,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -162,7 +162,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -182,7 +182,7 @@ describe('noSegmentRecords', () => {
 
   it('Should return 400 for missing params', (done) => {
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json: {}}, 
+     + "/api/noSegments", {json: {}}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
@@ -201,7 +201,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
@@ -220,7 +220,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
@@ -239,7 +239,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
@@ -258,7 +258,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
@@ -277,7 +277,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
@@ -298,7 +298,7 @@ describe('noSegmentRecords', () => {
     };
 
     request.post(utils.getbaseURL() 
-     + "/api/postNoSegments", {json}, 
+     + "/api/noSegments", {json}, 
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 403) {
