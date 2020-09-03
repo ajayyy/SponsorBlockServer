@@ -6,6 +6,7 @@ var config = require('./config.js');
 // Middleware 
 var corsMiddleware = require('./middleware/cors.js');
 var loggerMiddleware = require('./middleware/logger.js');
+const userCounter = require('./middleware/userCounter.js');
 
 // Routes
 var getSkipSegments = require('./routes/getSkipSegments.js').endpoint;
@@ -21,6 +22,8 @@ var getViewsForUser = require('./routes/getViewsForUser.js');
 var getTopUsers = require('./routes/getTopUsers.js');
 var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
+var postNoSegments = require('./routes/postNoSegments.js');
+var getIsUserVIP = require('./routes/getIsUserVIP.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
@@ -30,6 +33,8 @@ var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
 app.use(corsMiddleware);
 app.use(loggerMiddleware);
 app.use(express.json())
+
+if (config.userCounterURL) app.use(userCounter);
 
 // Setup pretty JSON
 if (config.mode === "development") app.set('json spaces', 2);
@@ -85,6 +90,13 @@ app.get('/api/getTotalStats', getTotalStats);
 
 //send out a formatted time saved total
 app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
+
+//submit video containing no segments
+app.post('/api/noSegments', postNoSegments);
+
+//get if user is a vip
+app.get('/api/isUserVIP', getIsUserVIP);
+
 
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: "./" });
