@@ -63,7 +63,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
             
             // If it is a first time submission
             // Then send a notification to discord
-            if (config.discordFirstTimeSubmissionsWebhookURL === null) return;
+            if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
             request.post(config.discordFirstTimeSubmissionsWebhookURL, {
                 json: {
                     "embeds": [{

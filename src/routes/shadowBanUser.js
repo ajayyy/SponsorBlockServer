@@ -1,5 +1,3 @@
-var config = require('../config.js');
-
 var databases = require('../databases/databases.js');
 var db = databases.db;
 var privateDB = databases.privateDB;
@@ -30,7 +28,8 @@ module.exports = async function shadowBanUser(req, res) {
   //hash the userID
   adminUserIDInput = getHash(adminUserIDInput);
 
-  if (adminUserIDInput !== config.adminUserID) {
+  let isVIP = db.prepare("get", "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [adminUserIDInput]).userCount > 0;
+  if (!isVIP) {
       //not authorized
       res.sendStatus(403);
       return;
