@@ -8,6 +8,62 @@ var logger = require('../utils/logger.js');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 
+function cleanGetSegments(videoID, categories) {
+  let userHashedIP, shadowHiddenSegments;
+
+  let segments = [];
+
+  try {
+    for (const category of categories) {
+      const categorySegments = db
+        .prepare(
+          'all',
+          'SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? and category = ? ORDER BY startTime',
+          [videoID, category]
+        )
+        .filter(segment => {
+          if (segment.votes < -1) {
+            return false; //too untrustworthy, just ignore it
+          }
+
+          //check if shadowHidden
+          //this means it is hidden to everyone but the original ip that submitted it
+          if (segment.shadowHidden != 1) {
+            return true;
+          }
+
+          if (shadowHiddenSegments === undefined) {
+            shadowHiddenSegments = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
+          }
+
+          //if this isn't their ip, don't send it to them
+          return shadowHiddenSegments.some(shadowHiddenSegment => {
+            if (userHashedIP === undefined) {
+              //hash the IP only if it's strictly necessary
+              userHashedIP = getHash(getIP(req) + config.globalSalt);
+            }
+            return shadowHiddenSegment.hashedIP === userHashedIP;
+          });
+        });
+
+      chooseSegments(categorySegments).forEach(chosenSegment => {
+        segments.push({
+          category,
+          segment: [chosenSegment.startTime, chosenSegment.endTime],
+          UUID: chosenSegment.UUID,
+        });
+      });
+    }
+
+    return segments;
+  } catch (err) {
+    if (err) {
+      logger.error('j 2 Query failed');
+      return undefined;
+    }
+  }
+}
+
 //gets a weighted random choice from the choices array based on their `votes` property.
 //amountOfChoices specifies the maximum amount of choices to return, 1 or more.
 //choices are unique
@@ -104,58 +160,11 @@ function handleGetSegments(req, res) {
     ? [req.query.category]
     : ['sponsor'];
 
-  /**
-   * @type {Array<{
-   *                 segment: number[],
-   *                 category: string,
-   *                 UUID: string
-   *              }>
-   *       }
-   */
-  const segments = [];
+  let segments = cleanGetSegments(videoID, categories);
 
-  let userHashedIP, shadowHiddenSegments;
-
-  try {
-    for (const category of categories) {
-      const categorySegments = db
-        .prepare(
-          'all',
-          'SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? and category = ? ORDER BY startTime',
-          [videoID, category]
-        )
-        .filter(segment => {
-          if (segment.votes < -1) {
-            return false; //too untrustworthy, just ignore it
-          }
-
-          //check if shadowHidden
-          //this means it is hidden to everyone but the original ip that submitted it
-          if (segment.shadowHidden != 1) {
-            return true;
-          }
-
-          if (shadowHiddenSegments === undefined) {
-            shadowHiddenSegments = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
-          }
-
-          //if this isn't their ip, don't send it to them
-          return shadowHiddenSegments.some(shadowHiddenSegment => {
-            if (userHashedIP === undefined) {
-              //hash the IP only if it's strictly necessary
-              userHashedIP = getHash(getIP(req) + config.globalSalt);
-            }
-            return shadowHiddenSegment.hashedIP === userHashedIP;
-          });
-        });
-
-      chooseSegments(categorySegments).forEach(chosenSegment => {
-        segments.push({
-          category,
-          segment: [chosenSegment.startTime, chosenSegment.endTime],
-          UUID: chosenSegment.UUID,
-        });
-      });
+    if (segments === undefined) {
+      res.sendStatus(500);
+      return false;
     }
 
     if (segments.length == 0) {
@@ -164,16 +173,11 @@ function handleGetSegments(req, res) {
     }
 
     return segments;
-  } catch (error) {
-    logger.error(error);
-    res.sendStatus(500);
-
-    return false;
-  }
 }
 
 module.exports = {
   handleGetSegments,
+  cleanGetSegments,
   endpoint: function (req, res) {
     let segments = handleGetSegments(req, res);
 
