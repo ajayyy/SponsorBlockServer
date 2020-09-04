@@ -9,6 +9,7 @@ if (fs.existsSync(config.privateDB)) fs.unlinkSync(config.privateDB);
 
 var createServer = require('./src/app.js');
 var createMockServer = require('./test/mocks.js');
+const logger = require('./src/utils/logger.js');
 
 // Instantiate a Mocha instance.
 var mocha = new Mocha();
@@ -27,9 +28,9 @@ fs.readdirSync(testDir).filter(function(file) {
 });
 
 var mockServer = createMockServer(() => {
-  console.log("Started mock HTTP Server");
+  logger.info("Started mock HTTP Server");
   var server = createServer(() => {
-    console.log("Started main HTTP server");
+    logger.info("Started main HTTP server");
     // Run the tests.
     mocha.run(function(failures) {
       mockServer.close();

@@ -148,9 +148,9 @@ function proxySubmission(req) {
     request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
         if (config.mode === 'development') {
             if (!err) {
-                logger.error('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
+                logger.debug('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
             } else {
-                logger.debug("Proxy Submission: Failed to make call");
+                logger.error("Proxy Submission: Failed to make call");
             }
         }
     });
@@ -187,6 +187,7 @@ module.exports = async function postSkipSegments(req, res) {
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
 
+    let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list) => { return list.category });
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -194,6 +195,18 @@ module.exports = async function postSkipSegments(req, res) {
             res.sendStatus(400);
             return;
         }
+
+        // Reject segemnt if it's in the no segments list
+        if (noSegmentList.indexOf(segments[i].category) !== -1) {
+            // TODO: Do something about the fradulent submission
+            logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
+            res.status(403).send(
+              "Request rejected by auto moderator: This video has been reported as not containing any segments with the category '"
+              + segments[i].category + "'. If you believe this is incorrect, contact someone on Discord."
+            );
+            return;
+        }
+        
 
         let startTime = parseFloat(segments[i].segment[0]);
         let endTime = parseFloat(segments[i].segment[1]);
