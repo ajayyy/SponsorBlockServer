@@ -22,7 +22,7 @@ describe('noSegmentRecords', () => {
   it('Should update the database version when starting the application', (done) => {
     let version = db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version']).value;
     if (version > 1) done();
-    else done('Version isn\'t greater that 1. Version is ' + version);
+    else done('Version isn\'t greater than 1. Version is ' + version);
   });
 
   it('Should be able to submit categories not in video (http response)', (done) => {

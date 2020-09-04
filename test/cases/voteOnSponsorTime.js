@@ -5,23 +5,23 @@ const getHash = require('../../src/utils/getHash.js');
 
 describe('voteOnSponsorTime', () => {
   before(() => {
-    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
-    db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.5', 'testman', 0, 50, 'outro', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.6', 'testman', 0, 50, 'interaction', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest3', 20, 33, 10, 'vote-uuid-2', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('vote-testtesttest,test', 1, 11, 100, 'vote-uuid-3', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-test3', 1, 11, 2, 'vote-uuid-4', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('vote-multiple', 1, 11, 2, 'vote-uuid-6', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0)");
-    db.exec(startOfQuery + "('voter-submitter', 1, 11, 2, 'vote-uuid-8', '" + getHash("randomID") + "', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-9', '" + getHash("randomID2") + "', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-10', '" + getHash("randomID3") + "', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-11', '" + getHash("randomID4") + "', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('own-submission-video', 1, 11, 500, 'own-submission-uuid', '"+ getHash('own-submission-id') +"', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('not-own-submission-video', 1, 11, 500, 'not-own-submission-uuid', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0)");
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+    db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '"+getHash('vote-testtesttest', 1)+"')");
+    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0, '"+getHash('vote-testtesttest2', 1)+"')");
+    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.5', 'testman', 0, 50, 'outro', 0, '"+getHash('vote-testtesttest2', 1)+"')");
+    db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.6', 'testman', 0, 50, 'interaction', 0, '"+getHash('vote-testtesttest2', 1)+"')");
+    db.exec(startOfQuery + "('vote-testtesttest3', 20, 33, 10, 'vote-uuid-2', 'testman', 0, 50, 'intro', 0, '"+getHash('vote-testtesttest3', 1)+"')");
+    db.exec(startOfQuery + "('vote-testtesttest,test', 1, 11, 100, 'vote-uuid-3', 'testman', 0, 50, 'sponsor', 0, '"+getHash('vote-testtesttest,test', 1)+"')");
+    db.exec(startOfQuery + "('vote-test3', 1, 11, 2, 'vote-uuid-4', 'testman', 0, 50, 'sponsor', 0, '"+getHash('vote-test3', 1)+"')");
+    db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5', 'testman', 0, 50, 'intro', 0, '"+getHash('vote-test3', 1)+"')");
+    db.exec(startOfQuery + "('vote-multiple', 1, 11, 2, 'vote-uuid-6', 'testman', 0, 50, 'intro', 0, '"+getHash('vote-multiple', 1)+"')");
+    db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0, '"+getHash('vote-multiple', 1)+"')");
+    db.exec(startOfQuery + "('voter-submitter', 1, 11, 2, 'vote-uuid-8', '" + getHash("randomID") + "', 0, 50, 'sponsor', 0, '"+getHash('voter-submitter', 1)+"')");
+    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-9', '" + getHash("randomID2") + "', 0, 50, 'sponsor', 0, '"+getHash('voter-submitter2', 1)+"')");
+    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-10', '" + getHash("randomID3") + "', 0, 50, 'sponsor', 0, '"+getHash('voter-submitter2', 1)+"')");
+    db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-11', '" + getHash("randomID4") + "', 0, 50, 'sponsor', 0, '"+getHash('voter-submitter2', 1)+"')");
+    db.exec(startOfQuery + "('own-submission-video', 1, 11, 500, 'own-submission-uuid', '"+ getHash('own-submission-id') +"', 0, 50, 'sponsor', 0, '"+getHash('own-submission-video', 1)+"')");
+    db.exec(startOfQuery + "('not-own-submission-video', 1, 11, 500, 'not-own-submission-uuid', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0, '"+getHash('not-own-submission-video', 1)+"')");
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
     privateDB.exec("INSERT INTO shadowBannedUsers (userID) VALUES ('" + getHash("randomID4") + "')");

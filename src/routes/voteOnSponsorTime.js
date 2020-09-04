@@ -1,4 +1,3 @@
-var fs = require('fs');
 var config = require('../config.js');
 
 var getHash = require('../utils/getHash.js');
@@ -370,8 +369,6 @@ async function voteOnSponsorTime(req, res) {
 }
 
 module.exports = {
-    voteOnSponsorTime,
-    endpoint: function (req, res) {
-       voteOnSponsorTime(req, res);
-    },
-  };
+  voteOnSponsorTime,
+  endpoint: voteOnSponsorTime
+};
