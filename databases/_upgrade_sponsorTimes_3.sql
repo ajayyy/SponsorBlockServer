@@ -22,6 +22,8 @@ INSERT INTO sqlb_temp_table_3 SELECT *, sha256(videoID) FROM sponsorTimes;
 DROP TABLE sponsorTimes;
 ALTER TABLE sqlb_temp_table_3 RENAME TO "sponsorTimes";
 
+CREATE INDEX IF NOT EXISTS sponsorTimes_hashedVideoID on sponsorTimes(hashedVideoID);
+
 /* Bump version in config */
 UPDATE config SET value = 3 WHERE key = "version";
 
