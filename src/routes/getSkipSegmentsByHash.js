@@ -29,7 +29,7 @@ module.exports = async function (req, res) {
         return {
             videoID: video.videoID,
             hash: video.hashedVideoID,
-            segments: getSegments(video.videoID, categories)
+            segments: getSegments(req, video.videoID, categories)
         };
     });
 
