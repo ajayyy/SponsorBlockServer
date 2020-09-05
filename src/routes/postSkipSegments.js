@@ -57,11 +57,11 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
                 err && logger.error(err);
                 return;
             }
-            
+
             let startTime = parseFloat(segmentInfo.segment[0]);
             let endTime = parseFloat(segmentInfo.segment[1]);
             sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, data, {submissionStart: startTime, submissionEnd: endTime}, segmentInfo);
-            
+
             // If it is a first time submission
             // Then send a notification to discord
             if (config.discordFirstTimeSubmissionsWebhookURL === null) return;
@@ -71,7 +71,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
                         "title": data.items[0].snippet.title,
                         "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
                         "description": "Submission ID: " + UUID +
-                                "\n\nTimestamp: " + 
+                                "\n\nTimestamp: " +
                                 getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
                                 "\n\nCategory: " + segmentInfo.category,
                         "color": 10813440,
@@ -90,6 +90,71 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
                         logger.error("\n");
                     } else if (res && res.statusCode >= 400) {
                         logger.error("Error sending first time submission Discord hook");
+                        logger.error(JSON.stringify(res));
+                        logger.error("\n");
+                    }
+            });
+        });
+    }
+}
+
+function sendWebhooksNB(userID, videoID, UUID, startTime, endTime, category, probability) {
+    if (config.youtubeAPIKey !== null) {
+        //let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
+        //    "(select count(1) from sponsorTimes where userID = s.userID) count, " +
+        //    "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
+        //    "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.userId=?",
+        //[userID]);
+        let submissionCount = db.prepare('get', "SELECT COUNT(*) count FROM sponsorTimes WHERE userID=?", [userID]);
+        let disregardedCount = db.prepare('get', "SELECT COUNT(*) disregarded FROM sponsorTimes WHERE userID=? and votes <= -2", [userID]);
+        //let uName = db.prepare('get', "SELECT userName FROM userNames WHERE userID=?", [userID]);
+        YouTubeAPI.videos.list({
+            part: "snippet",
+            id: videoID
+        }, function (err, data) {
+            if (err || data.items.length === 0) {
+                err && logger.error(err);
+                return;
+            }
+            //sendWebhookNotification(userID, videoID, UUID, submissionInfoRow.submissionCount, data, {submissionStart: startTime, submissionEnd: endTime}, segmentInfo);
+            let submittedBy = userID;//"";
+            // If there's no userName then just show the userID
+            // if (uName.userName == userID){
+            //   submittedBy = userID;
+            // } else { // else show both
+            //   submittedBy = uName.userName + "\n " + userID;
+            // }
+
+            // Send discord message
+            if (config.discordNeuralBlockRejectWebhookURL === null) return;
+            request.post(config.discordNeuralBlockRejectWebhookURL, {
+                json: {
+                    "embeds": [{
+                        "title": data.items[0].snippet.title,
+                        "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (startTime.toFixed(0) - 2),
+                        "description": "**Submission ID:** " + UUID +
+                                "\n**Timestamp:** " + getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
+                                "\n**Predicted Probability:** " + probability +
+                                "\n**Category:** " + category +
+                                "\n**Submitted by:** "+ submittedBy +
+                                "\n**Total User Submissions:** "+submissionCount.count +
+                                "\n**Ignored User Submissions:** "+disregardedCount.disregarded,
+                        "color": 10813440,
+                        "author": {
+                            "name": userID
+                        },
+                        "thumbnail": {
+                            "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                        }
+                    }]
+                }
+            }, (err, res) => {
+                    if (err) {
+                        logger.error("Failed to send NeuralBlock Discord hook.");
+                        logger.error(JSON.stringify(err));
+                        logger.error("\n");
+                    } else if (res && res.statusCode >= 400) {
+                        logger.error("Error sending NeuralBlock Discord hook");
                         logger.error(JSON.stringify(res));
                         logger.error("\n");
                     }
@@ -142,7 +207,10 @@ async function autoModerateSubmission(submission) {
                     if (nbPredictions.probabilities[0] >= 0.70){
                       return false;
                     } else {
+                      let UUID = getHash("v2-categories" + submission.videoID + submission.startTime +
+                          submission.endTime  + submission.category + submission.userID, 1);
                       // Send to Discord
+                      sendWebhooksNB(submission.userID, submission.videoID, UUID, submission.startTime, submission.endTime, submission.category, nbPredictions.probabilities[0]);
                       return "NB disagreement.";
                     }
                 }
@@ -204,6 +272,8 @@ module.exports = async function postSkipSegments(req, res) {
     //check if this user is on the vip list
     let isVIP = db.prepare("get", "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]).userCount > 0;
 
+    let decreaseVotes = 0;
+
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -238,8 +308,12 @@ module.exports = async function postSkipSegments(req, res) {
 
         // Auto moderator check
         if (!isVIP) {
-            let autoModerateResult = await autoModerateSubmission({videoID, startTime, endTime, category: segments[i].category});
-            if (autoModerateResult) {
+            let autoModerateResult = await autoModerateSubmission({videoID, startTime, endTime, category: segments[i].category, segmentInfo: segments[i]});
+            if (autoModerateResult == "NB disagreement."){
+                // If NB automod rejects, the submission will start with -2 votes
+                decreaseVotes = -2;
+            } else if (autoModerateResult) {
+                //Normal automod behavior
                 res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
                 return;
             }
@@ -291,7 +365,7 @@ module.exports = async function postSkipSegments(req, res) {
             shadowBanned = 1;
         }
 
-        let startingVotes = 0;
+        let startingVotes = 0 + decreaseVotes;
         if (isVIP) {
             //this user is a vip, start them at a higher approval rating
             startingVotes = 10000;
@@ -323,7 +397,7 @@ module.exports = async function postSkipSegments(req, res) {
 
             // Discord notification
             sendWebhooks(userID, videoID, UUID, segmentInfo);
-    
+
             UUIDs.push(UUID);
         }
     } catch (err) {

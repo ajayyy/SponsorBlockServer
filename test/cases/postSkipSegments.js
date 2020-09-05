@@ -91,8 +91,8 @@ describe('postSkipSegments', () => {
   }).timeout(5000);
 
   it('Should be accepted if a non-sponsor is less than 1 second', (done) => {
-    request.post(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", null, 
+    request.post(utils.getbaseURL()
+     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 200) done(); // pass
@@ -101,8 +101,8 @@ describe('postSkipSegments', () => {
   });
 
   it('Should be rejected if a sponsor is less than 1 second', (done) => {
-    request.post(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", null, 
+    request.post(utils.getbaseURL()
+     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 400) done(); // pass
@@ -125,14 +125,14 @@ describe('postSkipSegments', () => {
      + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
-        else if (res.statusCode === 403) done(); // pass
-        else done("non 403 status code: " + res.statusCode + " ("+body+")");
+        else if (res.statusCode === 200) done(); // pass
+        else done("non 200 status code: " + res.statusCode + " ("+body+")");
       });
   });
 
   it('Should be allowed if youtube thinks duration is 0', (done) => {
-    request.get(utils.getbaseURL() 
-     + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null, 
+    request.get(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 200) done(); // pass
