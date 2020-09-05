@@ -308,7 +308,7 @@ module.exports = async function postSkipSegments(req, res) {
 
         // Auto moderator check
         if (!isVIP) {
-            let autoModerateResult = await autoModerateSubmission({videoID, startTime, endTime, category: segments[i].category, segmentInfo: segments[i]});
+            let autoModerateResult = await autoModerateSubmission({userID, videoID, startTime, endTime, category: segments[i].category});
             if (autoModerateResult == "NB disagreement."){
                 // If NB automod rejects, the submission will start with -2 votes
                 decreaseVotes = -2;
