@@ -17,10 +17,10 @@ function getVoteAuthorRaw(submissionCount, isVIP, isOwnSubmission) {
 function getVoteAuthor(submissionCount, isVIP, isOwnSubmission) {
     if (submissionCount === 0) {
         return "Report by New User";
-    } else if (isVIP) {
-        return "Report by VIP User";
     } else if (isOwnSubmission) {
         return "Report by Submitter";
+    } else if (isVIP) {
+        return "Report by VIP User";
     }
 
     return "";
