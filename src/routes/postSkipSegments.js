@@ -296,7 +296,7 @@ module.exports = async function postSkipSegments(req, res) {
             let autoModerateResult = await autoModerateSubmission({userID, videoID, startTime, endTime, category: segments[i].category});
             if (autoModerateResult == "NB disagreement."){
                 // If NB automod rejects, the submission will start with -2 votes
-                decreaseVotes = -2;
+                //decreaseVotes = -2; //Disable for now
             } else if (autoModerateResult) {
                 //Normal automod behavior
                 res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
