@@ -99,25 +99,17 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
 }
 
 function sendWebhooksNB(userID, videoID, UUID, startTime, endTime, category, probability, ytData) {
-    //let submissionInfoRow = db.prepare('get', "SELECT s.videoID, s.userID, s.startTime, s.endTime, s.category, u.userName, " +
-    //    "(select count(1) from sponsorTimes where userID = s.userID) count, " +
-    //    "(select count(1) from sponsorTimes where userID = s.userID and votes <= -2) disregarded " +
-    //    "FROM sponsorTimes s left join userNames u on s.userID = u.userID where s.userId=?",
-    //[userID]);
-    let submissionCount = db.prepare('get', "SELECT COUNT(*) count FROM sponsorTimes WHERE userID=?", [userID]);
-    let disregardedCount = db.prepare('get', "SELECT COUNT(*) disregarded FROM sponsorTimes WHERE userID=? and votes <= -2", [userID]);
-    let uName = db.prepare('get', "SELECT userName FROM userNames WHERE userID=?", [userID]);
+    let submissionInfoRow = db.prepare('get', "SELECT " +
+        "(select count(1) from sponsorTimes where userID = ?) count, " +
+        "(select count(1) from sponsorTimes where userID = ? and votes <= -2) disregarded, " +
+        "coalesce((select userName FROM userNames WHERE userID = ?), ?) userName",
+        [userID, userID, userID, userID]);
 
     let submittedBy = "";
-    try {
-        // If a userName was created then show both
-        if (uName.userName !== userID){
-            submittedBy = uName.userName + "\n " + userID;
-        } else {
-            submittedBy = userID;
-        }
-    } catch {
-        //Catch in case User is not in userNames table
+    // If a userName was created then show both
+    if (submissionInfoRow.userName !== userID){
+        submittedBy = submissionInfoRow.userName + "\n " + userID;
+    } else {
         submittedBy = userID;
     }
 
@@ -133,8 +125,8 @@ function sendWebhooksNB(userID, videoID, UUID, startTime, endTime, category, pro
                         "\n**Predicted Probability:** " + probability +
                         "\n**Category:** " + category +
                         "\n**Submitted by:** "+ submittedBy +
-                        "\n**Total User Submissions:** "+submissionCount.count +
-                        "\n**Ignored User Submissions:** "+disregardedCount.disregarded,
+                        "\n**Total User Submissions:** "+submissionInfoRow.count +
+                        "\n**Ignored User Submissions:** "+submissionInfoRow.disregarded,
                 "color": 10813440,
                 "thumbnail": {
                     "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
