@@ -106,14 +106,20 @@ function sendWebhooksNB(userID, videoID, UUID, startTime, endTime, category, pro
     //[userID]);
     let submissionCount = db.prepare('get', "SELECT COUNT(*) count FROM sponsorTimes WHERE userID=?", [userID]);
     let disregardedCount = db.prepare('get', "SELECT COUNT(*) disregarded FROM sponsorTimes WHERE userID=? and votes <= -2", [userID]);
-    //let uName = db.prepare('get', "SELECT userName FROM userNames WHERE userID=?", [userID]);
-    let submittedBy = userID;//"";
-    // If there's no userName then just show the userID
-    // if (uName.userName == userID){
-    //   submittedBy = userID;
-    // } else { // else show both
-    //   submittedBy = uName.userName + "\n " + userID;
-    // }
+    let uName = db.prepare('get', "SELECT userName FROM userNames WHERE userID=?", [userID]);
+
+    let submittedBy = "";
+    try {
+        // If a userName was created then show both
+        if (uName.userName !== userID){
+            submittedBy = uName.userName + "\n " + userID;
+        } else {
+            submittedBy = userID;
+        }
+    } catch {
+        //Catch in case User is not in userNames table
+        submittedBy = userID;
+    }
 
     // Send discord message
     if (config.discordNeuralBlockRejectWebhookURL === null) return;
