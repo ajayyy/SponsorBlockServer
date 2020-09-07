@@ -115,7 +115,7 @@ async function autoModerateSubmission(submission, callback) {
         });
 
         if (err) {
-            return "Couldn't get video information.";
+            return false;
         } else {
             // Check to see if video exists
             if (data.pageInfo.totalResults === 0) {
