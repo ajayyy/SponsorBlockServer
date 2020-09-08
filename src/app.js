@@ -2,6 +2,7 @@ var express = require('express');
 // Create a service (the app object is just a callback).
 var app = express();
 var config = require('./config.js');
+var redis = require('./utils/redis.js');
 
 // Middleware 
 var corsMiddleware = require('./middleware/cors.js');
