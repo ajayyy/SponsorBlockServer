@@ -207,10 +207,6 @@ module.exports = async function postSkipSegments(req, res) {
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
             //invalid request
-            logger.debug(videoID);
-            logger.debug(userID);
-            logger.debug(JSON.stringify(segments));
-            logger.debug('400');
             res.sendStatus(400);
             return;
         }
