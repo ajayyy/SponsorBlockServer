@@ -31,8 +31,11 @@ if (config.mode === "test") {
                         // Only set cache if data returned
                         if (data.items.length > 0) {
                             redis.set(redisKey, JSON.stringify(data), (setErr) => {
-                                logger.debug("redis: video information cache set for: " + videoID);
-                                setErr && logger.warn(setErr);
+                                if(setErr) {
+                                    logger.warn(setErr);
+                                } else {
+                                    logger.debug("redis: video information cache set for: " + videoID);
+                                }
                                 callback(false, data); // don't fail
                             });
                         } else {
@@ -49,11 +52,5 @@ if (config.mode === "test") {
         });
     };
 }
-
-/* YouTubeAPI.videos.list({
-            part: "snippet",
-            id: videoID
-        }, function (err, data) {*/
-
 
 module.exports = exportObject;
