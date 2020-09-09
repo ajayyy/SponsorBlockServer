@@ -19,5 +19,6 @@
     "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",
     "readOnly": false,
-    "webhooks": []
+    "webhooks": [],
+    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"] // List of supported categories any other category will be rejected
 }

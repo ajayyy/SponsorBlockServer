@@ -150,6 +150,11 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
         res.status("400").send("Submission doesn't exist.");
         return;
     }
+    
+    if (!config.categoryList.includes(category)) {
+      res.status("400").send("Category doesn't exist.");
+      return;
+    }
 
     let timeSubmitted = Date.now();
 

@@ -194,6 +194,11 @@ module.exports = async function postSkipSegments(req, res) {
             res.sendStatus(400);
             return;
         }
+        
+        if (!config.categoryList.includes(segments[i].category)) {
+          res.status("400").send("Category doesn't exist.");
+          return;
+        }
 
         let startTime = parseFloat(segments[i].segment[0]);
         let endTime = parseFloat(segments[i].segment[1]);
