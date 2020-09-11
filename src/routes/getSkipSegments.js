@@ -8,7 +8,7 @@ var logger = require('../utils/logger.js');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 
-function cleanGetSegments(videoID, categories) {
+function cleanGetSegments(req, videoID, categories) {
     let userHashedIP, shadowHiddenSegments;
 
     let segments = [];
@@ -160,7 +160,7 @@ function handleGetSegments(req, res) {
         ? [req.query.category]
         : ['sponsor'];
 
-    let segments = cleanGetSegments(videoID, categories);
+    let segments = cleanGetSegments(req, videoID, categories);
 
     if (segments === null || segments === undefined) {
         res.sendStatus(500);
