@@ -64,7 +64,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
 
             // If it is a first time submission
             // Then send a notification to discord
-            if (config.discordFirstTimeSubmissionsWebhookURL === null) return;
+            if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
             request.post(config.discordFirstTimeSubmissionsWebhookURL, {
                 json: {
                     "embeds": [{
@@ -163,7 +163,7 @@ async function autoModerateSubmission(submission) {
         });
 
         if (err) {
-            return "Couldn't get video information.";
+            return false;
         } else {
             // Check to see if video exists
             if (data.pageInfo.totalResults === 0) {
@@ -267,7 +267,7 @@ module.exports = async function postSkipSegments(req, res) {
     //check if all correct inputs are here and the length is 1 second or more
     if (videoID == undefined || userID == undefined || segments == undefined || segments.length < 1) {
         //invalid request
-        res.sendStatus(400);
+        res.status(400).send("Parameters are not valid");
         return;
     }
 
@@ -286,8 +286,13 @@ module.exports = async function postSkipSegments(req, res) {
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
             //invalid request
-            res.sendStatus(400);
+            res.status(400).send("One of your segments are invalid");
             return;
+        }
+        
+        if (!config.categoryList.includes(segments[i].category)) {
+          res.status("400").send("Category doesn't exist.");
+          return;
         }
 
         let startTime = parseFloat(segments[i].segment[0]);
@@ -296,7 +301,7 @@ module.exports = async function postSkipSegments(req, res) {
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
             //invalid request
-            res.sendStatus(400);
+            res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
             return;
         }
 

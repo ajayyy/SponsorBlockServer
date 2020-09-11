@@ -22,6 +22,8 @@ describe('voteOnSponsorTime', () => {
     db.exec(startOfQuery + "('voter-submitter2', 1, 11, 2, 'vote-uuid-11', '" + getHash("randomID4") + "', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('own-submission-video', 1, 11, 500, 'own-submission-uuid', '"+ getHash('own-submission-id') +"', 0, 50, 'sponsor', 0)");
     db.exec(startOfQuery + "('not-own-submission-video', 1, 11, 500, 'not-own-submission-uuid', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('incorrect-category', 1, 11, 500, 'incorrect-category', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0)");
+    db.exec(startOfQuery + "('incorrect-category-change', 1, 11, 500, 'incorrect-category-change', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0)");
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
     privateDB.exec("INSERT INTO shadowBannedUsers (userID) VALUES ('" + getHash("randomID4") + "')");
@@ -207,6 +209,24 @@ describe('voteOnSponsorTime', () => {
     });
   });
 
+  it('Should not able to change to an invalid category', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=fakecategory", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 400) {
+          let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["incorrect-category"]);
+          if (row.category === "sponsor") {
+            done()
+          } else {
+            done("Vote did not succeed. Submission went from sponsor to " + row.category);
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
   it('Should be able to change your vote for a category and it should immediately change (for now)', (done) => {
     request.get(utils.getbaseURL() 
      + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=outro", null, 
@@ -224,6 +244,29 @@ describe('voteOnSponsorTime', () => {
         }
     });
   });
+
+
+  it('Should not be able to change your vote to an invalid category', (done) => {
+    const vote = (inputCat, assertCat, callback) => {
+      request.get(utils.getbaseURL() 
+        + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category-change&category="+inputCat, null, 
+        (err) => {
+        if (err) done(err);
+        else{
+          let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["incorrect-category-change"]);
+          if (row.category === assertCat) {
+            callback();
+          } else {
+            done("Vote did not succeed. Submission went from sponsor to " + row.category);
+          }
+        }
+      });
+    };
+    vote("sponsor", "sponsor", () => {
+      vote("fakeCategory", "sponsor", done);
+    });
+  });
+
 
   it('VIP should be able to vote for a category and it should immediately change', (done) => {
     request.get(utils.getbaseURL() 
