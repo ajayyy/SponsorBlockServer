@@ -32,7 +32,7 @@ var mockServer = createMockServer(() => {
   var server = createServer(() => {
     logger.info("Started main HTTP server");
     // Run the tests.
-    mocha.run(function(failures) {
+    mocha.run((failures) => {
       mockServer.close();
       server.close();
       process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures

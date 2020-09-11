@@ -48,10 +48,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
     if (config.youtubeAPIKey !== null) {
         let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
-        YouTubeAPI.videos.list({
-            part: "snippet",
-            id: videoID
-        }, function (err, data) {
+        YouTubeAPI.listVideos(videoID, "snippet", (err, data) => {
             if (err || data.items.length === 0) {
                 err && logger.error(err);
                 return;
@@ -108,10 +105,7 @@ async function autoModerateSubmission(submission, callback) {
     // Get the video information from the youtube API
     if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
-            YouTubeAPI.videos.list({
-                part: "contentDetails",
-                id: submission.videoID
-            }, (err, data) => resolve({err, data}));
+            YouTubeAPI.listVideos(submission.videoID, "contentDetails", (err, data) => resolve({err, data}));
         });
 
         if (err) {
@@ -134,7 +128,6 @@ async function autoModerateSubmission(submission, callback) {
                 }
             }
         }
-         
     } else {
         logger.debug("Skipped YouTube API");
 
