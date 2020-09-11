@@ -177,7 +177,7 @@ module.exports = async function postSkipSegments(req, res) {
     //check if all correct inputs are here and the length is 1 second or more
     if (videoID == undefined || userID == undefined || segments == undefined || segments.length < 1) {
         //invalid request
-        res.sendStatus(400).send("Parameters are not valid");
+        res.status(400).send("Parameters are not valid");
         return;
     }
 
@@ -191,7 +191,7 @@ module.exports = async function postSkipSegments(req, res) {
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
             //invalid request
-            res.sendStatus(400).send("One of your segments are invalid");
+            res.status(400).send("One of your segments are invalid");
             return;
         }
 
@@ -201,7 +201,7 @@ module.exports = async function postSkipSegments(req, res) {
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
             //invalid request
-            res.sendStatus(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
+            res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
             return;
         }
 
