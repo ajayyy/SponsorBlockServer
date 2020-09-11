@@ -169,33 +169,58 @@ async function autoModerateSubmission(submission) {
             if (data.pageInfo.totalResults === 0) {
                 return "No video exists with id " + submission.videoID;
             } else {
-                let duration = data.items[0].contentDetails.duration;
-                duration = isoDurations.toSeconds(isoDurations.parse(duration));
-                if (duration == 0) {
-                    // Allow submission if the duration is 0 (bug in youtube api)
-                    return false;
-                } else if ((submission.endTime - submission.startTime) > (duration/100)*80) {
-                    // Reject submission if over 80% of the video
-                    return "One of your submitted segments is over 80% of the video.";
-                } else {
-                    // Check NeuralBlock
-                    let neuralBlockURL = config.neuralBlockURL;
-                    if (!neuralBlockURL) return false;
+                let segments = submission.segments;
+                let nbString = "";
+                for (let i = 0; i < segments.length; i++) {
+                    let startTime = parseFloat(segments[i].segment[0]);
+                    let endTime = parseFloat(segments[i].segment[1]);
 
-                    let response = await fetch(neuralBlockURL + "/api/checkSponsorSegments?vid=" + submission.videoID +
-                                              "&segments=" + submission.startTime + "," + submission.endTime);
-                    if (!response.ok) return false;
-
-                    let nbPredictions = await response.json();
-                    if (nbPredictions.probabilities[0] >= 0.70){
-                      return false;
+                    let duration = data.items[0].contentDetails.duration;
+                    duration = isoDurations.toSeconds(isoDurations.parse(duration));
+                    if (duration == 0) {
+                        // Allow submission if the duration is 0 (bug in youtube api)
+                        return false;
+                    } else if ((endTime - startTime) > (duration/100)*80) {
+                        // Reject submission if over 80% of the video
+                        return "One of your submitted segments is over 80% of the video.";
                     } else {
-                      let UUID = getHash("v2-categories" + submission.videoID + submission.startTime +
-                          submission.endTime  + submission.category + submission.userID, 1);
-                      // Send to Discord
-                      sendWebhooksNB(submission.userID, submission.videoID, UUID, submission.startTime, submission.endTime, submission.category, nbPredictions.probabilities[0], data);
-                      return "NB disagreement.";
+                        if (segments[i].category === "sponsor") {
+                          //Prepare timestamps to send to NB all at once
+                          nbString = nbString + segments[i].segment[0] + "," + segments[i].segment[1] + ";";
+                        }
                     }
+                }
+                // Check NeuralBlock
+                let neuralBlockURL = config.neuralBlockURL;
+                if (!neuralBlockURL) return false;
+                let response = await fetch(neuralBlockURL + "/api/checkSponsorSegments?vid=" + submission.videoID +
+                        "&segments=" + nbString.substring(0,nbString.length-1));
+                if (!response.ok) return false;
+
+                let nbPredictions = await response.json();
+                nbDecision = false;
+                let predictionIdx = 0; //Keep track because only sponsor categories were submitted
+                for (let i = 0; i < segments.length; i++){
+                    if (segments[i].category === "sponsor"){
+                        if (nbPredictions.probabilities[predictionIdx] < 0.70){
+                          nbDecision = true; // At least one bad entry
+                          startTime = parseFloat(segments[i].segment[0]);
+                          endTime = parseFloat(segments[i].segment[1]);
+
+                          let UUID = getHash("v2-categories" + submission.videoID + startTime +
+                              endTime  + segments[i].category + submission.userID, 1);
+                          // Send to Discord
+                          // Note, if this is too spammy. Consider sending all the segments as one Webhook
+                          sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
+                        }
+                        predictionIdx++;
+                    }
+
+                }
+                if (nbDecision){
+                    return "NB disagreement.";
+                } else {
+                    return false;
                 }
             }
         }
@@ -288,21 +313,23 @@ module.exports = async function postSkipSegments(req, res) {
             res.sendStatus(409);
             return;
         }
-
-        // Auto moderator check
-        if (!isVIP) {
-            let autoModerateResult = await autoModerateSubmission({userID, videoID, startTime, endTime, category: segments[i].category});
-            if (autoModerateResult == "NB disagreement."){
-                // If NB automod rejects, the submission will start with -2 votes
-                //decreaseVotes = -2; //Disable for now
-            } else if (autoModerateResult) {
-                //Normal automod behavior
-                res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
-                return;
-            }
-        }
     }
 
+    // Auto moderator check
+    if (!isVIP) {
+        let autoModerateResult = await autoModerateSubmission({userID, videoID, segments});//startTime, endTime, category: segments[i].category});
+        if (autoModerateResult == "NB disagreement."){
+            // If NB automod rejects, the submission will start with -2 votes.
+            // Note, if one submission is bad all submissions will be affected.
+            // However, this behavior is consistent with other automod functions
+            // already in place.
+            //decreaseVotes = -2; //Disable for now
+        } else if (autoModerateResult) {
+            //Normal automod behavior
+            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
+            return;
+        }
+    }
     // Will be filled when submitting
     let UUIDs = [];
 
