@@ -218,7 +218,7 @@ async function autoModerateSubmission(submission) {
 
                 }
                 if (nbDecision){
-                    return "NB disagreement.";
+                    return "Rejected based on NeuralBlock predictions.";
                 } else {
                     return false;
                 }
@@ -318,7 +318,7 @@ module.exports = async function postSkipSegments(req, res) {
     // Auto moderator check
     if (!isVIP) {
         let autoModerateResult = await autoModerateSubmission({userID, videoID, segments});//startTime, endTime, category: segments[i].category});
-        if (autoModerateResult == "NB disagreement."){
+        if (autoModerateResult == "Rejected based on NeuralBlock predictions."){
             // If NB automod rejects, the submission will start with -2 votes.
             // Note, if one submission is bad all submissions will be affected.
             // However, this behavior is consistent with other automod functions
