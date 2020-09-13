@@ -14,9 +14,7 @@ module.exports = function getViewsForUser(req, res) {
   userID = getHash(userID);
 
   try {
-      let row = db.prepare('get', "SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?", [userID]);
-
-      //increase the view count by one
+      let row = db.prepare('get', "SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
       if (row.viewCount != null) {
           res.send({
               viewCount: row.viewCount

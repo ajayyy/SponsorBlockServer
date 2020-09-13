@@ -13,7 +13,7 @@ let lastUserCountCheck = 0;
 
 module.exports = function getTotalStats (req, res) {
     let row = db.prepare('get', "SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, " +
-              "SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1 AND votes >= 0", []);
+              "SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1 AND votes > -2", []);
 
     if (row !== undefined) {
         let extensionUsers = chromeUsersCache + firefoxUsersCache;
