@@ -21,10 +21,10 @@ function getWeightedRandomChoice(choices, amountOfChoices) {
   //assign a weight to each choice
   let totalWeight = 0;
   choices = choices.map(choice => {
-    // The initial value for votes is 0 so we have to add 1 because 
-    // everything below will be ignored
+    // The initial value for votes is 0 so we have to add 2 because 
+    // everything below (-1) will be ignored
     // https://www.desmos.com/calculator/c1duhfrmts
-    const weight = Math.exp((choice.votes + 1), 0.85);
+    const weight = Math.exp((choice.votes + 2), 0.85);
     totalWeight += weight;
 
     return { ...choice, weight };
