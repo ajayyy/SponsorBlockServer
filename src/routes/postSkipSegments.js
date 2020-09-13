@@ -410,9 +410,6 @@ module.exports = async function postSkipSegments(req, res) {
                 return;
             }
 
-            // Discord notification
-            sendWebhooks(userID, videoID, UUID, segmentInfo);
-
             UUIDs.push(UUID);
         }
     } catch (err) {
