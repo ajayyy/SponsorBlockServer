@@ -8,8 +8,8 @@ var db = databases.db;
 
 describe('postSkipSegments', () => {
   it('Should be able to submit a single time (Params method)', (done) => {
-    request.post(utils.getbaseURL() 
-     + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=test&category=sponsor", null, 
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=test&category=sponsor", null,
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -26,7 +26,7 @@ describe('postSkipSegments', () => {
   });
 
   it('Should be able to submit a single time (JSON method)', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
           userID: "test",
@@ -36,7 +36,7 @@ describe('postSkipSegments', () => {
             category: "sponsor"
           }]
        }
-     }, 
+     },
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -53,7 +53,7 @@ describe('postSkipSegments', () => {
   });
 
   it('Should be able to submit multiple times (JSON method)', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
           userID: "test",
@@ -66,7 +66,7 @@ describe('postSkipSegments', () => {
             category: "intro"
           }]
        }
-     }, 
+     },
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
@@ -88,11 +88,11 @@ describe('postSkipSegments', () => {
           done("Status code was " + res.statusCode);
         }
       });
-  });
+  }).timeout(5000);
 
   it('Should be accepted if a non-sponsor is less than 1 second', (done) => {
-    request.post(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", null, 
+    request.post(utils.getbaseURL()
+     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 200) done(); // pass
@@ -101,8 +101,8 @@ describe('postSkipSegments', () => {
   });
 
   it('Should be rejected if a sponsor is less than 1 second', (done) => {
-    request.post(utils.getbaseURL() 
-     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", null, 
+    request.post(utils.getbaseURL()
+     + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 400) done(); // pass
@@ -111,8 +111,8 @@ describe('postSkipSegments', () => {
   });
 
   it('Should be rejected if over 80% of the video', (done) => {
-    request.get(utils.getbaseURL() 
-     + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testing", null, 
+    request.get(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 403) done(); // pass
@@ -120,19 +120,29 @@ describe('postSkipSegments', () => {
       });
   });
 
-  it('Should be allowed if youtube thinks duration is 0', (done) => {
-    request.get(utils.getbaseURL() 
-     + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null, 
+  it("Should be rejected if NB's predicted probability is <70%.", (done) => {
+    request.get(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 200) done(); // pass
         else done("non 200 status code: " + res.statusCode + " ("+body+")");
       });
   });
-  
+
+  it('Should be allowed if youtube thinks duration is 0', (done) => {
+    request.get(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null,
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode === 200) done(); // pass
+        else done("non 200 status code: " + res.statusCode + " ("+body+")");
+      });
+  });
+
   it('Should be rejected if not a valid videoID', (done) => {
-    request.get(utils.getbaseURL() 
-     + "/api/postVideoSponsorTimes?videoID=knownWrongID&startTime=30&endTime=1000000&userID=testing", null, 
+    request.get(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?videoID=knownWrongID&startTime=30&endTime=1000000&userID=testing", null,
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 403) done(); // pass
@@ -141,8 +151,8 @@ describe('postSkipSegments', () => {
   });
 
   it('Should return 400 for missing params (Params method)', (done) => {
-    request.post(utils.getbaseURL() 
-     + "/api/postVideoSponsorTimes?startTime=9&endTime=10&userID=test", null, 
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes?startTime=9&endTime=10&userID=test", null,
       (err, res, body) => {
         if (err) done(true);
         if (res.statusCode === 400) done();
@@ -151,7 +161,7 @@ describe('postSkipSegments', () => {
   });
 
   it('Should return 400 for missing params (JSON method) 1', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
           userID: "test",
@@ -163,7 +173,7 @@ describe('postSkipSegments', () => {
             category: "intro"
           }]
        }
-     }, 
+     },
       (err, res, body) => {
         if (err) done(true);
         else if (res.statusCode === 400) done();
@@ -171,13 +181,13 @@ describe('postSkipSegments', () => {
       });
   });
   it('Should return 400 for missing params (JSON method) 2', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
         userID: "test",
         videoID: "dQw4w9WgXcQ"
        }
-      }, 
+      },
       (err, res, body) => {
         if (err) done(true);
         else if (res.statusCode === 400) done();
@@ -185,7 +195,7 @@ describe('postSkipSegments', () => {
       });
   });
   it('Should return 400 for missing params (JSON method) 3', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
           userID: "test",
@@ -198,7 +208,7 @@ describe('postSkipSegments', () => {
             category: "intro"
           }]
        }
-      }, 
+      },
       (err, res, body) => {
         if (err) done(true);
         else if (res.statusCode === 400) done();
@@ -206,7 +216,7 @@ describe('postSkipSegments', () => {
       });
   });
   it('Should return 400 for missing params (JSON method) 4', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
           userID: "test",
@@ -218,7 +228,7 @@ describe('postSkipSegments', () => {
             category: "intro"
           }]
        }
-      }, 
+      },
       (err, res, body) => {
         if (err) done(true);
         else if (res.statusCode === 400) done();
@@ -226,13 +236,13 @@ describe('postSkipSegments', () => {
       });
   });
   it('Should return 400 for missing params (JSON method) 5', (done) => {
-    request.post(utils.getbaseURL() 
+    request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes", {
        json: {
           userID: "test",
           videoID: "dQw4w9WgXcQ"
        }
-      }, 
+      },
       (err, res, body) => {
         if (err) done(true);
         else if (res.statusCode === 400) done();

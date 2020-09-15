@@ -4,9 +4,11 @@
     "globalSalt": "testSalt",
     "adminUserID": "testUserId",
     "youtubeAPIKey": "",
-    "discordReportChannelWebhookURL": "http://127.0.0.1:8081/ReportChannelWebhook", 
-    "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/FirstTimeSubmissionsWebhook", 
-    "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/CompletelyIncorrectReportWebhook", 
+    "discordReportChannelWebhookURL": "http://127.0.0.1:8081/ReportChannelWebhook",
+    "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/FirstTimeSubmissionsWebhook",
+    "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/CompletelyIncorrectReportWebhook",
+    "discordNeuralBlockRejectWebhookURL": "http://127.0.0.1:8081/NeuralBlockRejectWebhook",
+    "neuralBlockURL": "http://127.0.0.1:8081/NeuralBlock",
     "behindProxy": true,
     "db": "./test/databases/sponsorTimes.db",
     "privateDB": "./test/databases/private.db",
@@ -46,5 +48,6 @@
                 "vote.down"
             ]
         }
-    ]
+    ],
+    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"]
 }

@@ -19,7 +19,8 @@
     "redis": "^3.0.2",
     "sync-mysql": "^3.0.1",
     "uuid": "^3.3.2",
-    "youtube-api": "^2.0.10"
+    "youtube-api": "^2.0.10",
+    "node-fetch": "^2.6.0"
   },
   "devDependencies": {
     "mocha": "^7.1.1",

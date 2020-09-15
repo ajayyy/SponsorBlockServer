@@ -8,6 +8,8 @@
     "discordReportChannelWebhookURL": null, //URL from discord if you would like notifications when someone makes a report [optional]
     "discordFirstTimeSubmissionsWebhookURL": null, //URL from discord if you would like notifications when someone makes a first time submission [optional]
     "discordCompletelyIncorrectReportWebhookURL": null, //URL from discord if you would like notifications when someone reports a submission as completely incorrect [optional]
+    "neuralBlockURL": null, // URL to check submissions against neural block. Ex. https://ai.neuralblock.app
+    "discordNeuralBlockRejectWebhookURL": null, //URL from discord if you would like notifications when NeuralBlock rejects a submission [optional]
     "userCounterURL": null, // For user counting. URL to instance of https://github.com/ajayyy/PrivacyUserCount
     "proxySubmission": null, // Base url to proxy submissions to persist // e.g. https://sponsor.ajay.app (no trailing slash)
     "behindProxy": "X-Forwarded-For", //Options: "X-Forwarded-For", "Cloudflare", "X-Real-IP", anything else will mean it is not behind a proxy. True defaults to "X-Forwarded-For"
@@ -19,5 +21,6 @@
     "privateDBSchema": "./databases/_private.db.sql",
     "mode": "development",
     "readOnly": false,
-    "webhooks": []
+    "webhooks": [],
+    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"] // List of supported categories any other category will be rejected
 }
