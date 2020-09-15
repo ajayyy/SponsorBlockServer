@@ -1,11 +1,10 @@
-var fs = require('fs');
 var config = require('../config.js');
 
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 var getFormattedTime = require('../utils/getFormattedTime.js');
 var isUserTrustworthy = require('../utils/isUserTrustworthy.js');
-const {getVoteAuthor, getVoteAuthorRaw, dispatchEvent} = require('../utils/webhookUtils.js');
+const { getVoteAuthor, getVoteAuthorRaw, dispatchEvent } = require('../utils/webhookUtils.js');
 
 var databases = require('../databases/databases.js');
 var db = databases.db;
@@ -49,10 +48,7 @@ function sendWebhooks(voteData) {
         }
 
         if (config.youtubeAPIKey !== null) {
-            YouTubeAPI.videos.list({
-                part: "snippet",
-                id: submissionInfoRow.videoID
-            }, function (err, data) {
+            YouTubeAPI.listVideos(submissionInfoRow.videoID, "snippet", (err, data) => {
                 if (err || data.items.length === 0) {
                     err && logger.error(err);
                     return;
@@ -375,8 +371,6 @@ async function voteOnSponsorTime(req, res) {
 }
 
 module.exports = {
-    voteOnSponsorTime,
-    endpoint: function (req, res) {
-       voteOnSponsorTime(req, res);
-    },
-  };
+  voteOnSponsorTime,
+  endpoint: voteOnSponsorTime
+};

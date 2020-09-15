@@ -1,5 +1,4 @@
 var MysqlInterface = require('sync-mysql');
-var config = require('../config.js');
 const logger = require('../utils/logger.js');
 
 class Mysql {
