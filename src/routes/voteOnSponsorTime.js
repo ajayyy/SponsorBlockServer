@@ -270,6 +270,9 @@ async function voteOnSponsorTime(req, res) {
             } else if (votesRow.type === 2) {
                 //extra downvote
                 oldIncrementAmount = -4;
+            } else if (votesRow.type === 20) {
+                //undo/cancel vote
+                oldIncrementAmount = 0;
             } else if (votesRow.type < 0) {
                 //vip downvote
                 oldIncrementAmount = votesRow.type;
