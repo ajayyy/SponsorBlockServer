@@ -10,6 +10,9 @@ if (config.redis) {
     module.exports = {
         get: (key, callback) => {
             callback((true));
+        },
+        set: (key, value, callback) => {
+            callback((true));
         }
     };
 }
