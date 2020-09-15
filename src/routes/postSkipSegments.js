@@ -49,10 +49,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
     if (config.youtubeAPIKey !== null) {
         let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
-        YouTubeAPI.videos.list({
-            part: "snippet",
-            id: videoID
-        }, function (err, data) {
+        YouTubeAPI.listVideos(videoID, "snippet", (err, data) => {
             if (err || data.items.length === 0) {
                 err && logger.error(err);
                 return;
@@ -156,10 +153,7 @@ async function autoModerateSubmission(submission) {
     // Get the video information from the youtube API
     if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
-            YouTubeAPI.videos.list({
-                part: "contentDetails,snippet",
-                id: submission.videoID
-            }, (err, data) => resolve({err, data}));
+            YouTubeAPI.listVideos(submission.videoID, "contentDetails,snippet", (err, data) => resolve({err, data}));
         });
 
         if (err) {
@@ -224,7 +218,6 @@ async function autoModerateSubmission(submission) {
                 }
             }
         }
-
     } else {
         logger.debug("Skipped YouTube API");
 
@@ -238,9 +231,9 @@ function proxySubmission(req) {
     request.post(config.proxySubmission + '/api/skipSegments?userID='+req.query.userID+'&videoID='+req.query.videoID, {json: req.body}, (err, result) => {
         if (config.mode === 'development') {
             if (!err) {
-                logger.error('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
+                logger.debug('Proxy Submission: ' + result.statusCode + ' ('+result.body+')');
             } else {
-                logger.debug("Proxy Submission: Failed to make call");
+                logger.error("Proxy Submission: Failed to make call");
             }
         }
     });
@@ -277,6 +270,8 @@ module.exports = async function postSkipSegments(req, res) {
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
 
+    let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list) => { return list.category });
+    
     //check if this user is on the vip list
     let isVIP = db.prepare("get", "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]).userCount > 0;
 
@@ -294,6 +289,18 @@ module.exports = async function postSkipSegments(req, res) {
           res.status("400").send("Category doesn't exist.");
           return;
         }
+
+        // Reject segemnt if it's in the no segments list
+        if (noSegmentList.indexOf(segments[i].category) !== -1) {
+            // TODO: Do something about the fradulent submission
+            logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
+            res.status(403).send(
+              "Request rejected by auto moderator: This video has been reported as not containing any segments with the category '"
+              + segments[i].category + "'. If you believe this is incorrect, contact someone on Discord."
+            );
+            return;
+        }
+        
 
         let startTime = parseFloat(segments[i].segment[0]);
         let endTime = parseFloat(segments[i].segment[1]);
@@ -394,11 +401,13 @@ module.exports = async function postSkipSegments(req, res) {
                 segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
 
             try {
-                db.prepare('run', "INSERT INTO sponsorTimes " +
-                    "(videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden)" +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [videoID, segmentInfo.segment[0],
-                    segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned]);
-
+                db.prepare('run', "INSERT INTO sponsorTimes " + 
+                    "(videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID)" +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned, getHash(videoID, 1)
+                    ]
+                );
+            
                 //add to private db as well
                 privateDB.prepare('run', "INSERT INTO sponsorTimes VALUES(?, ?, ?)", [videoID, hashedIP, timeSubmitted]);
             } catch (err) {

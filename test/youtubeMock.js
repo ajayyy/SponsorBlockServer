@@ -8,6 +8,12 @@ YouTubeAPI.videos.list({
  // https://developers.google.com/youtube/v3/docs/videos
 
 const YouTubeAPI = {
+  listVideos: (id, part, callback) => {
+    YouTubeAPI.videos.list({
+      part: part,
+      id: id
+    }, callback);
+  },
   videos: {
     list: (obj, callback) => {
       if (obj.id === "knownWrongID") {

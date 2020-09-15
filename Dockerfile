@@ -4,6 +4,8 @@ COPY package.json .
 RUN npm install
 COPY index.js .
 COPY src src
+RUN mkdir databases
+COPY databases/*.sql databases/
 COPY entrypoint.sh .
 EXPOSE 8080
 CMD ./entrypoint.sh

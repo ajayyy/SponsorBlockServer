@@ -1,6 +1,7 @@
 var request = require('request');
 var db = require('../../src/databases/databases.js').db;
 var utils = require('../utils.js');
+var getHash = require('../../src/utils/getHash.js');
 
 
 /*
@@ -19,9 +20,9 @@ var utils = require('../utils.js');
 
 describe('getVideoSponsorTime (Old get method)', () => {
   before(() => {
-    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
-    db.exec(startOfQuery + "('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0)");
-    db.exec(startOfQuery + "('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0)");
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+    db.exec(startOfQuery + "('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest', 1) + "')");
+    db.exec(startOfQuery + "('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest,test', 1) + "')");
   }); 
 
   it('Should be able to get a time', (done) => {

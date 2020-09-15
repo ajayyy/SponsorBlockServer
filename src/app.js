@@ -2,6 +2,7 @@ var express = require('express');
 // Create a service (the app object is just a callback).
 var app = express();
 var config = require('./config.js');
+var redis = require('./utils/redis.js');
 
 // Middleware 
 var corsMiddleware = require('./middleware/cors.js');
@@ -11,6 +12,7 @@ const userCounter = require('./middleware/userCounter.js');
 // Routes
 var getSkipSegments = require('./routes/getSkipSegments.js').endpoint;
 var postSkipSegments = require('./routes/postSkipSegments.js');
+var getSkipSegmentsByHash = require('./routes/getSkipSegmentsByHash.js');
 var voteOnSponsorTime = require('./routes/voteOnSponsorTime.js');
 var viewedVideoSponsorTime = require('./routes/viewedVideoSponsorTime.js');
 var setUsername = require('./routes/setUsername.js');
@@ -22,6 +24,8 @@ var getViewsForUser = require('./routes/getViewsForUser.js');
 var getTopUsers = require('./routes/getTopUsers.js');
 var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
+var postNoSegments = require('./routes/postNoSegments.js');
+var getIsUserVIP = require('./routes/getIsUserVIP.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
@@ -50,6 +54,9 @@ app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
 //add the skip segments functions
 app.get('/api/skipSegments', getSkipSegments);
 app.post('/api/skipSegments', postSkipSegments);
+
+// add the privacy protecting skip segments functions
+app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
 //voting endpoint
 app.get('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
@@ -88,6 +95,13 @@ app.get('/api/getTotalStats', getTotalStats);
 
 //send out a formatted time saved total
 app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
+
+//submit video containing no segments
+app.post('/api/noSegments', postNoSegments);
+
+//get if user is a vip
+app.get('/api/isUserVIP', getIsUserVIP);
+
 
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: "./" });
