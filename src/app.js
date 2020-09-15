@@ -27,6 +27,7 @@ var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 var getUserInfo = require('./routes/getUserInfo.js');
 var postNoSegments = require('./routes/postNoSegments.js');
 var getIsUserVIP = require('./routes/getIsUserVIP.js');
+var warnUser = require('./routes/postWarning.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
@@ -104,6 +105,9 @@ app.post('/api/noSegments', postNoSegments);
 
 //get if user is a vip
 app.get('/api/isUserVIP', getIsUserVIP);
+
+//sent user a warning
+app.post('/api/warnUser', warnUser);
 
 
 app.get('/database.db', function (req, res) {

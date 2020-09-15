@@ -16,6 +16,11 @@ describe('getUserInfo', () => {
     db.exec(startOfSponsorTimesQuery + "('zzzxxxyyy', 1, 11, 2, 'uuid000006', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 0)");
     db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000007', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
     db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000008', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
+
+
+    db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES ('" + getHash('getuserinfo_warning_0') + "', 10, 'getuserinfo_vip')");
+    db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip')");
+    db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip')");
   });
 
   it('Should be able to get a 200', (done) => {
@@ -26,7 +31,7 @@ describe('getUserInfo', () => {
           done('couldn\'t call endpoint');
         } else {
           if (res.statusCode !== 200) {
-            done('non 200');
+            done('non 200 (' + res.statusCode + ')');
           } else {
             done(); // pass
           }
@@ -62,18 +67,79 @@ describe('getUserInfo', () => {
           } else {
             const data = JSON.parse(body);
             if (data.userName !== 'Username user 01') {
-              return done('Returned incorrect userName "' + data.userName + '"');
+              done('Returned incorrect userName "' + data.userName + '"');
+            } else if (data.minutesSaved !== 5) {
+              done('Returned incorrect minutesSaved "' + data.minutesSaved + '"');
+            } else if (data.viewCount !== 30) {
+              done('Returned incorrect viewCount "' + data.viewCount + '"');
+            } else if (data.segmentCount !== 3) {
+              done('Returned incorrect segmentCount "' + data.segmentCount + '"');
+            }  else {
+              done(); // pass
             }
-            if (data.minutesSaved !== 5) {
-              return done('Returned incorrect minutesSaved "' + data.minutesSaved + '"');
+          }
+        }
+      });
+  });
+
+  it('Should get warning data', (done) => {
+    request.get(utils.getbaseURL()
+     + '/api/getUserInfo?userID=getuserinfo_warning_0', null,
+      (err, res, body) => {
+        if (err) {
+          done("couldn't call endpoint");
+        } else {
+          if (res.statusCode !== 200) {
+            done("non 200");
+          } else {
+            const data = JSON.parse(body);
+            if (data.warnings !== 1) {
+              done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
+            } else {
+              done(); // pass
             }
-            if (data.viewCount !== 30) {
-              return done('Returned incorrect viewCount "' + data.viewCount + '"');
+          }
+        }
+      });
+  });
+
+  it('Should get multiple warnings', (done) => {
+    request.get(utils.getbaseURL()
+     + '/api/getUserInfo?userID=getuserinfo_warning_1', null,
+      (err, res, body) => {
+        if (err) {
+          done("couldn't call endpoint");
+        } else {
+          if (res.statusCode !== 200) {
+            done("non 200");
+          } else {
+            const data = JSON.parse(body);
+            if (data.warnings !== 2) {
+              done('wrong number of warnings: ' + data.warnings + ', not ' + 2);
+            } else {
+              done(); // pass
             }
-            if (data.segmentCount !== 3) {
-              return done('Returned incorrect segmentCount "' + data.segmentCount + '"');
+          }
+        }
+      });
+  });
+
+  it('Should not get warnings if noe', (done) => {
+    request.get(utils.getbaseURL()
+     + '/api/getUserInfo?userID=getuserinfo_warning_2', null,
+      (err, res, body) => {
+        if (err) {
+          done("couldn't call endpoint");
+        } else {
+          if (res.statusCode !== 200) {
+            done("non 200");
+          } else {
+            const data = JSON.parse(body);
+            if (data.warnings !== 0) {
+              done('wrong number of warnings: ' + data.warnings + ', not ' + 0);
+            } else {
+              done(); // pass
             }
-            done(); // pass
           }
         }
       });
