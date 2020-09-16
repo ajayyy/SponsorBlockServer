@@ -8,12 +8,6 @@ describe('postWarning', () => {
       db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("warning-vip") + "')");
     });
   
-    it('Should update the database version when starting the application', (done) => {
-        let version = db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version']).value;
-        if (version > 3) done();
-        else done('Version isn\'t greater than 3. Version is ' + version);
-    });
-
     it('Should be able to create warning if vip (exp 200)', (done) => {
         let json = {
             issuerUserID: 'warning-vip',
