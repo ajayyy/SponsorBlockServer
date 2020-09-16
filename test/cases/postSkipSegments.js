@@ -1,5 +1,7 @@
 var assert = require('assert');
 var request = require('request');
+var config = require('../../src/config.js');
+var getHash = require('../../src/utils/getHash.js');
 
 var utils = require('../utils.js');
 
@@ -7,6 +9,24 @@ var databases = require('../../src/databases/databases.js');
 var db = databases.db;
 
 describe('postSkipSegments', () => {
+  before(() => {
+    const now = Date.now();
+    const warnVip01Hash = getHash("warn-vip01");
+    const warnUser01Hash = getHash("warn-user01");
+    const warnUser02Hash = getHash("warn-user02");
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
+    const startOfWarningQuery = 'INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES';
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now-1000) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now-2000) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now-3601000) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now-(warningExpireTime + 1000)) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now-(warningExpireTime + 2000)) + "', '" + warnVip01Hash + "')");
+  });
+  
   it('Should be able to submit a single time (Params method)', (done) => {
     request.post(utils.getbaseURL()
      + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=test&category=sponsor", null,
@@ -127,6 +147,50 @@ describe('postSkipSegments', () => {
         if (err) done("Couldn't call endpoint");
         else if (res.statusCode === 200) done(); // pass
         else done("non 200 status code: " + res.statusCode + " ("+body+")");
+      });
+  });
+
+  it('Should be rejected if user has to many active warnings', (done) => {
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes", {
+       json: {
+          userID: "warn-user01",
+          videoID: "dQw4w9WgXcF",
+          segments: [{
+            segment: [0, 10],
+            category: "sponsor"
+          }]
+       }
+     },
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 403) {
+          done(); // success
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
+  it('Should be accepted if user has some active warnings', (done) => {
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes", {
+       json: {
+          userID: "warn-user02",
+          videoID: "dQw4w9WgXcF",
+          segments: [{
+            segment: [50, 60],
+            category: "sponsor"
+          }]
+       }
+     },
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          done(); // success
+        } else {
+          done("Status code was " + res.statusCode + " " + body);
+        }
       });
   });
 
