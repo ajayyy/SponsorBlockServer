@@ -355,17 +355,19 @@ async function voteOnSponsorTime(req, res) {
 
         res.sendStatus(200);
 
-        sendWebhooks({
-            UUID,
-            nonAnonUserID,
-            voteTypeEnum,
-            isVIP,
-            isOwnSubmission,
-            row,
-            category,
-            incrementAmount,
-            oldIncrementAmount
-        });
+        if (incrementAmount - oldIncrementAmount !== 0) {
+            sendWebhooks({
+                UUID,
+                nonAnonUserID,
+                voteTypeEnum,
+                isVIP,
+                isOwnSubmission,
+                row,
+                category,
+                incrementAmount,
+                oldIncrementAmount
+            });
+        }
     } catch (err) {
         logger.error(err);
 
