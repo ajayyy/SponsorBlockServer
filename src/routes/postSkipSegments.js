@@ -291,7 +291,7 @@ module.exports = async function postSkipSegments(req, res) {
         }
 
         // Reject segemnt if it's in the no segments list
-        if (noSegmentList.indexOf(segments[i].category) !== -1) {
+        if (!isVIP && noSegmentList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
             logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
             res.status(403).send(
