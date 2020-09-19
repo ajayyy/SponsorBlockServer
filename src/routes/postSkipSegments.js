@@ -295,7 +295,7 @@ module.exports = async function postSkipSegments(req, res) {
             // TODO: Do something about the fradulent submission
             logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
             res.status(403).send(
-              "Request rejected by auto moderator: This video has been reported as not containing any segments with the category '"
+              "Request rejected by auto moderator: New submissions are not allowed for the following category: '"
               + segments[i].category + "'. If you believe this is incorrect, contact someone on Discord."
             );
             return;
