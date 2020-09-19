@@ -296,7 +296,8 @@ module.exports = async function postSkipSegments(req, res) {
             logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
             res.status(403).send(
               "Request rejected by auto moderator: New submissions are not allowed for the following category: '"
-              + segments[i].category + "'. If you believe this is incorrect, contact someone on Discord."
+              + segments[i].category + "'. A VIP has decided that no new segments are needed and that all current segments of this category are timed perfectly. "
+              +  "If you believe this is incorrect, please contact someone on Discord."
             );
             return;
         }
