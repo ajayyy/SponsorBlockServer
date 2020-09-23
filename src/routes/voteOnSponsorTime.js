@@ -12,6 +12,7 @@ var privateDB = databases.privateDB;
 var YouTubeAPI = require('../utils/youtubeAPI.js');
 var request = require('request');
 const logger = require('../utils/logger.js');
+const isUserVIP = require('../utils/isUserVIP.js');
 
 const voteTypes = {
     normal: 0,
@@ -134,7 +135,7 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Check if they've already made a vote
     let previousVoteInfo = privateDB.prepare('get', "select count(*) as votes, category from categoryVotes where UUID = ? and userID = ?", [UUID, userID]);
 
-    if (previousVoteInfo > 0 && previousVoteInfo.category === category) {
+    if (previousVoteInfo !== undefined && previousVoteInfo.category === category) {
         // Double vote, ignore
         res.sendStatus(200);
         return;
@@ -166,23 +167,34 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     }
 
     // Add the info into the private db
-    if (previousVoteInfo > 0) {
+    if (previousVoteInfo  !== undefined) {
         // Reverse the previous vote
-        db.prepare('run', "update categoryVotes set votes -= 1 where UUID = ? and category = ?", [UUID, previousVoteInfo.category]);
+        db.prepare('run', "update categoryVotes set votes -= ? where UUID = ? and category = ?", [voteAmount, UUID, previousVoteInfo.category]);
 
-        privateDB.prepare('run', "update categoryVotes set category = ?, timeSubmitted = ?, hashedIP = ?", [category, timeSubmitted, hashedIP]);
+        privateDB.prepare('run', "update categoryVotes set category = ?, timeSubmitted = ?, hashedIP = ? where userID = ?", [category, timeSubmitted, hashedIP, userID]);
     } else {
         privateDB.prepare('run', "insert into categoryVotes (UUID, userID, hashedIP, category, timeSubmitted) values (?, ?, ?, ?, ?)", [UUID, userID, hashedIP, category, timeSubmitted]);
     }
 
     // See if the submissions category is ready to change
-    let currentCategoryInfo = db.prepare('get', "select votes from categoryVotes where UUID = ? and category = ?", [UUID, currentCategory.category]);
+    let currentCategoryInfo = db.prepare("get", "select votes from categoryVotes where UUID = ? and category = ?", [UUID, currentCategory.category]);
+
+    let submissionInfo = db.prepare("get", "SELECT userID, timeSubmitted FROM sponsorTimes WHERE UUID = ?", [UUID]);
+    let isSubmissionVIP = submissionInfo && isUserVIP(submissionInfo.userID);
+    let startingVotes = isSubmissionVIP ? 10000 : 1;
 
     // Change this value from 1 in the future to make it harder to change categories
     // Done this way without ORs incase the value is zero
-    let currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? 1 : currentCategoryInfo.votes;
+    let currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? startingVotes : currentCategoryInfo.votes;
 
-    let nextCategoryCount = (previousVoteInfo.votes || 0) + 1;
+    // Add submission as vote
+    if (!currentCategoryInfo && submissionInfo) {
+        db.prepare("run", "insert into categoryVotes (UUID, category, votes) values (?, ?, ?)", [UUID, currentCategory.category, currentCategoryCount]);
+
+        privateDB.prepare("run", "insert into categoryVotes (UUID, userID, hashedIP, category, timeSubmitted) values (?, ?, ?, ?, ?)", [UUID, submissionInfo.userID, "unknown", currentCategory.category, submissionUserIDInfo.timeSubmitted]);
+    }
+
+    let nextCategoryCount = (previousVoteInfo.votes || 0) + voteAmount;
 
     //TODO: In the future, raise this number from zero to make it harder to change categories
     // VIPs change it every time
@@ -223,7 +235,7 @@ async function voteOnSponsorTime(req, res) {
     let isOwnSubmission = db.prepare("get", "SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?", [nonAnonUserID, UUID]) !== undefined;
         
     if (type === undefined && category !== undefined) {
-        return categoryVote(UUID, userID, isVIP, category, hashedIP, res);
+        return categoryVote(UUID, nonAnonUserID, isVIP, category, hashedIP, res);
     }
 
     if (type == 1 && !isVIP && !isOwnSubmission) {
