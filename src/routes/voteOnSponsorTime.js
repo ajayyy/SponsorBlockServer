@@ -169,7 +169,7 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     // Add the info into the private db
     if (previousVoteInfo  !== undefined) {
         // Reverse the previous vote
-        db.prepare('run', "update categoryVotes set votes -= ? where UUID = ? and category = ?", [voteAmount, UUID, previousVoteInfo.category]);
+        db.prepare('run', "update categoryVotes set votes = votes - ? where UUID = ? and category = ?", [voteAmount, UUID, previousVoteInfo.category]);
 
         privateDB.prepare('run', "update categoryVotes set category = ?, timeSubmitted = ?, hashedIP = ? where userID = ?", [category, timeSubmitted, hashedIP, userID]);
     } else {
@@ -191,7 +191,7 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
     if (!currentCategoryInfo && submissionInfo) {
         db.prepare("run", "insert into categoryVotes (UUID, category, votes) values (?, ?, ?)", [UUID, currentCategory.category, currentCategoryCount]);
 
-        privateDB.prepare("run", "insert into categoryVotes (UUID, userID, hashedIP, category, timeSubmitted) values (?, ?, ?, ?, ?)", [UUID, submissionInfo.userID, "unknown", currentCategory.category, submissionUserIDInfo.timeSubmitted]);
+        privateDB.prepare("run", "insert into categoryVotes (UUID, userID, hashedIP, category, timeSubmitted) values (?, ?, ?, ?, ?)", [UUID, submissionInfo.userID, "unknown", currentCategory.category, submissionInfo.timeSubmitted]);
     }
 
     let nextCategoryCount = (previousVoteInfo.votes || 0) + voteAmount;
