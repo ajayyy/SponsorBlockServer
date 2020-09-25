@@ -298,7 +298,7 @@ module.exports = async function postSkipSegments(req, res) {
               "Request rejected by auto moderator: New submissions are not allowed for the following category: '"
               + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
               + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " + 
-                        "Categories that aren't sponsor, such as self-promotion can enabled in the options.\n\n " : "")
+                        "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n " : "")
               +  "If you believe this is incorrect, please contact someone on Discord."
             );
             return;
