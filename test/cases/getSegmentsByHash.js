@@ -40,7 +40,7 @@ describe('getSegmentsByHash', () => {
       });
   });
 
-  it('Should be able to get a 404 if no videos', (done) => {
+  /*it('Should be able to get a 404 if no videos', (done) => {
     request.get(utils.getbaseURL() 
      + '/api/skipSegments/11111?categories=["shilling"]', null, 
       (err, res, body) => {
@@ -50,7 +50,22 @@ describe('getSegmentsByHash', () => {
           done(); // pass
         }
       });
+  });*/
+
+  it('Should be able to get an emptry array if no videos', (done) => {
+    request.get(utils.getbaseURL() 
+     + '/api/skipSegments/11111?categories=["shilling"]', null, 
+      (err, res, body) => {
+        if (err) done("Couldn't call endpoint");
+        else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
+        else {
+          if (JSON.parse(body).length === 0) done(); // pass
+          else done("non empty array returned");
+          
+        }
+      });
   });
+
 
   it('Should return 400 prefix too short', (done) => {
     request.get(utils.getbaseURL() 
