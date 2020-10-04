@@ -26,6 +26,7 @@ var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 var postNoSegments = require('./routes/postNoSegments.js');
 var getIsUserVIP = require('./routes/getIsUserVIP.js');
+var postSegmentShift = require('./routes/postSegmentShift.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
@@ -101,6 +102,9 @@ app.post('/api/noSegments', postNoSegments);
 
 //get if user is a vip
 app.get('/api/isUserVIP', getIsUserVIP);
+
+//get if user is a vip
+app.post('/api/segmentShift', postSegmentShift);
 
 
 app.get('/database.db', function (req, res) {
