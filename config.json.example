@@ -22,5 +22,6 @@
     "mode": "development",
     "readOnly": false,
     "webhooks": [],
-    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"] // List of supported categories any other category will be rejected
+    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"], // List of supported categories any other category will be rejected
+    "getTopUsersCacheTimeMinutes": 5 // cacheTime for getTopUsers result in minutes
 }
