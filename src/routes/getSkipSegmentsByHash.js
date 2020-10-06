@@ -29,5 +29,5 @@ module.exports = async function (req, res) {
         };
     });
 
-    res.status(200).json(segments);
+    res.status((segments.length === 0) ? 404 : 200).json(segments);
 }
