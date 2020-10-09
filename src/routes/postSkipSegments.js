@@ -5,6 +5,7 @@ const db = databases.db;
 const privateDB = databases.privateDB;
 const YouTubeAPI = require('../utils/youtubeAPI.js');
 const logger = require('../utils/logger.js');
+const getSubmissionUUID = require('../utils/getSubmissionUUID.js');
 const request = require('request');
 const isoDurations = require('iso8601-duration');
 const fetch = require('node-fetch');
@@ -201,8 +202,7 @@ async function autoModerateSubmission(submission) {
                           startTime = parseFloat(segments[i].segment[0]);
                           endTime = parseFloat(segments[i].segment[1]);
 
-                          let UUID = getHash("v2-categories" + submission.videoID + startTime +
-                              endTime  + segments[i].category + submission.userID, 1);
+                          const UUID = getSubmissionUUID(submission.videoID, segments[i].category, submission.userID, startTime, endTime);
                           // Send to Discord
                           // Note, if this is too spammy. Consider sending all the segments as one Webhook
                           sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
@@ -400,8 +400,7 @@ module.exports = async function postSkipSegments(req, res) {
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            let UUID = getHash("v2-categories" + videoID + segmentInfo.segment[0] +
-                segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, segmentInfo.segment[0], segmentInfo.segment[1]);
 
             try {
                 db.prepare('run', "INSERT INTO sponsorTimes " + 
