@@ -3,7 +3,7 @@ module.exports = function createMemoryCache(memoryFn, cacheTimeMs) {
   const cache = new Map();
   // holds the promises that are not fulfilled
   const promiseMemory = new Map();
-  return function (...args) {
+  return (...args) => {
     // create cacheKey by joining arguments as string
     const cacheKey = args.join('.');
     // check if promising is already running
