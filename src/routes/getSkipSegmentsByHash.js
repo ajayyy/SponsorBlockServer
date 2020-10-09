@@ -20,10 +20,6 @@ module.exports = async function (req, res) {
 
     // Get all video id's that match hash prefix
     const videoIds = db.prepare('all', 'SELECT DISTINCT videoId, hashedVideoID from sponsorTimes WHERE hashedVideoID LIKE ?', [hashPrefix+'%']);
-    if (videoIds.length === 0) {
-        res.sendStatus(404);
-        return;
-    }
 
     let segments = videoIds.map((video) => {
         return {
@@ -33,5 +29,5 @@ module.exports = async function (req, res) {
         };
     });
 
-    res.status(200).json(segments);
+    res.status((segments.length === 0) ? 404 : 200).json(segments);
 }
