@@ -1,8 +1,8 @@
 module.exports = function createMemoryCache(memoryFn, cacheTimeMs) {
   // holds the promise results
-  const cache = new Map;
+  const cache = new Map();
   // holds the promises that are not fulfilled
-  const promiseMemory = new Map;
+  const promiseMemory = new Map();
   return function (...args) {
     // create cacheKey by joining arguments as string
     const cacheKey = args.join('.');
