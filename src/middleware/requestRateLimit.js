@@ -1,15 +1,15 @@
-const config = require('../config.js');
 const getIP = require('../utils/getIP.js');
 const getHash = require('../utils/getHash.js');
 const rateLimit = require('express-rate-limit');
 
-module.exports = rateLimit({
-  windowMs: config.rateLimit.vote.windowMs,
-  max: config.rateLimit.vote.max,
-  message: config.rateLimit.vote.message,
+module.exports = (limitConfig) => rateLimit({
+  windowMs: limitConfig.windowMs,
+  max: limitConfig.max,
+  message: limitConfig.message,
+  statusCode: limitConfig.statusCode,
   headers: false,
   keyGenerator: (req /*, res*/) => {
-    return getHash(req.ip, 1);
+    return getHash(getIP(req), 1);
   },
   skip: (/*req, res*/) => {
     // skip rate limit if running in test mode
