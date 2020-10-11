@@ -22,5 +22,12 @@
     "mode": "development",
     "readOnly": false,
     "webhooks": [],
-    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"] // List of supported categories any other category will be rejected
+    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"], // List of supported categories any other category will be rejected
+    "rateLimit": {
+      "vote": {
+        "windowMs": 900000, // 15 minutes
+        "max": 20, // 20 requests in 15min time window
+        "message": "Too many votes, please try again later"
+      }
+    }
 }

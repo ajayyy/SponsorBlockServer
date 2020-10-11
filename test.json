@@ -49,5 +49,12 @@
             ]
         }
     ],
-    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"]
+    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"],
+    "rateLimit": {
+      "vote": {
+        "windowMs": 900000,
+        "max": 20,
+        "message": "Too many votes, please try again later"
+      }
+    }
 }

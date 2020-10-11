@@ -3,8 +3,11 @@ var express = require('express');
 var app = express();
 var config = require('./config.js');
 var redis = require('./utils/redis.js');
+const getIP = require('./utils/getIP.js');
+const getHash = require('./utils/getHash.js');
 
 // Middleware 
+const voteRateLimitMiddleware = require('./middleware/voteRateLimit.js');
 var corsMiddleware = require('./middleware/cors.js');
 var loggerMiddleware = require('./middleware/logger.js');
 const userCounter = require('./middleware/userCounter.js');
@@ -59,8 +62,8 @@ app.post('/api/skipSegments', postSkipSegments);
 app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
 //voting endpoint
-app.get('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
-app.post('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
+app.get('/api/voteOnSponsorTime', voteRateLimitMiddleware, voteOnSponsorTime.endpoint);
+app.post('/api/voteOnSponsorTime', voteRateLimitMiddleware, voteOnSponsorTime.endpoint);
 
 //Endpoint when a sponsorTime is used up
 app.get('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
