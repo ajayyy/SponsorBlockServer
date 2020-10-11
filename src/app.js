@@ -7,7 +7,7 @@ const getIP = require('./utils/getIP.js');
 const getHash = require('./utils/getHash.js');
 
 // Middleware 
-const voteRateLimitMiddleware = require('./middleware/voteRateLimit.js');
+const rateLimitMiddleware = require('./middleware/requestRateLimit.js');
 var corsMiddleware = require('./middleware/cors.js');
 var loggerMiddleware = require('./middleware/logger.js');
 const userCounter = require('./middleware/userCounter.js');
@@ -33,6 +33,14 @@ var getIsUserVIP = require('./routes/getIsUserVIP.js');
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
 var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
+
+// Rate limit endpoint lists
+let voteEndpoints = [voteOnSponsorTime.endpoint];
+let viewEndpoints = [viewedVideoSponsorTime];
+if (config.rateLimit) {
+    // if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
+    if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
+}
 
 //setup CORS correctly
 app.use(corsMiddleware);
@@ -62,12 +70,12 @@ app.post('/api/skipSegments', postSkipSegments);
 app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
 //voting endpoint
-app.get('/api/voteOnSponsorTime', voteRateLimitMiddleware, voteOnSponsorTime.endpoint);
-app.post('/api/voteOnSponsorTime', voteRateLimitMiddleware, voteOnSponsorTime.endpoint);
+app.get('/api/voteOnSponsorTime', ...voteEndpoints);
+app.post('/api/voteOnSponsorTime', ...voteEndpoints);
 
-//Endpoint when a sponsorTime is used up
-app.get('/api/viewedVideoSponsorTime', voteRateLimitMiddleware, viewedVideoSponsorTime);
-app.post('/api/viewedVideoSponsorTime', voteRateLimitMiddleware, viewedVideoSponsorTime);
+//Endpoint when a submission is skipped
+app.get('/api/viewedVideoSponsorTime', ...viewEndpoints);
+app.post('/api/viewedVideoSponsorTime', ...viewEndpoints);
 
 //To set your username for the stats view
 app.post('/api/setUsername', setUsername);

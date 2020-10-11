@@ -27,7 +27,13 @@
       "vote": {
         "windowMs": 900000, // 15 minutes
         "max": 20, // 20 requests in 15min time window
-        "message": "Too many votes, please try again later"
+        "message": "Too many votes, please try again later",
+        "statusCode": 200
+      },
+      "view": {
+        "windowMs": 900000, // 15 minutes
+        "max": 20, // 20 requests in 15min time window
+        "statusCode": 200
       }
     }
 }
