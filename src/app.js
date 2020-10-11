@@ -66,8 +66,8 @@ app.get('/api/voteOnSponsorTime', voteRateLimitMiddleware, voteOnSponsorTime.end
 app.post('/api/voteOnSponsorTime', voteRateLimitMiddleware, voteOnSponsorTime.endpoint);
 
 //Endpoint when a sponsorTime is used up
-app.get('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
-app.post('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
+app.get('/api/viewedVideoSponsorTime', voteRateLimitMiddleware, viewedVideoSponsorTime);
+app.post('/api/viewedVideoSponsorTime', voteRateLimitMiddleware, viewedVideoSponsorTime);
 
 //To set your username for the stats view
 app.post('/api/setUsername', setUsername);
