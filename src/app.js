@@ -38,7 +38,7 @@ var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
 let voteEndpoints = [voteOnSponsorTime.endpoint];
 let viewEndpoints = [viewedVideoSponsorTime];
 if (config.rateLimit) {
-    // if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
+    if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
     if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
 }
 
