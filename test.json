@@ -55,12 +55,12 @@
           "windowMs": 900000,
           "max": 20,
           "message": "Too many votes, please try again later",
-          "statusCode": 200
+          "statusCode": 429
         },
         "view": {
           "windowMs": 900000,
           "max": 20,
           "statusCode": 200
         }
-      }
+    }
 }

@@ -28,7 +28,7 @@
         "windowMs": 900000, // 15 minutes
         "max": 20, // 20 requests in 15min time window
         "message": "Too many votes, please try again later",
-        "statusCode": 200
+        "statusCode": 429
       },
       "view": {
         "windowMs": 900000, // 15 minutes
