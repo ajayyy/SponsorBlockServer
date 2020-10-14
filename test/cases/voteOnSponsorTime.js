@@ -1,11 +1,19 @@
 const request = require('request');
+const config = require('../../src/config.js');
 const { db, privateDB } = require('../../src/databases/databases.js');
 const utils = require('../utils.js');
 const getHash = require('../../src/utils/getHash.js');
 
 describe('voteOnSponsorTime', () => {
   before(() => {
+    const now = Date.now();
+    const warnVip01Hash = getHash("warn-vip01");
+    const warnUser01Hash = getHash("warn-voteuser01");
+    const warnUser02Hash = getHash("warn-voteuser02");
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
     let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+    const startOfWarningQuery = 'INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES';
     
     db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest', 1) + "')");
     db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest2', 1) + "')");
@@ -25,6 +33,17 @@ describe('voteOnSponsorTime', () => {
     db.exec(startOfQuery + "('not-own-submission-video', 1, 11, 500, 'not-own-submission-uuid', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0, '" + getHash('not-own-submission-video', 1) + "')");
     db.exec(startOfQuery + "('incorrect-category', 1, 11, 500, 'incorrect-category', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0, '" + getHash('incorrect-category', 1) + "')");
     db.exec(startOfQuery + "('incorrect-category-change', 1, 11, 500, 'incorrect-category-change', '"+ getHash('somebody-else-id') +"', 0, 50, 'sponsor', 0, '" + getHash('incorrect-category-change', 1) + "')");
+    db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'warnvote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest', 1) + "')");
+    
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now-1000) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now-2000) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now-3601000) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now-(warningExpireTime + 1000)) + "', '" + warnVip01Hash + "')");
+    db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now-(warningExpireTime + 2000)) + "', '" + warnVip01Hash + "')");
+
 
     db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
     privateDB.exec("INSERT INTO shadowBannedUsers (userID) VALUES ('" + getHash("randomID4") + "')");
@@ -326,6 +345,19 @@ describe('voteOnSponsorTime', () => {
           } else {
             done("Vote did not succeed. Votes raised from -3 to " + row.votes);
           }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+    });
+  });
+
+  it('Should not be able to upvote a segment (Too many warning)', (done) => {
+    request.get(utils.getbaseURL() 
+     + "/api/voteOnSponsorTime?userID=warn-voteuser01&UUID=warnvote-uuid-0&type=1", null, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 403) {
+          done(); // success
         } else {
           done("Status code was " + res.statusCode);
         }

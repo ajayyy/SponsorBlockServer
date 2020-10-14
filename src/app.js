@@ -27,8 +27,11 @@ var getViewsForUser = require('./routes/getViewsForUser.js');
 var getTopUsers = require('./routes/getTopUsers.js');
 var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
+var getUserInfo = require('./routes/getUserInfo.js');
 var postNoSegments = require('./routes/postNoSegments.js');
 var getIsUserVIP = require('./routes/getIsUserVIP.js');
+var warnUser = require('./routes/postWarning.js');
+var postSegmentShift = require('./routes/postSegmentShift.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
@@ -104,6 +107,8 @@ app.get('/api/getTopUsers', getTopUsers);
 //send the total submissions, total views and total minutes saved
 app.get('/api/getTotalStats', getTotalStats);
 
+app.get('/api/getUserInfo', getUserInfo);
+
 //send out a formatted time saved total
 app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
@@ -113,6 +118,11 @@ app.post('/api/noSegments', postNoSegments);
 //get if user is a vip
 app.get('/api/isUserVIP', getIsUserVIP);
 
+//sent user a warning
+app.post('/api/warnUser', warnUser);
+
+//get if user is a vip
+app.post('/api/segmentShift', postSegmentShift);
 
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: "./" });
