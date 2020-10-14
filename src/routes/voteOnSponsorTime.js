@@ -49,7 +49,7 @@ function sendWebhooks(voteData) {
         }
 
         if (config.youtubeAPIKey !== null) {
-            YouTubeAPI.listVideos(submissionInfoRow.videoID, "snippet", (err, data) => {
+            YouTubeAPI.listVideos(submissionInfoRow.videoID, (err, data) => {
                 if (err || data.items.length === 0) {
                     err && logger.error(err);
                     return;

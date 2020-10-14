@@ -18,13 +18,14 @@ if (config.mode === "test") {
     exportObject = YouTubeAPI;
 
     // YouTubeAPI.videos.list wrapper with cacheing
-    exportObject.listVideos = (videoID, part, callback) => {
+    exportObject.listVideos = (videoID, callback) => {
+        let part = 'contentDetails,snippet';
         if (videoID.length !== 11 || videoID.includes(".")) {
             callback("Invalid video ID");
             return;
         }
 
-        let redisKey = "youtube.video." + videoID + "." + part;
+        let redisKey = "youtube.video." + videoID;
         redis.get(redisKey, (getErr, result) => {
             if (getErr || !result) {
                 logger.debug("redis: no cache for video information: " + videoID);
