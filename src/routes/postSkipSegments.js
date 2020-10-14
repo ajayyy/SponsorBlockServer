@@ -269,6 +269,16 @@ module.exports = async function postSkipSegments(req, res) {
 
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
+    
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    let warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ?",
+      [userID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))]
+    ).count;
+    
+    if (warningsCount >= config.maxNumberOfActiveWarnings) {
+      return res.status(403).send('Submission blocked. Too many active warnings!');
+    }
 
     let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list) => { return list.category });
     

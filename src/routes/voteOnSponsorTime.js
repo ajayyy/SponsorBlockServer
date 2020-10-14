@@ -247,6 +247,16 @@ async function voteOnSponsorTime(req, res) {
             return;
         }
     }
+    
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    let warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ?",
+      [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))]
+    ).count;
+    
+    if (warningsCount >= config.maxNumberOfActiveWarnings) {
+      return res.status(403).send('Vote blocked. Too many active warnings!');
+    }
 
     let voteTypeEnum = (type == 0 || type == 1) ? voteTypes.normal : voteTypes.incorrect;
 
