@@ -13,6 +13,7 @@ describe('postSkipSegments', () => {
     
     db.exec(startOfQuery + "('80percent_video', 0, 1000, 0, '80percent-uuid-0', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
     db.exec(startOfQuery + "('80percent_video', 1001, 1005, 0, '80percent-uuid-1', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
+    db.exec(startOfQuery + "('80percent_video', 0, 5000, -2, '80percent-uuid-2', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
   }); 
 
   it('Should be able to submit a single time (Params method)', (done) => {
@@ -122,7 +123,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 200) {
-          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["L_jWHffIx5E"]);
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
           let success = true;
           if (rows.length === 4) {
             for (const row of rows) {
@@ -168,7 +169,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
-          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["n9rIGdXnSJc"]);
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
           let success = true;
           if (rows.length === 4) {
             for (const row of rows) {
@@ -212,7 +213,7 @@ describe('postSkipSegments', () => {
       (err, res, body) => {
         if (err) done(err);
         else if (res.statusCode === 400) {
-          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["80percent_video"]);
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
           let success = true && rows.length == 2;
           for (const row of rows) {
             if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||

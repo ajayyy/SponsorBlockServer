@@ -402,7 +402,7 @@ module.exports = async function postSkipSegments(req, res) {
             });
 
             //get all segments for this video and user
-            let allSubmittedByUser = db.prepare('all', "SELECT startTime, endTime FROM sponsorTimes WHERE userID = ? and videoID = ?", [userID, videoID]);
+            let allSubmittedByUser = db.prepare('all', "SELECT startTime, endTime FROM sponsorTimes WHERE userID = ? and videoID = ? and votes > -1", [userID, videoID]);
             let allSegmentTimes = [];
             if (allSubmittedByUser !== undefined)
             {
