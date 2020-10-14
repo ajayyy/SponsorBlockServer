@@ -3,8 +3,11 @@ var express = require('express');
 var app = express();
 var config = require('./config.js');
 var redis = require('./utils/redis.js');
+const getIP = require('./utils/getIP.js');
+const getHash = require('./utils/getHash.js');
 
 // Middleware 
+const rateLimitMiddleware = require('./middleware/requestRateLimit.js');
 var corsMiddleware = require('./middleware/cors.js');
 var loggerMiddleware = require('./middleware/logger.js');
 const userCounter = require('./middleware/userCounter.js');
@@ -24,12 +27,23 @@ var getViewsForUser = require('./routes/getViewsForUser.js');
 var getTopUsers = require('./routes/getTopUsers.js');
 var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
+var getUserInfo = require('./routes/getUserInfo.js');
 var postNoSegments = require('./routes/postNoSegments.js');
 var getIsUserVIP = require('./routes/getIsUserVIP.js');
+var warnUser = require('./routes/postWarning.js');
+var postSegmentShift = require('./routes/postSegmentShift.js');
 
 // Old Routes
 var oldGetVideoSponsorTimes = require('./routes/oldGetVideoSponsorTimes.js');
 var oldSubmitSponsorTimes = require('./routes/oldSubmitSponsorTimes.js');
+
+// Rate limit endpoint lists
+let voteEndpoints = [voteOnSponsorTime.endpoint];
+let viewEndpoints = [viewedVideoSponsorTime];
+if (config.rateLimit) {
+    if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
+    if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
+}
 
 //setup CORS correctly
 app.use(corsMiddleware);
@@ -59,12 +73,12 @@ app.post('/api/skipSegments', postSkipSegments);
 app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
 //voting endpoint
-app.get('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
-app.post('/api/voteOnSponsorTime', voteOnSponsorTime.endpoint);
+app.get('/api/voteOnSponsorTime', ...voteEndpoints);
+app.post('/api/voteOnSponsorTime', ...voteEndpoints);
 
-//Endpoint when a sponsorTime is used up
-app.get('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
-app.post('/api/viewedVideoSponsorTime', viewedVideoSponsorTime);
+//Endpoint when a submission is skipped
+app.get('/api/viewedVideoSponsorTime', ...viewEndpoints);
+app.post('/api/viewedVideoSponsorTime', ...viewEndpoints);
 
 //To set your username for the stats view
 app.post('/api/setUsername', setUsername);
@@ -93,6 +107,8 @@ app.get('/api/getTopUsers', getTopUsers);
 //send the total submissions, total views and total minutes saved
 app.get('/api/getTotalStats', getTotalStats);
 
+app.get('/api/getUserInfo', getUserInfo);
+
 //send out a formatted time saved total
 app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
@@ -102,6 +118,11 @@ app.post('/api/noSegments', postNoSegments);
 //get if user is a vip
 app.get('/api/isUserVIP', getIsUserVIP);
 
+//sent user a warning
+app.post('/api/warnUser', warnUser);
+
+//get if user is a vip
+app.post('/api/segmentShift', postSegmentShift);
 
 app.get('/database.db', function (req, res) {
     res.sendFile("./databases/sponsorTimes.db", { root: "./" });

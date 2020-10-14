@@ -19,6 +19,11 @@ if (config.mode === "test") {
 
     // YouTubeAPI.videos.list wrapper with cacheing
     exportObject.listVideos = (videoID, part, callback) => {
+        if (videoID.length !== 11 || videoID.includes(".")) {
+            callback("Invalid video ID");
+            return;
+        }
+
         let redisKey = "youtube.video." + videoID + "." + part;
         redis.get(redisKey, (getErr, result) => {
             if (getErr || !result) {
