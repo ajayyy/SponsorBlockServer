@@ -404,23 +404,28 @@ module.exports = async function postSkipSegments(req, res) {
             //get all segments for this video and user
             let allSubmittedByUser = db.prepare('all', "SELECT startTime, endTime FROM sponsorTimes WHERE userID = ? and videoID = ? and votes > -1", [userID, videoID]);
             let allSegmentTimes = [];
-            if (allSubmittedByUser !== undefined)
-            {
+            if (allSubmittedByUser !== undefined) {
+                //add segments the user has previously submitted
                 for (const segmentInfo of allSubmittedByUser) {
                     allSegmentTimes.push([parseFloat(segmentInfo.startTime), parseFloat(segmentInfo.endTime)])
                 }
             }
+
+            //add segments they are trying to add in this submission
             for (let i = 0; i < segments.length; i++) {
                 let startTime = parseFloat(segments[i].segment[0]);
                 let endTime = parseFloat(segments[i].segment[1]);
                 allSegmentTimes.push([startTime, endTime]);
             }
+
+            //merge all the times into non-overlapping arrays
             const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort(function(a, b) { return a[0]-b[0] || a[1]-b[1] }));
 
             let videoDuration = data.items[0].contentDetails.duration;
             videoDuration = isoDurations.toSeconds(isoDurations.parse(videoDuration));
             if (videoDuration != 0) {
                 let allSegmentDuration = 0;
+                //sum all segment times together
                 allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
                 if (allSegmentDuration > (videoDuration/100)*80) {
                     // Reject submission if all segments combine are over 80% of the video
