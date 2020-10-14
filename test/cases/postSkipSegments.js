@@ -10,6 +10,12 @@ var db = databases.db;
 
 describe('postSkipSegments', () => {
   before(() => {
+    let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+    
+    db.exec(startOfQuery + "('80percent_video', 0, 1000, 0, '80percent-uuid-0', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
+    db.exec(startOfQuery + "('80percent_video', 1001, 1005, 0, '80percent-uuid-1', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
+    db.exec(startOfQuery + "('80percent_video', 0, 5000, -2, '80percent-uuid-2', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
+
     const now = Date.now();
     const warnVip01Hash = getHash("warn-vip01");
     const warnUser01Hash = getHash("warn-user01");
@@ -104,6 +110,139 @@ describe('postSkipSegments', () => {
 
           if (success) done();
           else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(row));
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+      });
+  }).timeout(5000);
+
+  it('Should allow multiple times if total is under 80% of video(JSON method)', (done) => {
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes", {
+       json: {
+          userID: "test",
+          videoID: "L_jWHffIx5E",
+          segments: [{
+            segment: [3, 3000],
+            category: "sponsor"
+          },{
+            segment: [3002, 3050],
+            category: "intro"
+          },{
+            segment: [45, 100],
+            category: "interaction"
+          },{
+            segment: [99, 170],
+            category: "sponsor"
+          }]
+       }
+     },
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
+          let success = true;
+          if (rows.length === 4) {
+            for (const row of rows) {
+              if ((row.startTime !== 3 || row.endTime !== 3000 || row.category !== "sponsor") &&
+                  (row.startTime !== 3002 || row.endTime !== 3050 || row.category !== "intro") &&
+                  (row.startTime !== 45 || row.endTime !== 100 || row.category !== "interaction") &&
+                  (row.startTime !== 99 || row.endTime !== 170 || row.category !== "sponsor")) {
+                success = false;
+                break;
+              }
+            }
+          }
+
+          if (success) done();
+          else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+      });
+  }).timeout(5000);
+
+  it('Should reject multiple times if total is over 80% of video (JSON method)', (done) => {
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes", {
+       json: {
+          userID: "test",
+          videoID: "n9rIGdXnSJc",
+          segments: [{
+            segment: [0, 2000],
+            category: "interaction"
+          },{
+            segment: [3000, 4000],
+            category: "sponsor"
+          },{
+            segment: [1500, 2750],
+            category: "sponsor"
+          },{
+            segment: [4050, 4750],
+            category: "intro"
+          }]
+       }
+     },
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 400) {
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
+          let success = true;
+          if (rows.length === 4) {
+            for (const row of rows) {
+              if ((row.startTime === 0 || row.endTime === 2000 || row.category === "interaction") ||
+                  (row.startTime === 3000 || row.endTime === 4000 || row.category === "sponsor") ||
+                  (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
+                  (row.startTime === 4050 || row.endTime === 4750 || row.category === "intro")) {
+                success = false;
+                break;
+              }
+            }
+          }
+
+          if (success) done();
+          else 
+          done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+      });
+  }).timeout(5000);
+
+  it('Should reject multiple times if total is over 80% of video including previosuly submitted times(JSON method)', (done) => {
+    request.post(utils.getbaseURL()
+     + "/api/postVideoSponsorTimes", {
+       json: {
+          userID: "test",
+          videoID: "80percent_video",
+          segments: [{
+            segment: [2000, 4000],
+            category: "sponsor"
+          },{
+            segment: [1500, 2750],
+            category: "sponsor"
+          },{
+            segment: [4050, 4750],
+            category: "sponsor"
+          }]
+       }
+     },
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 400) {
+          let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
+          let success = true && rows.length == 2;
+          for (const row of rows) {
+            if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||
+                (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
+                (row.startTime === 4050 || row.endTime === 4750 || row.category === "sponsor")) {
+              success = false;
+              break;
+            }
+          }
+          if (success) done();
+          else 
+          done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
         } else {
           done("Status code was " + res.statusCode);
         }
