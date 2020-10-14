@@ -7,7 +7,6 @@ var utils = require('../utils.js');
 
 var databases = require('../../src/databases/databases.js');
 var db = databases.db;
-const getHash = require('../../src/utils/getHash.js');
 
 describe('postSkipSegments', () => {
   before(() => {
