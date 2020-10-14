@@ -50,7 +50,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
     if (config.youtubeAPIKey !== null) {
         let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
-        YouTubeAPI.listVideos(videoID, "snippet", (err, data) => {
+        YouTubeAPI.listVideos(videoID, (err, data) => {
             if (err || data.items.length === 0) {
                 err && logger.error(err);
                 return;
@@ -154,7 +154,7 @@ async function autoModerateSubmission(submission) {
     // Get the video information from the youtube API
     if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
-            YouTubeAPI.listVideos(submission.videoID, "contentDetails,snippet", (err, data) => resolve({err, data}));
+            YouTubeAPI.listVideos(submission.videoID, (err, data) => resolve({err, data}));
         });
 
         if (err) {
@@ -398,7 +398,7 @@ module.exports = async function postSkipSegments(req, res) {
 
         if (config.youtubeAPIKey !== null) {
             let {err, data} = await new Promise((resolve, reject) => {
-                YouTubeAPI.listVideos(videoID, "contentDetails,snippet", (err, data) => resolve({err, data}));
+                YouTubeAPI.listVideos(videoID, (err, data) => resolve({err, data}));
             });
 
             //get all segments for this video and user
