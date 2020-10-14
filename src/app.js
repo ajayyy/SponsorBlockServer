@@ -29,6 +29,7 @@ var getTotalStats = require('./routes/getTotalStats.js');
 var getDaysSavedFormatted = require('./routes/getDaysSavedFormatted.js');
 var getUserInfo = require('./routes/getUserInfo.js');
 var postNoSegments = require('./routes/postNoSegments.js');
+var deleteNoSegments = require('./routes/deleteNoSegments.js');
 var getIsUserVIP = require('./routes/getIsUserVIP.js');
 var warnUser = require('./routes/postWarning.js');
 var postSegmentShift = require('./routes/postSegmentShift.js');
@@ -114,6 +115,8 @@ app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
 //submit video containing no segments
 app.post('/api/noSegments', postNoSegments);
+
+app.delete('/api/noSegments', deleteNoSegments);
 
 //get if user is a vip
 app.get('/api/isUserVIP', getIsUserVIP);
