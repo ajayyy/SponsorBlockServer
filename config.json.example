@@ -24,5 +24,18 @@
     "webhooks": [],
     "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"], // List of supported categories any other category will be rejected
     "maxNumberOfActiveWarnings": 3, // Users with this number of warnings will be blocked until warnings expire
-    "hoursAfterWarningExpire": 24
+    "hoursAfterWarningExpire": 24,
+    "rateLimit": {
+      "vote": {
+        "windowMs": 900000, // 15 minutes
+        "max": 20, // 20 requests in 15min time window
+        "message": "Too many votes, please try again later",
+        "statusCode": 429
+      },
+      "view": {
+        "windowMs": 900000, // 15 minutes
+        "max": 20, // 20 requests in 15min time window
+        "statusCode": 200
+      }
+    }
 }

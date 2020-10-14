@@ -5,6 +5,7 @@ const db = databases.db;
 const privateDB = databases.privateDB;
 const YouTubeAPI = require('../utils/youtubeAPI.js');
 const logger = require('../utils/logger.js');
+const getSubmissionUUID = require('../utils/getSubmissionUUID.js');
 const request = require('request');
 const isoDurations = require('iso8601-duration');
 const fetch = require('node-fetch');
@@ -201,8 +202,7 @@ async function autoModerateSubmission(submission) {
                           startTime = parseFloat(segments[i].segment[0]);
                           endTime = parseFloat(segments[i].segment[1]);
 
-                          let UUID = getHash("v2-categories" + submission.videoID + startTime +
-                              endTime  + segments[i].category + submission.userID, 1);
+                          const UUID = getSubmissionUUID(submission.videoID, segments[i].category, submission.userID, startTime, endTime);
                           // Send to Discord
                           // Note, if this is too spammy. Consider sending all the segments as one Webhook
                           sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
@@ -301,12 +301,15 @@ module.exports = async function postSkipSegments(req, res) {
         }
 
         // Reject segemnt if it's in the no segments list
-        if (noSegmentList.indexOf(segments[i].category) !== -1) {
+        if (!isVIP && noSegmentList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
             logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
             res.status(403).send(
-              "Request rejected by auto moderator: This video has been reported as not containing any segments with the category '"
-              + segments[i].category + "'. If you believe this is incorrect, contact someone on Discord."
+              "Request rejected by auto moderator: New submissions are not allowed for the following category: '"
+              + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
+              + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " + 
+                        "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n " : "")
+              +  "If you believe this is incorrect, please contact someone on Discord."
             );
             return;
         }
@@ -407,8 +410,7 @@ module.exports = async function postSkipSegments(req, res) {
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            let UUID = getHash("v2-categories" + videoID + segmentInfo.segment[0] +
-                segmentInfo.segment[1]  + segmentInfo.category + userID, 1);
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, segmentInfo.segment[0], segmentInfo.segment[1]);
 
             try {
                 db.prepare('run', "INSERT INTO sponsorTimes " + 
