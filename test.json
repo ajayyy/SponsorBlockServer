@@ -50,6 +50,8 @@
         }
     ],
     "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"],
+    "maxNumberOfActiveWarnings": 3,
+    "hoursAfterWarningExpires": 24,
     "rateLimit": {
         "vote": {
           "windowMs": 900000,

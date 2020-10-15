@@ -50,7 +50,7 @@ function sendWebhooks(userID, videoID, UUID, segmentInfo) {
     if (config.youtubeAPIKey !== null) {
         let userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
 
-        YouTubeAPI.listVideos(videoID, "snippet", (err, data) => {
+        YouTubeAPI.listVideos(videoID, (err, data) => {
             if (err || data.items.length === 0) {
                 err && logger.error(err);
                 return;
@@ -154,7 +154,7 @@ async function autoModerateSubmission(submission) {
     // Get the video information from the youtube API
     if (config.youtubeAPIKey !== null) {
         let {err, data} = await new Promise((resolve, reject) => {
-            YouTubeAPI.listVideos(submission.videoID, "contentDetails,snippet", (err, data) => resolve({err, data}));
+            YouTubeAPI.listVideos(submission.videoID, (err, data) => resolve({err, data}));
         });
 
         if (err) {
@@ -269,6 +269,16 @@ module.exports = async function postSkipSegments(req, res) {
 
     //hash the ip 5000 times so no one can get it from the database
     let hashedIP = getHash(getIP(req) + config.globalSalt);
+    
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    let warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ?",
+      [userID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))]
+    ).count;
+    
+    if (warningsCount >= config.maxNumberOfActiveWarnings) {
+      return res.status(403).send('Submission blocked. Too many active warnings!');
+    }
 
     let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list) => { return list.category });
     
@@ -396,6 +406,45 @@ module.exports = async function postSkipSegments(req, res) {
             startingVotes = 10000;
         }
 
+        if (config.youtubeAPIKey !== null) {
+            let {err, data} = await new Promise((resolve, reject) => {
+                YouTubeAPI.listVideos(videoID, (err, data) => resolve({err, data}));
+            });
+
+            //get all segments for this video and user
+            let allSubmittedByUser = db.prepare('all', "SELECT startTime, endTime FROM sponsorTimes WHERE userID = ? and videoID = ? and votes > -1", [userID, videoID]);
+            let allSegmentTimes = [];
+            if (allSubmittedByUser !== undefined) {
+                //add segments the user has previously submitted
+                for (const segmentInfo of allSubmittedByUser) {
+                    allSegmentTimes.push([parseFloat(segmentInfo.startTime), parseFloat(segmentInfo.endTime)])
+                }
+            }
+
+            //add segments they are trying to add in this submission
+            for (let i = 0; i < segments.length; i++) {
+                let startTime = parseFloat(segments[i].segment[0]);
+                let endTime = parseFloat(segments[i].segment[1]);
+                allSegmentTimes.push([startTime, endTime]);
+            }
+
+            //merge all the times into non-overlapping arrays
+            const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort(function(a, b) { return a[0]-b[0] || a[1]-b[1] }));
+
+            let videoDuration = data.items[0].contentDetails.duration;
+            videoDuration = isoDurations.toSeconds(isoDurations.parse(videoDuration));
+            if (videoDuration != 0) {
+                let allSegmentDuration = 0;
+                //sum all segment times together
+                allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
+                if (allSegmentDuration > (videoDuration/100)*80) {
+                    // Reject submission if all segments combine are over 80% of the video
+                    res.status(400).send("Total length of your submitted segments are over 80% of the video.");
+                    return;
+                }
+            }
+        }
+
         for (const segmentInfo of segments) {
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
@@ -436,4 +485,31 @@ module.exports = async function postSkipSegments(req, res) {
     for (let i = 0; i < segments.length; i++) {
         sendWebhooks(userID, videoID, UUIDs[i], segments[i]);
     }
+}
+
+// Takes an array of arrays: 
+// ex) 
+// [
+//     [3, 40], 
+//     [50, 70], 
+//     [60, 80], 
+//     [100, 150]
+// ] 
+// => transforms to combining overlapping segments
+// [
+//     [3, 40],
+//     [50, 80], 
+//     [100, 150]
+// ]
+function mergeTimeSegments(ranges) {
+    var result = [], last;
+
+    ranges.forEach(function (r) {
+        if (!last || r[0] > last[1])
+            result.push(last = r);
+        else if (r[1] > last[1])
+            last[1] = r[1];
+    });
+
+    return result;
 }

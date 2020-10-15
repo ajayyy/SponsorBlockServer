@@ -17,6 +17,11 @@ describe('noSegmentRecords', () => {
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'sponsor')");
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'intro')");
     db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'noSubmitVideo', 'sponsor')");
+
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'delete-record', 'sponsor')");
+
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'sponsor')");
+    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'intro')");
   });
 
   it('Should update the database version when starting the application', (done) => {
@@ -308,6 +313,59 @@ describe('noSegmentRecords', () => {
         }
       });
   });
+
+  it('Should be able to delete a noSegment record', (done) => {
+    let json = {
+      videoID: 'delete-record',
+      userID: 'VIPUser-noSegments',
+      categories: [
+        'sponsor'
+      ]
+    };
+
+    request.delete(utils.getbaseURL() 
+     + "/api/noSegments", {json}, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record']);
+          if (result.length === 0) {
+            done();
+          } else {
+            done("Didn't delete record");
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
+  it('Should be able to delete one noSegment record without removing another', (done) => {
+    let json = {
+      videoID: 'delete-record-1',
+      userID: 'VIPUser-noSegments',
+      categories: [
+        'sponsor'
+      ]
+    };
+
+    request.delete(utils.getbaseURL() 
+     + "/api/noSegments", {json}, 
+      (err, res, body) => {
+        if (err) done(err);
+        else if (res.statusCode === 200) {
+          let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record-1']);
+          if (result.length === 1) {
+            done();
+          } else {
+            done("Didn't delete record");
+          }
+        } else {
+          done("Status code was " + res.statusCode);
+        }
+      });
+  });
+
 
   /*
    * Submission tests in this file do not check database records, only status codes.
