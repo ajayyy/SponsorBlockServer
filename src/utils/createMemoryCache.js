@@ -1,4 +1,6 @@
 module.exports = function createMemoryCache(memoryFn, cacheTimeMs) {
+  if (isNaN(cacheTimeMs)) cacheTimeMs = 0;
+
   // holds the promise results
   const cache = new Map();
   // holds the promises that are not fulfilled
