@@ -40,7 +40,7 @@ addDefaults(config, {
             windowMs: 900000,
             max: 20,
             statusCode: 200,
-            message: "",  // TODO TYPESCRIPT whats the msg?
+            message: "Too many views, please try again later",
         },
     },
     userCounterURL: null,

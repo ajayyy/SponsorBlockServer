@@ -36,7 +36,6 @@ function dispatchEvent(scope: string, data: any): void {
         let scopes = webhook.scopes || [];
         if (!scopes.includes(scope.toLowerCase())) return;
 
-        // TODO TYPESCRIPT deprecated
         request.post(webhookURL, {
             json: data, headers: {
                 "Authorization": authKey,

@@ -76,9 +76,8 @@ function getWeightedRandomChoice(choices: any[], amountOfChoices: number) {
     let totalWeight = 0;
     choices = choices.map(choice => {
         //The 3 makes -2 the minimum votes before being ignored completely
-        //https://www.desmos.com/calculator/c1duhfrmts
         //this can be changed if this system increases in popularity.
-        const weight = Math.exp((choice.votes + 3));  // TODO TYPESCRIPT what was this 0.85?
+        const weight = Math.exp((choice.votes + 3));
         totalWeight += weight;
 
         return {...choice, weight};

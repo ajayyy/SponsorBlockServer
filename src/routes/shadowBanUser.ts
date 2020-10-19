@@ -55,7 +55,6 @@ export async function shadowBanUser(req: Request, res: Response) {
             }
         }
     }
-    // TODO TYPESCRIPT a lof unused code, wtf is happening
     else if (hashedIP) {
         //check to see if this user is already shadowbanned
         // let row = privateDB.prepare('get', "SELECT count(*) as userCount FROM shadowBannedIPs WHERE hashedIP = ?", [hashedIP]);
