@@ -1,4 +1,4 @@
-import express, {Request, RequestHandler, Response} from 'express';
+import express, {Express, Request, RequestHandler, Response} from 'express';
 import {config} from './config';
 import {oldSubmitSponsorTimes} from './routes/oldSubmitSponsorTimes';
 import {oldGetVideoSponsorTimes} from './routes/oldGetVideoSponsorTimes';
@@ -22,108 +22,112 @@ import {voteOnSponsorTime} from './routes/voteOnSponsorTime';
 import {getSkipSegmentsByHash} from './routes/getSkipSegmentsByHash';
 import {postSkipSegments} from './routes/postSkipSegments';
 import {endpoint as getSkipSegments} from './routes/getSkipSegments';
-
 import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
 
-// Create a service (the app object is just a callback).
-const app = express();
-// Rate limit endpoint lists
-const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
-const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
-if (config.rateLimit) {
-    if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
-    if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
+
+export function createServer(callback: () => void) {
+    // Create a service (the app object is just a callback).
+    const app = express();
+
+    //setup CORS correctly
+    app.use(corsMiddleware);
+    app.use(loggerMiddleware);
+    app.use(express.json());
+
+    if (config.userCounterURL) app.use(userCounter);
+
+    // Setup pretty JSON
+    if (config.mode === "development") app.set('json spaces', 2);
+
+    // Set production mode
+    app.set('env', config.mode || 'production');
+
+    setupRoutes(app);
+
+    return app.listen(config.port, callback);
 }
 
-//setup CORS correctly
-app.use(corsMiddleware);
-app.use(loggerMiddleware);
-app.use(express.json());
+function setupRoutes(app: Express) {
+    // Rate limit endpoint lists
+    const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
+    const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
+    if (config.rateLimit) {
+        if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
+        if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
+    }
 
-if (config.userCounterURL) app.use(userCounter);
+    //add the get function
+    app.get('/api/getVideoSponsorTimes', oldGetVideoSponsorTimes);
 
-// Setup pretty JSON
-if (config.mode === "development") app.set('json spaces', 2);
+    //add the oldpost function
+    app.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+    app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
 
-// Set production mode
-app.set('env', config.mode || 'production');
+    //add the skip segments functions
+    app.get('/api/skipSegments', getSkipSegments);
+    app.post('/api/skipSegments', postSkipSegments);
 
-//add the get function
-app.get('/api/getVideoSponsorTimes', oldGetVideoSponsorTimes);
+    // add the privacy protecting skip segments functions
+    app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
-//add the oldpost function
-app.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
-app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+    //voting endpoint
+    app.get('/api/voteOnSponsorTime', ...voteEndpoints);
+    app.post('/api/voteOnSponsorTime', ...voteEndpoints);
 
-//add the skip segments functions
-app.get('/api/skipSegments', getSkipSegments);
-app.post('/api/skipSegments', postSkipSegments);
+    //Endpoint when a submission is skipped
+    app.get('/api/viewedVideoSponsorTime', ...viewEndpoints);
+    app.post('/api/viewedVideoSponsorTime', ...viewEndpoints);
 
-// add the privacy protecting skip segments functions
-app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
+    //To set your username for the stats view
+    app.post('/api/setUsername', setUsername);
 
-//voting endpoint
-app.get('/api/voteOnSponsorTime', ...voteEndpoints);
-app.post('/api/voteOnSponsorTime', ...voteEndpoints);
+    //get what username this user has
+    app.get('/api/getUsername', getUsername);
 
-//Endpoint when a submission is skipped
-app.get('/api/viewedVideoSponsorTime', ...viewEndpoints);
-app.post('/api/viewedVideoSponsorTime', ...viewEndpoints);
+    //Endpoint used to hide a certain user's data
+    app.post('/api/shadowBanUser', shadowBanUser);
 
-//To set your username for the stats view
-app.post('/api/setUsername', setUsername);
+    //Endpoint used to make a user a VIP user with special privileges
+    app.post('/api/addUserAsVIP', addUserAsVIP);
 
-//get what username this user has
-app.get('/api/getUsername', getUsername);
+    //Gets all the views added up for one userID
+    //Useful to see how much one user has contributed
+    app.get('/api/getViewsForUser', getViewsForUser);
 
-//Endpoint used to hide a certain user's data
-app.post('/api/shadowBanUser', shadowBanUser);
+    //Gets all the saved time added up (views * sponsor length) for one userID
+    //Useful to see how much one user has contributed
+    //In minutes
+    app.get('/api/getSavedTimeForUser', getSavedTimeForUser);
 
-//Endpoint used to make a user a VIP user with special privileges
-app.post('/api/addUserAsVIP', addUserAsVIP);
+    app.get('/api/getTopUsers', getTopUsers);
 
-//Gets all the views added up for one userID
-//Useful to see how much one user has contributed
-app.get('/api/getViewsForUser', getViewsForUser);
+    //send out totals
+    //send the total submissions, total views and total minutes saved
+    app.get('/api/getTotalStats', getTotalStats);
 
-//Gets all the saved time added up (views * sponsor length) for one userID
-//Useful to see how much one user has contributed
-//In minutes
-app.get('/api/getSavedTimeForUser', getSavedTimeForUser);
+    app.get('/api/getUserInfo', getUserInfo);
 
-app.get('/api/getTopUsers', getTopUsers);
+    //send out a formatted time saved total
+    app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
-//send out totals
-//send the total submissions, total views and total minutes saved
-app.get('/api/getTotalStats', getTotalStats);
+    //submit video containing no segments
+    app.post('/api/noSegments', postNoSegments);
 
-app.get('/api/getUserInfo', getUserInfo);
+    app.delete('/api/noSegments', deleteNoSegments);
 
-//send out a formatted time saved total
-app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
+    //get if user is a vip
+    app.get('/api/isUserVIP', getIsUserVIP);
 
-//submit video containing no segments
-app.post('/api/noSegments', postNoSegments);
+    //sent user a warning
+    app.post('/api/warnUser', postWarning);
 
-app.delete('/api/noSegments', deleteNoSegments);
+    //get if user is a vip
+    app.post('/api/segmentShift', postSegmentShift);
 
-//get if user is a vip
-app.get('/api/isUserVIP', getIsUserVIP);
-
-//sent user a warning
-app.post('/api/warnUser', postWarning);
-
-//get if user is a vip
-app.post('/api/segmentShift', postSegmentShift);
-
-app.get('/database.db', function (req: Request, res: Response) {
-    res.sendFile("./databases/sponsorTimes.db", {root: "./"});
-});
-
-// Create an HTTP service.
-export function createServer(callback: () => void) {
-    return app.listen(config.port, callback);
+    app.get('/database.db', function (req: Request, res: Response) {
+        res.sendFile("./databases/sponsorTimes.db", {root: "./"});
+    });
 }

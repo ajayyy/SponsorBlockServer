@@ -2,8 +2,13 @@ import request from 'request';
 import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
+import {ImportMock,} from 'ts-mock-imports';
+import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
+import {YouTubeApiMock} from '../youtubeMock';
 
-
+const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
+const sinonStub = mockManager.mock('listVideos');
+sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('getSegmentsByHash', () => {
     before(() => {
@@ -12,6 +17,7 @@ describe('getSegmentsByHash', () => {
         db.exec(startOfQuery + "('getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
         db.exec(startOfQuery + "('getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 0, 'fdaffnoMatchHash')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
         db.exec(startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
+
     });
 
     it('Should be able to get a 200', (done: Done) => {

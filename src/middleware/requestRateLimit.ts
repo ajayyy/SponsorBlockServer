@@ -13,9 +13,5 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig): rateLimit.Rat
         keyGenerator: (req) => {
             return getHash(getIP(req), 1);
         },
-        skip: (/*req, res*/) => {
-            // skip rate limit if running in test mode
-            return process.env.npm_lifecycle_script === 'ts-node test.ts';
-        },
     });
 }

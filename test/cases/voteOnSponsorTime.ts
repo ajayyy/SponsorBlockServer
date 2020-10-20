@@ -3,6 +3,13 @@ import {config} from '../../src/config';
 import {db, privateDB} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
+import {ImportMock} from 'ts-mock-imports';
+import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
+import {YouTubeApiMock} from '../youtubeMock';
+
+const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
+const sinonStub = mockManager.mock('listVideos');
+sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('voteOnSponsorTime', () => {
     before(() => {

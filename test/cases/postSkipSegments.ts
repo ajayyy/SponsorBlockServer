@@ -3,6 +3,13 @@ import {config} from '../../src/config';
 import {getHash} from '../../src/utils/getHash';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
+import {ImportMock} from 'ts-mock-imports';
+import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
+import {YouTubeApiMock} from '../youtubeMock';
+
+const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
+const sinonStub = mockManager.mock('listVideos');
+sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('postSkipSegments', () => {
     before(() => {
@@ -227,7 +234,7 @@ describe('postSkipSegments', () => {
                 if (err) done(err);
                 else if (res.statusCode === 400) {
                     let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
-                    let success = true && rows.length == 2;
+                    let success = rows.length == 2;
                     for (const row of rows) {
                         if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||
                             (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||

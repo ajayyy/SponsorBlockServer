@@ -104,3 +104,4 @@ config.json
 # Mac files
 .DS_Store
 /.idea/
+/dist/

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import {SBSConfig} from "./types/config.model";
 
-const isTestMode = process.env.npm_lifecycle_script === 'ts-node test.ts';
+const isTestMode = process.env.npm_lifecycle_script === 'ts-node test/test.ts';
 const configFile = isTestMode ? 'test.json' : 'config.json';
 export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString('utf8'));
 

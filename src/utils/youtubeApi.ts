@@ -2,28 +2,15 @@ import {config} from '../config';
 import {Logger} from './logger';
 import * as redis from './redis';
 // @ts-ignore
-import YouTubeAPI from 'youtube-api';
+import _youTubeAPI from 'youtube-api';
 
-import {YouTubeAPI as youtubeApiTest} from '../../test/youtubeMock';
+_youTubeAPI.authenticate({
+    type: "key",
+    key: config.youtubeAPIKey,
+});
 
-let _youtubeApi: {
-    listVideos: (videoID: string, callback: (err: string | boolean, data: any) => void) => void
-};
-// If in test mode, return a mocked youtube object
-//   otherwise return an authenticated youtube api
-if (config.mode === "test") {
-    _youtubeApi = youtubeApiTest;
-}
-else {
-    _youtubeApi = YouTubeAPI;
-
-    YouTubeAPI.authenticate({
-        type: "key",
-        key: config.youtubeAPIKey,
-    });
-
-    // YouTubeAPI.videos.list wrapper with cacheing
-    _youtubeApi.listVideos = (videoID: string, callback: (err: string | boolean, data: any) => void) => {
+export class YouTubeAPI {
+    static listVideos(videoID: string, callback: (err: string | boolean, data: any) => void) {
         const part = 'contentDetails,snippet';
         if (videoID.length !== 11 || videoID.includes(".")) {
             callback("Invalid video ID", undefined);
@@ -34,7 +21,7 @@ else {
         redis.get(redisKey, (getErr: string, result: string) => {
             if (getErr || !result) {
                 Logger.debug("redis: no cache for video information: " + videoID);
-                YouTubeAPI.videos.list({
+                _youTubeAPI.videos.list({
                     part,
                     id: videoID,
                 }, (ytErr: boolean | string, data: any) => {
@@ -62,8 +49,4 @@ else {
             }
         });
     };
-}
-
-export {
-    _youtubeApi as YouTubeAPI
 }

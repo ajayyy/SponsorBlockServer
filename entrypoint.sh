@@ -23,4 +23,4 @@ cp /etc/sponsorblock/config.json . || cat <<EOF > config.json
     "readOnly": false
 }
 EOF
-ts-node index.ts
+node dist/index.js
