@@ -257,11 +257,22 @@ module.exports = async function postSkipSegments(req, res) {
         }];
     }
 
-    //check if all correct inputs are here and the length is 1 second or more
-    if (videoID == undefined || userID == undefined || segments == undefined || segments.length < 1) {
-        //invalid request
-        res.status(400).send("Parameters are not valid");
-        return;
+    const invalidFields = [];
+    if (typeof videoID !== 'string') {
+      invalidFields.push('videoID');
+    }
+    if (typeof userID !== 'string') {
+      invalidFields.push('userID');
+    }
+    if (!Array.isArray(segments) || segments.length < 1) {
+      invalidFields.push('segments');
+    }
+
+    if (invalidFields.length !== 0) {
+      // invalid request
+      const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
+      res.status(400).send(`No valid ${fields} field(s) provided`);
+      return;
     }
 
     //hash the userID
