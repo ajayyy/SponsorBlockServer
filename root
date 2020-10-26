@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"3708d7e99c169a5d462136cbf424bcd078c353be"},"timestamp":1602715841,"metadata":{"github-id":"MDU6SXNzdWU3MjE4NDU0MzA=","github-url":"https://github.com/ajayyy/SponsorBlockServer/issues/167","origin":"github"},"title":"Add new API endpoints to wiki","message":"`deleteNoSegments`\n\n`getUserInfo`\n\n`segmentShift`","files":null}]}
