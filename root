@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"3708d7e99c169a5d462136cbf424bcd078c353be"},"timestamp":1600276592,"metadata":{"github-id":"MDU6SXNzdWU3MDI5MzYxOTc=","github-url":"https://github.com/ajayyy/SponsorBlockServer/issues/147","origin":"github"},"title":"Improve speed of getTopUsers","message":"This is using up a lot of CPU","files":null}]}
