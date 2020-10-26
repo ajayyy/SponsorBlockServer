@@ -25,6 +25,7 @@ export interface SBSConfig {
     webhooks: WebhookConfig[];
     categoryList: string[];
     getTopUsersCacheTimeMinutes: number;
+    getCategoryStatsCacheTimeMinutes: number;
     maxNumberOfActiveWarnings: number;
     hoursAfterWarningExpires: number;
     rateLimit: {
