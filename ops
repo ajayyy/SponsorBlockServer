@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"3708d7e99c169a5d462136cbf424bcd078c353be"},"timestamp":1602787492,"metadata":{"github-id":"MDU6SXNzdWU3MjI1ODA3OTk=","github-url":"https://github.com/ajayyy/SponsorBlockServer/issues/171","origin":"github"},"title":"Cache videos with 404 in redis","message":"Redis can clear this cache when a submission occurs.","files":null}]}
