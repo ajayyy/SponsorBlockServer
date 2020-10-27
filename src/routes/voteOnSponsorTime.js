@@ -198,7 +198,7 @@ function categoryVote(UUID, userID, isVIP, category, hashedIP, res) {
 
     //TODO: In the future, raise this number from zero to make it harder to change categories
     // VIPs change it every time
-    if (nextCategoryCount - currentCategoryCount >= (submissionInfo ? Math.max(Math.ciel(submissionInfo.votes / 2), 1) : 1) || isVIP) {
+    if (nextCategoryCount - currentCategoryCount >= (submissionInfo ? Math.max(Math.ceil(submissionInfo.votes / 2), 1) : 1) || isVIP) {
         // Replace the category
         db.prepare('run', "update sponsorTimes set category = ? where UUID = ?", [category, UUID]);
     }
