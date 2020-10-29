@@ -3,6 +3,7 @@ var db = databases.db;
 var privateDB = databases.privateDB;
 
 var getHash = require('../utils/getHash.js');
+const logger = require('../utils/logger.js');
 
 module.exports = async function shadowBanUser(req, res) {
   let userID = req.query.userID;
@@ -47,7 +48,7 @@ module.exports = async function shadowBanUser(req, res) {
 
         //find all previous submissions and hide them
         if (unHideOldSubmissions) {
-        db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?", [userID]);
+            db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?", [userID]);
         }
     } else if (!enabled && row.userCount > 0) {
         //remove them from the shadow ban list
@@ -55,7 +56,14 @@ module.exports = async function shadowBanUser(req, res) {
 
         //find all previous submissions and unhide them
         if (unHideOldSubmissions) {
-            db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?", [userID]);
+            let segmentsToIgnore = db.prepare('all', "SELECT uuid FROM sponsorTimes st JOIN noSegments ns on st.videoID = ns.videoID AND st.category = ns.category WHERE st.userID = ?", [userID]).map((item) => item.UUID);
+            let allSegments = db.prepare('all', "SELECT uuid FROM sponsorTimes st WHERE st.userID = ?", [userID]).map((item) => item.UUID);
+            
+            allSegments.filter((item) => {
+                return segmentsToIgnore.indexOf(item) === -1;
+            }).forEach((uuid) => {
+                db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 0 WHERE uuid = ?", [uuid]);
+            });
         }
     }
   } else if (hashedIP) {
