@@ -37,7 +37,11 @@ function generateCategoryStats(sortBy: string, sortByOrder: string) {
             ORDER BY ${sortBy} ${sortByOrder}
         `;
 
-        resolve(db.getAll<CategoryStats>(query));
+        const items = db
+            .getAll<CategoryStats>(query)
+            .filter(item => config.isCategoryInConfig(item.category))
+            .map(item => ({...item, categoryLabel: config.getCategoryLabel(item.category)}))
+        resolve(items);
     });
 }
 
@@ -51,6 +55,7 @@ function isSortByOrderValid(givenSortByOrder: string) {
 
 interface CategoryStats {
     category: string;
+    categoryLabel: string;
     totalSubmissions: number;
     viewCount: number;
     minutesSaved: number;

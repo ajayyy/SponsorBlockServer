@@ -309,7 +309,7 @@ export async function postSkipSegments(req: Request, res: Response) {
             return;
         }
 
-        if (!config.categoryList.includes(segments[i].category)) {
+        if (!config.isCategoryInConfig(segments[i].category)) {
             res.status(400).send("Category doesn't exist.");
             return;
         }
