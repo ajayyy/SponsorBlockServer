@@ -134,7 +134,7 @@ function chooseSegments(segments) {
     });
 
     //if there are too many groups, find the best 8
-    return getWeightedRandomChoice(similarSegmentsGroups, 8).map(
+    return getWeightedRandomChoice(similarSegmentsGroups, 32).map(
         //randomly choose 1 good segment per group and return them
         group => getWeightedRandomChoice(group.segments, 1)[0]
     );
