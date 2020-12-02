@@ -24,17 +24,17 @@ describe('getSegmentsByHash', () => {
       });
   });
 
-  it('Should be able to get a 200 with empty segments for video but no matching categories', (done) => {
+  it('Should return 404 if no segments are found even if a video for the given hash is known', (done) => {
     request.get(utils.getbaseURL() 
      + '/api/skipSegments/3272f?categories=["shilling"]', null, 
       (err, res, body) => {
         if (err) done("Couldn't call endpoint");
-        else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
+        else if (res.statusCode !== 404) done("non 404 status code, was " + res.statusCode);
         else {
-          if (JSON.parse(body) && JSON.parse(body).length > 0 && JSON.parse(body)[0].segments.length === 0) {
+          if (body === '[]') {
             done(); // pass
           } else {
-            done("response had segments");
+            done("response had videos");
           }
         }
       });

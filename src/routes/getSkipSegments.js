@@ -8,51 +8,102 @@ var logger = require('../utils/logger.js');
 var getHash = require('../utils/getHash.js');
 var getIP = require('../utils/getIP.js');
 
-function cleanGetSegments(req, videoID, categories) {
-    let userHashedIP, shadowHiddenSegments;
+function prepareCategorySegments(req, videoID, category, segments, cache = {shadowHiddenSegments: {}}) {
+    const filteredSegments = segments.filter((segment) => {
+        if (segment.votes < -1) {
+            return false; //too untrustworthy, just ignore it
+        }
 
-    let segments = [];
+        //check if shadowHidden
+        //this means it is hidden to everyone but the original ip that submitted it
+        if (segment.shadowHidden != 1) {
+            return true;
+        }
+
+        if (cache.shadowHiddenSegments[videoID] === undefined) {
+            cache.shadowHiddenSegments[videoID] = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
+        }
+
+        //if this isn't their ip, don't send it to them
+        return cache.shadowHiddenSegments[videoID].some((shadowHiddenSegment) => {
+            if (cache.userHashedIP === undefined) {
+                //hash the IP only if it's strictly necessary
+                cache.userHashedIP = getHash(getIP(req) + config.globalSalt);
+            }
+
+            return shadowHiddenSegment.hashedIP === cache.userHashedIP;
+        });
+    });
+
+    return chooseSegments(filteredSegments).map((chosenSegment) => ({
+        category,
+        segment: [chosenSegment.startTime, chosenSegment.endTime],
+        UUID: chosenSegment.UUID,
+    }));
+}
+
+function getSegmentsByVideoID(req, videoID, categories) {
+    const cache = {};
+    const segments = [];
 
     try {
-        for (const category of categories) {
-            const categorySegments = db
-                .prepare(
-                    'all',
-                    'SELECT startTime, endTime, votes, UUID, shadowHidden FROM sponsorTimes WHERE videoID = ? and category = ? ORDER BY startTime',
-                    [videoID, category]
-                )
-                .filter(segment => {
-                    if (segment.votes < -1) {
-                        return false; //too untrustworthy, just ignore it
-                    }
+        const segmentsByCategory = db
+            .prepare(
+                'all',
+                `SELECT startTime, endTime, votes, UUID, category, shadowHidden FROM sponsorTimes WHERE videoID = ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
+                [videoID, categories]
+            ).reduce((acc, segment) => {
+                acc[segment.category] = acc[segment.category] || [];
+                acc[segment.category].push(segment);
 
-                    //check if shadowHidden
-                    //this means it is hidden to everyone but the original ip that submitted it
-                    if (segment.shadowHidden != 1) {
-                        return true;
-                    }
+                return acc;
+            }, {});
 
-                    if (shadowHiddenSegments === undefined) {
-                        shadowHiddenSegments = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
-                    }
+        for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
+            segments.push(...prepareCategorySegments(req, videoID, category, categorySegments, cache));
+        }
 
-                    //if this isn't their ip, don't send it to them
-                    return shadowHiddenSegments.some(shadowHiddenSegment => {
-                        if (userHashedIP === undefined) {
-                            //hash the IP only if it's strictly necessary
-                            userHashedIP = getHash(getIP(req) + config.globalSalt);
-                        }
-                        return shadowHiddenSegment.hashedIP === userHashedIP;
-                    });
-                });
+        return segments;
+    } catch (err) {
+        if (err) {
+            logger.error(err);
+            return null;
+        }
+    }
+}
 
-            chooseSegments(categorySegments).forEach(chosenSegment => {
-                segments.push({
-                    category,
-                    segment: [chosenSegment.startTime, chosenSegment.endTime],
-                    UUID: chosenSegment.UUID,
-                });
-            });
+function getSegmentsByHash(req, hashedVideoIDPrefix, categories) {
+    const cache = {};
+    const segments = {};
+
+    try {
+        const allSegments = db
+            .prepare(
+                'all',
+                `SELECT videoID, startTime, endTime, votes, UUID, category, shadowHidden, hashedVideoID FROM sponsorTimes WHERE hashedVideoID LIKE ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
+                [hashedVideoIDPrefix + '%', categories]
+            ).reduce((acc, segment) => {
+                acc[segment.videoID] = acc[segment.videoID] || {
+                    hash: segment.hashedVideoID,
+                    categories: {},
+                };
+                const videoCategories = acc[segment.videoID].categories;
+
+                videoCategories[segment.category] = videoCategories[segment.category] || [];
+                videoCategories[segment.category].push(segment);
+
+                return acc;
+            }, {});
+
+        for (const [videoID, videoData] of Object.entries(allSegments)) {
+            segments[videoID] = {
+                hash: videoData.hash,
+                segments: [],
+            };
+
+            for (const [category, categorySegments] of Object.entries(videoData.categories)) {
+                segments[videoID].segments.push(...prepareCategorySegments(req, videoID, category, categorySegments, cache));
+            }
         }
 
         return segments;
@@ -160,14 +211,14 @@ function handleGetSegments(req, res) {
         ? [req.query.category]
         : ['sponsor'];
 
-    let segments = cleanGetSegments(req, videoID, categories);
+    const segments = getSegmentsByVideoID(req, videoID, categories);
 
     if (segments === null || segments === undefined) {
         res.sendStatus(500);
         return false;
     }
 
-    if (segments.length == 0) {
+    if (segments.length === 0) {
         res.sendStatus(404);
         return false;
     }
@@ -177,7 +228,8 @@ function handleGetSegments(req, res) {
 
 module.exports = {
     handleGetSegments,
-    cleanGetSegments,
+    getSegmentsByVideoID,
+    getSegmentsByHash,
     endpoint: function (req, res) {
         let segments = handleGetSegments(req, res);
 

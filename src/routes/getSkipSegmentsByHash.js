@@ -1,5 +1,5 @@
 const hashPrefixTester = require('../utils/hashPrefixTester.js');
-const getSegments = require('./getSkipSegments.js').cleanGetSegments;
+const getSegments = require('./getSkipSegments.js').getSegmentsByHash;
 
 const databases = require('../databases/databases.js');
 const logger = require('../utils/logger.js');
@@ -19,15 +19,15 @@ module.exports = async function (req, res) {
     : ['sponsor'];
 
     // Get all video id's that match hash prefix
-    const videoIds = db.prepare('all', 'SELECT DISTINCT videoId, hashedVideoID from sponsorTimes WHERE hashedVideoID LIKE ?', [hashPrefix+'%']);
+    const segments = getSegments(req, hashPrefix, categories);
 
-    let segments = videoIds.map((video) => {
-        return {
-            videoID: video.videoID,
-            hash: video.hashedVideoID,
-            segments: getSegments(req, video.videoID, categories)
-        };
-    });
+    if (!segments) return res.status(404).json([]);
 
-    res.status((segments.length === 0) ? 404 : 200).json(segments);
+    const output = Object.entries(segments).map(([videoID, data]) => ({
+        videoID,
+        hash: data.hash,
+        segments: data.segments,
+    }));
+
+    res.status(output.length === 0 ? 404 : 200).json(output);
 }
