@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 );
 
 CREATE TABLE IF NOT EXISTS "config" (
-    "key" TEXT NOT NULL,
+	"key" TEXT NOT NULL,
 	"value" TEXT NOT NULL
 );
 

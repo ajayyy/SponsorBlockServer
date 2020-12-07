@@ -179,7 +179,7 @@ function categoryVote(UUID: string, userID: string, isVIP: boolean, category: an
     // See if the submissions category is ready to change
     const currentCategoryInfo = db.prepare("get", "select votes from categoryVotes where UUID = ? and category = ?", [UUID, currentCategory.category]);
 
-    const submissionInfo = db.prepare("get", "SELECT userID, timeSubmitted FROM sponsorTimes WHERE UUID = ?", [UUID]);
+    const submissionInfo = db.prepare("get", "SELECT userID, timeSubmitted, votes FROM sponsorTimes WHERE UUID = ?", [UUID]);
     const isSubmissionVIP = submissionInfo && isUserVIP(submissionInfo.userID);
     const startingVotes = isSubmissionVIP ? 10000 : 1;
 
@@ -198,7 +198,7 @@ function categoryVote(UUID: string, userID: string, isVIP: boolean, category: an
 
     //TODO: In the future, raise this number from zero to make it harder to change categories
     // VIPs change it every time
-    if (nextCategoryCount - currentCategoryCount >= 0 || isVIP) {
+    if (nextCategoryCount - currentCategoryCount >= (submissionInfo ? Math.max(Math.ceil(submissionInfo.votes / 2), 1) : 1) || isVIP) {
         // Replace the category
         db.prepare('run', "update sponsorTimes set category = ? where UUID = ?", [category, UUID]);
     }

@@ -2,7 +2,6 @@ import {db, privateDB} from '../databases/databases';
 import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
 
-
 export async function shadowBanUser(req: Request, res: Response) {
     const userID = req.query.userID as string;
     const hashedIP = req.query.hashedIP as string;
@@ -51,7 +50,17 @@ export async function shadowBanUser(req: Request, res: Response) {
 
             //find all previous submissions and unhide them
             if (unHideOldSubmissions) {
-                db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 0 WHERE userID = ?", [userID]);
+                let segmentsToIgnore = db.prepare('all', "SELECT UUID FROM sponsorTimes st "
+                                + "JOIN noSegments ns on st.videoID = ns.videoID AND st.category = ns.category WHERE st.userID = ?"
+                                    , [userID]).map((item: {UUID: string}) => item.UUID);
+                let allSegments = db.prepare('all', "SELECT UUID FROM sponsorTimes st WHERE st.userID = ?", [userID])
+                                        .map((item: {UUID: string}) => item.UUID);
+
+                allSegments.filter((item: {uuid: string}) => {
+                    return segmentsToIgnore.indexOf(item) === -1;
+                }).forEach((UUID: string) => {
+                    db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 0 WHERE UUID = ?", [UUID]);
+                });
             }
         }
     }
