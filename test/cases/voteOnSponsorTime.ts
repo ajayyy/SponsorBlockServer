@@ -41,6 +41,8 @@ describe('voteOnSponsorTime', () => {
         db.exec(startOfQuery + "('incorrect-category', 1, 11, 500, 'incorrect-category', '" + getHash('somebody-else-id') + "', 0, 50, 'sponsor', 0, '" + getHash('incorrect-category', 1) + "')");
         db.exec(startOfQuery + "('incorrect-category-change', 1, 11, 500, 'incorrect-category-change', '" + getHash('somebody-else-id') + "', 0, 50, 'sponsor', 0, '" + getHash('incorrect-category-change', 1) + "')");
         db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'warnvote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest', 1) + "')");
+        db.exec(startOfQuery + "('no-sponsor-segments-video', 1, 11, 2, 'no-sponsor-segments-uuid-0', 'no-sponsor-segments', 0, 50, 'sponsor', 0, '" + getHash('no-sponsor-segments-video', 1) + "')");
+        db.exec(startOfQuery + "('no-sponsor-segments-video', 1, 11, 2, 'no-sponsor-segments-uuid-1', 'no-sponsor-segments', 0, 50, 'intro', 0, '" + getHash('no-sponsor-segments-video', 1) + "')");
 
         db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "')");
         db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "')");
@@ -54,6 +56,9 @@ describe('voteOnSponsorTime', () => {
 
         db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
         privateDB.exec("INSERT INTO shadowBannedUsers (userID) VALUES ('" + getHash("randomID4") + "')");
+
+        db.exec("INSERT INTO noSegments (videoID, userID, category) VALUES ('no-sponsor-segments-video', 'someUser', 'sponsor')");
+
     });
 
     it('Should be able to upvote a segment', (done: Done) => {
@@ -371,6 +376,58 @@ describe('voteOnSponsorTime', () => {
                     done(); // success
                 } else {
                     done("Status code was " + res.statusCode);
+                }
+            });
+    });
+
+    it('Non-VIP should not be able to vote on a segment with no-segments category', (done: Done) => {
+        request.get(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&type=1", null,
+            (err, res) => {
+                if (err) done(err);
+                else if (res.statusCode === 403) {
+                    done();
+                } else {
+                    done("Status code was " + res.statusCode + " instead of 403");
+                }
+            });
+    });
+
+    it('Non-VIP should not be able to category vote on a segment with no-segments category', (done: Done) => {
+        request.get(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&category=outro", null,
+            (err, res) => {
+                if (err) done(err);
+                else if (res.statusCode === 403) {
+                    done();
+                } else {
+                    done("Status code was " + res.statusCode + " instead of 403");
+                }
+            });
+    });
+
+    it('VIP should able to vote on a segment with no-segments category', (done: Done) => {
+        request.get(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=VIPUser&UUID=no-sponsor-segments-uuid-0&type=1", null,
+            (err, res) => {
+                if (err) done(err);
+                else if (res.statusCode === 200) {
+                    done();
+                } else {
+                    done("Status code was " + res.statusCode + " instead of 200");
+                }
+            });
+    });
+
+    it('Non-VIP should be able to vote on a segment on a no-segments video with a category that doesn\'t have no-segments', (done: Done) => {
+        request.get(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-1&type=1", null,
+            (err, res) => {
+                if (err) done(err);
+                else if (res.statusCode === 200) {
+                    done();
+                } else {
+                    done("Status code was " + res.statusCode + " instead of 200");
                 }
             });
     });

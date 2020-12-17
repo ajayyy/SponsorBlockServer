@@ -234,6 +234,18 @@ async function voteOnSponsorTime(req: Request, res: Response) {
     //check if user voting on own submission
     const isOwnSubmission = db.prepare("get", "SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?", [nonAnonUserID, UUID]) !== undefined;
 
+    
+    if (!isVIP) {
+        const isVideoLocked = !!db.prepare('get', 'SELECT noSegments.category from noSegments left join sponsorTimes' + 
+                                ' on (noSegments.videoID = sponsorTimes.videoID and noSegments.category = sponsorTimes.category)' + 
+                                    ' where UUID = ?', [UUID]);
+
+        if (isVideoLocked) {
+            res.status(403).send("Not allowed to vote on video that has been locked by a VIP.");
+            return;
+        }
+    }
+
     if (type === undefined && category !== undefined) {
         return categoryVote(UUID, nonAnonUserID, isVIP, category, hashedIP, res);
     }
