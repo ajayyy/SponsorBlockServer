@@ -30,6 +30,7 @@ describe('voteOnSponsorTime', () => {
         db.exec(startOfQuery + "('vote-testtesttest,test', 1, 11, 100, 'vote-uuid-3', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest,test', 1) + "')");
         db.exec(startOfQuery + "('vote-test3', 1, 11, 2, 'vote-uuid-4', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-test3', 1) + "')");
         db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-test3', 1) + "')");
+        db.exec(startOfQuery + "('vote-test3', 7, 22, -3, 'vote-uuid-5_1', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-test3', 1) + "')");
         db.exec(startOfQuery + "('vote-multiple', 1, 11, 2, 'vote-uuid-6', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-multiple', 1) + "')");
         db.exec(startOfQuery + "('vote-multiple', 20, 33, 2, 'vote-uuid-7', 'testman', 0, 50, 'intro', 0, '" + getHash('vote-multiple', 1) + "')");
         db.exec(startOfQuery + "('voter-submitter', 1, 11, 2, 'vote-uuid-8', '" + getHash("randomID") + "', 0, 50, 'sponsor', 0, '" + getHash('voter-submitter', 1) + "')");
@@ -316,6 +317,24 @@ describe('voteOnSponsorTime', () => {
                         done();
                     } else {
                         done("Vote did not succeed. Submission went from intro to " + row.category + ". Category votes are " + row2.votes + " and should be 500.");
+                    }
+                } else {
+                    done("Status code was " + res.statusCode);
+                }
+            });
+    });
+
+    it('Submitter should be able to vote for a category and it should immediately change', (done: Done) => {
+        request.get(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=testman&UUID=vote-uuid-5_1&category=outro", null,
+            (err, res) => {
+                if (err) done(err);
+                else if (res.statusCode === 200) {
+                    let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
+                    if (row.category === "outro") {
+                        done();
+                    } else {
+                        done("Vote did not succeed. Submission went from intro to " + row.category + ".");
                     }
                 } else {
                     done("Status code was " + res.statusCode);

@@ -131,7 +131,7 @@ function sendWebhooks(voteData: VoteData) {
     }
 }
 
-function categoryVote(UUID: string, userID: string, isVIP: boolean, category: any, hashedIP: string, res: Response) {
+function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnSubmission: boolean, category: string, hashedIP: string, res: Response) {
     // Check if they've already made a vote
     const previousVoteInfo = privateDB.prepare('get', "select count(*) as votes, category from categoryVotes where UUID = ? and userID = ?", [UUID, userID]);
 
@@ -198,7 +198,7 @@ function categoryVote(UUID: string, userID: string, isVIP: boolean, category: an
 
     //TODO: In the future, raise this number from zero to make it harder to change categories
     // VIPs change it every time
-    if (nextCategoryCount - currentCategoryCount >= (submissionInfo ? Math.max(Math.ceil(submissionInfo.votes / 2), 1) : 1) || isVIP) {
+    if (nextCategoryCount - currentCategoryCount >= (submissionInfo ? Math.max(Math.ceil(submissionInfo.votes / 2), 1) : 1) || isVIP || isOwnSubmission) {
         // Replace the category
         db.prepare('run', "update sponsorTimes set category = ? where UUID = ?", [category, UUID]);
     }
@@ -247,7 +247,7 @@ async function voteOnSponsorTime(req: Request, res: Response) {
     }
 
     if (type === undefined && category !== undefined) {
-        return categoryVote(UUID, nonAnonUserID, isVIP, category, hashedIP, res);
+        return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, res);
     }
 
     if (type == 1 && !isVIP && !isOwnSubmission) {
