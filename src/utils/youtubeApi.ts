@@ -45,7 +45,7 @@ export class YouTubeAPI {
                 });
             } else {
                 Logger.debug("redis: fetched video information from cache: " + videoID);
-                callback(getErr.message, JSON.parse(result));
+                callback(getErr?.message, JSON.parse(result));
             }
         });
     };
