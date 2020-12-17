@@ -12,7 +12,7 @@ _youTubeAPI.authenticate({
 export class YouTubeAPI {
     static listVideos(videoID: string, callback: (err: string | boolean, data: any) => void) {
         const part = 'contentDetails,snippet';
-        if (videoID.length !== 11 || videoID.includes(".")) {
+        if (!videoID || videoID.length !== 11 || videoID.includes(".")) {
             callback("Invalid video ID", undefined);
             return;
         }
@@ -24,7 +24,7 @@ export class YouTubeAPI {
                 _youTubeAPI.videos.list({
                     part,
                     id: videoID,
-                }, (ytErr: boolean | string, data: any) => {
+                }, (ytErr: boolean | string, { data }: any) => {
                     if (!ytErr) {
                         // Only set cache if data returned
                         if (data.items.length > 0) {
