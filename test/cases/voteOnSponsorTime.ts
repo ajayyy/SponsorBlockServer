@@ -224,25 +224,26 @@ describe('voteOnSponsorTime', () => {
             });
     });
 
-    /** Test needs to be updated with new category vote limit
-    it('Should be able to vote for a category and it should immediately change (for now)', (done: Done) => {
+    it('Should be able to vote for a category and it should add your vote to the database', (done: Done) => {
         request.get(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=intro", null,
             (err, res) => {
                 if (err) done(err);
                 else if (res.statusCode === 200) {
                     let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
-                    if (row.category === "intro") {
+                    let categoryRows = db.prepare('all', "SELECT votes, category FROM categoryVotes WHERE UUID = ?", ["vote-uuid-4"]);
+                    if (row.category === "sponsor" && categoryRows.length === 2 
+                            && categoryRows[0]?.votes === 1 && categoryRows[0]?.category === "intro"
+                                && categoryRows[1]?.votes === 1 && categoryRows[1]?.category === "sponsor") {
                         done();
                     } else {
-                        done("Vote did not succeed. Submission went from sponsor to " + row.category);
+                        done("Submission changed to " + row.category + " instead of staying as sponsor. Vote was applied as " + categoryRows[0]?.category + " with " + categoryRows[0]?.votes + " votes and there were " + categoryRows.length + " rows.");
                     }
                 } else {
                     done("Status code was " + res.statusCode);
                 }
             });
     });
-    */
 
     it('Should not able to change to an invalid category', (done: Done) => {
         request.get(getbaseURL()
@@ -262,25 +263,34 @@ describe('voteOnSponsorTime', () => {
             });
     });
 
-    /** Test needs to be updated with new category vote limit
-    it('Should be able to change your vote for a category and it should immediately change (for now)', (done: Done) => {
+    it('Should be able to change your vote for a category and it should add your vote to the database', (done: Done) => {
         request.get(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=outro", null,
             (err, res) => {
                 if (err) done(err);
                 else if (res.statusCode === 200) {
-                    let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
-                    if (row.category === "outro") {
+                    let submissionRow = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
+                    let categoryRows = db.prepare('all', "SELECT votes, category FROM categoryVotes WHERE UUID = ?", ["vote-uuid-4"]);
+                    let introVotes = 0;
+                    let outroVotes = 0;
+                    let sponsorVotes = 0;
+                    for (const row of categoryRows) {
+                        if (row?.category === "intro") introVotes += row?.votes;
+                        if (row?.category === "outro") outroVotes += row?.votes;
+                        if (row?.category === "sponsor") sponsorVotes += row?.votes;
+                    }
+                    if (submissionRow.category === "sponsor" && categoryRows.length === 3 
+                            && introVotes === 0 && outroVotes === 1 && sponsorVotes === 1) {
                         done();
                     } else {
-                        done("Vote did not succeed. Submission went from intro to " + row.category);
+                        done("Submission changed to " + submissionRow.category + " instead of staying as sponsor. There were " 
+                                + introVotes + " intro votes, " + outroVotes + " outro votes and " + sponsorVotes + " sponsor votes.");
                     }
                 } else {
                     done("Status code was " + res.statusCode);
                 }
             });
     });
-    */
 
 
     it('Should not be able to change your vote to an invalid category', (done: Done) => {
