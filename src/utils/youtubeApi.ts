@@ -1,6 +1,6 @@
 import {config} from '../config';
 import {Logger} from './logger';
-import * as redis from './redis';
+import redis from './redis';
 // @ts-ignore
 import _youTubeAPI from 'youtube-api';
 
@@ -18,7 +18,7 @@ export class YouTubeAPI {
         }
 
         const redisKey = "youtube.video." + videoID;
-        redis.get(redisKey, (getErr: string, result: string) => {
+        redis.get(redisKey, (getErr, result) => {
             if (getErr || !result) {
                 Logger.debug("redis: no cache for video information: " + videoID);
                 _youTubeAPI.videos.list({
@@ -28,9 +28,9 @@ export class YouTubeAPI {
                     if (!ytErr) {
                         // Only set cache if data returned
                         if (data.items.length > 0) {
-                            redis.set(redisKey, JSON.stringify(data), (setErr: string) => {
+                            redis.set(redisKey, JSON.stringify(data), (setErr) => {
                                 if (setErr) {
-                                    Logger.warn(setErr);
+                                    Logger.warn(setErr.message);
                                 } else {
                                     Logger.debug("redis: video information cache set for: " + videoID);
                                 }
@@ -45,7 +45,7 @@ export class YouTubeAPI {
                 });
             } else {
                 Logger.debug("redis: fetched video information from cache: " + videoID);
-                callback(getErr, JSON.parse(result));
+                callback(getErr?.message, JSON.parse(result));
             }
         });
     };
