@@ -339,7 +339,7 @@ export async function postSkipSegments(req: Request, res: Response) {
             return;
         }
 
-        if (segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
+        if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
             // Too short
             res.status(400).send("Sponsors must be longer than 1 second long");
             return;
