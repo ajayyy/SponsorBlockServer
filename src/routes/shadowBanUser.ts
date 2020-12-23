@@ -42,7 +42,9 @@ export async function shadowBanUser(req: Request, res: Response) {
 
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
-                db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?", [userID]);
+                db.prepare('run', "UPDATE sponsorTimes SET shadowHidden = 1 WHERE userID = ?"
+                                + " AND NOT EXISTS ( SELECT videoID, category FROM noSegments WHERE"
+                                + " sponsorTimes.videoID = noSegments.videoID AND sponsorTimes.category = noSegments.category)", [userID]);
             }
         } else if (!enabled && row.userCount > 0) {
             //remove them from the shadow ban list
