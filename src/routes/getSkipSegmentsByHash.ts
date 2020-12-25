@@ -1,31 +1,31 @@
 import {hashPrefixTester} from '../utils/hashPrefixTester';
-import {cleanGetSegments} from './getSkipSegments';
-import {db} from '../databases/databases';
+import {getSegmentsByHash} from './getSkipSegments';
 import {Request, Response} from 'express';
+import { Category, VideoIDHash } from '../types/segments.model';
 
 export async function getSkipSegmentsByHash(req: Request, res: Response) {
-    let hashPrefix = req.params.prefix;
+    let hashPrefix: VideoIDHash = req.params.prefix;
     if (!hashPrefixTester(req.params.prefix)) {
         res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
         return;
     }
 
-    const categories = req.query.categories
+    const categories: Category[] = req.query.categories
         ? JSON.parse(req.query.categories as string)
         : req.query.category
             ? [req.query.category]
             : ['sponsor'];
 
     // Get all video id's that match hash prefix
-    const videoIds = db.prepare('all', 'SELECT DISTINCT videoId, hashedVideoID from sponsorTimes WHERE hashedVideoID LIKE ?', [hashPrefix + '%']);
+    const segments = getSegmentsByHash(req, hashPrefix, categories);
 
-    let segments = videoIds.map((video: any) => {
-        return {
-            videoID: video.videoID,
-            hash: video.hashedVideoID,
-            segments: cleanGetSegments(req, video.videoID, categories),
-        };
-    });
+    if (!segments) return res.status(404).json([]);
 
-    res.status((segments.length === 0) ? 404 : 200).json(segments);
+    const output = Object.entries(segments).map(([videoID, data]) => ({
+        videoID,
+        hash: data.hash,
+        segments: data.segments,
+    }));
+
+    res.status(output.length === 0 ? 404 : 200).json(output);
 }
