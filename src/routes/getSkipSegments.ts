@@ -19,7 +19,7 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
             return true;
         }
 
-        if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
+        if (cache?.shadowHiddenSegmentIPs[videoID] === undefined) {
             cache.shadowHiddenSegmentIPs[videoID] = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
         }
 
