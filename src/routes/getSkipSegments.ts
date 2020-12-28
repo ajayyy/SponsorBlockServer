@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
-import { Category, DBSegment, OverlappingSegmentGroup, Segment, SegmentCache, VideoData, VideoID, VideoIDHash, VotableObject } from "../types/segments.model";
+import { Category, DBSegment, OverlappingSegmentGroup, Segment, SegmentCache, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
@@ -15,7 +15,7 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
 
         //check if shadowHidden
         //this means it is hidden to everyone but the original ip that submitted it
-        if (segment.shadowHidden != 1) {
+        if (segment.shadowHidden != Visibility.HIDDEN) {
             return true;
         }
 

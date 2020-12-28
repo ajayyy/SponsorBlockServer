@@ -10,13 +10,18 @@ export interface Segment {
     UUID: SegmentUUID;
 }
 
+export enum Visibility {
+    VISIBLE = 0,
+    HIDDEN = 1
+}
+
 export interface DBSegment { 
     category: Category; 
     startTime: number;
     endTime: number;
     UUID: SegmentUUID;
     votes: number;
-    shadowHidden: 0 | 1;
+    shadowHidden: Visibility;
     videoID: VideoID;
     hashedVideoID: VideoIDHash;
 }
