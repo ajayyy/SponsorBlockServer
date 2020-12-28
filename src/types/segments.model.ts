@@ -40,6 +40,6 @@ export interface VideoData {
 }
 
 export interface SegmentCache {
-    shadowHiddenSegmentIPs?: Record<VideoID, {hashedIP: IPHash}[]>,
+    shadowHiddenSegmentIPs: Record<VideoID, {hashedIP: IPHash}[]>,
     userHashedIP?: IPHash
 }

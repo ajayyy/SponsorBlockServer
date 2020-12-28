@@ -19,7 +19,7 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
             return true;
         }
 
-        if (cache?.shadowHiddenSegmentIPs[videoID] === undefined) {
+        if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
             cache.shadowHiddenSegmentIPs[videoID] = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
         }
 
@@ -42,7 +42,7 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
 }
 
 function getSegmentsByVideoID(req: Request, videoID: string, categories: Category[]): Segment[] {
-    const cache: SegmentCache = {};
+    const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Segment[] = [];
 
     try {
@@ -72,7 +72,7 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
 }
 
 function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): Record<VideoID, VideoData> {
-    const cache: SegmentCache = {};
+    const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Record<VideoID, VideoData> = {};
 
     try {
