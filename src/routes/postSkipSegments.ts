@@ -289,7 +289,7 @@ export async function postSkipSegments(req: Request, res: Response) {
     ).count;
 
     if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send('Submission blocked. Too many active warnings!');
+        return res.status(403).send('Submission rejected due to too many active warnings. This means that we noticed you were making some mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix along with your public userID or username?');
     }
 
     const noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list: any) => {
