@@ -72,7 +72,7 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
     }
 }
 
-function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): Record<VideoID, VideoData> {
+function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): SBRecord<VideoID, VideoData> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: SBRecord<VideoID, VideoData> = {};
 

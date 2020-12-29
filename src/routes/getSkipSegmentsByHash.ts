@@ -4,7 +4,7 @@ import {Request, Response} from 'express';
 import { Category, VideoIDHash } from '../types/segments.model';
 
 export async function getSkipSegmentsByHash(req: Request, res: Response) {
-    let hashPrefix: VideoIDHash = req.params.prefix;
+    let hashPrefix = req.params.prefix as VideoIDHash;
     if (!hashPrefixTester(req.params.prefix)) {
         res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
         return;
