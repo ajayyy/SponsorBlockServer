@@ -22,10 +22,17 @@ export function postWarning(req: Request, res: Response) {
     let resultStatus = "";
 
     if (enabled) {
-        db.prepare('run', 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES (?, ?, ?, 1)', [userID, issueTime, issuerUserID]);
-        resultStatus = "issued to";
+        let previousWarning = db.prepare('get', 'SELECT * FROM warnings WHERE userID = ? AND issuerUserID = ?', [userID, issuerUserID]);
+
+        if (!previousWarning) {
+            db.prepare('run', 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES (?, ?, ?, 1)', [userID, issueTime, issuerUserID]);
+            resultStatus = "issued to";
+        } else {
+            res.status(409).send();
+            return;
+        }
     } else {
-        db.prepare('run', 'UPDATE warnings SET enabled = 0', []);
+        db.prepare('run', 'UPDATE warnings SET enabled = 0 WHERE userID = ? AND issuerUserID = ?', [userID, issuerUserID]);
         resultStatus = "removed from";
     }
 
