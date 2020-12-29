@@ -7,7 +7,7 @@ import {getHash} from '../utils/getHash';
 export function postWarning(req: Request, res: Response) {
     // Collect user input data
     let issuerUserID = getHash(req.body.issuerUserID);
-    let userID = getHash(req.body.userID);
+    let userID = req.body.userID;
     let issueTime = new Date().getTime();
 
     // Ensure user is a VIP
