@@ -1,0 +1,1 @@
+export type HashedValue = string & { __hashBrand: unknown };

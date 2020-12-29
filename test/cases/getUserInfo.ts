@@ -18,9 +18,9 @@ describe('getUserInfo', () => {
         db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000008', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
 
 
-        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES ('" + getHash('getuserinfo_warning_0') + "', 10, 'getuserinfo_vip')");
-        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip')");
-        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip')");
+        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_0') + "', 10, 'getuserinfo_vip', 1)");
+        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
+        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
     });
 
     it('Should be able to get a 200', (done: Done) => {

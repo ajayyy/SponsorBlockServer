@@ -2,9 +2,10 @@ import {Logger} from '../utils/logger';
 import {getHash} from '../utils/getHash';
 import {isUserVIP} from '../utils/isUserVIP';
 import {Request, Response} from 'express';
+import { HashedUserID, UserID } from '../types/user.model';
 
 export function getIsUserVIP(req: Request, res: Response): void {
-    let userID = req.query.userID as string;
+    const userID = req.query.userID as UserID;
 
     if (userID == undefined) {
         //invalid request
@@ -13,12 +14,12 @@ export function getIsUserVIP(req: Request, res: Response): void {
     }
 
     //hash the userID
-    userID = getHash(userID);
+    const hashedUserID: HashedUserID = getHash(userID);
 
     try {
-        let vipState = isUserVIP(userID);
+        let vipState = isUserVIP(hashedUserID);
         res.status(200).json({
-            hashedUserID: userID,
+            hashedUserID: hashedUserID,
             vip: vipState,
         });
     } catch (err) {
