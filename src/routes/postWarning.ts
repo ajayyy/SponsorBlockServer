@@ -25,7 +25,7 @@ export function postWarning(req: Request, res: Response) {
         db.prepare('run', 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES (?, ?, ?, 1)', [userID, issueTime, issuerUserID]);
         resultStatus = "issued to";
     } else {
-        db.prepare('run', 'UPDATE warnings SET enabled = 0', []);
+        db.prepare('run', 'UPDATE warnings SET enabled = 0 WHERE userID = ? AND issuerUserID = ?', [userID, issuerUserID]);
         resultStatus = "removed from";
     }
 
