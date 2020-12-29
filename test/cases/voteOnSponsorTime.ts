@@ -20,7 +20,7 @@ describe('voteOnSponsorTime', () => {
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
         let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
-        const startOfWarningQuery = 'INSERT INTO warnings (userID, issueTime, issuerUserID) VALUES';
+        const startOfWarningQuery = 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES';
 
         db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest', 1) + "')");
         db.exec(startOfQuery + "('vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest2', 1) + "')");
@@ -45,14 +45,14 @@ describe('voteOnSponsorTime', () => {
         db.exec(startOfQuery + "('no-sponsor-segments-video', 1, 11, 2, 'no-sponsor-segments-uuid-0', 'no-sponsor-segments', 0, 50, 'sponsor', 0, '" + getHash('no-sponsor-segments-video', 1) + "')");
         db.exec(startOfQuery + "('no-sponsor-segments-video', 1, 11, 2, 'no-sponsor-segments-uuid-1', 'no-sponsor-segments', 0, 50, 'intro', 0, '" + getHash('no-sponsor-segments-video', 1) + "')");
 
-        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 1000)) + "', '" + warnVip01Hash + "')");
-        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 2000)) + "', '" + warnVip01Hash + "')");
+        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 1000)) + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 2000)) + "', '" + warnVip01Hash + "', 1)");
 
 
         db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser") + "')");
