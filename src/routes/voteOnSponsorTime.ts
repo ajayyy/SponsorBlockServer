@@ -1,7 +1,7 @@
 import {Request, Response} from 'express';
 import {Logger} from '../utils/logger';
 import {isUserVIP} from '../utils/isUserVIP';
-import request from 'request';
+import fetch from 'node-fetch';
 import {YouTubeAPI} from '../utils/youtubeApi';
 import {db, privateDB} from '../databases/databases';
 import {dispatchEvent, getVoteAuthor, getVoteAuthorRaw} from '../utils/webhookUtils';
@@ -89,8 +89,9 @@ function sendWebhooks(voteData: VoteData) {
 
                 // Send discord message
                 if (webhookURL !== null && !isUpvote) {
-                    request.post(webhookURL, {
-                        json: {
+                    fetch(webhookURL, {
+                        method: 'POST',
+                        body: JSON.stringify({
                             "embeds": [{
                                 "title": data.items[0].snippet.title,
                                 "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID
@@ -112,17 +113,19 @@ function sendWebhooks(voteData: VoteData) {
                                     "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                                 },
                             }],
-                        },
-                    }, (err, res) => {
-                        if (err) {
-                            Logger.error("Failed to send reported submission Discord hook.");
-                            Logger.error(JSON.stringify(err));
-                            Logger.error("\n");
-                        } else if (res && res.statusCode >= 400) {
+                        })
+                    })
+                    .then(async res => {
+                        if (res.status >= 400) {
                             Logger.error("Error sending reported submission Discord hook");
-                            Logger.error(JSON.stringify(res));
+                            Logger.error(JSON.stringify((await res.text())));
                             Logger.error("\n");
                         }
+                    })
+                    .catch(err => {
+                        Logger.error("Failed to send reported submission Discord hook.");
+                        Logger.error(JSON.stringify(err));
+                        Logger.error("\n");
                     });
                 }
 
