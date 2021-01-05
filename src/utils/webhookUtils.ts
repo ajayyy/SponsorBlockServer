@@ -46,7 +46,7 @@ function dispatchEvent(scope: string, data: any): void {
         })
         .catch(err => {
             Logger.warn('Couldn\'t send webhook to ' + webhook.url);
-            Logger.warn(e.message);
+            Logger.warn(err);
         });
     });
 }

@@ -5,7 +5,6 @@ import {YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
 import fetch from 'node-fetch';
 import isoDurations from 'iso8601-duration';
-import fetch from 'node-fetch';
 import {getHash} from '../utils/getHash';
 import {getIP} from '../utils/getIP';
 import {getFormattedTime} from '../utils/getFormattedTime';
