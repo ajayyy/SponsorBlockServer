@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
@@ -70,30 +70,39 @@ describe('segmentShift', function () {
     });
 
     it('Reject none VIP user', function (done: Done) {
-        request.post(`${baseURL}/api/segmentShift`, {
-            json: {
+        fetch(`${baseURL}/api/segmentShift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                 videoID: 'vsegshift01',
                 userID: 'segshift_randomuser001',
                 startTime: 20,
                 endTime: 30,
-            },
-        }, (err, res) => {
-            if (err) return done(err);
-            return done(res.statusCode === 403 ? undefined : res.statusCode);
-        });
+            }),
+        })
+        .then(res => {
+            done(res.status === 403 ? undefined : res.status);
+        })
+        .catch(err => done(err));
     });
 
     it('Shift is outside segments', function (done: Done) {
-        request.post(`${baseURL}/api/segmentShift`, {
-            json: {
+        fetch(`${baseURL}/api/segmentShift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                 videoID: 'vsegshift01',
                 userID: privateVipUserID,
                 startTime: 20,
                 endTime: 30,
-            },
-        }, (err, res) => {
-            if (err) return done(err);
-            if (res.statusCode !== 200) return done(`Status code was ${res.statusCode}`);
+            }),
+        })
+        .then(res => {
+            if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -117,20 +126,25 @@ describe('segmentShift', function () {
                 },
             ];
             done(dbSponsorTimesCompareExpect(db, expect));
-        });
+        })
+        .catch(err => done(err));
     });
 
     it('Shift is inside segment', function (done: Done) {
-        request.post(`${baseURL}/api/segmentShift`, {
-            json: {
+        fetch(`${baseURL}/api/segmentShift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                 videoID: 'vsegshift01',
                 userID: privateVipUserID,
                 startTime: 65,
                 endTime: 75,
-            },
-        }, (err, res) => {
-            if (err) return done(err);
-            if (res.statusCode !== 200) return done(`Status code was ${res.statusCode}`);
+            }),
+        })
+        .then(res => {
+            if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -154,20 +168,25 @@ describe('segmentShift', function () {
                 },
             ];
             done(dbSponsorTimesCompareExpect(db, expect));
-        });
+        })
+        .catch(err => done(err));
     });
 
     it('Shift is overlaping startTime of segment', function (done: Done) {
-        request.post(`${baseURL}/api/segmentShift`, {
-            json: {
+        fetch(`${baseURL}/api/segmentShift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                 videoID: 'vsegshift01',
                 userID: privateVipUserID,
                 startTime: 32,
                 endTime: 42,
-            },
-        }, (err, res) => {
-            if (err) return done(err);
-            if (res.statusCode !== 200) return done(`Status code was ${res.statusCode}`);
+            }),
+        })
+        .then(res => {
+            if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -191,20 +210,25 @@ describe('segmentShift', function () {
                 },
             ];
             done(dbSponsorTimesCompareExpect(db, expect));
-        });
+        })
+        .catch(err => done(err));
     });
 
     it('Shift is overlaping endTime of segment', function (done: Done) {
-        request.post(`${baseURL}/api/segmentShift`, {
-            json: {
+        fetch(`${baseURL}/api/segmentShift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                 videoID: 'vsegshift01',
                 userID: privateVipUserID,
                 startTime: 85,
                 endTime: 95,
-            },
-        }, (err, res) => {
-            if (err) return done(err);
-            if (res.statusCode !== 200) return done(`Status code was ${res.statusCode}`);
+            }),
+        })
+        .then(res => {
+            if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -228,20 +252,25 @@ describe('segmentShift', function () {
                 },
             ];
             done(dbSponsorTimesCompareExpect(db, expect));
-        });
+        })
+        .catch(err => done(err));
     });
 
     it('Shift is overlaping segment', function (done: Done) {
-        request.post(`${baseURL}/api/segmentShift`, {
-            json: {
+        fetch(`${baseURL}/api/segmentShift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                 videoID: 'vsegshift01',
                 userID: privateVipUserID,
                 startTime: 35,
                 endTime: 55,
-            },
-        }, (err, res) => {
-            if (err) return done(err);
-            if (res.statusCode !== 200) return done(`Status code was ${res.statusCode}`);
+            }),
+        })
+        .then(res => {
+            if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -266,8 +295,7 @@ describe('segmentShift', function () {
                 },
             ];
             done(dbSponsorTimesCompareExpect(db, expect));
-        });
+        })
+        .catch(err => done(err));
     });
-
-
 });

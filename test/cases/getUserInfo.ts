@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
@@ -24,144 +24,101 @@ describe('getUserInfo', () => {
     });
 
     it('Should be able to get a 200', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo?userID=getuserinfo_user_01', null,
-            (err, res) => {
-                if (err) {
-                    done('couldn\'t call endpoint');
-                } else {
-                    if (res.statusCode !== 200) {
-                        done('non 200 (' + res.statusCode + ')');
-                    } else {
-                        done(); // pass
-                    }
-                }
-            });
+        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
+        .then(res => {
+            if (res.status !== 200) done('non 200 (' + res.status + ')');
+            else  done(); // pass
+        })
+        .catch(err => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get a 400 (No userID parameter)', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo', null,
-            (err, res) => {
-                if (err) {
-                    done('couldn\'t call endpoint');
-                } else {
-                    if (res.statusCode !== 400) {
-                        done('non 400');
-                    } else {
-                        done(); // pass
-                    }
-                }
-            });
+        fetch(getbaseURL() + '/api/getUserInfo')
+        .then(res => {
+            if (res.status !== 400) done('non 400 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => done('couldn\'t call endpoint'));
     });
 
     it('Should return info', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo?userID=getuserinfo_user_01', null,
-            (err, res, body) => {
-                if (err) {
-                    done("couldn't call endpoint");
+        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.userName !== 'Username user 01') {
+                    done('Returned incorrect userName "' + data.userName + '"');
+                } else if (data.minutesSaved !== 5) {
+                    done('Returned incorrect minutesSaved "' + data.minutesSaved + '"');
+                } else if (data.viewCount !== 30) {
+                    done('Returned incorrect viewCount "' + data.viewCount + '"');
+                } else if (data.segmentCount !== 3) {
+                    done('Returned incorrect segmentCount "' + data.segmentCount + '"');
                 } else {
-                    if (res.statusCode !== 200) {
-                        done("non 200");
-                    } else {
-                        const data = JSON.parse(body);
-                        if (data.userName !== 'Username user 01') {
-                            done('Returned incorrect userName "' + data.userName + '"');
-                        } else if (data.minutesSaved !== 5) {
-                            done('Returned incorrect minutesSaved "' + data.minutesSaved + '"');
-                        } else if (data.viewCount !== 30) {
-                            done('Returned incorrect viewCount "' + data.viewCount + '"');
-                        } else if (data.segmentCount !== 3) {
-                            done('Returned incorrect segmentCount "' + data.segmentCount + '"');
-                        } else {
-                            done(); // pass
-                        }
-                    }
+                    done(); // pass
                 }
-            });
+            }
+        })
+        .catch(err => done("couldn't call endpoint"));
     });
 
     it('Should get warning data', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo?userID=getuserinfo_warning_0', null,
-            (err, res, body) => {
-                if (err) {
-                    done("couldn't call endpoint");
-                } else {
-                    if (res.statusCode !== 200) {
-                        done("non 200");
-                    } else {
-                        const data = JSON.parse(body);
-                        if (data.warnings !== 1) {
-                            done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
-                        } else {
-                            done(); // pass
-                        }
-                    }
-                }
-            });
+        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_warning_0')
+        .then(async res => {
+            if (res.status !== 200) {
+                done('non 200 (' + res.status + ')');
+            } else {
+                const data = await res.json();;
+                if (data.warnings !== 1) done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
+                else done(); // pass
+            }
+        })
+        .catch(err => done("couldn't call endpoint"));
     });
 
     it('Should get multiple warnings', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo?userID=getuserinfo_warning_1', null,
-            (err, res, body) => {
-                if (err) {
-                    done("couldn't call endpoint");
-                } else {
-                    if (res.statusCode !== 200) {
-                        done("non 200");
-                    } else {
-                        const data = JSON.parse(body);
-                        if (data.warnings !== 2) {
-                            done('wrong number of warnings: ' + data.warnings + ', not ' + 2);
-                        } else {
-                            done(); // pass
-                        }
-                    }
-                }
-            });
+        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_warning_1')
+        .then(async res => {
+            if (res.status !== 200) {
+                done('non 200 (' + res.status + ')');
+            } else {
+                const data = await res.json();
+                if (data.warnings !== 2) done('wrong number of warnings: ' + data.warnings + ', not ' + 2);
+                else done(); // pass
+            }
+        })
+        .catch(err => done("couldn't call endpoint"));
     });
 
     it('Should not get warnings if noe', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo?userID=getuserinfo_warning_2', null,
-            (err, res, body) => {
-                if (err) {
-                    done("couldn't call endpoint");
-                } else {
-                    if (res.statusCode !== 200) {
-                        done("non 200");
-                    } else {
-                        const data = JSON.parse(body);
-                        if (data.warnings !== 0) {
-                            done('wrong number of warnings: ' + data.warnings + ', not ' + 0);
-                        } else {
-                            done(); // pass
-                        }
-                    }
-                }
-            });
+        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_warning_2')
+        .then(async res => {
+            if (res.status !== 200) {
+                done('non 200 (' + res.status + ')');
+            } else {
+                const data = await res.json();
+                if (data.warnings !== 0) done('wrong number of warnings: ' + data.warnings + ', not ' + 0);
+                else done(); // pass
+            }
+        })
+        .catch(err => done("couldn't call endpoint"));
     });
 
     it('Should return userID for userName (No userName set)', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/getUserInfo?userID=getuserinfo_user_02', null,
-            (err, res, body) => {
-                if (err) {
-                    done('couldn\'t call endpoint');
-                } else {
-                    if (res.statusCode !== 200) {
-                        done('non 200');
-                    } else {
-                        const data = JSON.parse(body);
-                        if (data.userName !== 'c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f') {
-                            return done('Did not return userID for userName');
-                        }
-                        done(); // pass
-                    }
+        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_02')
+        .then(async res => {
+            if (res.status !== 200) {
+                done('non 200 (' + res.status + ')');
+            } else {
+                const data = await res.json();
+                if (data.userName !== 'c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f') {
+                    return done('Did not return userID for userName');
                 }
-            });
+                done(); // pass
+            }
+        })
+        .catch(err => done('couldn\'t call endpoint'));
     });
 });
