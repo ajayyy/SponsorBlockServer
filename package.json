@@ -20,7 +20,6 @@
     "iso8601-duration": "^1.2.0",
     "node-fetch": "^2.6.0",
     "redis": "^3.0.2",
-    "request": "^2.88.2",
     "sync-mysql": "^3.0.1",
     "uuid": "^3.3.2",
     "youtube-api": "^3.0.1"
