@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
-import { Category, DBSegment, OverlappingSegmentGroup, Segment, SegmentCache, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
+import { SBRecord } from '../types/lib.model';
+import { Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
@@ -20,14 +21,14 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
         }
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID] = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]);
+            cache.shadowHiddenSegmentIPs[videoID] = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]) as { hashedIP: HashedIP }[];
         }
 
         //if this isn't their ip, don't send it to them
         return cache.shadowHiddenSegmentIPs[videoID].some((shadowHiddenSegment) => {
             if (cache.userHashedIP === undefined) {
                 //hash the IP only if it's strictly necessary
-                cache.userHashedIP = getHash(getIP(req) + config.globalSalt);
+                cache.userHashedIP = getHash((getIP(req) + config.globalSalt) as IPAddress);
             }
 
             return shadowHiddenSegment.hashedIP === cache.userHashedIP;
@@ -46,12 +47,12 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
     const segments: Segment[] = [];
 
     try {
-        const segmentsByCategory: Record<Category, DBSegment[]> = db
+        const segmentsByCategory: SBRecord<Category, DBSegment[]> = db
             .prepare(
                 'all',
                 `SELECT startTime, endTime, votes, UUID, category, shadowHidden FROM sponsorTimes WHERE videoID = ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
                 [videoID, categories]
-            ).reduce((acc: Record<Category, DBSegment[]>, segment: DBSegment) => {
+            ).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
                 acc[segment.category].push(segment);
 
@@ -59,7 +60,7 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
             }, {});
 
         for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
-            segments.push(...prepareCategorySegments(req, videoID, category, categorySegments, cache));
+            segments.push(...prepareCategorySegments(req, videoID as VideoID, category as Category, categorySegments, cache));
         }
 
         return segments;
@@ -71,12 +72,12 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
     }
 }
 
-function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): Record<VideoID, VideoData> {
+function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): SBRecord<VideoID, VideoData> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
-    const segments: Record<VideoID, VideoData> = {};
+    const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
-        type SegmentWithHashPerVideoID = Record<VideoID, {hash: VideoIDHash, segmentPerCategory: Record<Category, DBSegment[]>}>;
+        type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerCategory: SBRecord<Category, DBSegment[]>}>;
 
         const segmentPerVideoID: SegmentWithHashPerVideoID = db
             .prepare(
@@ -103,7 +104,7 @@ function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categ
             };
 
             for (const [category, segmentPerCategory] of Object.entries(videoData.segmentPerCategory)) {
-                segments[videoID].segments.push(...prepareCategorySegments(req, videoID, category, segmentPerCategory, cache));
+                segments[videoID].segments.push(...prepareCategorySegments(req, videoID as VideoID, category as Category, segmentPerCategory, cache));
             }
         }
 

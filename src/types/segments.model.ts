@@ -1,8 +1,12 @@
-export type SegmentUUID = string;
-export type VideoID = string;
-export type Category = string;
-export type VideoIDHash = string;
-export type IPHash = string;
+import { HashedValue } from "./hash.model";
+import { SBRecord } from "./lib.model";
+
+export type SegmentUUID = string  & { __segmentUUIDBrand: unknown };
+export type VideoID = string & { __videoIDBrand: unknown };
+export type Category = string & { __categoryBrand: unknown };
+export type VideoIDHash = VideoID & HashedValue;
+export type IPAddress = string & { __ipAddressBrand: unknown };
+export type HashedIP = IPAddress & HashedValue;
 
 export interface Segment { 
     category: Category; 
@@ -45,6 +49,6 @@ export interface VideoData {
 }
 
 export interface SegmentCache {
-    shadowHiddenSegmentIPs: Record<VideoID, {hashedIP: IPHash}[]>,
-    userHashedIP?: IPHash
+    shadowHiddenSegmentIPs: SBRecord<VideoID, {hashedIP: HashedIP}[]>,
+    userHashedIP?: HashedIP
 }
