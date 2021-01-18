@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 
 import * as utils from  '../utils';
 import { getHash } from '../../src/utils/getHash';
@@ -23,9 +23,14 @@ describe('unBan', () => {
   });
 
   it('Should be able to unban a user and re-enable shadow banned segments', (done) => {
-    request.post(utils.getbaseURL() + "/api/shadowBanUser?userID=testMan-unBan&adminUserID=VIPUser-unBan&enabled=false", null, (err, res, body) => {
-      if (err) done(err);
-      else if (res.statusCode === 200) {
+    fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testMan-unBan&adminUserID=VIPUser-unBan&enabled=false", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(async res => {
+      if (res.status === 200) {
         let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
         if (result.length !== 0) {
           console.log(result);
@@ -34,34 +39,48 @@ describe('unBan', () => {
           done();
         }
       } else {
+        const body = await res.text();
         console.log(body);
-        done("Status code was " + res.statusCode);
+        done("Status code was " + res.status);
       }
-    });
+    })
+    .catch(err => done(err));
   });
 
   it('Should be able to unban a user and re-enable shadow banned segments without noSegment entrys', (done) => {
-    request.post(utils.getbaseURL() + "/api/shadowBanUser?userID=testWoman-unBan&adminUserID=VIPUser-unBan&enabled=false", null, (err, res, body) => {
-      if (err) done(err);
-      else if (res.statusCode === 200) {
-        let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
-        if (result.length !== 1) {
-          console.log(result);
-          done("Expected 1 banned entry1 in db, got " + result.length);
+    fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testWoman-unBan&adminUserID=VIPUser-unBan&enabled=false", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(async res => {
+        if (res.status === 200) {
+            let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
+            if (result.length !== 1) {
+                console.log(result);
+                done("Expected 1 banned entry1 in db, got " + result.length);
+            } else {
+              done();
+            }
         } else {
-          done();
+            const body = await res.text();
+            console.log(body);
+            done("Status code was " + res.status);
         }
-      } else {
-        console.log(body);
-        done("Status code was " + res.statusCode);
-      }
-    });
+    })
+    .catch(err => done(err));
   }); 
 
   it('Should be able to unban a user and re-enable shadow banned segments with a mix of noSegment entrys', (done) => {
-    request.post(utils.getbaseURL() + "/api/shadowBanUser?userID=testEntity-unBan&adminUserID=VIPUser-unBan&enabled=false", null, (err, res, body) => {
-      if (err) done(err);
-      else if (res.statusCode === 200) {
+    fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testEntity-unBan&adminUserID=VIPUser-unBan&enabled=false", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(async res => {
+      if (res.status === 200) {
         let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE  userID = ? AND shadowHidden = ?', ['testEntity-unBan', 1]);
         if (result.length !== 1) {
           console.log(result);
@@ -70,9 +89,11 @@ describe('unBan', () => {
           done();
         }
       } else {
-        console.log(body);
-        done("Status code was " + res.statusCode);
+          const body = await res.text();
+          console.log(body);
+          done("Status code was " + res.status);
       }
-    });
+    })
+    .catch(err => done(err));
   }); 
 });

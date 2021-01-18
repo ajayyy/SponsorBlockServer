@@ -3,9 +3,8 @@ import {Logger} from '../utils/logger';
 import {db, privateDB} from '../databases/databases';
 import {YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
-import request from 'request';
-import isoDurations from 'iso8601-duration';
 import fetch from 'node-fetch';
+import isoDurations from 'iso8601-duration';
 import {getHash} from '../utils/getHash';
 import {getIP} from '../utils/getIP';
 import {getFormattedTime} from '../utils/getFormattedTime';
@@ -64,8 +63,10 @@ function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo
             // If it is a first time submission
             // Then send a notification to discord
             if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
-            request.post(config.discordFirstTimeSubmissionsWebhookURL, {
-                json: {
+            
+            fetch(config.discordFirstTimeSubmissionsWebhookURL, {
+                method: 'POST',
+                body: JSON.stringify({
                     "embeds": [{
                         "title": data.items[0].snippet.title,
                         "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseInt(startTime.toFixed(0)) - 2),
@@ -81,17 +82,19 @@ function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo
                             "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                         },
                     }],
-                },
-            }, (err, res) => {
-                if (err) {
-                    Logger.error("Failed to send first time submission Discord hook.");
-                    Logger.error(JSON.stringify(err));
-                    Logger.error("\n");
-                } else if (res && res.statusCode >= 400) {
+                })
+            })
+            .then(res => {
+                if (res.status >= 400) {
                     Logger.error("Error sending first time submission Discord hook");
                     Logger.error(JSON.stringify(res));
                     Logger.error("\n");
                 }
+            })
+            .catch(err => {
+                Logger.error("Failed to send first time submission Discord hook.");
+                Logger.error(JSON.stringify(err));
+                Logger.error("\n");
             });
         });
     }
@@ -114,8 +117,10 @@ function sendWebhooksNB(userID: string, videoID: string, UUID: string, startTime
 
     // Send discord message
     if (config.discordNeuralBlockRejectWebhookURL === null) return;
-    request.post(config.discordNeuralBlockRejectWebhookURL, {
-        json: {
+    
+    fetch(config.discordNeuralBlockRejectWebhookURL, {
+        method: 'POST',
+        body: JSON.stringify({
             "embeds": [{
                 "title": ytData.items[0].snippet.title,
                 "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseFloat(startTime.toFixed(0)) - 2),
@@ -131,17 +136,19 @@ function sendWebhooksNB(userID: string, videoID: string, UUID: string, startTime
                     "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
                 },
             }],
-        },
-    }, (err, res) => {
-        if (err) {
-            Logger.error("Failed to send NeuralBlock Discord hook.");
-            Logger.error(JSON.stringify(err));
-            Logger.error("\n");
-        } else if (res && res.statusCode >= 400) {
+        })
+    })
+    .then(res => {
+        if (res.status >= 400) {
             Logger.error("Error sending NeuralBlock Discord hook");
             Logger.error(JSON.stringify(res));
             Logger.error("\n");
         }
+    })
+    .catch(err => {
+        Logger.error("Failed to send NeuralBlock Discord hook.");
+        Logger.error(JSON.stringify(err));
+        Logger.error("\n");
     });
 }
 
@@ -229,15 +236,20 @@ async function autoModerateSubmission(submission: { videoID: any; userID: any; s
 }
 
 function proxySubmission(req: Request) {
-    request.post(config.proxySubmission + '/api/skipSegments?userID=' + req.query.userID + '&videoID=' + req.query.videoID, {json: req.body}, (err, result) => {
-        if (config.mode === 'development') {
-            if (!err) {
-                Logger.debug('Proxy Submission: ' + result.statusCode + ' (' + result.body + ')');
-            } else {
+    fetch(config.proxySubmission + '/api/skipSegments?userID=' + req.query.userID + '&videoID=' + req.query.videoID, {
+            method: 'POST',
+            body: req.body,
+        })
+        .then(async res => {
+            if (config.mode === 'development') {
+                Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
+            }
+        })
+        .catch(err => {
+            if (config.mode === 'development') {
                 Logger.error("Proxy Submission: Failed to make call");
             }
-        }
-    });
+        });
 }
 
 export async function postSkipSegments(req: Request, res: Response) {

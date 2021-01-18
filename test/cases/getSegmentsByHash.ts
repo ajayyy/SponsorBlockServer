@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
@@ -21,56 +21,47 @@ describe('getSegmentsByHash', () => {
     });
 
     it('Should be able to get a 200', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/3272f?categories=["sponsor", "intro"]', null,
-            (err, res) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
-                else {
-                    done();
-                } // pass
-            });
+        fetch(getbaseURL() + '/api/skipSegments/3272f?categories=["sponsor", "intro"]')
+        .then(res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else done(); // pass
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 404 if no segments are found even if a video for the given hash is known', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/3272f?categories=["shilling"]', null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 404) done("non 404 status code, was " + res.statusCode);
-                else {
-                    if (body === '[]') {
-                        done(); // pass
-                    } else {
-                        done("Response had videos");
-                    }
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/3272f?categories=["shilling"]')
+        .then(async res => {
+            if (res.status !== 404) done("non 404 status code, was " + res.status);
+            else {
+                const body = await res.text();
+                if (body === '[]') done(); // pass
+                else done("Response had videos");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get an empty array if no videos', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/11111?categories=["shilling"]', null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 404) done("non 404 status code, was " + res.statusCode);
-                else {
-                    if (JSON.parse(body).length === 0 && body === '[]') done(); // pass
-                    else done("non empty array returned");
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/11111?categories=["shilling"]')
+        .then(async res => {
+            if (res.status !== 404) done("non 404 status code, was " + res.status);
+            else {
+                const body = await res.text();
+                if (JSON.parse(body).length === 0 && body === '[]') done(); // pass
+                else done("non empty array returned");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 prefix too short', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/11?categories=["shilling"]', null,
-            (err, res) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 400) done("non 400 status code, was " + res.statusCode);
-                else {
-                    done(); // pass
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/11?categories=["shilling"]')
+        .then(res => {
+            if (res.status !== 400) done("non 400 status code, was " + res.status);
+            else done(); // pass
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 prefix too long', (done: Done) => {
@@ -79,120 +70,106 @@ describe('getSegmentsByHash', () => {
             done('failed to generate a long enough string for the test ' + prefix.length);
             return;
         }
-
-        request.get(getbaseURL()
-            + '/api/skipSegments/' + prefix + '?categories=["shilling"]', null,
-            (err, res) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 400) done("non 400 status code, was " + res.statusCode);
-                else {
-                    done(); // pass
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/' + prefix + '?categories=["shilling"]')
+        .then(res => {
+            if (res.status !== 400) done("non 400 status code, was " + res.status);
+            else done(); // pass
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should not return 400 prefix in range', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/11111?categories=["shilling"]', null,
-            (err, res) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 400) done("prefix length 5 gave 400 " + res.statusCode);
-                else {
-                    done(); // pass
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/11111?categories=["shilling"]')
+        .then(res => {
+            if (res.status === 400) done("prefix length 5 gave 400 " + res.status);
+            else done(); // pass
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 404 for no hash', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/?categories=["shilling"]', null,
-            (err, res) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 404) done("expected 404, got " + res.statusCode);
-                else {
-                    done(); // pass
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/?categories=["shilling"]')
+        .then(res => {
+            if (res.status !== 404) done("expected 404, got " + res.status);
+            else done(); // pass
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 500 for bad format categories', (done: Done) => { // should probably be 400
-        request.get(getbaseURL()
-            + '/api/skipSegments/?categories=shilling', null,
-            (err, res) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 500) done("expected 500 got " + res.statusCode);
-                else {
-                    done(); // pass
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/?categories=shilling')
+        .then(res => {
+            if (res.status !== 500) done("expected 500 got " + res.status);
+            else done(); // pass
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get multiple videos', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/fdaf?categories=["sponsor","intro"]', null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
-                else {
-                    body = JSON.parse(body);
-                    if (body.length !== 2) done("expected 2 video, got " + body.length);
-                    else if (body[0].segments.length !== 2) done("expected 2 segments for first video, got " + body[0].segments.length);
-                    else if (body[1].segments.length !== 1) done("expected 1 segment for second video, got " + body[1].segments.length);
-                    else done();
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/fdaf?categories=["sponsor","intro"]')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 videos, got " + body.length);
+                else if (body[0].segments.length !== 2) done("expected 2 segments for first video, got " + body[0].segments.length);
+                else if (body[1].segments.length !== 1) done("expected 1 segment for second video, got " + body[1].segments.length);
+                else done();
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get 200 for no categories (default sponsor)', (done: Done) => {
-        request.get(getbaseURL()
-            + '/api/skipSegments/fdaf', null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode !== 200) done("non 200 status code, was " + res.statusCode);
-                else {
-                    body = JSON.parse(body);
-                    if (body.length !== 2) done("expected 2 videos, got " + body.length);
-                    else if (body[0].segments.length !== 1) done("expected 1 segments for first video, got " + body[0].segments.length);
-                    else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
-                    else if (body[0].segments[0].category !== 'sponsor' || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
-                    else done();
-                }
-            });
+        fetch(getbaseURL() + '/api/skipSegments/fdaf')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 videos, got " + body.length);
+                else if (body[0].segments.length !== 1) done("expected 1 segments for first video, got " + body[0].segments.length);
+                else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
+                else if (body[0].segments[0].category !== 'sponsor' || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
+                else done();
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be able to post a segment and get it using endpoint', (done: Done) => {
         let testID = 'abc123goodVideo';
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: testID,
-                    segments: [{
-                        segment: [13, 17],
-                        category: "sponsor",
-                    }],
-                },
+        fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done('(post) ' + err);
-                else if (res.statusCode === 200) {
-                    request.get(getbaseURL()
-                        + '/api/skipSegments/' + getHash(testID, 1).substring(0, 3), null,
-                        (err, res, body) => {
-                            if (err) done("(get) Couldn't call endpoint");
-                            else if (res.statusCode !== 200) done("(get) non 200 status code, was " + res.statusCode);
-                            else {
-                                body = JSON.parse(body);
-                                if (body.length !== 1) done("(get) expected 1 video, got " + body.length);
-                                else if (body[0].segments.length !== 1) done("(get) expected 1 segments for first video, got " + body[0].segments.length);
-                                else if (body[0].segments[0].category !== 'sponsor') done("(get) segment should be sponsor, was " + body[0].segments[0].category);
-                                else done();
-                            }
-                        });
-                } else {
-                    done("(post) non 200 status code, was " + res.statusCode);
-                }
-            },
-        );
+            body: JSON.stringify({
+                userID: "test",
+                videoID: testID,
+                segments: [{
+                    segment: [13, 17],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                fetch(getbaseURL() + '/api/skipSegments/' + getHash(testID, 1).substring(0, 3))
+                .then(async res => {
+                    if (res.status !== 200) done("(get) non 200 status code, was " + res.status);
+                    else {
+                        const body = await res.json();
+                        if (body.length !== 1) done("(get) expected 1 video, got " + body.length);
+                        else if (body[0].segments.length !== 1) done("(get) expected 1 segments for first video, got " + body[0].segments.length);
+                        else if (body[0].segments[0].category !== 'sponsor') done("(get) segment should be sponsor, was " + body[0].segments[0].category);
+                        else done();
+                    }
+                })
+                .catch(err => done("(get) Couldn't call endpoint"));
+            } else {
+                done("(post) non 200 status code, was " + res.status);
+            }
+        })
+        .catch(err => done('(post) ' + err));
     });
 });

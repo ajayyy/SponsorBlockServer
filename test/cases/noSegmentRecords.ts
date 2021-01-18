@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
@@ -48,21 +48,28 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res, body) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    if (JSON.stringify(body) === JSON.stringify(expected)) {
-                        done();
-                    } else {
-                        done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(body));
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json)
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const data = await res.json();
+                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                    done();
                 } else {
-                    console.log(body);
-                    done("Status code was " + res.statusCode);
+                    done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
                 }
-            });
+            } else {
+                const body = await res.text();
+                console.log(body);
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to submit categories not in video (sql check)', (done: Done) => {
@@ -79,23 +86,29 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res, body) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['no-segments-video-id-1']);
-                    if (result.length !== 4) {
-                        console.log(result);
-                        done("Expected 4 entrys in db, got " + result.length);
-                    } else {
-                        done();
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json)
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['no-segments-video-id-1']);
+                if (result.length !== 4) {
+                    console.log(result);
+                    done("Expected 4 entrys in db, got " + result.length);
                 } else {
-                    console.log(body);
-                    done("Status code was " + res.statusCode);
+                    done();
                 }
-            });
+            } else {
+                const body = await res.text();
+                console.log(body);
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to submit categories with _ in the category', (done: Done) => {
@@ -107,23 +120,29 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res, body) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['underscore']);
-                    if (result.length !== 1) {
-                        console.log(result);
-                        done("Expected 1 entrys in db, got " + result.length);
-                    } else {
-                        done();
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['underscore']);
+                if (result.length !== 1) {
+                    console.log(result);
+                    done("Expected 1 entrys in db, got " + result.length);
                 } else {
-                    console.log(body);
-                    done("Status code was " + res.statusCode);
+                    done();
                 }
-            });
+            } else {
+                const body = await res.text();
+                console.log(body);
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to submit categories with upper and lower case in the category', (done: Done) => {
@@ -135,23 +154,29 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res, body) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['bothCases']);
-                    if (result.length !== 1) {
-                        console.log(result);
-                        done("Expected 1 entrys in db, got " + result.length);
-                    } else {
-                        done();
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['bothCases']);
+                if (result.length !== 1) {
+                    console.log(result);
+                    done("Expected 1 entrys in db, got " + result.length);
                 } else {
-                    console.log(body);
-                    done("Status code was " + res.statusCode);
+                    done();
                 }
-            });
+            } else {
+                const body = await res.text();
+                console.log(body);
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should not be able to submit categories with $ in the category', (done: Done) => {
@@ -163,36 +188,47 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res, body) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['specialChar']);
-                    if (result.length !== 0) {
-                        console.log(result);
-                        done("Expected 0 entrys in db, got " + result.length);
-                    } else {
-                        done();
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['specialChar']);
+                if (result.length !== 0) {
+                    console.log(result);
+                    done("Expected 0 entrys in db, got " + result.length);
                 } else {
-                    console.log(body);
-                    done("Status code was " + res.statusCode);
+                    done();
                 }
-            });
+            } else {
+                const body = await res.text();
+                console.log(body);
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 for missing params', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/noSegments", {json: {}},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 for no categories', (done: Done) => {
@@ -202,16 +238,21 @@ describe('noSegmentRecords', () => {
             categories: [],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 for no userID', (done: Done) => {
@@ -221,16 +262,21 @@ describe('noSegmentRecords', () => {
             categories: ['sponsor'],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 for no videoID', (done: Done) => {
@@ -240,16 +286,21 @@ describe('noSegmentRecords', () => {
             categories: ['sponsor'],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 object categories)', (done: Done) => {
@@ -259,16 +310,21 @@ describe('noSegmentRecords', () => {
             categories: {},
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 bad format categories', (done: Done) => {
@@ -278,16 +334,21 @@ describe('noSegmentRecords', () => {
             categories: 'sponsor',
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 403 if user is not VIP', (done: Done) => {
@@ -299,16 +360,21 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.post(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 403) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 403) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to delete a noSegment record', (done: Done) => {
@@ -320,21 +386,26 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.delete(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record']);
-                    if (result.length === 0) {
-                        done();
-                    } else {
-                        done("Didn't delete record");
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record']);
+                if (result.length === 0) {
+                    done();
                 } else {
-                    done("Status code was " + res.statusCode);
+                    done("Didn't delete record");
                 }
-            });
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to delete one noSegment record without removing another', (done: Done) => {
@@ -346,21 +417,26 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        request.delete(getbaseURL()
-            + "/api/noSegments", {json},
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record-1']);
-                    if (result.length === 1) {
-                        done();
-                    } else {
-                        done("Didn't delete record");
-                    }
+        fetch(getbaseURL() + "/api/noSegments", {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record-1']);
+                if (result.length === 1) {
+                    done();
                 } else {
-                    done("Status code was " + res.statusCode);
+                    done("Didn't delete record");
                 }
-            });
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
 
@@ -370,31 +446,37 @@ describe('noSegmentRecords', () => {
      */
 
     it('Should not be able to submit a segment to a video with a no-segment record (single submission)', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "testman42",
-                    videoID: "noSubmitVideo",
-                    segments: [{
-                        segment: [20, 40],
-                        category: "sponsor",
-                    }],
-                },
+        fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 403) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+            body: JSON.stringify({
+                userID: "testman42",
+                videoID: "noSubmitVideo",
+                segments: [{
+                    segment: [20, 40],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 403) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should not be able to submit segments to a video where any of the submissions with a no-segment record', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes", {
-                json: {
+        fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                     userID: "testman42",
                     videoID: "noSubmitVideo",
                     segments: [{
@@ -404,60 +486,66 @@ describe('noSegmentRecords', () => {
                         segment: [50, 60],
                         category: "intro",
                     }],
-                },
-            },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 403) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+                },),
+        })
+        .then(res => {
+            if (res.status === 403) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
 
     it('Should  be able to submit a segment to a video with a different no-segment record', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "testman42",
-                    videoID: "noSubmitVideo",
-                    segments: [{
-                        segment: [20, 40],
-                        category: "intro",
-                    }],
-                },
+        fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+            body: JSON.stringify({
+                userID: "testman42",
+                videoID: "noSubmitVideo",
+                segments: [{
+                    segment: [20, 40],
+                    category: "intro",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to submit a segment to a video with no no-segment records', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes", {
-                json: {
+        fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                     userID: "testman42",
                     videoID: "normalVideo",
                     segments: [{
                         segment: [20, 40],
                         category: "intro",
                     }],
-                },
-            },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    done();
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+                }),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                done();
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 });

@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 import {config} from '../../src/config';
 import {getHash} from '../../src/utils/getHash';
 import {Done, getbaseURL} from '../utils';
@@ -37,54 +37,67 @@ describe('postSkipSegments', () => {
     });
 
     it('Should be able to submit a single time (Params method)', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=test&category=sponsor", null,
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
-                    if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
-                        done();
-                    } else {
-                        done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                    }
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=test&category=sponsor", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+        .then(res => {
+            if (res.status === 200) {
+                const row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
+                if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
+                    done();
                 } else {
-                    done("Status code was " + res.statusCode);
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
                 }
-            });
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to submit a single time (JSON method)', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: "dQw4w9WgXcF",
-                    segments: [{
-                        segment: [0, 10],
-                        category: "sponsor",
-                    }],
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
-                    if (row.startTime === 0 && row.endTime === 10 && row.category === "sponsor") {
-                        done();
-                    } else {
-                        done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                    }
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcF",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                const row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.category === "sponsor") {
+                    done();
                 } else {
-                    done("Status code was " + res.statusCode);
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
                 }
-            });
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be able to submit multiple times (JSON method)', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                     userID: "test",
                     videoID: "dQw4w9WgXcQ",
                     segments: [{
@@ -94,35 +107,38 @@ describe('postSkipSegments', () => {
                         segment: [30, 60],
                         category: "intro",
                     }],
-                },
-            },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
-                    let success = true;
-                    if (rows.length === 2) {
-                        for (const row of rows) {
-                            if ((row.startTime !== 3 || row.endTime !== 10 || row.category !== "sponsor") &&
-                                (row.startTime !== 30 || row.endTime !== 60 || row.category !== "intro")) {
-                                success = false;
-                                break;
-                            }
+                }),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
+                let success = true;
+                if (rows.length === 2) {
+                    for (const row of rows) {
+                        if ((row.startTime !== 3 || row.endTime !== 10 || row.category !== "sponsor") &&
+                            (row.startTime !== 30 || row.endTime !== 60 || row.category !== "intro")) {
+                            success = false;
+                            break;
                         }
                     }
-
-                    if (success) done();
-                    else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-                } else {
-                    done("Status code was " + res.statusCode);
                 }
-            });
+                if (success) done();
+                else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     }).timeout(5000);
 
     it('Should allow multiple times if total is under 80% of video(JSON method)', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                     userID: "test",
                     videoID: "L_jWHffIx5E",
                     segments: [{
@@ -138,37 +154,40 @@ describe('postSkipSegments', () => {
                         segment: [99, 170],
                         category: "sponsor",
                     }],
-                },
-            },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
-                    let success = true;
-                    if (rows.length === 4) {
-                        for (const row of rows) {
-                            if ((row.startTime !== 3 || row.endTime !== 3000 || row.category !== "sponsor") &&
-                                (row.startTime !== 3002 || row.endTime !== 3050 || row.category !== "intro") &&
-                                (row.startTime !== 45 || row.endTime !== 100 || row.category !== "interaction") &&
-                                (row.startTime !== 99 || row.endTime !== 170 || row.category !== "sponsor")) {
-                                success = false;
-                                break;
-                            }
+                }),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
+                let success = true;
+                if (rows.length === 4) {
+                    for (const row of rows) {
+                        if ((row.startTime !== 3 || row.endTime !== 3000 || row.category !== "sponsor") &&
+                            (row.startTime !== 3002 || row.endTime !== 3050 || row.category !== "intro") &&
+                            (row.startTime !== 45 || row.endTime !== 100 || row.category !== "interaction") &&
+                            (row.startTime !== 99 || row.endTime !== 170 || row.category !== "sponsor")) {
+                            success = false;
+                            break;
                         }
                     }
-
-                    if (success) done();
-                    else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-                } else {
-                    done("Status code was " + res.statusCode);
                 }
-            });
+                if (success) done();
+                else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     }).timeout(5000);
 
     it('Should reject multiple times if total is over 80% of video (JSON method)', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
                     userID: "test",
                     videoID: "n9rIGdXnSJc",
                     segments: [{
@@ -184,275 +203,334 @@ describe('postSkipSegments', () => {
                         segment: [4050, 4750],
                         category: "intro",
                     }],
-                },
-            },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
-                    let success = true;
-                    if (rows.length === 4) {
-                        for (const row of rows) {
-                            if ((row.startTime === 0 || row.endTime === 2000 || row.category === "interaction") ||
-                                (row.startTime === 3000 || row.endTime === 4000 || row.category === "sponsor") ||
-                                (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
-                                (row.startTime === 4050 || row.endTime === 4750 || row.category === "intro")) {
-                                success = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (success) done();
-                    else
-                        done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
-    }).timeout(5000);
-
-    it('Should reject multiple times if total is over 80% of video including previosuly submitted times(JSON method)', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: "80percent_video",
-                    segments: [{
-                        segment: [2000, 4000],
-                        category: "sponsor",
-                    }, {
-                        segment: [1500, 2750],
-                        category: "sponsor",
-                    }, {
-                        segment: [4050, 4750],
-                        category: "sponsor",
-                    }],
-                },
-            },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 400) {
-                    let rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
-                    let success = rows.length == 2;
+                }),
+            })
+        .then(res => {
+            if (res.status === 400) {
+                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
+                let success = true;
+                if (rows.length === 4) {
                     for (const row of rows) {
-                        if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||
+                        if ((row.startTime === 0 || row.endTime === 2000 || row.category === "interaction") ||
+                            (row.startTime === 3000 || row.endTime === 4000 || row.category === "sponsor") ||
                             (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
-                            (row.startTime === 4050 || row.endTime === 4750 || row.category === "sponsor")) {
+                            (row.startTime === 4050 || row.endTime === 4750 || row.category === "intro")) {
                             success = false;
                             break;
                         }
                     }
-                    if (success) done();
-                    else
-                        done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-                } else {
-                    done("Status code was " + res.statusCode);
                 }
-            });
+
+                if (success) done();
+                else
+                    done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    }).timeout(5000);
+
+    it('Should reject multiple times if total is over 80% of video including previosuly submitted times(JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "80percent_video",
+                segments: [{
+                    segment: [2000, 4000],
+                    category: "sponsor",
+                }, {
+                    segment: [1500, 2750],
+                    category: "sponsor",
+                }, {
+                    segment: [4050, 4750],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 400) {
+                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
+                let success = rows.length == 2;
+                for (const row of rows) {
+                    if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||
+                        (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
+                        (row.startTime === 4050 || row.endTime === 4750 || row.category === "sponsor")) {
+                        success = false;
+                        break;
+                    }
+                }
+                if (success) done();
+                else
+                    done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     }).timeout(5000);
 
     it('Should be accepted if a non-sponsor is less than 1 second', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 200) done(); // pass
-                else done("non 200 status code: " + res.statusCode + " (" + body + ")");
-            });
+        fetch(getbaseURL()
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", {
+            method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 200) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 200 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if a sponsor is less than 1 second', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 400) done(); // pass
-                else done("non 403 status code: " + res.statusCode + " (" + body + ")");
-            });
+        fetch(getbaseURL()
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", {
+            method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 400) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 403 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if over 80% of the video', (done: Done) => {
-        request.get(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testing", null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 403) done(); // pass
-                else done("non 403 status code: " + res.statusCode + " (" + body + ")");
-            });
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testing")
+        .then(async res => {
+            if (res.status === 403) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 403 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it("Should be rejected if NB's predicted probability is <70%.", (done: Done) => {
-        request.get(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testing", null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 200) done(); // pass
-                else done("non 200 status code: " + res.statusCode + " (" + body + ")");
-            });
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testing")
+        .then(async res => {
+            if (res.status === 200) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 200 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if user has to many active warnings', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "warn-user01",
-                    videoID: "dQw4w9WgXcF",
-                    segments: [{
-                        segment: [0, 10],
-                        category: "sponsor",
-                    }],
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(err);
-                else if (res.statusCode === 403) {
-                    done(); // success
-                } else {
-                    done("Status code was " + res.statusCode);
-                }
-            });
+            body: JSON.stringify({
+                userID: "warn-user01",
+                videoID: "dQw4w9WgXcF",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 403) {
+                done(); // success
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be accepted if user has some active warnings', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
                     userID: "warn-user02",
                     videoID: "dQw4w9WgXcF",
                     segments: [{
                         segment: [50, 60],
                         category: "sponsor",
                     }],
-                },
-            },
-            (err, res, body) => {
-                if (err) done(err);
-                else if (res.statusCode === 200) {
-                    done(); // success
-                } else {
-                    done("Status code was " + res.statusCode + " " + body);
-                }
-            });
+                }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                done(); // success
+            } else {
+                const body = await res.text();
+                done("Status code was " + res.status + " " + body);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should be allowed if youtube thinks duration is 0', (done: Done) => {
-        request.get(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 200) done(); // pass
-                else done("non 200 status code: " + res.statusCode + " (" + body + ")");
-            });
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", {
+                method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 200) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 200 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if not a valid videoID', (done: Done) => {
-        request.get(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=knownWrongID&startTime=30&endTime=1000000&userID=testing", null,
-            (err, res, body) => {
-                if (err) done("Couldn't call endpoint");
-                else if (res.statusCode === 403) done(); // pass
-                else done("non 403 status code: " + res.statusCode + " (" + body + ")");
-            });
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?videoID=knownWrongID&startTime=30&endTime=1000000&userID=testing")
+        .then(async res => {
+            if (res.status === 403) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 403 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 for missing params (Params method)', (done: Done) => {
-        request.post(getbaseURL()
-            + "/api/postVideoSponsorTimes?startTime=9&endTime=10&userID=test", null,
-            (err, res) => {
-                if (err) done(true);
-                if (res.statusCode === 400) done();
-                else done(true);
-            });
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?startTime=9&endTime=10&userID=test", {
+                method: 'POST',
+        })
+        .then(res => {
+            if (res.status === 400) done();
+            else done(true);
+        })
+        .catch(err => done(true));
     });
 
     it('Should return 400 for missing params (JSON method) 1', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    segments: [{
-                        segment: [9, 10],
-                        category: "sponsor",
-                    }, {
-                        segment: [31, 60],
-                        category: "intro",
-                    }],
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(true);
-                else if (res.statusCode === 400) done();
-                else done(true);
-            });
+            body: JSON.stringify({
+                userID: "test",
+                segments: [{
+                    segment: [9, 10],
+                    category: "sponsor",
+                }, {
+                    segment: [31, 60],
+                    category: "intro",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 400) done();
+            else done(true);
+        })
+        .catch(err => done(true));
     });
     it('Should return 400 for missing params (JSON method) 2', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: "dQw4w9WgXcQ",
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(true);
-                else if (res.statusCode === 400) done();
-                else done(true);
-            });
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcQ",
+            }),
+        })
+        .then(res => {
+            if (res.status === 400) done();
+            else done(true);
+        })
+        .catch(err => done(true));
     });
     it('Should return 400 for missing params (JSON method) 3', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: "dQw4w9WgXcQ",
-                    segments: [{
-                        segment: [0],
-                        category: "sponsor",
-                    }, {
-                        segment: [31, 60],
-                        category: "intro",
-                    }],
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(true);
-                else if (res.statusCode === 400) done();
-                else done(true);
-            });
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcQ",
+                segments: [{
+                    segment: [0],
+                    category: "sponsor",
+                }, {
+                    segment: [31, 60],
+                    category: "intro",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 400) done();
+            else done(true);
+        })
+        .catch(err => done(true));
     });
     it('Should return 400 for missing params (JSON method) 4', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: "dQw4w9WgXcQ",
-                    segments: [{
-                        segment: [9, 10],
-                    }, {
-                        segment: [31, 60],
-                        category: "intro",
-                    }],
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(true);
-                else if (res.statusCode === 400) done();
-                else done(true);
-            });
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcQ",
+                segments: [{
+                    segment: [9, 10],
+                }, {
+                    segment: [31, 60],
+                    category: "intro",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 400) done();
+            else done(true);
+        })
+        .catch(err => done(true));
     });
     it('Should return 400 for missing params (JSON method) 5', (done: Done) => {
-        request.post(getbaseURL()
+        fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
-                json: {
-                    userID: "test",
-                    videoID: "dQw4w9WgXcQ",
-                },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            (err, res) => {
-                if (err) done(true);
-                else if (res.statusCode === 400) done();
-                else done(true);
-            });
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcQ",
+            }),
+        })
+        .then(res => {
+            if (res.status === 400) done();
+            else done(true);
+        })
+        .catch(err => done(true));
     });
 });

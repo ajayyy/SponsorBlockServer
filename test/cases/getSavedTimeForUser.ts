@@ -1,4 +1,4 @@
-import request from 'request';
+import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
@@ -10,12 +10,11 @@ describe('getSavedTimeForUser', () => {
     });
 
     it('Should be able to get a 200', (done: Done) => {
-        request.get(getbaseURL()
-            + "/api/getSavedTimeForUser?userID=testman", null,
-            (err, res) => {
-                if (err) done("couldn't call endpoint");
-                else if (res.statusCode !== 200) done("non 200");
-                else done(); // pass
-            });
+        fetch(getbaseURL() + "/api/getSavedTimeForUser?userID=testman")
+        .then(res => {
+            if (res.status !== 200) done("non 200");
+            else done(); // pass
+        })
+        .catch(err => done("couldn't call endpoint"));
     });
 });
