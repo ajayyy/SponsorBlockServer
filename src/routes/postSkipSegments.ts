@@ -82,7 +82,10 @@ function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo
                             "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                         },
                     }],
-                })
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             })
             .then(res => {
                 if (res.status >= 400) {
@@ -136,7 +139,10 @@ function sendWebhooksNB(userID: string, videoID: string, UUID: string, startTime
                     "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
                 },
             }],
-        })
+        }),
+        headers: {
+            'Content-Type': 'application/json'
+        }
     })
     .then(res => {
         if (res.status >= 400) {

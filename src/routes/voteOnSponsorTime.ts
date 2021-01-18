@@ -113,7 +113,10 @@ function sendWebhooks(voteData: VoteData) {
                                     "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
                                 },
                             }],
-                        })
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     })
                     .then(async res => {
                         if (res.status >= 400) {

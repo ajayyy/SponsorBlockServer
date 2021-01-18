@@ -42,6 +42,7 @@ function dispatchEvent(scope: string, data: any): void {
             headers: {
                 "Authorization": authKey,
                 "Event-Type": scope, // Maybe change this in the future?
+                'Content-Type': 'application/json'
             },
         })
         .catch(err => {
