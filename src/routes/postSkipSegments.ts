@@ -302,7 +302,7 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
-    const warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ?",
+    const warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ? AND enabled = 1",
         [userID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
     ).count;
 

@@ -23,6 +23,7 @@ describe('postSkipSegments', () => {
         const warnVip01Hash = getHash("warn-vip01");
         const warnUser01Hash = getHash("warn-user01");
         const warnUser02Hash = getHash("warn-user02");
+        const warnUser03Hash = getHash("warn-user03");
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
         const startOfWarningQuery = 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES';
@@ -34,6 +35,10 @@ describe('postSkipSegments', () => {
         db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
         db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 1000)) + "', '" + warnVip01Hash + "', 1)");
         db.exec(startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 2000)) + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + now + "', '" + warnVip01Hash + "', 0)");
+        db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 0)");
+        db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
+        db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "', 1)");
     });
 
     it('Should be able to submit a single time (Params method)', (done: Done) => {
@@ -369,6 +374,33 @@ describe('postSkipSegments', () => {
                     videoID: "dQw4w9WgXcF",
                     segments: [{
                         segment: [50, 60],
+                        category: "sponsor",
+                    }],
+                }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                done(); // success
+            } else {
+                const body = await res.text();
+                done("Status code was " + res.status + " " + body);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be accepted if user has some warnings removed', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                    userID: "warn-user03",
+                    videoID: "dQw4w9WgXcF",
+                    segments: [{
+                        segment: [53, 60],
                         category: "sponsor",
                     }],
                 }),
