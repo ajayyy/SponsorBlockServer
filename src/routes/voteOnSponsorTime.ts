@@ -270,12 +270,12 @@ async function voteOnSponsorTime(req: Request, res: Response) {
 
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
-    const warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ?",
+    const warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ? AND enabled = 1",
         [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
     ).count;
 
     if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send('Vote blocked. Too many active warnings!');
+        return res.status(403).send('Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
     const voteTypeEnum = (type == 0 || type == 1) ? voteTypes.normal : voteTypes.incorrect;
