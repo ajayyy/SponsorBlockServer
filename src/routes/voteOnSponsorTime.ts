@@ -243,13 +243,14 @@ async function voteOnSponsorTime(req: Request, res: Response) {
     const isOwnSubmission = db.prepare("get", "SELECT UUID as submissionCount FROM sponsorTimes where userID = ? AND UUID = ?", [nonAnonUserID, UUID]) !== undefined;
 
     
-    if (!isVIP) {
+    // If not upvote
+    if (!isVIP && type !== 1) {
         const isVideoLocked = !!db.prepare('get', 'SELECT noSegments.category from noSegments left join sponsorTimes' + 
                                 ' on (noSegments.videoID = sponsorTimes.videoID and noSegments.category = sponsorTimes.category)' + 
                                     ' where UUID = ?', [UUID]);
 
         if (isVideoLocked) {
-            res.status(403).send("Not allowed to vote on video that has been locked by a VIP.");
+            res.status(403).send("Vote rejected: A moderator has decided that this segment is correct");
             return;
         }
     }
