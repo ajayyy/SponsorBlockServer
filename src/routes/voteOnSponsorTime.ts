@@ -245,11 +245,12 @@ async function voteOnSponsorTime(req: Request, res: Response) {
     
     // If not upvote
     if (!isVIP && type !== 1) {
-        const isVideoLocked = !!db.prepare('get', 'SELECT noSegments.category from noSegments left join sponsorTimes' + 
+        const isSegmentLocked = () => !!db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", [UUID])?.locked; 
+        const isVideoLocked = () => !!db.prepare('get', 'SELECT noSegments.category from noSegments left join sponsorTimes' + 
                                 ' on (noSegments.videoID = sponsorTimes.videoID and noSegments.category = sponsorTimes.category)' + 
                                     ' where UUID = ?', [UUID]);
 
-        if (isVideoLocked) {
+        if (isSegmentLocked() || isVideoLocked()) {
             res.status(403).send("Vote rejected: A moderator has decided that this segment is correct");
             return;
         }
@@ -369,6 +370,10 @@ async function voteOnSponsorTime(req: Request, res: Response) {
             //update the vote count on this sponsorTime
             //oldIncrementAmount will be zero is row is null
             db.prepare('run', "UPDATE sponsorTimes SET " + columnName + " = " + columnName + " + ? WHERE UUID = ?", [incrementAmount - oldIncrementAmount, UUID]);
+            if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
+                // Lock this submission
+                db.prepare('run', "UPDATE sponsorTimes SET locked = 1 WHERE UUID = ?", [UUID]);
+            }
 
             //for each positive vote, see if a hidden submission can be shown again
             if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
