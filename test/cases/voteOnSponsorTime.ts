@@ -44,6 +44,7 @@ describe('voteOnSponsorTime', () => {
         db.exec(startOfQuery + "('vote-testtesttest', 1, 11, 2, 'warnvote-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('vote-testtesttest', 1) + "')");
         db.exec(startOfQuery + "('no-sponsor-segments-video', 1, 11, 2, 'no-sponsor-segments-uuid-0', 'no-sponsor-segments', 0, 50, 'sponsor', 0, '" + getHash('no-sponsor-segments-video', 1) + "')");
         db.exec(startOfQuery + "('no-sponsor-segments-video', 1, 11, 2, 'no-sponsor-segments-uuid-1', 'no-sponsor-segments', 0, 50, 'intro', 0, '" + getHash('no-sponsor-segments-video', 1) + "')");
+        db.exec(startOfQuery + "('segment-locking-video', 1, 11, 2, 'segment-locking-uuid-1', 'segment-locking-user', 0, 50, 'intro', 0, '" + getHash('segment-locking-video', 1) + "')");
 
         db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
         db.exec(startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 1)");
@@ -407,14 +408,27 @@ describe('voteOnSponsorTime', () => {
         .catch(err => done(err));
     });
 
-    it('Non-VIP should not be able to vote on a segment with no-segments category', (done: Done) => {
+    it('Non-VIP should not be able to downvote on a segment with no-segments category', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&type=1")
+            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&type=0")
         .then(res => {
             if (res.status === 403) {
                 done();
             } else {
                 done("Status code was " + res.status + " instead of 403");
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Non-VIP should be able to upvote on a segment with no-segments category', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&type=1")
+        .then(res => {
+            if (res.status === 200) {
+                done();
+            } else {
+                done("Status code was " + res.status + " instead of 200");
             }
         })
         .catch(err => done(err));
@@ -433,12 +447,17 @@ describe('voteOnSponsorTime', () => {
         .catch(err => done(err));
     });
 
-    it('VIP should able to vote on a segment with no-segments category', (done: Done) => {
+    it('VIP upvote should lock segment', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/voteOnSponsorTime?userID=VIPUser&UUID=no-sponsor-segments-uuid-0&type=1")
+            + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=1")
         .then(res => {
             if (res.status === 200) {
-                done();
+                let row = db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", ["segment-locking-uuid-1"]);
+                if (row?.locked) {
+                    done();
+                } else {
+                    done("Segment not locked");
+                }
             } else {
                 done("Status code was " + res.status + " instead of 200");
             }
@@ -446,16 +465,4 @@ describe('voteOnSponsorTime', () => {
         .catch(err => done(err));
     });
 
-    it('Non-VIP should be able to vote on a segment on a no-segments video with a category that doesn\'t have no-segments', (done: Done) => {
-        fetch(getbaseURL()
-            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-1&type=1")
-        .then(res => {
-            if (res.status === 200) {
-                done();
-            } else {
-                done("Status code was " + res.status + " instead of 200");
-            }
-        })
-        .catch(err => done(err));
-    });
 });
