@@ -39,6 +39,8 @@ describe('postSkipSegments', () => {
         db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 0)");
         db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
         db.exec(startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "', 1)");
+
+        db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUserSubmission") + "')");
     });
 
     it('Should be able to submit a single time (Params method)', (done: Done) => {
@@ -82,8 +84,8 @@ describe('postSkipSegments', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                const row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.category === "sponsor") {
+                const row = db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor") {
                     done();
                 } else {
                     done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
@@ -95,6 +97,37 @@ describe('postSkipSegments', () => {
         .catch(err => done(err));
     });
 
+    it('VIP submission should start locked', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "VIPUserSubmission",
+                videoID: "vipuserIDSubmission",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(res => {
+            if (res.status === 200) {
+                const row = db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["vipuserIDSubmission"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 1 && row.category === "sponsor") {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+    
     it('Should be able to submit multiple times (JSON method)', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {

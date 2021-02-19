@@ -25,6 +25,7 @@ export interface DBSegment {
     endTime: number;
     UUID: SegmentUUID;
     votes: number;
+    locked: boolean;
     shadowHidden: Visibility;
     videoID: VideoID;
     hashedVideoID: VideoIDHash;
@@ -33,6 +34,7 @@ export interface DBSegment {
 export interface OverlappingSegmentGroup {
     segments: DBSegment[],
     votes: number;
+    locked: boolean; // Contains a locked segment
 }
 
 export interface VotableObject {

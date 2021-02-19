@@ -50,7 +50,7 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
         const segmentsByCategory: SBRecord<Category, DBSegment[]> = db
             .prepare(
                 'all',
-                `SELECT startTime, endTime, votes, UUID, category, shadowHidden FROM sponsorTimes WHERE videoID = ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
+                `SELECT startTime, endTime, votes, locked, UUID, category, shadowHidden FROM sponsorTimes WHERE videoID = ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
                 [videoID, categories]
             ).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
@@ -82,7 +82,7 @@ function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categ
         const segmentPerVideoID: SegmentWithHashPerVideoID = db
             .prepare(
                 'all',
-                `SELECT videoID, startTime, endTime, votes, UUID, category, shadowHidden, hashedVideoID FROM sponsorTimes WHERE hashedVideoID LIKE ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
+                `SELECT videoID, startTime, endTime, votes, locked, UUID, category, shadowHidden, hashedVideoID FROM sponsorTimes WHERE hashedVideoID LIKE ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
                 [hashedVideoIDPrefix + '%', categories]
             ).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
@@ -176,7 +176,7 @@ function chooseSegments(segments: DBSegment[]): DBSegment[] {
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
     segments.forEach(segment => {
         if (segment.startTime > cursor) {
-            currentGroup = {segments: [], votes: 0};
+            currentGroup = {segments: [], votes: 0, locked: false};
             overlappingSegmentsGroups.push(currentGroup);
         }
 
@@ -186,7 +186,17 @@ function chooseSegments(segments: DBSegment[]): DBSegment[] {
             currentGroup.votes += segment.votes;
         }
 
+        if (segment.locked) {
+            currentGroup.locked = true;
+        }
+
         cursor = Math.max(cursor, segment.endTime);
+    });
+
+    overlappingSegmentsGroups.forEach((group) => {
+        if (group.locked) {
+            group.segments = group.segments.filter((segment) => segment.locked);
+        }
     });
 
     //if there are too many groups, find the best 8

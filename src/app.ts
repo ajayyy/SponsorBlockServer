@@ -18,7 +18,7 @@ import {shadowBanUser} from './routes/shadowBanUser';
 import {getUsername} from './routes/getUsername';
 import {setUsername} from './routes/setUsername';
 import {viewedVideoSponsorTime} from './routes/viewedVideoSponsorTime';
-import {voteOnSponsorTime} from './routes/voteOnSponsorTime';
+import {voteOnSponsorTime, getUserID as voteGetUserID} from './routes/voteOnSponsorTime';
 import {getSkipSegmentsByHash} from './routes/getSkipSegmentsByHash';
 import {postSkipSegments} from './routes/postSkipSegments';
 import {endpoint as getSkipSegments} from './routes/getSkipSegments';
@@ -55,7 +55,7 @@ function setupRoutes(app: Express) {
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
     if (config.rateLimit) {
-        if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote));
+        if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote, voteGetUserID));
         if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
     }
 
