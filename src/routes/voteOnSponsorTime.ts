@@ -378,6 +378,9 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Lock this submission
                 db.prepare('run', "UPDATE sponsorTimes SET locked = 1 WHERE UUID = ?", [UUID]);
+            } else if (isVIP && incrementAmount < 0 && voteTypeEnum === voteTypes.normal) {
+                 // Unlock if a VIP downvotes it
+                 db.prepare('run', "UPDATE sponsorTimes SET locked = 0 WHERE UUID = ?", [UUID]);
             }
 
             //for each positive vote, see if a hidden submission can be shown again
