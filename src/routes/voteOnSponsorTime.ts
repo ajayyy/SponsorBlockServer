@@ -10,6 +10,7 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {getIP} from '../utils/getIP';
 import {getHash} from '../utils/getHash';
 import {config} from '../config';
+import { UserID } from '../types/user.model';
 
 const voteTypes = {
     normal: 0,
@@ -214,21 +215,25 @@ function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnSubmiss
     res.sendStatus(200);
 }
 
-async function voteOnSponsorTime(req: Request, res: Response) {
+export function getUserID(req: Request): UserID {
+    return req.query.userID as UserID;
+}
+
+export async function voteOnSponsorTime(req: Request, res: Response) {
     const UUID = req.query.UUID as string;
-    let userID = req.query.userID as string;
+    const paramUserID = getUserID(req);
     let type = req.query.type !== undefined ? parseInt(req.query.type as string) : undefined;
     const category = req.query.category as string;
 
-    if (UUID === undefined || userID === undefined || (type === undefined && category === undefined)) {
+    if (UUID === undefined || paramUserID === undefined || (type === undefined && category === undefined)) {
         //invalid request
         res.sendStatus(400);
         return;
     }
 
     //hash the userID
-    const nonAnonUserID = getHash(userID);
-    userID = getHash(userID + UUID);
+    const nonAnonUserID = getHash(paramUserID);
+    const userID = getHash(paramUserID + UUID);
 
     //x-forwarded-for if this server is behind a proxy
     const ip = getIP(req);
@@ -422,7 +427,3 @@ async function voteOnSponsorTime(req: Request, res: Response) {
         res.status(500).json({error: 'Internal error creating segment vote'});
     }
 }
-
-export {
-    voteOnSponsorTime,
-};
