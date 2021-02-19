@@ -5,14 +5,16 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getSkipSegments', () => {
     before(() => {
-        let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
-        db.exec(startOfQuery + "('testtesttest', 1, 11, 2, '1-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest', 1) + "')");
-        db.exec(startOfQuery + "('testtesttest', 20, 33, 2, '1-uuid-2', 'testman', 0, 50, 'intro', 0, '" + getHash('testtesttest', 1) + "')");
-        db.exec(startOfQuery + "('testtesttest,test', 1, 11, 2, '1-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest,test', 1) + "')");
-        db.exec(startOfQuery + "('test3', 1, 11, 2, '1-uuid-4', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 1) + "')");
-        db.exec(startOfQuery + "('test3', 7, 22, -3, '1-uuid-5', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 1) + "')");
-        db.exec(startOfQuery + "('multiple', 1, 11, 2, '1-uuid-6', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 1) + "')");
-        db.exec(startOfQuery + "('multiple', 20, 33, 2, '1-uuid-7', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 1) + "')");
+        let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, locked, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+        db.exec(startOfQuery + "('testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest', 1) + "')");
+        db.exec(startOfQuery + "('testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 0, '" + getHash('testtesttest', 1) + "')");
+        db.exec(startOfQuery + "('testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest,test', 1) + "')");
+        db.exec(startOfQuery + "('test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 1) + "')");
+        db.exec(startOfQuery + "('test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 1) + "')");
+        db.exec(startOfQuery + "('multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 1) + "')");
+        db.exec(startOfQuery + "('multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 1) + "')");
+        db.exec(startOfQuery + "('locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 0, '" + getHash('locked', 1) + "')");
+        db.exec(startOfQuery + "('locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 0, '" + getHash('locked', 1) + "')");
     });
 
 
@@ -201,6 +203,23 @@ describe('getSkipSegments', () => {
                     done();
                 } else {
                     done("Received incorrect body: " + body);
+                }
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
+    it('Should always get locked segment', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=locked&category=intro")
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 1 && data[0].segment[0] === 20 && data[0].segment[1] === 33
+                    && data[0].category === "intro" && data[0].UUID === "1-uuid-locked-8") {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })

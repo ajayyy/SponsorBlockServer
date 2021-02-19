@@ -433,10 +433,6 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         let startingVotes = 0 + decreaseVotes;
-        if (isVIP) {
-            //this user is a vip, start them at a higher approval rating
-            startingVotes = 10000;
-        }
 
         if (config.youtubeAPIKey !== null) {
             let {err, data} = await new Promise((resolve) => {
@@ -489,11 +485,12 @@ export async function postSkipSegments(req: Request, res: Response) {
             //also better for duplication checking
             const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, segmentInfo.segment[0], segmentInfo.segment[1]);
 
+            const startingLocked = isVIP ? 1 : 0;
             try {
                 db.prepare('run', "INSERT INTO sponsorTimes " +
-                    "(videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID)" +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned, getHash(videoID, 1),
+                    "(videoID, startTime, endTime, votes, locked, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID)" +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned, getHash(videoID, 1),
                     ],
                 );
 
