@@ -465,4 +465,22 @@ describe('voteOnSponsorTime', () => {
         .catch(err => done(err));
     });
 
+    it('VIP downvote should unlock segment', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=0")
+        .then(res => {
+            if (res.status === 200) {
+                let row = db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", ["segment-locking-uuid-1"]);
+                if (!row?.locked) {
+                    done();
+                } else {
+                    done("Segment not locked");
+                }
+            } else {
+                done("Status code was " + res.status + " instead of 200");
+            }
+        })
+        .catch(err => done(err));
+    });
+
 });
