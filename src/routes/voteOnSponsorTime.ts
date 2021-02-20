@@ -155,7 +155,7 @@ function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnSubmiss
         return;
     }
 
-    if (!config.categoryList.includes(category)) {
+    if (!config.isCategoryInConfig(category)) {
         res.status(400).send("Category doesn't exist.");
         return;
     }

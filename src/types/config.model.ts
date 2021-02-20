@@ -1,6 +1,6 @@
 import * as redis from 'redis';
 
-export interface SBSConfig {
+export class SBSConfig {
     port: number;
     mockPort?: number;
     globalSalt: string;
@@ -23,8 +23,9 @@ export interface SBSConfig {
     mode: string;
     readOnly: boolean;
     webhooks: WebhookConfig[];
-    categoryList: string[];
+    categoryList: CategoryConfig[];
     getTopUsersCacheTimeMinutes: number;
+    getCategoryStatsCacheTimeMinutes: number;
     maxNumberOfActiveWarnings: number;
     hoursAfterWarningExpires: number;
     rateLimit: {
@@ -36,6 +37,14 @@ export interface SBSConfig {
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: redis.ClientOpts;
+
+    getCategoryLabel(categoryName: string) {
+        return this.categoryList.find(cat => cat.name === categoryName)?.label;
+    }
+
+    isCategoryInConfig(categoryName: string) {
+        return this.categoryList.find(cat => cat.name === categoryName) != null;
+    }
 }
 
 export interface WebhookConfig {
@@ -49,4 +58,9 @@ export interface RateLimitConfig {
     max: number;
     message: string;
     statusCode: number;
+}
+
+export interface CategoryConfig {
+    name: string;
+    label: string;
 }

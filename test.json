@@ -49,7 +49,14 @@
             ]
         }
     ],
-    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"],
+    "categoryList": [
+        { "name": "sponsor", "label": "Sponsor" },
+        { "name": "intro", "label": "Intro" },
+        { "name": "outro", "label": "Outro" },
+        { "name": "interaction", "label": "Interaction" },
+        { "name": "selfpromo", "label": "Self Promotion" },
+        { "name": "music_offtopic", "label": "Non-Music Section" }
+    ],
     "maxNumberOfActiveWarnings": 3,
     "hoursAfterWarningExpires": 24,
     "rateLimit": {

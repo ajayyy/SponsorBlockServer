@@ -26,6 +26,7 @@ import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
+import {getCategoryStats} from './routes/getCategoryStats';
 
 
 export function createServer(callback: () => void) {
@@ -109,6 +110,8 @@ function setupRoutes(app: Express) {
     app.get('/api/getTotalStats', getTotalStats);
 
     app.get('/api/getUserInfo', getUserInfo);
+
+    app.get('/api/getCategoryStats', getCategoryStats);
 
     //send out a formatted time saved total
     app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
