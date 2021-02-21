@@ -388,7 +388,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             }
 
             // Clear redis cache for this video
-            redis.delAsync(skipSegmentsKey(row.videoID));
+            redis.delAsync(skipSegmentsKey(row?.videoID));
 
             //for each positive vote, see if a hidden submission can be shown again
             if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
