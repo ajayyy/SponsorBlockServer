@@ -253,7 +253,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         res.sendStatus(404);
 
         // Save in cache
-        redis.setAsync(skipSegmentsKey(videoID), JSON.stringify(segments));
+        if (categories.length == 7) redis.setAsync(skipSegmentsKey(videoID), JSON.stringify(segments));
 
         return false;
     }
