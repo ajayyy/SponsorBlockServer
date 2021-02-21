@@ -1,8 +1,8 @@
 import {handleGetSegments} from './getSkipSegments';
 import {Request, Response} from 'express';
 
-export function oldGetVideoSponsorTimes(req: Request, res: Response) {
-    let segments = handleGetSegments(req, res);
+export async function oldGetVideoSponsorTimes(req: Request, res: Response): Promise<void> {
+    let segments = await handleGetSegments(req, res);
 
     if (segments) {
         // Convert to old outputs

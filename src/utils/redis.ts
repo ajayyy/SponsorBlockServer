@@ -2,15 +2,33 @@ import {config} from '../config';
 import {Logger} from './logger';
 import redis, {Callback} from 'redis';
 
-let exportObject = {
-    get: (key: string, callback?: Callback<string | null>) => callback(null, undefined),
-    set: (key: string, value: string, callback?: Callback<string | null>) => callback(null, undefined)
+interface RedisSB {
+    get(key: string, callback?: Callback<string | null>): void;
+    getAsync?(key: string): Promise<{err: Error | null, reply: string | null}>;
+    set(key: string, value: string, callback?: Callback<string | null>): void;
+    setAsync?(key: string, value: string): Promise<{err: Error | null, reply: string | null}>;
+    delAsync?(...keys: [string]): Promise<Error | null>;
+}
+
+let exportObject: RedisSB = {
+    get: (key, callback?) => callback(null, undefined),
+    getAsync: (key) => 
+        new Promise((resolve) => resolve({err: null, reply: undefined})),
+    set: (key, value, callback) => callback(null, undefined),
+    setAsync: (key, value) => 
+        new Promise((resolve) => resolve({err: null, reply: undefined})),
+    delAsync: (...keys) => 
+        new Promise((resolve) => resolve(null)),
 };
 
 if (config.redis) {
     Logger.info('Connected to redis');
     const client = redis.createClient(config.redis);
     exportObject = client;
+
+    exportObject.getAsync = (key) => new Promise((resolve) => client.get(key, (err, reply) => resolve({err, reply})));
+    exportObject.setAsync = (key, value) => new Promise((resolve) => client.set(key, value, (err, reply) => resolve({err, reply})));
+    exportObject.delAsync = (...keys) => new Promise((resolve) => client.del(keys, (err) => resolve(err)));
 }
 
 export default exportObject;

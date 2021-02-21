@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
+import { RedisClient } from 'redis';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
+import { skipSegmentsKey } from '../middleware/redisKeys';
 import { SBRecord } from '../types/lib.model';
 import { Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
+import redis from '../utils/redis';
 
 
 function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Segment[] {
@@ -216,15 +219,28 @@ function chooseSegments(segments: DBSegment[]): DBSegment[] {
  *
  * @returns
  */
-function handleGetSegments(req: Request, res: Response) {
-    const videoID = req.query.videoID as string;
+async function handleGetSegments(req: Request, res: Response): Promise<Segment[] | false> {
+    const videoID = req.query.videoID as VideoID;
     // Default to sponsor
     // If using params instead of JSON, only one category can be pulled
+    console.log(req.query.categories)
     const categories = req.query.categories
         ? JSON.parse(req.query.categories as string)
         : req.query.category
             ? [req.query.category]
             : ['sponsor'];
+
+    // Only 404s are cached at the moment
+    const redisResult = await redis.getAsync(skipSegmentsKey(videoID));
+    
+    if (redisResult.reply) {
+        const redisSegments = JSON.parse(redisResult.reply);
+        if (redisSegments?.length === 0) {
+            res.sendStatus(404);
+            Logger.debug("Using segments from cache for " + videoID);
+            return false;
+        }
+    }
 
     const segments = getSegmentsByVideoID(req, videoID, categories);
 
@@ -235,18 +251,27 @@ function handleGetSegments(req: Request, res: Response) {
 
     if (segments.length === 0) {
         res.sendStatus(404);
+
+        // Save in cache
+        redis.setAsync(skipSegmentsKey(videoID), JSON.stringify(segments));
+
         return false;
     }
 
     return segments;
 }
 
-function endpoint(req: Request, res: Response): void {
-    let segments = handleGetSegments(req, res);
+async function endpoint(req: Request, res: Response): Promise<void> {
+    try {
+        const segments = await handleGetSegments(req, res);
 
-    if (segments) {
-        //send result
-        res.send(segments);
+        // If false, res.send has already been called
+        if (segments) {
+            //send result
+            res.send(segments);
+        }
+    } catch (err) {
+        res.status(500).send();
     }
 }
 

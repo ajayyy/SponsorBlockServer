@@ -11,6 +11,9 @@ import {getIP} from '../utils/getIP';
 import {getHash} from '../utils/getHash';
 import {config} from '../config';
 import { UserID } from '../types/user.model';
+import redis from '../utils/redis';
+import { skipSegmentsKey } from '../middleware/redisKeys';
+import { VideoID } from '../types/segments.model';
 
 const voteTypes = {
     normal: 0,
@@ -335,7 +338,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         }
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        const row = db.prepare('get', "SELECT votes, views FROM sponsorTimes WHERE UUID = ?", [UUID]);
+        const row = db.prepare('get', "SELECT videoID, votes, views FROM sponsorTimes WHERE UUID = ?", [UUID]) as 
+                        {videoID: VideoID, votes: number, views: number};
 
         if (voteTypeEnum === voteTypes.normal) {
             if ((isVIP || isOwnSubmission) && incrementAmount < 0) {
@@ -382,6 +386,9 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                  // Unlock if a VIP downvotes it
                  db.prepare('run', "UPDATE sponsorTimes SET locked = 0 WHERE UUID = ?", [UUID]);
             }
+
+            // Clear redis cache for this video
+            redis.delAsync(skipSegmentsKey(row.videoID));
 
             //for each positive vote, see if a hidden submission can be shown again
             if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {

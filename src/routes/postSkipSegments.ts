@@ -11,6 +11,8 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
+import { skipSegmentsKey } from '../middleware/redisKeys';
+import redis from '../utils/redis';
 
 
 function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
@@ -496,6 +498,9 @@ export async function postSkipSegments(req: Request, res: Response) {
 
                 //add to private db as well
                 privateDB.prepare('run', "INSERT INTO sponsorTimes VALUES(?, ?, ?)", [videoID, hashedIP, timeSubmitted]);
+            
+                // Clear redis cache for this video
+                redis.delAsync(skipSegmentsKey(videoID));
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(502);
