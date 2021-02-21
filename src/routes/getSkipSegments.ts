@@ -223,7 +223,6 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
     const videoID = req.query.videoID as VideoID;
     // Default to sponsor
     // If using params instead of JSON, only one category can be pulled
-    console.log(req.query.categories)
     const categories = req.query.categories
         ? JSON.parse(req.query.categories as string)
         : req.query.category
