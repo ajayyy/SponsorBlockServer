@@ -38,5 +38,6 @@
         "max": 20, // 20 requests in 15min time window
         "statusCode": 200
       }
-    }
+    },
+    "maxRewardTimePerSegmentInSeconds": 86400 // maximum time a user get rewarded in the leaderboard for a single segment
 }

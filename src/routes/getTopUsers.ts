@@ -5,6 +5,7 @@ import {Request, Response} from 'express';
 
 const MILLISECONDS_IN_MINUTE = 60000;
 const getTopUsersWithCache = createMemoryCache(generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
+const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boolean = false) {
     return new Promise((resolve) => {
@@ -25,7 +26,7 @@ function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boolean = f
         }
 
         const rows = db.prepare('all', "SELECT COUNT(*) as totalSubmissions, SUM(views) as viewCount," +
-            "SUM((sponsorTimes.endTime - sponsorTimes.startTime) / 60 * sponsorTimes.views) as minutesSaved, " +
+            "SUM(((CASE WHEN endTime - startTime > " + maxRewardTimePerSegmentInSeconds + " THEN " + maxRewardTimePerSegmentInSeconds + " ELSE endTime - startTime END) / 60) * views) as minutesSaved," +
             "SUM(votes) as userVotes, " +
             additionalFields +
             "IFNULL(userNames.userName, sponsorTimes.userID) as userName FROM sponsorTimes LEFT JOIN userNames ON sponsorTimes.userID=userNames.userID " +

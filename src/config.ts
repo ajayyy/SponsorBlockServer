@@ -45,6 +45,7 @@ addDefaults(config, {
     },
     userCounterURL: null,
     youtubeAPIKey: null,
+    maxRewardTimePerSegmentInSeconds: 86400,
 });
 
 // Add defaults
