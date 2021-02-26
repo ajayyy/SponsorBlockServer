@@ -96,10 +96,10 @@ describe('getSegmentsByHash', () => {
         .catch(err => done("Couldn't call endpoint"));
     });
 
-    it('Should return 500 for bad format categories', (done: Done) => { // should probably be 400
-        fetch(getbaseURL() + '/api/skipSegments/?categories=shilling')
+    it('Should return 400 for bad format categories', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/fdaf?categories=shilling')
         .then(res => {
-            if (res.status !== 500) done("expected 500 got " + res.status);
+            if (res.status !== 400) done("expected 400 got " + res.status);
             else done(); // pass
         })
         .catch(err => done("Couldn't call endpoint"));
