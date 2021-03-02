@@ -92,6 +92,8 @@ databases/sponsorTimes.db
 databases/sponsorTimes.db-shm
 databases/sponsorTimes.db-wal
 databases/private.db
+databases/private.db-shm
+databases/private.db-wal
 databases/sponsorTimesReal.db
 test/databases/sponsorTimes.db
 test/databases/sponsorTimes.db-shm
