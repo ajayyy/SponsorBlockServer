@@ -1,6 +1,9 @@
 import {db} from '../databases/databases';
 import {Request, Response} from 'express';
 import {getHash} from '../utils/getHash';
+import {config} from '../config';
+
+const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 export function getSavedTimeForUser(req: Request, res: Response) {
     let userID = req.query.userID as string;
@@ -15,7 +18,7 @@ export function getSavedTimeForUser(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = db.prepare("get", "SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ", [userID]);
+        let row = db.prepare("get", "SELECT SUM(((CASE WHEN endTime - startTime > " + maxRewardTimePerSegmentInSeconds + " THEN " + maxRewardTimePerSegmentInSeconds + " ELSE endTime - startTime END) / 60) * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ", [userID]);
 
         if (row.minutesSaved != null) {
             res.send({
