@@ -100,6 +100,7 @@ test/databases/private.db
 
 # Config files
 config.json
+docker/database.env
 
 # Mac files
 .DS_Store
