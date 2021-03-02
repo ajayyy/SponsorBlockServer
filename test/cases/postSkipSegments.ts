@@ -53,7 +53,7 @@ describe('postSkipSegments', () => {
             })
         .then(res => {
             if (res.status === 200) {
-                const row = db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
+                const row = await db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
                 if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
                     done();
                 } else {
@@ -84,7 +84,7 @@ describe('postSkipSegments', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                const row = db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
+                const row = await db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
                 if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor") {
                     done();
                 } else {
@@ -115,7 +115,7 @@ describe('postSkipSegments', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                const row = db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["vipuserIDSubmission"]);
+                const row = await db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["vipuserIDSubmission"]);
                 if (row.startTime === 0 && row.endTime === 10 && row.locked === 1 && row.category === "sponsor") {
                     done();
                 } else {
@@ -149,7 +149,7 @@ describe('postSkipSegments', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
+                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
                 let success = true;
                 if (rows.length === 2) {
                     for (const row of rows) {
@@ -196,7 +196,7 @@ describe('postSkipSegments', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
+                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
                 let success = true;
                 if (rows.length === 4) {
                     for (const row of rows) {
@@ -245,7 +245,7 @@ describe('postSkipSegments', () => {
             })
         .then(res => {
             if (res.status === 400) {
-                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
+                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
                 let success = true;
                 if (rows.length === 4) {
                     for (const row of rows) {
@@ -293,7 +293,7 @@ describe('postSkipSegments', () => {
         })
         .then(res => {
             if (res.status === 400) {
-                const rows = db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
+                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
                 let success = rows.length == 2;
                 for (const row of rows) {
                     if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||

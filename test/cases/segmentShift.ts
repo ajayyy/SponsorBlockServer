@@ -21,13 +21,13 @@ function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, en
 }
 
 function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
-    db.prepare('run', `UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?`, [startTime, endTime, UUID]);
+    await db.prepare('run', `UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?`, [startTime, endTime, UUID]);
 }
 
 function dbSponsorTimesCompareExpect(db: IDatabase, expect: any) {
     for (let i = 0, len = expect.length; i < len; i++) {
         const expectSeg = expect[i];
-        let seg = db.prepare('get', "SELECT startTime, endTime FROM sponsorTimes WHERE UUID = ?", [expectSeg.UUID]);
+        let seg = await db.prepare('get', "SELECT startTime, endTime FROM sponsorTimes WHERE UUID = ?", [expectSeg.UUID]);
         if ('removed' in expect) {
             if (expect.removed === true && seg.votes === -2) {
                 return;

@@ -45,7 +45,7 @@ function shiftSegment(segment: any, shift: { startTime: any; endTime: any }) {
     return {action: ACTION_NONE, segment};
 }
 
-export function postSegmentShift(req: Request, res: Response): Response {
+export async function postSegmentShift(req: Request, res: Response): Promise<Response> {
     // Collect user input data
     const videoID = req.body.videoID;
     const startTime = req.body.startTime;
@@ -66,7 +66,7 @@ export function postSegmentShift(req: Request, res: Response): Response {
 
     // Check if user is VIP
     userID = getHash(userID);
-    const userIsVIP = isUserVIP(userID);
+    const userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {
         res.status(403).json({
@@ -76,22 +76,23 @@ export function postSegmentShift(req: Request, res: Response): Response {
     }
 
     try {
-        const segments = db.prepare('all', 'SELECT startTime, endTime, UUID FROM sponsorTimes WHERE videoID = ?', [videoID]);
+        const segments = await db.prepare('all', 'SELECT startTime, endTime, UUID FROM sponsorTimes WHERE videoID = ?', [videoID]);
         const shift = {
             startTime,
             endTime,
         };
-        segments.forEach((segment: any) => {
+
+        for (const segment of segments) {
             const result = shiftSegment(segment, shift);
             switch (result.action) {
                 case ACTION_UPDATE:
-                    db.prepare('run', 'UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
+                    await db.prepare('run', 'UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
                     break;
                 case ACTION_REMOVE:
-                    db.prepare('run', 'UPDATE sponsorTimes SET startTime = ?, endTime = ?, votes = -2 WHERE UUID = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
+                    await db.prepare('run', 'UPDATE sponsorTimes SET startTime = ?, endTime = ?, votes = -2 WHERE UUID = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
                     break;
             }
-        });
+        };
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);

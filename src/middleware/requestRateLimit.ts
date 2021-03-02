@@ -16,8 +16,8 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (r
         keyGenerator: (req) => {
             return getHash(getIP(req), 1);
         },
-        handler: (req, res, next) => {
-            if (getUserID === undefined || !isUserVIP(getHash(getUserID(req)))) {
+        handler: async (req, res, next) => {
+            if (getUserID === undefined || !await isUserVIP(getHash(getUserID(req)))) {
                 return res.status(limitConfig.statusCode).send(limitConfig.message);
             } else {
                 return next();

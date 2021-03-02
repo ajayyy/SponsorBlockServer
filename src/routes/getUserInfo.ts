@@ -3,9 +3,9 @@ import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
 import {Logger} from '../utils/logger'
 
-function dbGetSubmittedSegmentSummary(userID: string): any {
+async function dbGetSubmittedSegmentSummary(userID: string): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        let row = db.prepare("get", "SELECT SUM(((endTime - startTime) / 60) * views) as minutesSaved, count(*) as segmentCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
+        let row = await db.prepare("get", "SELECT SUM(((endTime - startTime) / 60) * views) as minutesSaved, count(*) as segmentCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
         if (row.minutesSaved != null) {
             return {
                 minutesSaved: row.minutesSaved,
@@ -18,13 +18,13 @@ function dbGetSubmittedSegmentSummary(userID: string): any {
             };
         }
     } catch (err) {
-        return false;
+        return null;
     }
 }
 
-function dbGetUsername(userID: string) {
+async function dbGetUsername(userID: string) {
     try {
-        let row = db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
+        let row = await db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
         if (row !== undefined) {
             return row.userName;
         } else {
@@ -36,9 +36,9 @@ function dbGetUsername(userID: string) {
     }
 }
 
-function dbGetViewsForUser(userID: string) {
+async function dbGetViewsForUser(userID: string) {
     try {
-        let row = db.prepare('get', "SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
+        let row = await db.prepare('get', "SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
         //increase the view count by one
         if (row.viewCount != null) {
             return row.viewCount;
@@ -50,9 +50,9 @@ function dbGetViewsForUser(userID: string) {
     }
 }
 
-function dbGetWarningsForUser(userID: string): number {
+async function dbGetWarningsForUser(userID: string): Promise<number> {
     try {
-        let rows = db.prepare('all', "SELECT * FROM warnings WHERE userID = ?", [userID]);
+        let rows = await db.prepare('all', "SELECT * FROM warnings WHERE userID = ?", [userID]);
         return rows.length;
     } catch (err) {
         Logger.error('Couldn\'t get warnings for user ' + userID + '. returning 0');
@@ -60,7 +60,7 @@ function dbGetWarningsForUser(userID: string): number {
     }
 }
 
-export function getUserInfo(req: Request, res: Response) {
+export async function getUserInfo(req: Request, res: Response) {
     let userID = req.query.userID as string;
 
     if (userID == undefined) {
@@ -72,13 +72,17 @@ export function getUserInfo(req: Request, res: Response) {
     //hash the userID
     userID = getHash(userID);
 
-    const segmentsSummary = dbGetSubmittedSegmentSummary(userID);
-    res.send({
-        userID,
-        userName: dbGetUsername(userID),
-        minutesSaved: segmentsSummary.minutesSaved,
-        segmentCount: segmentsSummary.segmentCount,
-        viewCount: dbGetViewsForUser(userID),
-        warnings: dbGetWarningsForUser(userID),
-    });
+    const segmentsSummary = await dbGetSubmittedSegmentSummary(userID);
+    if (segmentsSummary) {
+        res.send({
+            userID,
+            userName: await dbGetUsername(userID),
+            minutesSaved: segmentsSummary.minutesSaved,
+            segmentCount: segmentsSummary.segmentCount,
+            viewCount: await dbGetViewsForUser(userID),
+            warnings: await dbGetWarningsForUser(userID),
+        });
+    } else {
+        res.status(400).send();
+    }
 }

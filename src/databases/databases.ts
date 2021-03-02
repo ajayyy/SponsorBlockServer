@@ -9,8 +9,7 @@ let privateDB: IDatabase;
 if (config.mysql) {
     db = new Mysql(config.mysql);
     privateDB = new Mysql(config.privateMysql);
-}
-else {
+} else {
     db = new Sqlite({
         dbPath: config.db,
         dbSchemaFileName: config.dbSchema,

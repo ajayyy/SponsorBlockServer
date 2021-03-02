@@ -23,7 +23,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
+                let row = await db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
                 if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
                     done();
                 } else {
@@ -54,7 +54,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 409) {
-                let row = db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
+                let row = await db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
                 if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
                     done();
                 } else {
@@ -86,7 +86,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
+                let row = await db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
                 if (row?.enabled == 0) {
                     done();
                 } else {

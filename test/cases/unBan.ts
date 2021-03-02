@@ -31,7 +31,7 @@ describe('unBan', () => {
     })
     .then(async res => {
       if (res.status === 200) {
-        let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
+        let result = await db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
         if (result.length !== 0) {
           console.log(result);
           done("Expected 0 banned entrys in db, got " + result.length);
@@ -56,7 +56,7 @@ describe('unBan', () => {
     })
     .then(async res => {
         if (res.status === 200) {
-            let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
+            let result = await db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
             if (result.length !== 1) {
                 console.log(result);
                 done("Expected 1 banned entry1 in db, got " + result.length);
@@ -81,7 +81,7 @@ describe('unBan', () => {
     })
     .then(async res => {
       if (res.status === 200) {
-        let result = db.prepare('all', 'SELECT * FROM sponsorTimes WHERE  userID = ? AND shadowHidden = ?', ['testEntity-unBan', 1]);
+        let result = await db.prepare('all', 'SELECT * FROM sponsorTimes WHERE  userID = ? AND shadowHidden = ?', ['testEntity-unBan', 1]);
         if (result.length !== 1) {
           console.log(result);
           done("Expected 1 banned entry1 in db, got " + result.length);

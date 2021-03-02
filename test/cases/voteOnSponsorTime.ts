@@ -68,7 +68,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID&UUID=vote-uuid-0&type=1")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-0"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-0"]);
                 if (row.votes === 3) {
                     done();
                 } else {
@@ -86,7 +86,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-2&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
                 if (row.votes < 10) {
                     done();
                 } else {
@@ -104,7 +104,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID3&UUID=vote-uuid-2&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-2"]);
                 if (row.votes === 9) {
                     done();
                 } else {
@@ -122,7 +122,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID4&UUID=vote-uuid-1.6&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1.6"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1.6"]);
                 if (row.votes === 10) {
                     done();
                 } else {
@@ -140,7 +140,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1&type=1")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1"]);
                 if (row.votes === 2) {
                     done();
                 } else {
@@ -158,7 +158,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1.5&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1.5"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-1.5"]);
                 if (row.votes === 10) {
                     done();
                 } else {
@@ -176,7 +176,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-3&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-3"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-3"]);
                 if (row.votes <= -2) {
                     done();
                 } else {
@@ -194,7 +194,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=own-submission-id&UUID=own-submission-uuid&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["own-submission-uuid"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["own-submission-uuid"]);
                 if (row.votes <= -2) {
                     done();
                 } else {
@@ -212,7 +212,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=not-own-submission-uuid&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["not-own-submission-uuid"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["not-own-submission-uuid"]);
                 if (row.votes === 499) {
                     done();
                 } else {
@@ -230,8 +230,8 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=intro")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
-                let categoryRows = db.prepare('all', "SELECT votes, category FROM categoryVotes WHERE UUID = ?", ["vote-uuid-4"]);
+                let row = await db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
+                let categoryRows = await db.prepare('all', "SELECT votes, category FROM categoryVotes WHERE UUID = ?", ["vote-uuid-4"]);
                 if (row.category === "sponsor" && categoryRows.length === 2 
                         && categoryRows[0]?.votes === 1 && categoryRows[0]?.category === "intro"
                             && categoryRows[1]?.votes === 1 && categoryRows[1]?.category === "sponsor") {
@@ -251,7 +251,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=fakecategory")
         .then(res => {
             if (res.status === 400) {
-                let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["incorrect-category"]);
+                let row = await db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["incorrect-category"]);
                 if (row.category === "sponsor") {
                     done();
                 } else {
@@ -269,8 +269,8 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=outro")
         .then(res => {
             if (res.status === 200) {
-                let submissionRow = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
-                let categoryRows = db.prepare('all', "SELECT votes, category FROM categoryVotes WHERE UUID = ?", ["vote-uuid-4"]);
+                let submissionRow = await db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-4"]);
+                let categoryRows = await db.prepare('all', "SELECT votes, category FROM categoryVotes WHERE UUID = ?", ["vote-uuid-4"]);
                 let introVotes = 0;
                 let outroVotes = 0;
                 let sponsorVotes = 0;
@@ -299,7 +299,7 @@ describe('voteOnSponsorTime', () => {
             fetch(getbaseURL()
                 + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category-change&category=" + inputCat)
             .then(res => {
-                let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["incorrect-category-change"]);
+                let row = await db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["incorrect-category-change"]);
                 if (row.category === assertCat) {
                     callback();
                 } else {
@@ -319,8 +319,8 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&category=outro")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
-                let row2 = db.prepare('get', "SELECT votes FROM categoryVotes WHERE UUID = ? and category = ?", ["vote-uuid-5", "outro"]);
+                let row = await db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
+                let row2 = await db.prepare('get', "SELECT votes FROM categoryVotes WHERE UUID = ? and category = ?", ["vote-uuid-5", "outro"]);
                 if (row.category === "outro" && row2.votes === 500) {
                     done();
                 } else {
@@ -338,7 +338,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=testman&UUID=vote-uuid-5_1&category=outro")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
+                let row = await db.prepare('get', "SELECT category FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
                 if (row.category === "outro") {
                     done();
                 } else {
@@ -382,7 +382,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&type=1")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
+                let row = await db.prepare('get', "SELECT votes FROM sponsorTimes WHERE UUID = ?", ["vote-uuid-5"]);
                 if (row.votes > -3) {
                     done();
                 } else {
@@ -452,7 +452,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=1")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", ["segment-locking-uuid-1"]);
+                let row = await db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", ["segment-locking-uuid-1"]);
                 if (row?.locked) {
                     done();
                 } else {
@@ -470,7 +470,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=0")
         .then(res => {
             if (res.status === 200) {
-                let row = db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", ["segment-locking-uuid-1"]);
+                let row = await db.prepare('get', "SELECT locked FROM sponsorTimes WHERE UUID = ?", ["segment-locking-uuid-1"]);
                 if (!row?.locked) {
                     done();
                 } else {

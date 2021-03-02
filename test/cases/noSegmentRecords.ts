@@ -22,7 +22,7 @@ describe('noSegmentRecords', () => {
     });
 
     it('Should update the database version when starting the application', (done: Done) => {
-        let version = db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version']).value;
+        let version = await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version']).value;
         if (version > 1) done();
         else done('Version isn\'t greater than 1. Version is ' + version);
     });
@@ -95,7 +95,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['no-segments-video-id-1']);
+                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['no-segments-video-id-1']);
                 if (result.length !== 4) {
                     console.log(result);
                     done("Expected 4 entrys in db, got " + result.length);
@@ -129,7 +129,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['underscore']);
+                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['underscore']);
                 if (result.length !== 1) {
                     console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
@@ -163,7 +163,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['bothCases']);
+                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['bothCases']);
                 if (result.length !== 1) {
                     console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
@@ -197,7 +197,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['specialChar']);
+                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['specialChar']);
                 if (result.length !== 0) {
                     console.log(result);
                     done("Expected 0 entrys in db, got " + result.length);
@@ -395,7 +395,7 @@ describe('noSegmentRecords', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record']);
+                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record']);
                 if (result.length === 0) {
                     done();
                 } else {
@@ -426,7 +426,7 @@ describe('noSegmentRecords', () => {
         })
         .then(res => {
             if (res.status === 200) {
-                let result = db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record-1']);
+                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record-1']);
                 if (result.length === 1) {
                     done();
                 } else {

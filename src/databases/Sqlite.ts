@@ -12,7 +12,7 @@ export class Sqlite implements IDatabase {
     {
     }
 
-    prepare(type: QueryType, query: string, params: any[]) {
+    async prepare(type: QueryType, query: string, params: any[]) {
         const preparedQuery = this.db.prepare(query);
 
         switch (type) {
@@ -27,20 +27,6 @@ export class Sqlite implements IDatabase {
                 break;
             }
         }
-    }
-
-    get<TModel>(query: string, params: any[]): TModel {
-        return this.prepare('get', query, params);
-    }
-    getAll<TModel>(query: string, params: any[]): TModel[] {
-        return this.prepare('all', query, params);
-    }
-    run(query: string, params: any[]): void {
-        this.prepare('run', query, params);
-    }
-
-    exec(query: string) {
-        return this.db.exec(query);
     }
 
     init() {

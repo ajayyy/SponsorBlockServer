@@ -13,8 +13,8 @@ let apiUsersCache = 0;
 
 let lastUserCountCheck = 0;
 
-export function getTotalStats(req: Request, res: Response) {
-    let row = db.prepare('get', "SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, " +
+export async function getTotalStats(req: Request, res: Response) {
+    let row = await db.prepare('get', "SELECT COUNT(DISTINCT userID) as userCount, COUNT(*) as totalSubmissions, " +
         "SUM(views) as viewCount, SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE shadowHidden != 1 AND votes >= 0", []);
 
     if (row !== undefined) {
