@@ -50,7 +50,7 @@ export class Sqlite implements IDatabase {
         this.db = new Sqlite3(this.config.dbPath, {readonly: this.config.readOnly, fileMustExist: !this.config.createDbIfNotExists});
 
         if (this.config.createDbIfNotExists && !this.config.readOnly && fs.existsSync(this.config.dbSchemaFileName)) {
-            this.db.exec(fs.readFileSync(this.config.dbSchemaFileName).toString());
+            this.db.exec(Sqlite.processUpgradeQuery(fs.readFileSync(this.config.dbSchemaFileName).toString()));
         }
 
         if (!this.config.readOnly) {

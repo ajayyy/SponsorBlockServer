@@ -15,6 +15,10 @@ export class Mysql implements IDatabase {
         if (!this.config.readOnly) {
             // Upgrade database if required
             this.upgradeDB(this.config.fileNamePrefix, this.config.dbSchemaFolder);
+
+            if (this.config.createDbIfNotExists && !this.config.readOnly && fs.existsSync(this.config.dbSchemaFileName)) {
+                this.pool.query(this.processUpgradeQuery(fs.readFileSync(this.config.dbSchemaFileName).toString()));
+            }
         }
     }
 
