@@ -84,13 +84,19 @@ export class Sqlite implements IDatabase {
         Logger.debug('db update: trying ' + path);
         while (fs.existsSync(path)) {
             Logger.debug('db update: updating ' + path);
-            db.exec(fs.readFileSync(path).toString());
+            db.exec(this.processUpgradeQuery(fs.readFileSync(path).toString()));
 
             versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
             path = schemaFolder + "/_upgrade_" + fileNamePrefix + "_" + (parseInt(versionCode) + 1) + ".sql";
             Logger.debug('db update: trying ' + path);
         }
         Logger.debug('db update: no file ' + path);
+    }
+
+    private static processUpgradeQuery(query: string): string {
+        let result = query.replace(/^.*--!sqlite-ignore/gm, "");
+
+        return result;
     }
 }
 
