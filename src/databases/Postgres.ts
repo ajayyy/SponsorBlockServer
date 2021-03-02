@@ -11,7 +11,7 @@ export class Mysql implements IDatabase {
         this.pool = new Pool();
     }
 
-    async prepare(type: QueryType, query: string, params: any[]) {
+    async prepare(type: QueryType, query: string, params?: any[]) {
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
         const queryResult = await this.pool.query(query, params);
 

@@ -4,30 +4,30 @@ import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 
 describe('getUserInfo', () => {
-    before(() => {
+    before(async () => {
         let startOfUserNamesQuery = "INSERT INTO userNames (userID, userName) VALUES";
-        db.exec(startOfUserNamesQuery + "('" + getHash("getuserinfo_user_01") + "', 'Username user 01')");
+        await db.prepare("run", startOfUserNamesQuery + "('" + getHash("getuserinfo_user_01") + "', 'Username user 01')");
         let startOfSponsorTimesQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden) VALUES";
-        db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000001', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
-        db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000002', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
-        db.exec(startOfSponsorTimesQuery + "('yyyxxxzzz', 1, 11, -1, 'uuid000003', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
-        db.exec(startOfSponsorTimesQuery + "('yyyxxxzzz', 1, 11, -2, 'uuid000004', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 1)");
-        db.exec(startOfSponsorTimesQuery + "('xzzzxxyyy', 1, 11, -5, 'uuid000005', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 1)");
-        db.exec(startOfSponsorTimesQuery + "('zzzxxxyyy', 1, 11, 2, 'uuid000006', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 0)");
-        db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000007', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
-        db.exec(startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000008', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000001', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000002', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('yyyxxxzzz', 1, 11, -1, 'uuid000003', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('yyyxxxzzz', 1, 11, -2, 'uuid000004', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 1)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('xzzzxxyyy', 1, 11, -5, 'uuid000005', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 1)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('zzzxxxyyy', 1, 11, 2, 'uuid000006', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 0)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000007', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
+        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000008', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
 
-
-        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_0') + "', 10, 'getuserinfo_vip', 1)");
-        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
-        db.exec("INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
+    
+        await db.prepare("run", "INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_0') + "', 10, 'getuserinfo_vip', 1)");
+        await db.prepare("run", "INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
+        await db.prepare("run", "INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES ('" + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
     });
 
     it('Should be able to get a 200', (done: Done) => {
         fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
         .then(res => {
             if (res.status !== 200) done('non 200 (' + res.status + ')');
-            else  done(); // pass
+            else done(); // pass
         })
         .catch(err => done('couldn\'t call endpoint'));
     });
@@ -41,7 +41,7 @@ describe('getUserInfo', () => {
         .catch(err => done('couldn\'t call endpoint'));
     });
 
-    it('Should return info', (done: Done) => {
+    it('Should done(info', (done: Done) => {
         fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
         .then(async res => {
             if (res.status !== 200) {
@@ -61,7 +61,7 @@ describe('getUserInfo', () => {
                 }
             }
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(err => ("couldn't call endpoint"));
     });
 
     it('Should get warning data', (done: Done) => {
@@ -75,7 +75,7 @@ describe('getUserInfo', () => {
                 else done(); // pass
             }
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(err => ("couldn't call endpoint"));
     });
 
     it('Should get multiple warnings', (done: Done) => {
@@ -89,7 +89,7 @@ describe('getUserInfo', () => {
                 else done(); // pass
             }
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(err => ("couldn't call endpoint"));
     });
 
     it('Should not get warnings if noe', (done: Done) => {
@@ -103,10 +103,10 @@ describe('getUserInfo', () => {
                 else done(); // pass
             }
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(err => ("couldn't call endpoint"));
     });
 
-    it('Should return userID for userName (No userName set)', (done: Done) => {
+    it('Should done(userID for userName (No userName set)', (done: Done) => {
         fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_02')
         .then(async res => {
             if (res.status !== 200) {
@@ -114,11 +114,11 @@ describe('getUserInfo', () => {
             } else {
                 const data = await res.json();
                 if (data.userName !== 'c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f') {
-                    return done('Did not return userID for userName');
+                    done('Did not done(userID for userName');
                 }
                 done(); // pass
             }
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(err => ('couldn\'t call endpoint'));
     });
 });

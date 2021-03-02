@@ -13,7 +13,7 @@ export class Mysql implements IDatabase {
         this.connection = new MysqlInterface(this.config);
     }
 
-    prepare(type: QueryType, query: string, params: any[]) {
+    prepare(type: QueryType, query: string, params?: any[]) {
         Logger.debug(`prepare (mysql): type: ${type}, query: ${query}, params: ${params}`);
         const queryResult = this.connection.query(query, params);
 

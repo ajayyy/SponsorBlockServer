@@ -8,18 +8,18 @@ import { Logger } from '../../src/utils/logger.js';
 
 describe('unBan', () => {
   before(() => {
-    db.exec("INSERT INTO shadowBannedUsers VALUES('testMan-unBan')");
-    db.exec("INSERT INTO shadowBannedUsers VALUES('testWoman-unBan')");
-    db.exec("INSERT INTO shadowBannedUsers VALUES('testEntity-unBan')");
+    db.prepare("run", "INSERT INTO shadowBannedUsers VALUES('testMan-unBan')");
+    db.prepare("run", "INSERT INTO shadowBannedUsers VALUES('testWoman-unBan')");
+    db.prepare("run", "INSERT INTO shadowBannedUsers VALUES('testEntity-unBan')");
 
-    db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser-unBan") + "')");
-    db.exec("INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");
+    db.prepare("run", "INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser-unBan") + "')");
+    db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");
 
     let startOfInsertSegmentQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
-    db.exec(startOfInsertSegmentQuery + "('unBan-videoID-0', 1, 11, 2, 'unBan-uuid-0', 'testMan-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-0', 1) + "')");
-    db.exec(startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-1', 'testWoman-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
-    db.exec(startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-2', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
-    db.exec(startOfInsertSegmentQuery + "('unBan-videoID-2', 1, 11, 2, 'unBan-uuid-3', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-2', 1) + "')");
+    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-0', 1, 11, 2, 'unBan-uuid-0', 'testMan-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-0', 1) + "')");
+    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-1', 'testWoman-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
+    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-2', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
+    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-2', 1, 11, 2, 'unBan-uuid-3', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-2', 1) + "')");
   });
 
   it('Should be able to unban a user and re-enable shadow banned segments', (done) => {

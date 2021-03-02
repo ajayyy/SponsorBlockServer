@@ -5,7 +5,7 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('postWarning', () => {
     before(() => {
-        db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("warning-vip") + "')");
+        db.prepare("run", "INSERT INTO vipUsers (userID) VALUES ('" + getHash("warning-vip") + "')");
     });
 
     it('Should be able to create warning if vip (exp 200)', (done: Done) => {

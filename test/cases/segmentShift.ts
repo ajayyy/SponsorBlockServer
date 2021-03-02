@@ -11,7 +11,7 @@ function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, en
         views = 0,
         shadowHidden = 0,
         hashedVideoID = `hash_${UUID}`;
-    db.exec(`INSERT INTO
+    db.prepare("run", `INSERT INTO
     sponsorTimes (videoID, startTime, endTime, votes, UUID,
     userID, timeSubmitted, views, category, shadowHidden, hashedVideoID)
   VALUES
@@ -20,11 +20,11 @@ function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, en
   `);
 }
 
-function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
+async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
     await db.prepare('run', `UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?`, [startTime, endTime, UUID]);
 }
 
-function dbSponsorTimesCompareExpect(db: IDatabase, expect: any) {
+async function dbSponsorTimesCompareExpect(db: IDatabase, expect: any) {
     for (let i = 0, len = expect.length; i < len; i++) {
         const expectSeg = expect[i];
         let seg = await db.prepare('get', "SELECT startTime, endTime FROM sponsorTimes WHERE UUID = ?", [expectSeg.UUID]);
@@ -56,7 +56,7 @@ describe('segmentShift', function () {
         dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid02', 'sponsor');
         dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid03', 'interaction');
         dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid04', 'outro');
-        db.exec(`INSERT INTO vipUsers (userID) VALUES ('${vipUserID}')`);
+        db.prepare("run", `INSERT INTO vipUsers (userID) VALUES ('${vipUserID}')`);
         done();
     });
 
@@ -82,7 +82,7 @@ describe('segmentShift', function () {
                 endTime: 30,
             }),
         })
-        .then(res => {
+        .then(async res => {
             done(res.status === 403 ? undefined : res.status);
         })
         .catch(err => done(err));
@@ -101,7 +101,7 @@ describe('segmentShift', function () {
                 endTime: 30,
             }),
         })
-        .then(res => {
+        .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
@@ -125,7 +125,7 @@ describe('segmentShift', function () {
                     endTime: 130,
                 },
             ];
-            done(dbSponsorTimesCompareExpect(db, expect));
+            done(await dbSponsorTimesCompareExpect(db, expect));
         })
         .catch(err => done(err));
     });
@@ -143,7 +143,7 @@ describe('segmentShift', function () {
                 endTime: 75,
             }),
         })
-        .then(res => {
+        .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
@@ -167,7 +167,7 @@ describe('segmentShift', function () {
                     endTime: 130,
                 },
             ];
-            done(dbSponsorTimesCompareExpect(db, expect));
+            done(await dbSponsorTimesCompareExpect(db, expect));
         })
         .catch(err => done(err));
     });
@@ -185,7 +185,7 @@ describe('segmentShift', function () {
                 endTime: 42,
             }),
         })
-        .then(res => {
+        .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
@@ -209,7 +209,7 @@ describe('segmentShift', function () {
                     endTime: 130,
                 },
             ];
-            done(dbSponsorTimesCompareExpect(db, expect));
+            done(await dbSponsorTimesCompareExpect(db, expect));
         })
         .catch(err => done(err));
     });
@@ -227,7 +227,7 @@ describe('segmentShift', function () {
                 endTime: 95,
             }),
         })
-        .then(res => {
+        .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
@@ -251,7 +251,7 @@ describe('segmentShift', function () {
                     endTime: 130,
                 },
             ];
-            done(dbSponsorTimesCompareExpect(db, expect));
+            done(await dbSponsorTimesCompareExpect(db, expect));
         })
         .catch(err => done(err));
     });
@@ -269,7 +269,7 @@ describe('segmentShift', function () {
                 endTime: 55,
             }),
         })
-        .then(res => {
+        .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
             const expect = [
                 {
@@ -294,7 +294,7 @@ describe('segmentShift', function () {
                     endTime: 120,
                 },
             ];
-            done(dbSponsorTimesCompareExpect(db, expect));
+            done(await dbSponsorTimesCompareExpect(db, expect));
         })
         .catch(err => done(err));
     });

@@ -12,18 +12,30 @@ export class Sqlite implements IDatabase {
     {
     }
 
-    async prepare(type: QueryType, query: string, params: any[]) {
+    async prepare(type: QueryType, query: string, params?: any[]) {
         const preparedQuery = this.db.prepare(query);
 
         switch (type) {
             case 'get': {
-                return preparedQuery.get(...params);
+                if (params) {
+                    return preparedQuery.get(...params);
+                } else {
+                    return preparedQuery.get();
+                }
             }
             case 'all': {
-                return preparedQuery.all(...params);
+                if (params) {
+                    return preparedQuery.all(...params);
+                } else {
+                    return preparedQuery.all();
+                }
             }
             case 'run': {
-                preparedQuery.run(...params);
+                if (params) {
+                    preparedQuery.run(...params);
+                } else {
+                    preparedQuery.run();
+                }
                 break;
             }
         }
