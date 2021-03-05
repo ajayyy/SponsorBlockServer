@@ -33,12 +33,12 @@ export async function deleteNoSegments(req: Request, res: Response) {
         return;
     }
 
-    const entries = (await db.prepare("all", 'SELECT * FROM noSegments WHERE videoID = ?', [videoID])).filter((entry: any) => {
+    const entries = (await db.prepare("all", 'SELECT * FROM "noSegments" WHERE "videoID" = ?', [videoID])).filter((entry: any) => {
         return (categories.indexOf(entry.category) !== -1);
     });
 
     for (const entry of entries) {
-        await db.prepare('run', 'DELETE FROM noSegments WHERE videoID = ? AND category = ?', [videoID, entry.category]);
+        await db.prepare('run', 'DELETE FROM "noSegments" WHERE "videoID" = ? AND "category" = ?', [videoID, entry.category]);
     }
 
     res.status(200).json({message: 'Removed no segments entrys for video ' + videoID});

@@ -67,9 +67,9 @@ export class Postgres implements IDatabase {
     }
 
     private processUpgradeQuery(query: string): string {
-        let result = query.toLocaleLowerCase();
+        let result = query;
         result = result.replace(/sha256\((.*?)\)/gm, "digest($1, 'sha256')");
-        result = result.replace(/integer/gm, "numeric");
+        result = result.replace(/integer/gmi, "NUMERIC");
 
         return result;
     }

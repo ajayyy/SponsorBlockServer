@@ -15,7 +15,7 @@ export async function getSavedTimeForUser(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare("get", "SELECT SUM((endTime - startTime) / 60 * views) as minutesSaved FROM sponsorTimes WHERE userID = ? AND votes > -1 AND shadowHidden != 1 ", [userID]);
+        let row = await db.prepare("get", 'SELECT SUM(("endTime" - "startTime") / 60 * "views") as "minutesSaved" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -1 AND "shadowHidden" != 1 ', [userID]);
 
         if (row.minutesSaved != null) {
             res.send({

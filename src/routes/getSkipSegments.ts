@@ -24,7 +24,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
         }
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID] = await privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]) as { hashedIP: HashedIP }[];
+            cache.shadowHiddenSegmentIPs[videoID] = await privateDB.prepare('all', 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ?', [videoID]) as { hashedIP: HashedIP }[];
         }
 
         //if this isn't their ip, don't send it to them
@@ -57,8 +57,8 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
         const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await db
             .prepare(
                 'all',
-                `SELECT startTime, endTime, votes, locked, UUID, category, shadowHidden FROM sponsorTimes 
-                WHERE videoID = ? AND category IN (${categories.map((c) => "'" + c + "'")}) ORDER BY startTime`,
+                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden" FROM "sponsorTimes" 
+                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
                 [videoID]
             )).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
@@ -97,8 +97,8 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await db
             .prepare(
                 'all',
-                `SELECT videoID, startTime, endTime, votes, locked, UUID, category, shadowHidden, hashedVideoID FROM sponsorTimes
-                WHERE hashedVideoID LIKE ? AND category IN (${categories.map((c) => "'" + c + "'")}) ORDER BY startTime`,
+                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+                WHERE "hashedVideoID" LIKE ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
                 [hashedVideoIDPrefix + '%']
             )).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {

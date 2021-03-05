@@ -14,9 +14,9 @@ CREATE TABLE "sqlb_temp_table_1" (
 	"category"	TEXT NOT NULL DEFAULT 'sponsor',
 	"shadowHidden"	INTEGER NOT NULL
 );
-INSERT INTO sqlb_temp_table_1 SELECT videoID,startTime,endTime,votes,'1',UUID,userID,timeSubmitted,views,category,shadowHidden FROM sponsorTimes;
+INSERT INTO sqlb_temp_table_1 SELECT "videoID","startTime","endTime","votes",'1',"UUID","userID","timeSubmitted","views","category","shadowHidden" FROM "sponsorTimes";
 
-DROP TABLE sponsorTimes;
+DROP TABLE "sponsorTimes";
 ALTER TABLE sqlb_temp_table_1 RENAME TO "sponsorTimes";
 
 /* Add version to config */
