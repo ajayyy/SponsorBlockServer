@@ -67,14 +67,9 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
                 return acc;
             }, {});
 
-            console.log(segmentsByCategory)
-
-
         for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
             segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, categorySegments, cache)));
         }
-
-        console.log(segments)
 
         return segments;
     } catch (err) {

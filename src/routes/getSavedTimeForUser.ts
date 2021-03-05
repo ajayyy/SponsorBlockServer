@@ -1,6 +1,7 @@
 import {db} from '../databases/databases';
 import {Request, Response} from 'express';
 import {getHash} from '../utils/getHash';
+import { Logger } from '../utils/logger';
 
 export async function getSavedTimeForUser(req: Request, res: Response) {
     let userID = req.query.userID as string;
@@ -25,7 +26,7 @@ export async function getSavedTimeForUser(req: Request, res: Response) {
             res.sendStatus(404);
         }
     } catch (err) {
-        console.log(err);
+        Logger.error("getSavedTimeForUser " + err);
         res.sendStatus(500);
 
         return;
