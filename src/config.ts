@@ -45,6 +45,7 @@ addDefaults(config, {
     },
     userCounterURL: null,
     youtubeAPIKey: null,
+    postgres: null
 });
 
 // Add defaults

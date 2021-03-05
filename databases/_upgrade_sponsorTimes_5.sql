@@ -10,8 +10,8 @@ CREATE TABLE "sqlb_temp_table_5" (
 INSERT INTO sqlb_temp_table_5 SELECT userID,issueTime,issuerUserID,1 FROM warnings;
 
 DROP TABLE warnings;
-ALTER TABLE sqlb_temp_table_5 RENAME TO "warnings";
+ALTER TABLE sqlb_temp_table_5 RENAME TO "warnings";;
 
-UPDATE config SET value = 5 WHERE key = "version";
+UPDATE config SET value = 5 WHERE key = 'version';
 
 COMMIT;

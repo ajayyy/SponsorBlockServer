@@ -7,6 +7,6 @@ CREATE TABLE "warnings" (
     issuerUserID TEXT NOT NULL
 );
 
-UPDATE config SET value = 4 WHERE key = "version";
+UPDATE config SET value = 4 WHERE key = 'version';
 
 COMMIT;
