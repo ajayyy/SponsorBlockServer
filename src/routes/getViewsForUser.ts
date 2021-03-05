@@ -16,7 +16,7 @@ export async function getViewsForUser(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare('get', "SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ?", [userID]);
+        let row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
 
         //increase the view count by one
         if (row.viewCount != null) {

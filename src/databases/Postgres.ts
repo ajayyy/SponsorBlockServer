@@ -38,10 +38,35 @@ export class Postgres implements IDatabase {
 
         switch (type) {
             case 'get': {
-                return queryResult.rows[0];
+                const value = queryResult.rows[0];
+                Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
+                if (value) {
+                    for (const [key, v] of Object.entries(value)) {
+                        if (!isNaN(v as any)) {
+                            value[key] = parseFloat(v as string)
+                        }
+                    }
+                }
+
+                Logger.debug(`result (postgres): ${value}`);
+                return value;
             }
             case 'all': {
-                return queryResult.rows;
+                let values = queryResult.rows;
+                if (values) {
+                    values = values.map((row) => {
+                        for (const [key, v] of Object.entries(row)) {
+                            if (!isNaN(v as any)) {
+                                row[key] = parseFloat(v as string)
+                            }
+                        }
+
+                        return row;
+                    });
+                }
+
+                Logger.debug(`result (postgres): ${values}`);
+                return values;
             }
             case 'run': {
                 break;

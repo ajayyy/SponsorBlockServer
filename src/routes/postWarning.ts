@@ -22,17 +22,17 @@ export async function postWarning(req: Request, res: Response) {
     let resultStatus = "";
 
     if (enabled) {
-        let previousWarning = await db.prepare('get', 'SELECT * FROM warnings WHERE userID = ? AND issuerUserID = ?', [userID, issuerUserID]);
+        let previousWarning = await db.prepare('get', 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
 
         if (!previousWarning) {
-            await db.prepare('run', 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES (?, ?, ?, 1)', [userID, issueTime, issuerUserID]);
+            await db.prepare('run', 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES (?, ?, ?, 1)', [userID, issueTime, issuerUserID]);
             resultStatus = "issued to";
         } else {
             res.status(409).send();
             return;
         }
     } else {
-        await db.prepare('run', 'UPDATE warnings SET enabled = 0 WHERE userID = ? AND issuerUserID = ?', [userID, issuerUserID]);
+        await db.prepare('run', 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
         resultStatus = "removed from";
     }
 

@@ -10,7 +10,7 @@ export async function viewedVideoSponsorTime(req: Request, res: Response): Promi
     }
 
     //up the view count by one
-    await db.prepare('run', "UPDATE sponsorTimes SET views = views + 1 WHERE UUID = ?", [UUID]);
+    await db.prepare('run', `UPDATE "sponsorTimes" SET views = views + 1 WHERE "UUID" = ?`, [UUID]);
 
     return res.sendStatus(200);
 }

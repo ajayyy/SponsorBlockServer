@@ -35,7 +35,7 @@ export async function postNoSegments(req: Request, res: Response) {
     }
 
     // Get existing no segment markers
-    let noSegmentList = await db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]);
+    let noSegmentList = await db.prepare('all', 'SELECT "category" from "noSegments" where "videoID" = ?', [videoID]);
     if (!noSegmentList || noSegmentList.length === 0) {
         noSegmentList = [];
     } else {
@@ -59,7 +59,7 @@ export async function postNoSegments(req: Request, res: Response) {
     // create database entry
     for (const category of categoriesToMark) {
         try {
-            await db.prepare('run', "INSERT INTO noSegments (videoID, userID, category) VALUES(?, ?, ?)", [videoID, userID, category]);
+            await db.prepare('run', `INSERT INTO "noSegments" ("videoID", "userID", "category") VALUES(?, ?, ?)`, [videoID, userID, category]);
         } catch (err) {
             Logger.error("Error submitting 'noSegment' marker for category '" + category + "' for video '" + videoID + "'");
             Logger.error(err);

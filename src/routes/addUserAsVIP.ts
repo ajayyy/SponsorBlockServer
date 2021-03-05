@@ -27,7 +27,7 @@ export async function addUserAsVIP(req: Request, res: Response) {
     }
 
     //check to see if this user is already a vip
-    const row = await db.prepare('get', 'SELECT count(*) as "userCount" FROM vipUsers WHERE userID = ?', [userID]);
+    const row = await db.prepare('get', 'SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?', [userID]);
 
     if (enabled && row.userCount == 0) {
         //add them to the vip list

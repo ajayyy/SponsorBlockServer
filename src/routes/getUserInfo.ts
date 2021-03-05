@@ -5,7 +5,7 @@ import {Logger} from '../utils/logger'
 
 async function dbGetSubmittedSegmentSummary(userID: string): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        let row = await db.prepare("get", "SELECT SUM(((endTime - startTime) / 60) * views) as minutesSaved, count(*) as segmentCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
+        let row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved", count(*) as "segmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         if (row.minutesSaved != null) {
             return {
                 minutesSaved: row.minutesSaved,
@@ -24,7 +24,7 @@ async function dbGetSubmittedSegmentSummary(userID: string): Promise<{ minutesSa
 
 async function dbGetUsername(userID: string) {
     try {
-        let row = await db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
+        let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         if (row !== undefined) {
             return row.userName;
         } else {
@@ -38,7 +38,7 @@ async function dbGetUsername(userID: string) {
 
 async function dbGetViewsForUser(userID: string) {
     try {
-        let row = await db.prepare('get', "SELECT SUM(views) as viewCount FROM sponsorTimes WHERE userID = ? AND votes > -2 AND shadowHidden != 1", [userID]);
+        let row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         //increase the view count by one
         if (row.viewCount != null) {
             return row.viewCount;
@@ -52,7 +52,7 @@ async function dbGetViewsForUser(userID: string) {
 
 async function dbGetWarningsForUser(userID: string): Promise<number> {
     try {
-        let rows = await db.prepare('all', "SELECT * FROM warnings WHERE userID = ?", [userID]);
+        let rows = await db.prepare('all', `SELECT * FROM "warnings" WHERE "userID" = ?`, [userID]);
         return rows.length;
     } catch (err) {
         Logger.error('Couldn\'t get warnings for user ' + userID + '. returning 0');

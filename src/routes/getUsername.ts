@@ -16,7 +16,7 @@ export async function getUsername(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
+        let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
 
         if (row !== undefined) {
             res.send({

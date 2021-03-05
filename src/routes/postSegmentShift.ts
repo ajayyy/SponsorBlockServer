@@ -76,7 +76,7 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
     }
 
     try {
-        const segments = await db.prepare('all', 'SELECT startTime, endTime, UUID FROM sponsorTimes WHERE videoID = ?', [videoID]);
+        const segments = await db.prepare('all', 'SELECT "startTime", "endTime", "UUID" FROM "sponsorTimes" WHERE "videoID" = ?', [videoID]);
         const shift = {
             startTime,
             endTime,
@@ -86,10 +86,10 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
             const result = shiftSegment(segment, shift);
             switch (result.action) {
                 case ACTION_UPDATE:
-                    await db.prepare('run', 'UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
+                    await db.prepare('run', 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
                     break;
                 case ACTION_REMOVE:
-                    await db.prepare('run', 'UPDATE sponsorTimes SET startTime = ?, endTime = ?, votes = -2 WHERE UUID = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
+                    await db.prepare('run', 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2 WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
                     break;
             }
         };
