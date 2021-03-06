@@ -52,7 +52,7 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
     const segments: Segment[] = [];
 
     try {
-        categories.filter((category) => !/[^a-z|_|-]/.test(category));
+        categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
 
         const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await db
             .prepare(
@@ -87,12 +87,12 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
     try {
         type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerCategory: SBRecord<Category, DBSegment[]>}>;
 
-        categories.filter((category) => !/[^a-z|_|-]/.test(category));
+        categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
 
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await db
             .prepare(
                 'all',
-                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+                `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
                 WHERE "hashedVideoID" LIKE ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
                 [hashedVideoIDPrefix + '%']
             )).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {

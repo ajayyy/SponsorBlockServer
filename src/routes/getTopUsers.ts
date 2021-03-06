@@ -24,13 +24,13 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
     }
 
     const rows = await db.prepare('all', `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
-        SUM(("sponsorTimes.endTime" - "sponsorTimes.startTime") / 60 * "sponsorTimes.views") as "minutesSaved",
+        SUM(("sponsorTimes"."endTime" - "sponsorTimes"."startTime") / 60 * "sponsorTimes"."views") as "minutesSaved",
         SUM("votes") as "userVotes", ` +
         additionalFields +
-        `IFNULL("userNames.userName", "sponsorTimes.userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes.userID"="userNames.userID"
-        LEFT JOIN "privateDB.shadowBannedUsers" ON "sponsorTimes.userID"="privateDB.shadowBannedUsers.userID"
-        WHERE "sponsorTimes.votes" > -1 AND "sponsorTimes.shadowHidden" != 1 AND "privateDB.shadowBannedUsers.userID" IS NULL
-        GROUP BY IFNULL("userName", "sponsorTimes.userID") HAVING "userVotes" > 20
+        `IFNULL("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
+        LEFT JOIN "privateDB"."shadowBannedUsers" ON "sponsorTimes"."userID"="privateDB"."shadowBannedUsers"."userID"
+        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "privateDB"."shadowBannedUsers"."userID" IS NULL
+        GROUP BY IFNULL("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
         ORDER BY "` + sortBy + `" DESC LIMIT 100`, []);
 
     for (let i = 0; i < rows.length; i++) {

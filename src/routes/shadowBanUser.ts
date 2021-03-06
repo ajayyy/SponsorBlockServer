@@ -44,29 +44,28 @@ export async function shadowBanUser(req: Request, res: Response) {
             if (unHideOldSubmissions) {
                 await db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ?
                                 AND NOT EXISTS ( SELECT "videoID", "category" FROM "noSegments" WHERE
-                                "sponsorTimes.videoID" = "noSegments.videoID" AND "sponsorTimes.category" = "noSegments.category")`, [userID]);
+                                "sponsorTimes"."videoID" = "noSegments"."videoID" AND "sponsorTimes"."category" = "noSegments"."category")`, [userID]);
             }
         } else if (!enabled && row.userCount > 0) {
             //remove them from the shadow ban list
-            await privateDB.prepare('run', `DELETE FROM "shadowBannedUsers" WHERE userID = ?`, [userID]);
+            await privateDB.prepare('run', `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
             //find all previous submissions and unhide them
             if (unHideOldSubmissions) {
                 let segmentsToIgnore = (await db.prepare('all', `SELECT UUID FROM "sponsorTimes" st
-                                JOIN "noSegments" ns on "st.videoID" = "ns.videoID" AND st.category = ns.category WHERE "st.userID" = ?`
+                                JOIN "noSegments" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category WHERE "st"."userID" = ?`
                                     , [userID])).map((item: {UUID: string}) => item.UUID);
-                let allSegments = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st WHERE "st.userID" = ?`, [userID]))
+                let allSegments = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
                                         .map((item: {UUID: string}) => item.UUID);
 
-                allSegments.filter((item: {uuid: string}) => {
+                await Promise.all(allSegments.filter((item: {uuid: string}) => {
                     return segmentsToIgnore.indexOf(item) === -1;
-                }).forEach((UUID: string) => {
-                    db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ?`, [UUID]);
-                });
+                }).map((UUID: string) => {
+                    return db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ?`, [UUID]);
+                }));
             }
         }
-    }
-    else if (hashedIP) {
+    } else if (hashedIP) {
         //check to see if this user is already shadowbanned
         // let row = await privateDB.prepare('get', "SELECT count(*) as userCount FROM shadowBannedIPs WHERE hashedIP = ?", [hashedIP]);
 
@@ -81,8 +80,8 @@ export async function shadowBanUser(req: Request, res: Response) {
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
                 await db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "timeSubmitted" IN
-                    (SELECT "privateDB.timeSubmitted" FROM "sponsorTimes" LEFT JOIN "privateDB.sponsorTimes" as "privateDB" ON "sponsorTimes.timeSubmitted"="privateDB.timeSubmitted"
-                    WHERE "privateDB.hashedIP" = ?)`, [hashedIP]);
+                    (SELECT "privateDB"."timeSubmitted" FROM "sponsorTimes" LEFT JOIN "privateDB"."sponsorTimes" as "privateDB" ON "sponsorTimes"."timeSubmitted"="privateDB"."timeSubmitted"
+                    WHERE "privateDB"."hashedIP" = ?)`, [hashedIP]);
             }
         } /*else if (!enabled && row.userCount > 0) {
             // //remove them from the shadow ban list

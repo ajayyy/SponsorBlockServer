@@ -36,10 +36,10 @@ interface VoteData {
 }
 
 async function sendWebhooks(voteData: VoteData) {
-    const submissionInfoRow = await db.prepare('get', `SELECT "s.videoID", "s.userID", "s.startTime", "s.endTime", "s.category", "u.userName",
-        (select count(1) from "sponsorTimes" where "userID" = "s.userID") count,
-        (select count(1) from "sponsorTimes" where "userID" = "s.userID" and votes <= -2) disregarded
-        FROM "sponsorTimes" s left join "userNames" u on "s.userID" = "u.userID" where "s.UUID"=?`,
+    const submissionInfoRow = await db.prepare('get', `SELECT "s"."videoID", "s"."userID", s."startTime", s."endTime", s."category", u."userName",
+        (select count(1) from "sponsorTimes" where "userID" = s."userID") count,
+        (select count(1) from "sponsorTimes" where "userID" = s."userID" and votes <= -2) disregarded
+        FROM "sponsorTimes" s left join "userNames" u on s."userID" = u."userID" where s."UUID"=?`,
         [voteData.UUID]);
 
     const userSubmissionCountRow = await db.prepare('get', `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ?`, [voteData.nonAnonUserID]);
@@ -254,8 +254,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     // If not upvote
     if (!isVIP && type !== 1) {
         const isSegmentLocked = async () => !!(await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked; 
-        const isVideoLocked = async () => !!(await db.prepare('get', 'SELECT "noSegments.category" from "noSegments" left join "sponsorTimes"' + 
-                                ' on ("noSegments.videoID" = "sponsorTimes.videoID" and "noSegments.category" = "sponsorTimes.category")' + 
+        const isVideoLocked = async () => !!(await db.prepare('get', 'SELECT "noSegments".category from "noSegments" left join "sponsorTimes"' + 
+                                ' on ("noSegments"."videoID" = "sponsorTimes"."videoID" and "noSegments".category = "sponsorTimes".category)' + 
                                     ' where "UUID" = ?', [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {

@@ -31,7 +31,7 @@ describe('unBan', () => {
     })
     .then(async res => {
       if (res.status === 200) {
-        let result = await db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
+        let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
         if (result.length !== 0) {
           console.log(result);
           done("Expected 0 banned entrys in db, got " + result.length);
