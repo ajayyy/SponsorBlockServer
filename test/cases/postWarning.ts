@@ -4,8 +4,8 @@ import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 
 describe('postWarning', () => {
-    before(() => {
-        db.prepare("run", "INSERT INTO vipUsers (userID) VALUES ('" + getHash("warning-vip") + "')");
+    before(async () => {
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("warning-vip") + "')");
     });
 
     it('Should be able to create warning if vip (exp 200)', (done: Done) => {
@@ -23,7 +23,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
+                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
                 if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
                     done();
                 } else {
@@ -54,7 +54,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 409) {
-                let row = await db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
+                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
                 if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
                     done();
                 } else {
@@ -86,7 +86,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', "SELECT userID, issueTime, issuerUserID, enabled FROM warnings WHERE userID = ?", [json.userID]);
+                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
                 if (row?.enabled == 0) {
                     done();
                 } else {

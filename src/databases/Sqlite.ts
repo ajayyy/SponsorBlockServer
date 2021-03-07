@@ -30,7 +30,7 @@ export class Sqlite implements IDatabase {
         }
     }
 
-    init() {
+    async init() {
         // Make dirs if required
         if (!fs.existsSync(path.join(this.config.dbPath, "../"))) {
             fs.mkdirSync(path.join(this.config.dbPath, "../"));

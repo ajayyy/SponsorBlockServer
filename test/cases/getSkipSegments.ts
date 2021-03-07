@@ -5,7 +5,7 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getSkipSegments', () => {
     before(async () => {
-        let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, locked, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
         await db.prepare("run", startOfQuery + "('testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest', 1) + "')");
         await db.prepare("run", startOfQuery + "('testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 0, '" + getHash('testtesttest', 1) + "')");
         await db.prepare("run", startOfQuery + "('testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest,test', 1) + "')");

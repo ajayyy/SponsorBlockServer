@@ -13,7 +13,7 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('postSkipSegments', () => {
     before(() => {
-        let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
+        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
 
         db.prepare("run", startOfQuery + "('80percent_video', 0, 1000, 0, '80percent-uuid-0', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
         db.prepare("run", startOfQuery + "('80percent_video', 1001, 1005, 0, '80percent-uuid-1', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
@@ -26,7 +26,7 @@ describe('postSkipSegments', () => {
         const warnUser03Hash = getHash("warn-user03");
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
-        const startOfWarningQuery = 'INSERT INTO warnings (userID, issueTime, issuerUserID, enabled) VALUES';
+        const startOfWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", enabled) VALUES';
         db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
         db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 1)");
         db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
@@ -40,7 +40,7 @@ describe('postSkipSegments', () => {
         db.prepare("run", startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
         db.prepare("run", startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "', 1)");
 
-        db.prepare("run", "INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUserSubmission") + "')");
+        db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUserSubmission") + "')");
     });
 
     it('Should be able to submit a single time (Params method)', (done: Done) => {
@@ -53,7 +53,7 @@ describe('postSkipSegments', () => {
             })
         .then(async res => {
             if (res.status === 200) {
-                const row = await db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcR"]);
                 if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
                     done();
                 } else {
@@ -84,7 +84,7 @@ describe('postSkipSegments', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                const row = await db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcF"]);
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcF"]);
                 if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor") {
                     done();
                 } else {
@@ -115,7 +115,7 @@ describe('postSkipSegments', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                const row = await db.prepare('get', "SELECT startTime, endTime, locked, category FROM sponsorTimes WHERE videoID = ?", ["vipuserIDSubmission"]);
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["vipuserIDSubmission"]);
                 if (row.startTime === 0 && row.endTime === 10 && row.locked === 1 && row.category === "sponsor") {
                     done();
                 } else {
@@ -149,7 +149,7 @@ describe('postSkipSegments', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcR"]);
+                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcR"]);
                 let success = true;
                 if (rows.length === 2) {
                     for (const row of rows) {
@@ -196,7 +196,7 @@ describe('postSkipSegments', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["L_jWHffIx5E"]);
+                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["L_jWHffIx5E"]);
                 let success = true;
                 if (rows.length === 4) {
                     for (const row of rows) {
@@ -245,7 +245,7 @@ describe('postSkipSegments', () => {
             })
         .then(async res => {
             if (res.status === 400) {
-                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["n9rIGdXnSJc"]);
+                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["n9rIGdXnSJc"]);
                 let success = true;
                 if (rows.length === 4) {
                     for (const row of rows) {
@@ -293,7 +293,7 @@ describe('postSkipSegments', () => {
         })
         .then(async res => {
             if (res.status === 400) {
-                const rows = await db.prepare('all', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ? and votes > -1", ["80percent_video"]);
+                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["80percent_video"]);
                 let success = rows.length == 2;
                 for (const row of rows) {
                     if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||

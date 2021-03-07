@@ -1,6 +1,6 @@
 import { Logger } from '../utils/logger';
 import { IDatabase, QueryType } from './IDatabase';
-import { Pool } from 'pg';
+import { Client, Pool } from 'pg';
 
 import fs from "fs";
 
@@ -13,6 +13,10 @@ export class Postgres implements IDatabase {
         this.pool = new Pool(this.config.postgres);
 
         if (!this.config.readOnly) {
+            if (this.config.createDbIfNotExists) {
+                await this.createDB();
+            }
+
             if (this.config.createDbIfNotExists && !this.config.readOnly && fs.existsSync(this.config.dbSchemaFileName)) {
                 await this.pool.query(this.processUpgradeQuery(fs.readFileSync(this.config.dbSchemaFileName).toString()));
             }
@@ -72,6 +76,29 @@ export class Postgres implements IDatabase {
                 break;
             }
         }
+    }
+
+    private async createDB() {
+        const client = new Client({
+            ...this.config.postgres,
+            database: "postgres"
+        });
+
+        await client.connect();
+        
+        if ((await client.query(`SELECT * FROM pg_database WHERE datname = '${this.config.postgres.database}'`)).rowCount == 0) {
+            await client.query(`CREATE DATABASE "${this.config.postgres.database}"
+                                WITH 
+                                OWNER = ${this.config.postgres.user}
+                                ENCODING = 'UTF8'
+                                LC_COLLATE = 'en_US.utf8'
+                                LC_CTYPE = 'en_US.utf8'
+                                TABLESPACE = pg_default
+                                CONNECTION LIMIT = -1;`
+            );
+        }
+
+        client.end();
     }
 
     private async upgradeDB(fileNamePrefix: string, schemaFolder: string) {

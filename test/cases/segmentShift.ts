@@ -4,16 +4,16 @@ import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 import {IDatabase} from '../../src/databases/IDatabase';
 
-function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
+async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
     const votes = 0,
         userID = 0,
         timeSubmitted = 0,
         views = 0,
         shadowHidden = 0,
         hashedVideoID = `hash_${UUID}`;
-    db.prepare("run", `INSERT INTO
-    sponsorTimes (videoID, startTime, endTime, votes, UUID,
-    userID, timeSubmitted, views, category, shadowHidden, hashedVideoID)
+    await db.prepare("run", `INSERT INTO
+    "sponsorTimes" ("videoID", "startTime", "endTime", votes, "UUID",
+    "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID")
   VALUES
     ('${videoID}', ${startTime}, ${endTime}, ${votes}, '${UUID}',
     '${userID}', ${timeSubmitted}, ${views}, '${category}', ${shadowHidden}, '${hashedVideoID}')
@@ -21,13 +21,13 @@ function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, en
 }
 
 async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
-    await db.prepare('run', `UPDATE sponsorTimes SET startTime = ?, endTime = ? WHERE UUID = ?`, [startTime, endTime, UUID]);
+    await db.prepare('run', `UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ? WHERE "UUID" = ?`, [startTime, endTime, UUID]);
 }
 
 async function dbSponsorTimesCompareExpect(db: IDatabase, expect: any) {
     for (let i = 0, len = expect.length; i < len; i++) {
         const expectSeg = expect[i];
-        let seg = await db.prepare('get', "SELECT startTime, endTime FROM sponsorTimes WHERE UUID = ?", [expectSeg.UUID]);
+        let seg = await db.prepare('get', `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "UUID" = ?`, [expectSeg.UUID]);
         if ('removed' in expect) {
             if (expect.removed === true && seg.votes === -2) {
                 return;
@@ -50,14 +50,13 @@ describe('segmentShift', function () {
     const vipUserID = getHash(privateVipUserID);
     const baseURL = getbaseURL();
 
-    before(function (done: Done) {
+    before(async function () {
         // startTime and endTime get set in beforeEach for consistency
-        dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid01', 'intro');
-        dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid02', 'sponsor');
-        dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid03', 'interaction');
-        dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid04', 'outro');
-        db.prepare("run", `INSERT INTO vipUsers (userID) VALUES ('${vipUserID}')`);
-        done();
+        await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid01', 'intro');
+        await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid02', 'sponsor');
+        await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid03', 'interaction');
+        await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid04', 'outro');
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('${vipUserID}')`);
     });
 
     beforeEach(function (done: Done) {

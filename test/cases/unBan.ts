@@ -3,23 +3,23 @@ import fetch from 'node-fetch';
 import * as utils from  '../utils';
 import { getHash } from '../../src/utils/getHash';
 
-import { db } from '../../src/databases/databases';
+import { db, privateDB } from '../../src/databases/databases';
 import { Logger } from '../../src/utils/logger.js';
 
 describe('unBan', () => {
-  before(() => {
-    db.prepare("run", "INSERT INTO shadowBannedUsers VALUES('testMan-unBan')");
-    db.prepare("run", "INSERT INTO shadowBannedUsers VALUES('testWoman-unBan')");
-    db.prepare("run", "INSERT INTO shadowBannedUsers VALUES('testEntity-unBan')");
+  before(async () => {
+    await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testMan-unBan')`);
+    await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testWoman-unBan')`);
+    await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testEntity-unBan')`);
 
-    db.prepare("run", "INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser-unBan") + "')");
-    db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");
+    await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-unBan") + "')");
+    await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");
 
-    let startOfInsertSegmentQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
-    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-0', 1, 11, 2, 'unBan-uuid-0', 'testMan-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-0', 1) + "')");
-    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-1', 'testWoman-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
-    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-2', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
-    db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-2', 1, 11, 2, 'unBan-uuid-3', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-2', 1) + "')");
+    let startOfInsertSegmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
+    await db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-0', 1, 11, 2, 'unBan-uuid-0', 'testMan-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-0', 1) + "')");
+    await db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-1', 'testWoman-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
+    await db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-1', 1, 11, 2, 'unBan-uuid-2', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-1', 1) + "')");
+    await db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-2', 1, 11, 2, 'unBan-uuid-3', 'testEntity-unBan', 0, 60, 'sponsor', 1, '" + getHash('unBan-videoID-2', 1) + "')");
   });
 
   it('Should be able to unban a user and re-enable shadow banned segments', (done) => {
@@ -56,7 +56,7 @@ describe('unBan', () => {
     })
     .then(async res => {
         if (res.status === 200) {
-            let result = await db.prepare('all', 'SELECT * FROM sponsorTimes WHERE videoID = ? AND userID = ? AND shadowHidden = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
+            let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
             if (result.length !== 1) {
                 console.log(result);
                 done("Expected 1 banned entry1 in db, got " + result.length);
@@ -81,7 +81,7 @@ describe('unBan', () => {
     })
     .then(async res => {
       if (res.status === 200) {
-        let result = await db.prepare('all', 'SELECT * FROM sponsorTimes WHERE  userID = ? AND shadowHidden = ?', ['testEntity-unBan', 1]);
+        let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?', ['testEntity-unBan', 1]);
         if (result.length !== 1) {
           console.log(result);
           done("Expected 1 banned entry1 in db, got " + result.length);

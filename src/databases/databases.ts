@@ -60,9 +60,9 @@ if (config.mysql) {
         enableWalCheckpointNumber: false
     });
 }
-function initDb() {
-    db.init();
-    privateDB.init();
+async function initDb() {
+    await db.init();
+    await privateDB.init();
 
     if (db instanceof Sqlite) {
         // Attach private db to main db

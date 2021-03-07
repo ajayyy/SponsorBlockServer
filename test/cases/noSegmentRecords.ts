@@ -6,19 +6,19 @@ import {db} from '../../src/databases/databases';
 
 describe('noSegmentRecords', () => {
     before(async () => {
-        await db.prepare("run", "INSERT INTO vipUsers (userID) VALUES ('" + getHash("VIPUser-noSegments") + "')");
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-noSegments") + "')");
  
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'sponsor')");
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'intro')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'intro')");
  
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'sponsor')");
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'intro')");
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'noSubmitVideo', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'intro')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'noSubmitVideo', 'sponsor')");
  
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'delete-record', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'delete-record', 'sponsor')");
  
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'sponsor')");
-        await db.prepare("run", "INSERT INTO noSegments (userID, videoID, category) VALUES ('" + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'intro')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'intro')");
     });
 
     it('Should update the database version when starting the application', async () => {
@@ -95,7 +95,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['no-segments-video-id-1']);
+                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
                 if (result.length !== 4) {
                     console.log(result);
                     done("Expected 4 entrys in db, got " + result.length);
@@ -129,7 +129,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['underscore']);
+                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['underscore']);
                 if (result.length !== 1) {
                     console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
@@ -163,7 +163,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['bothCases']);
+                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['bothCases']);
                 if (result.length !== 1) {
                     console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
@@ -197,7 +197,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['specialChar']);
+                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['specialChar']);
                 if (result.length !== 0) {
                     console.log(result);
                     done("Expected 0 entrys in db, got " + result.length);
@@ -395,7 +395,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record']);
+                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['delete-record']);
                 if (result.length === 0) {
                     done();
                 } else {
@@ -426,7 +426,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM noSegments WHERE videoID = ?', ['delete-record-1']);
+                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['delete-record-1']);
                 if (result.length === 1) {
                     done();
                 } else {

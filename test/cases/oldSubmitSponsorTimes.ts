@@ -9,7 +9,7 @@ describe('postVideoSponsorTime (Old submission method)', () => {
             + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcQ&startTime=1&endTime=10&userID=test")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcQ"]);
+                let row = await db.prepare('get', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcQ"]);
                 if (row.startTime === 1 && row.endTime === 10 && row.category === "sponsor") {
                     done();
                 } else {
@@ -32,7 +32,7 @@ describe('postVideoSponsorTime (Old submission method)', () => {
             })
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', "SELECT startTime, endTime, category FROM sponsorTimes WHERE videoID = ?", ["dQw4w9WgXcE"]);
+                let row = await db.prepare('get', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcE"]);
                 if (row.startTime === 1 && row.endTime === 11 && row.category === "sponsor") {
                     done();
                 } else {

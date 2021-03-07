@@ -357,7 +357,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         // Only change the database if they have made a submission before and haven't voted recently
         const ableToVote = isVIP
             || ((await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
-                && (await privateDB.prepare("get", `SELECT userID FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
+                && (await privateDB.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
                 && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined);
 
         if (ableToVote) {
