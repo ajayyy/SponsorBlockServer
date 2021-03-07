@@ -143,7 +143,7 @@ async function sendWebhooks(voteData: VoteData) {
 
 async function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnSubmission: boolean, category: string, hashedIP: string, res: Response) {
     // Check if they've already made a vote
-    const usersLastVoteInfo = await privateDB.prepare('get', `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ?`, [UUID, userID]);
+    const usersLastVoteInfo = await privateDB.prepare('get', `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID]);
 
     if (usersLastVoteInfo?.category === category) {
         // Double vote, ignore
@@ -250,7 +250,6 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     //check if user voting on own submission
     const isOwnSubmission = (await db.prepare("get", `SELECT "UUID" as "submissionCount" FROM "sponsorTimes" where "userID" = ? AND "UUID" = ?`, [nonAnonUserID, UUID])) !== undefined;
 
-    
     // If not upvote
     if (!isVIP && type !== 1) {
         const isSegmentLocked = async () => !!(await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked; 

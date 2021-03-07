@@ -17,18 +17,28 @@ if (config.mysql) {
         fileNamePrefix: 'sponsorTimes',
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
-        enableWalCheckpointNumber: !config.readOnly && config.mode === "production",
-        postgres: config.postgres
+        postgres: {
+            user: config.postgres?.user,
+            host: config.postgres?.host,
+            database: "sponsorTimes",
+            password: config.postgres?.password,
+            port: config.postgres?.port,
+        }
     });
 
-    privateDB = new Sqlite({
-        dbPath: config.privateDB,
+    privateDB = new Postgres({
         dbSchemaFileName: config.privateDBSchema,
         dbSchemaFolder: config.schemaFolder,
         fileNamePrefix: 'private',
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
-        enableWalCheckpointNumber: false
+        postgres: {
+            user: config.postgres?.user,
+            host: config.postgres?.host,
+            database: "privateDB",
+            password: config.postgres?.password,
+            port: config.postgres?.port,
+        }
     });
 } else {
     db = new Sqlite({
