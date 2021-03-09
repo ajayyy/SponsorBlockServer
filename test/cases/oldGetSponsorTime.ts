@@ -18,9 +18,9 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getVideoSponsorTime (Old get method)', () => {
     before(() => {
-        let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
-        db.exec(startOfQuery + "('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest', 1) + "')");
-        db.exec(startOfQuery + "('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest,test', 1) + "')");
+        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
+        db.prepare("run", startOfQuery + "('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest', 1) + "')");
+        db.prepare("run", startOfQuery + "('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest,test', 1) + "')");
     });
 
     it('Should be able to get a time', (done: Done) => {

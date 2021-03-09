@@ -29,7 +29,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response) {
     categories = categories.filter((item: any) => typeof item === "string");
 
     // Get all video id's that match hash prefix
-    const segments = getSegmentsByHash(req, hashPrefix, categories);
+    const segments = await getSegmentsByHash(req, hashPrefix, categories);
 
     if (!segments) return res.status(404).json([]);
 

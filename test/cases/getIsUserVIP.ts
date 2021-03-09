@@ -4,8 +4,8 @@ import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 
 describe('getIsUserVIP', () => {
-    before(() => {
-        db.exec("INSERT INTO vipUsers (userID) VALUES ('" + getHash("supertestman") + "')");
+    before((done: Done) => {
+        db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("supertestman") + "')").then(done);
     });
 
     it('Should be able to get a 200', (done: Done) => {

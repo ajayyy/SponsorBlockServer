@@ -8,6 +8,6 @@ CREATE TABLE "noSegments" (
 );
 
 /* Add version to config */
-UPDATE config SET value = 2 WHERE key = 'version';
+UPDATE "config" SET value = 2 WHERE key = 'version';
 
 COMMIT;

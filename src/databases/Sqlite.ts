@@ -12,7 +12,8 @@ export class Sqlite implements IDatabase {
     {
     }
 
-    prepare(type: QueryType, query: string, params: any[]) {
+    async prepare(type: QueryType, query: string, params: any[] = []) {
+        // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
         const preparedQuery = this.db.prepare(query);
 
         switch (type) {
@@ -29,21 +30,7 @@ export class Sqlite implements IDatabase {
         }
     }
 
-    get<TModel>(query: string, params: any[]): TModel {
-        return this.prepare('get', query, params);
-    }
-    getAll<TModel>(query: string, params: any[]): TModel[] {
-        return this.prepare('all', query, params);
-    }
-    run(query: string, params: any[]): void {
-        this.prepare('run', query, params);
-    }
-
-    exec(query: string) {
-        return this.db.exec(query);
-    }
-
-    init() {
+    async init() {
         // Make dirs if required
         if (!fs.existsSync(path.join(this.config.dbPath, "../"))) {
             fs.mkdirSync(path.join(this.config.dbPath, "../"));
@@ -52,7 +39,7 @@ export class Sqlite implements IDatabase {
         this.db = new Sqlite3(this.config.dbPath, {readonly: this.config.readOnly, fileMustExist: !this.config.createDbIfNotExists});
 
         if (this.config.createDbIfNotExists && !this.config.readOnly && fs.existsSync(this.config.dbSchemaFileName)) {
-            this.db.exec(fs.readFileSync(this.config.dbSchemaFileName).toString());
+            this.db.exec(Sqlite.processUpgradeQuery(fs.readFileSync(this.config.dbSchemaFileName).toString()));
         }
 
         if (!this.config.readOnly) {
@@ -86,13 +73,19 @@ export class Sqlite implements IDatabase {
         Logger.debug('db update: trying ' + path);
         while (fs.existsSync(path)) {
             Logger.debug('db update: updating ' + path);
-            db.exec(fs.readFileSync(path).toString());
+            db.exec(this.processUpgradeQuery(fs.readFileSync(path).toString()));
 
             versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
             path = schemaFolder + "/_upgrade_" + fileNamePrefix + "_" + (parseInt(versionCode) + 1) + ".sql";
             Logger.debug('db update: trying ' + path);
         }
         Logger.debug('db update: no file ' + path);
+    }
+
+    private static processUpgradeQuery(query: string): string {
+        let result = query.replace(/^.*--!sqlite-ignore/gm, "");
+
+        return result;
     }
 }
 

@@ -1,0 +1,5 @@
+load database
+     from ./database.db
+     into postgresql://sponsorblock:pw@127.0.0.1:5432/sponsorTimes
+
+with quote identifiers;

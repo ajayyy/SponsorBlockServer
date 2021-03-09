@@ -3,7 +3,7 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {getHash} from '../utils/getHash';
 import {db} from '../databases/databases';
 
-export function deleteNoSegments(req: Request, res: Response) {
+export async function deleteNoSegments(req: Request, res: Response) {
     // Collect user input data
     const videoID = req.body.videoID;
     let userID = req.body.userID;
@@ -24,7 +24,7 @@ export function deleteNoSegments(req: Request, res: Response) {
 
     // Check if user is VIP
     userID = getHash(userID);
-    const userIsVIP = isUserVIP(userID);
+    const userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {
         res.status(403).json({
@@ -33,11 +33,13 @@ export function deleteNoSegments(req: Request, res: Response) {
         return;
     }
 
-    db.prepare("all", 'SELECT * FROM noSegments WHERE videoID = ?', [videoID]).filter((entry: any) => {
+    const entries = (await db.prepare("all", 'SELECT * FROM "noSegments" WHERE "videoID" = ?', [videoID])).filter((entry: any) => {
         return (categories.indexOf(entry.category) !== -1);
-    }).forEach((entry: any) => {
-        db.prepare('run', 'DELETE FROM noSegments WHERE videoID = ? AND category = ?', [videoID, entry.category]);
     });
+
+    for (const entry of entries) {
+        await db.prepare('run', 'DELETE FROM "noSegments" WHERE "videoID" = ? AND "category" = ?', [videoID, entry.category]);
+    }
 
     res.status(200).json({message: 'Removed no segments entrys for video ' + videoID});
 }
