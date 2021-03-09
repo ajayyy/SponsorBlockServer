@@ -53,6 +53,7 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
 
     try {
         categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
+        if (categories.length === 0) return null;
 
         const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await db
             .prepare(
@@ -88,6 +89,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerCategory: SBRecord<Category, DBSegment[]>}>;
 
         categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
+        if (categories.length === 0) return null;
 
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await db
             .prepare(
