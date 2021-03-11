@@ -9,6 +9,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response) {
         res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
         return;
     }
+    hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
 
     let categories: Category[] = [];
     try {
