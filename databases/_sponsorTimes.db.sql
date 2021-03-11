@@ -35,9 +35,6 @@ CREATE TABLE IF NOT EXISTS "config" (
 	"value" TEXT NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS "sponsorTimes_videoID" on "sponsorTimes"("videoID");
-CREATE INDEX IF NOT EXISTS "sponsorTimes_UUID" on "sponsorTimes"("UUID");
-
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 
 COMMIT;

@@ -5,8 +5,6 @@ BEGIN TRANSACTION;
 ALTER TABLE "sponsorTimes" ADD "hashedVideoID" TEXT NOT NULL default '';
 UPDATE "sponsorTimes" SET "hashedVideoID" = sha256("videoID");
 
-CREATE INDEX IF NOT EXISTS "sponsorTimes_hashedVideoID" on "sponsorTimes"("hashedVideoID");
-
 /* Bump version in config */
 UPDATE "config" SET value = 3 WHERE key = 'version';
 
