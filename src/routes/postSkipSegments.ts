@@ -391,6 +391,7 @@ export async function postSkipSegments(req: Request, res: Response) {
     }
     // Will be filled when submitting
     const UUIDs = [];
+    const newSegments = [];
 
     try {
         //get current time
@@ -511,6 +512,11 @@ export async function postSkipSegments(req: Request, res: Response) {
             }
 
             UUIDs.push(UUID);
+            newSegments.push({
+                UUID: UUID,
+                category: segmentInfo.category,
+                segment: segmentInfo.segment,
+            });
         }
     } catch (err) {
         Logger.error(err);
@@ -520,7 +526,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         return;
     }
 
-    res.sendStatus(200);
+    res.json(newSegments);
 
     for (let i = 0; i < segments.length; i++) {
         sendWebhooks(userID, videoID, UUIDs[i], segments[i]);
