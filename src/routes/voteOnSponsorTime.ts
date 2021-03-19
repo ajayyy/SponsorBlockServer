@@ -33,6 +33,7 @@ interface VoteData {
     category: string;
     incrementAmount: number;
     oldIncrementAmount: number;
+    finalMessage: string;
 }
 
 async function sendWebhooks(voteData: VoteData) {
@@ -111,7 +112,7 @@ async function sendWebhooks(voteData: VoteData) {
                                     getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                                 "color": 10813440,
                                 "author": {
-                                    "name": getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                                    "name": voteData.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
                                 },
                                 "thumbnail": {
                                     "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
@@ -238,6 +239,10 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     const nonAnonUserID = getHash(paramUserID);
     const userID = getHash(paramUserID + UUID);
 
+    // To force a non 200, change this early
+    let finalStatus = 200;
+    let finalMessage = null;
+
     //x-forwarded-for if this server is behind a proxy
     const ip = getIP(req);
 
@@ -258,7 +263,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                                     ' where "UUID" = ?', [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {
-            res.status(403).send("Vote rejected: A moderator has decided that this segment is correct");
+            finalStatus = 403;
+            finalMessage = "Vote rejected: A moderator has decided that this segment is correct"
             return;
         }
     }
@@ -415,7 +421,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             }
         }
 
-        res.sendStatus(200);
+        res.status(finalStatus).send(finalMessage ?? undefined);
 
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({
@@ -428,6 +434,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                 category,
                 incrementAmount,
                 oldIncrementAmount,
+                finalMessage
             });
         }
     } catch (err) {
