@@ -20,6 +20,11 @@ const voteTypes = {
     incorrect: 1,
 };
 
+interface FinalResponse {
+    finalStatus: number
+    finalMessage: string
+}
+
 interface VoteData {
     UUID: string;
     nonAnonUserID: string;
@@ -33,7 +38,7 @@ interface VoteData {
     category: string;
     incrementAmount: number;
     oldIncrementAmount: number;
-    finalMessage: string;
+    finalResponse: FinalResponse;
 }
 
 async function sendWebhooks(voteData: VoteData) {
@@ -112,7 +117,7 @@ async function sendWebhooks(voteData: VoteData) {
                                     getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                                 "color": 10813440,
                                 "author": {
-                                    "name": voteData.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                                    "name": voteData.finalResponse?.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
                                 },
                                 "thumbnail": {
                                     "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
@@ -142,13 +147,14 @@ async function sendWebhooks(voteData: VoteData) {
     }
 }
 
-async function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnSubmission: boolean, category: string, hashedIP: string, res: Response) {
+async function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnSubmission: boolean, category: string
+            , hashedIP: string, finalResponse: FinalResponse, res: Response) {
     // Check if they've already made a vote
     const usersLastVoteInfo = await privateDB.prepare('get', `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID]);
 
     if (usersLastVoteInfo?.category === category) {
         // Double vote, ignore
-        res.sendStatus(200);
+        res.sendStatus(finalResponse.finalStatus);
         return;
     }
 
@@ -216,7 +222,7 @@ async function categoryVote(UUID: string, userID: string, isVIP: boolean, isOwnS
         await db.prepare('run', `update "sponsorTimes" set "category" = ? where "UUID" = ?`, [category, UUID]);
     }
 
-    res.sendStatus(200);
+    res.sendStatus(finalResponse.finalStatus);
 }
 
 export function getUserID(req: Request): UserID {
@@ -240,8 +246,10 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     const userID = getHash(paramUserID + UUID);
 
     // To force a non 200, change this early
-    let finalStatus = 200;
-    let finalMessage = null;
+    let finalResponse: FinalResponse = {
+        finalStatus: 200,
+        finalMessage: null
+    }
 
     //x-forwarded-for if this server is behind a proxy
     const ip = getIP(req);
@@ -263,14 +271,13 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                                     ' where "UUID" = ?', [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {
-            finalStatus = 403;
-            finalMessage = "Vote rejected: A moderator has decided that this segment is correct"
-            return;
+            finalResponse.finalStatus = 403;
+            finalResponse.finalMessage = "Vote rejected: A moderator has decided that this segment is correct"
         }
     }
 
     if (type === undefined && category !== undefined) {
-        return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, res);
+        return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, finalResponse, res);
     }
 
     if (type == 1 && !isVIP && !isOwnSubmission) {
@@ -421,7 +428,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             }
         }
 
-        res.status(finalStatus).send(finalMessage ?? undefined);
+        res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
 
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({
@@ -434,7 +441,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                 category,
                 incrementAmount,
                 oldIncrementAmount,
-                finalMessage
+                finalResponse
             });
         }
     } catch (err) {
