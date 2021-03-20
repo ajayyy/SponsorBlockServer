@@ -28,6 +28,7 @@ export interface Segment {
     category: Category; 
     segment: number[]; 
     UUID: SegmentUUID;
+    videoDuration: VideoDuration;
 }
 
 export enum Visibility {
@@ -44,6 +45,7 @@ export interface DBSegment {
     locked: boolean;
     shadowHidden: Visibility;
     videoID: VideoID;
+    videoDuration: VideoDuration;
     hashedVideoID: VideoIDHash;
 }
 
