@@ -13,7 +13,12 @@ import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
 import { skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
+import { Category, IncomingSegment, Segment, Service, VideoDuration, VideoID } from '../types/segments.model';
 
+interface APIVideoInfo {
+    err: string | boolean,
+    data: any
+}
 
 async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
     const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
@@ -45,62 +50,58 @@ async function sendWebhookNotification(userID: string, videoID: string, UUID: st
     });
 }
 
-async function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo: any) {
-    if (config.youtubeAPIKey !== null) {
+async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID: string, UUID: string, segmentInfo: any, service: Service) {
+    if (apiVideoInfo && service == Service.YouTube) {
         const userSubmissionCountRow = await db.prepare('get', `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
 
-        YouTubeAPI.listVideos(videoID, (err: any, data: any) => {
-            if (err || data.items.length === 0) {
-                err && Logger.error(err);
-                return;
+        const {data, err} = apiVideoInfo;
+        if (err) return;
+
+        const startTime = parseFloat(segmentInfo.segment[0]);
+        const endTime = parseFloat(segmentInfo.segment[1]);
+        sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, data, {
+            submissionStart: startTime,
+            submissionEnd: endTime,
+        }, segmentInfo);
+
+        // If it is a first time submission
+        // Then send a notification to discord
+        if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
+        
+        fetch(config.discordFirstTimeSubmissionsWebhookURL, {
+            method: 'POST',
+            body: JSON.stringify({
+                "embeds": [{
+                    "title": data.items[0].snippet.title,
+                    "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseInt(startTime.toFixed(0)) - 2),
+                    "description": "Submission ID: " + UUID +
+                        "\n\nTimestamp: " +
+                        getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
+                        "\n\nCategory: " + segmentInfo.category,
+                    "color": 10813440,
+                    "author": {
+                        "name": userID,
+                    },
+                    "thumbnail": {
+                        "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                    },
+                }],
+            }),
+            headers: {
+                'Content-Type': 'application/json'
             }
-
-            const startTime = parseFloat(segmentInfo.segment[0]);
-            const endTime = parseFloat(segmentInfo.segment[1]);
-            sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, data, {
-                submissionStart: startTime,
-                submissionEnd: endTime,
-            }, segmentInfo);
-
-            // If it is a first time submission
-            // Then send a notification to discord
-            if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
-            
-            fetch(config.discordFirstTimeSubmissionsWebhookURL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    "embeds": [{
-                        "title": data.items[0].snippet.title,
-                        "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseInt(startTime.toFixed(0)) - 2),
-                        "description": "Submission ID: " + UUID +
-                            "\n\nTimestamp: " +
-                            getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
-                            "\n\nCategory: " + segmentInfo.category,
-                        "color": 10813440,
-                        "author": {
-                            "name": userID,
-                        },
-                        "thumbnail": {
-                            "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                        },
-                    }],
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(res => {
-                if (res.status >= 400) {
-                    Logger.error("Error sending first time submission Discord hook");
-                    Logger.error(JSON.stringify(res));
-                    Logger.error("\n");
-                }
-            })
-            .catch(err => {
-                Logger.error("Failed to send first time submission Discord hook.");
-                Logger.error(JSON.stringify(err));
+        })
+        .then(res => {
+            if (res.status >= 400) {
+                Logger.error("Error sending first time submission Discord hook");
+                Logger.error(JSON.stringify(res));
                 Logger.error("\n");
-            });
+            }
+        })
+        .catch(err => {
+            Logger.error("Failed to send first time submission Discord hook.");
+            Logger.error(JSON.stringify(err));
+            Logger.error("\n");
         });
     }
 }
@@ -166,73 +167,98 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
 // Looks like this was broken for no defined youtube key - fixed but IMO we shouldn't return
 //   false for a pass - it was confusing and lead to this bug - any use of this function in
 //   the future could have the same problem.
-async function autoModerateSubmission(submission: { videoID: any; userID: any; segments: any }) {
-    // Get the video information from the youtube API
-    if (config.youtubeAPIKey !== null) {
-        const {err, data} = await new Promise((resolve) => {
-            YouTubeAPI.listVideos(submission.videoID, (err: any, data: any) => resolve({err, data}));
-        });
+async function autoModerateSubmission(apiVideoInfo: APIVideoInfo, 
+            submission: { videoID: any; userID: any; segments: any }) {
+    if (apiVideoInfo) {
+        const {err, data} = apiVideoInfo;
+        if (err) return false;
 
-        if (err) {
-            return false;
-        } else {
-            // Check to see if video exists
-            if (data.pageInfo.totalResults === 0) {
-                return "No video exists with id " + submission.videoID;
+        // Check to see if video exists
+        if (data.pageInfo.totalResults === 0) return "No video exists with id " + submission.videoID;
+
+        const duration = getYouTubeVideoDuration(apiVideoInfo);
+        const segments = submission.segments;
+        let nbString = "";
+        for (let i = 0; i < segments.length; i++) {
+            const startTime = parseFloat(segments[i].segment[0]);
+            const endTime = parseFloat(segments[i].segment[1]);
+
+            if (duration == 0) {
+                // Allow submission if the duration is 0 (bug in youtube api)
+                return false;
             } else {
-                const segments = submission.segments;
-                let nbString = "";
-                for (let i = 0; i < segments.length; i++) {
+                if (segments[i].category === "sponsor") {
+                    //Prepare timestamps to send to NB all at once
+                    nbString = nbString + segments[i].segment[0] + "," + segments[i].segment[1] + ";";
+                }
+            }
+        }
+
+        // Get all submissions for this user
+        const allSubmittedByUser = await db.prepare('all', `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ? and "votes" > -1`, [submission.userID, submission.videoID]);
+        const allSegmentTimes = [];
+        if (allSubmittedByUser !== undefined) {
+            //add segments the user has previously submitted
+            for (const segmentInfo of allSubmittedByUser) {
+                allSegmentTimes.push([parseFloat(segmentInfo.startTime), parseFloat(segmentInfo.endTime)]);
+            }
+        }
+
+        //add segments they are trying to add in this submission
+        for (let i = 0; i < segments.length; i++) {
+            let startTime = parseFloat(segments[i].segment[0]);
+            let endTime = parseFloat(segments[i].segment[1]);
+            allSegmentTimes.push([startTime, endTime]);
+        }
+
+        //merge all the times into non-overlapping arrays
+        const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort(function (a, b) {
+            return a[0] - b[0] || a[1] - b[1];
+        }));
+
+        let videoDuration = data.items[0].contentDetails.duration;
+        videoDuration = isoDurations.toSeconds(isoDurations.parse(videoDuration));
+        if (videoDuration != 0) {
+            let allSegmentDuration = 0;
+            //sum all segment times together
+            allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
+            if (allSegmentDuration > (videoDuration / 100) * 80) {
+                // Reject submission if all segments combine are over 80% of the video
+                return "Total length of your submitted segments are over 80% of the video.";
+            }
+        }
+
+        // Check NeuralBlock
+        const neuralBlockURL = config.neuralBlockURL;
+        if (!neuralBlockURL) return false;
+        const response = await fetch(neuralBlockURL + "/api/checkSponsorSegments?vid=" + submission.videoID +
+            "&segments=" + nbString.substring(0, nbString.length - 1));
+        if (!response.ok) return false;
+
+        const nbPredictions = await response.json();
+        let nbDecision = false;
+        let predictionIdx = 0; //Keep track because only sponsor categories were submitted
+        for (let i = 0; i < segments.length; i++) {
+            if (segments[i].category === "sponsor") {
+                if (nbPredictions.probabilities[predictionIdx] < 0.70) {
+                    nbDecision = true; // At least one bad entry
                     const startTime = parseFloat(segments[i].segment[0]);
                     const endTime = parseFloat(segments[i].segment[1]);
 
-                    let duration = data.items[0].contentDetails.duration;
-                    duration = isoDurations.toSeconds(isoDurations.parse(duration));
-                    if (duration == 0) {
-                        // Allow submission if the duration is 0 (bug in youtube api)
-                        return false;
-                    } else if ((endTime - startTime) > (duration / 100) * 80) {
-                        // Reject submission if over 80% of the video
-                        return "One of your submitted segments is over 80% of the video.";
-                    } else {
-                        if (segments[i].category === "sponsor") {
-                            //Prepare timestamps to send to NB all at once
-                            nbString = nbString + segments[i].segment[0] + "," + segments[i].segment[1] + ";";
-                        }
-                    }
+                    const UUID = getSubmissionUUID(submission.videoID, segments[i].category, submission.userID, startTime, endTime);
+                    // Send to Discord
+                    // Note, if this is too spammy. Consider sending all the segments as one Webhook
+                    sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
                 }
-                // Check NeuralBlock
-                const neuralBlockURL = config.neuralBlockURL;
-                if (!neuralBlockURL) return false;
-                const response = await fetch(neuralBlockURL + "/api/checkSponsorSegments?vid=" + submission.videoID +
-                    "&segments=" + nbString.substring(0, nbString.length - 1));
-                if (!response.ok) return false;
-
-                const nbPredictions = await response.json();
-                let nbDecision = false;
-                let predictionIdx = 0; //Keep track because only sponsor categories were submitted
-                for (let i = 0; i < segments.length; i++) {
-                    if (segments[i].category === "sponsor") {
-                        if (nbPredictions.probabilities[predictionIdx] < 0.70) {
-                            nbDecision = true; // At least one bad entry
-                            const startTime = parseFloat(segments[i].segment[0]);
-                            const endTime = parseFloat(segments[i].segment[1]);
-
-                            const UUID = getSubmissionUUID(submission.videoID, segments[i].category, submission.userID, startTime, endTime);
-                            // Send to Discord
-                            // Note, if this is too spammy. Consider sending all the segments as one Webhook
-                            sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
-                        }
-                        predictionIdx++;
-                    }
-
-                }
-                if (nbDecision) {
-                    return "Rejected based on NeuralBlock predictions.";
-                } else {
-                    return false;
-                }
+                predictionIdx++;
             }
+
+        }
+
+        if (nbDecision) {
+            return "Rejected based on NeuralBlock predictions.";
+        } else {
+            return false;
         }
     } else {
         Logger.debug("Skipped YouTube API");
@@ -240,6 +266,21 @@ async function autoModerateSubmission(submission: { videoID: any; userID: any; s
         // Can't moderate the submission without calling the youtube API
         // so allow by default.
         return false;
+    }
+}
+
+function getYouTubeVideoDuration(apiVideoInfo: APIVideoInfo): VideoDuration {
+    const duration = apiVideoInfo?.data?.items[0]?.contentDetails?.duration;
+    return duration ? isoDurations.toSeconds(isoDurations.parse(duration)) as VideoDuration : null;
+}
+
+async function getYouTubeVideoInfo(videoID: VideoID): Promise<APIVideoInfo> {
+    if (config.youtubeAPIKey !== null) {
+        return new Promise((resolve) => {
+            YouTubeAPI.listVideos(videoID, (err: any, data: any) => resolve({err, data}));
+        });
+    } else {
+        return null;
     }
 }
 
@@ -267,14 +308,18 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const videoID = req.query.videoID || req.body.videoID;
     let userID = req.query.userID || req.body.userID;
+    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
+    if (!Object.values(Service).some((val) => val == service)) {
+        service = Service.YouTube;
+    }
+    let videoDuration: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
 
-
-    let segments = req.body.segments;
+    let segments = req.body.segments as IncomingSegment[];
     if (segments === undefined) {
         // Use query instead
         segments = [{
-            segment: [req.query.startTime, req.query.endTime],
-            category: req.query.category,
+            segment: [req.query.startTime as string, req.query.endTime as string],
+            category: req.query.category as Category
         }];
     }
 
@@ -367,16 +412,22 @@ export async function postSkipSegments(req: Request, res: Response) {
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
-            and "endTime" = ? and "category" = ? and "videoID" = ?`, [startTime, endTime, segments[i].category, videoID]);
+            and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
         if (duplicateCheck2Row.count > 0) {
             res.sendStatus(409);
             return;
         }
     }
 
+    let apiVideoInfo: APIVideoInfo = null;
+    if (service == Service.YouTube) {
+        apiVideoInfo = await getYouTubeVideoInfo(videoID);
+    }
+    videoDuration = getYouTubeVideoDuration(apiVideoInfo) || videoDuration;
+
     // Auto moderator check
-    if (!isVIP) {
-        const autoModerateResult = await autoModerateSubmission({userID, videoID, segments});//startTime, endTime, category: segments[i].category});
+    if (!isVIP && service == Service.YouTube) {
+        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, {userID, videoID, segments});//startTime, endTime, category: segments[i].category});
         if (autoModerateResult == "Rejected based on NeuralBlock predictions.") {
             // If NB automod rejects, the submission will start with -2 votes.
             // Note, if one submission is bad all submissions will be affected.
@@ -437,63 +488,18 @@ export async function postSkipSegments(req: Request, res: Response) {
 
         let startingVotes = 0 + decreaseVotes;
 
-        if (config.youtubeAPIKey !== null) {
-            let {err, data} = await new Promise((resolve) => {
-                YouTubeAPI.listVideos(videoID, (err: any, data: any) => resolve({err, data}));
-            });
-
-            if (err) {
-                Logger.error("Error while submitting when connecting to YouTube API: " + err);
-            } else {
-                //get all segments for this video and user
-                const allSubmittedByUser = await db.prepare('all', `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ? and "votes" > -1`, [userID, videoID]);
-                const allSegmentTimes = [];
-                if (allSubmittedByUser !== undefined) {
-                    //add segments the user has previously submitted
-                    for (const segmentInfo of allSubmittedByUser) {
-                        allSegmentTimes.push([parseFloat(segmentInfo.startTime), parseFloat(segmentInfo.endTime)]);
-                    }
-                }
-
-                //add segments they are trying to add in this submission
-                for (let i = 0; i < segments.length; i++) {
-                    let startTime = parseFloat(segments[i].segment[0]);
-                    let endTime = parseFloat(segments[i].segment[1]);
-                    allSegmentTimes.push([startTime, endTime]);
-                }
-
-                //merge all the times into non-overlapping arrays
-                const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort(function (a, b) {
-                    return a[0] - b[0] || a[1] - b[1];
-                }));
-
-                let videoDuration = data.items[0].contentDetails.duration;
-                videoDuration = isoDurations.toSeconds(isoDurations.parse(videoDuration));
-                if (videoDuration != 0) {
-                    let allSegmentDuration = 0;
-                    //sum all segment times together
-                    allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
-                    if (allSegmentDuration > (videoDuration / 100) * 80) {
-                        // Reject submission if all segments combine are over 80% of the video
-                        res.status(400).send("Total length of your submitted segments are over 80% of the video.");
-                        return;
-                    }
-                }
-            }
-        }
-
         for (const segmentInfo of segments) {
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, segmentInfo.segment[0], segmentInfo.segment[1]);
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]));
 
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned, getHash(videoID, 1),
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, shadowBanned, getHash(videoID, 1),
                     ],
                 );
 
@@ -504,7 +510,7 @@ export async function postSkipSegments(req: Request, res: Response) {
                 redis.delAsync(skipSegmentsKey(videoID));
             } catch (err) {
                 //a DB change probably occurred
-                res.sendStatus(502);
+                res.sendStatus(500);
                 Logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
 
@@ -529,7 +535,7 @@ export async function postSkipSegments(req: Request, res: Response) {
     res.json(newSegments);
 
     for (let i = 0; i < segments.length; i++) {
-        sendWebhooks(userID, videoID, UUIDs[i], segments[i]);
+        sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service);
     }
 }
 

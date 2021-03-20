@@ -4,7 +4,7 @@ import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
 import { skipSegmentsKey } from '../middleware/redisKeys';
 import { SBRecord } from '../types/lib.model';
-import { Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
+import { Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
@@ -43,11 +43,12 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     return chooseSegments(filteredSegments).map((chosenSegment) => ({
         category,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
-        UUID: chosenSegment.UUID
+        UUID: chosenSegment.UUID,
+        videoDuration: chosenSegment.videoDuration
     }));
 }
 
-async function getSegmentsByVideoID(req: Request, videoID: string, categories: Category[]): Promise<Segment[]> {
+async function getSegmentsByVideoID(req: Request, videoID: string, categories: Category[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Segment[] = [];
 
@@ -58,9 +59,9 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
         const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await db
             .prepare(
                 'all',
-                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden" FROM "sponsorTimes" 
-                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
-                [videoID]
+                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden" FROM "sponsorTimes" 
+                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) AND "service" = ? ORDER BY "startTime"`,
+                [videoID, service]
             )).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
                 acc[segment.category].push(segment);
@@ -81,7 +82,7 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
     }
 }
 
-async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): Promise<SBRecord<VideoID, VideoData>> {
+async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: SBRecord<VideoID, VideoData> = {};
 
@@ -94,9 +95,9 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await db
             .prepare(
                 'all',
-                `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
-                WHERE "hashedVideoID" LIKE ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
-                [hashedVideoIDPrefix + '%']
+                `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+                WHERE "hashedVideoID" LIKE ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) AND "service" = ? ORDER BY "startTime"`,
+                [hashedVideoIDPrefix + '%', service]
             )).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
                     hash: segment.hashedVideoID,
@@ -239,6 +240,11 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
             ? [req.query.category]
             : ['sponsor'];
 
+    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
+    if (!Object.values(Service).some((val) => val == service)) {
+        service = Service.YouTube;
+    }
+
     // Only 404s are cached at the moment
     const redisResult = await redis.getAsync(skipSegmentsKey(videoID));
     
@@ -251,7 +257,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         }
     }
 
-    const segments = await getSegmentsByVideoID(req, videoID, categories);
+    const segments = await getSegmentsByVideoID(req, videoID, categories, service);
 
     if (segments === null || segments === undefined) {
         res.sendStatus(500);
