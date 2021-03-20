@@ -129,7 +129,8 @@ function setupRoutes(app: Express) {
     app.post('/api/segmentShift', postSegmentShift);
 
     if (config.postgres) {
-        app.get('/database', dumpDatabase);
+        app.get('/database', (req, res) => dumpDatabase(req, res, true));
+        app.get('/database.json', (req, res) => dumpDatabase(req, res, false));
     } else {
         app.get('/database.db', function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", {root: "./"});

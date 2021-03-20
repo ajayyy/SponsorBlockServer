@@ -32,12 +32,14 @@ const tables = [{
     name: "vipUsers"
 }];
 
-const links: string = tables.map((table) => `<p><a href="/database/${table.name}.csv">${table.name}.csv</a></p>`)
+const links: string[] = tables.map((table) => `/database/${table.name}.csv`);
+
+const linksHTML: string = tables.map((table) => `<p><a href="/database/${table.name}.csv">${table.name}.csv</a></p>`)
                         .reduce((acc, url) => acc + url, "");
 
 let lastUpdate = 0;
 
-export default function dumpDatabase(req: Request, res: Response) {
+export default function dumpDatabase(req: Request, res: Response, showPage: boolean) {
     if (!config.postgres) {
         res.status(404).send("Not supported on this instance");
         return;
@@ -46,9 +48,19 @@ export default function dumpDatabase(req: Request, res: Response) {
     const now = Date.now();
     const updateQueued = now - lastUpdate > ONE_MINUTE;
 
-    res.status(200).send(`${styleHeader}
-                <h1>SponsorBlock database dumps</h1>${licenseHeader}${links}<br/>
-                ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
+    res.status(200)
+    
+    if (showPage) {
+        res.send(`${styleHeader}
+            <h1>SponsorBlock database dumps</h1>${licenseHeader}${linksHTML}<br/>
+            ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
+    } else {
+        res.send({
+            lastUpdated: lastUpdate,
+            updateQueued,
+            links
+        })
+    }
 
     if (updateQueued) {
         lastUpdate = Date.now();
