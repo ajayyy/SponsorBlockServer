@@ -16,12 +16,12 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
 
     let additionalFields = '';
     if (categoryStatsEnabled) {
-        additionalFields += `SUM(CASE WHEN category = 'sponsor' THEN 1 ELSE 0 END) as "categorySponsor",
-            SUM(CASE WHEN category = 'intro' THEN 1 ELSE 0 END) as "categorySumIntro",
-            SUM(CASE WHEN category = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
-            SUM(CASE WHEN category = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
-            SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
-            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic", `;
+        additionalFields += `SUM(CASE WHEN category = "sponsor" THEN 1 ELSE 0 END) as "categorySponsor",
+            SUM(CASE WHEN category = "intro" THEN 1 ELSE 0 END) as "categorySumIntro",
+            SUM(CASE WHEN category = "outro" THEN 1 ELSE 0 END) as "categorySumOutro",
+            SUM(CASE WHEN category = "interaction" THEN 1 ELSE 0 END) as "categorySumInteraction",
+            SUM(CASE WHEN category = "selfpromo" THEN 1 ELSE 0 END) as "categorySelfpromo",
+            SUM(CASE WHEN category = "music_offtopic" THEN 1 ELSE 0 END) as "categoryMusicOfftopic", `;
     }
 
     const rows = await db.prepare('all', `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
@@ -32,7 +32,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
         LEFT JOIN "privateDB"."shadowBannedUsers" ON "sponsorTimes"."userID"="privateDB"."shadowBannedUsers"."userID"
         WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "privateDB"."shadowBannedUsers"."userID" IS NULL
         GROUP BY IFNULL("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
-        ORDER BY "` + sortBy + `" DESC LIMIT 100`, []);
+        ORDER BY "${sortBy}" DESC LIMIT 100`, []);
 
     for (let i = 0; i < rows.length; i++) {
         userNames[i] = rows[i].userName;
