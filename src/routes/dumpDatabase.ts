@@ -52,7 +52,12 @@ export default function dumpDatabase(req: Request, res: Response, showPage: bool
     
     if (showPage) {
         res.send(`${styleHeader}
-            <h1>SponsorBlock database dumps</h1>${licenseHeader}${linksHTML}<br/>
+            <h1>SponsorBlock database dumps</h1>${licenseHeader}
+            <h3>How this works</h3>
+            Send a request to <code>https://sponsor.ajay.app/database.json</code>, or visit this page to trigger the database dump to run.
+            Then, you can download the csv files below, or use the links returned from the JSON request.
+            <h3>Links</h3>
+            ${linksHTML}<br/>
             ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
     } else {
         res.send({
