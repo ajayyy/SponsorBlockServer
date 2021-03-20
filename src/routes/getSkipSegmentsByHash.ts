@@ -1,7 +1,7 @@
 import {hashPrefixTester} from '../utils/hashPrefixTester';
 import {getSegmentsByHash} from './getSkipSegments';
 import {Request, Response} from 'express';
-import { Category, VideoIDHash } from '../types/segments.model';
+import { Category, Service, VideoIDHash } from '../types/segments.model';
 
 export async function getSkipSegmentsByHash(req: Request, res: Response) {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -25,12 +25,17 @@ export async function getSkipSegmentsByHash(req: Request, res: Response) {
     catch(error) {
         return res.status(400).send("Bad parameter: categories (invalid JSON)");
     }
+
+    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
+    if (!Object.values(Service).some((val) => val == service)) {
+        service = Service.YouTube;
+    }
     
     // filter out none string elements, only flat array with strings is valid
     categories = categories.filter((item: any) => typeof item === "string");
 
     // Get all video id's that match hash prefix
-    const segments = await getSegmentsByHash(req, hashPrefix, categories);
+    const segments = await getSegmentsByHash(req, hashPrefix, categories, service);
 
     if (!segments) return res.status(404).json([]);
 

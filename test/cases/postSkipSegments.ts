@@ -97,6 +97,38 @@ describe('postSkipSegments', () => {
         .catch(err => done(err));
     });
 
+    it('Should be able to submit a single time under a different service (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcG",
+                service: "PeerTube",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "service" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcG"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.service === "PeerTube") {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
     it('VIP submission should start locked', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {

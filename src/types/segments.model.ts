@@ -8,6 +8,16 @@ export type VideoIDHash = VideoID & HashedValue;
 export type IPAddress = string & { __ipAddressBrand: unknown };
 export type HashedIP = IPAddress & HashedValue;
 
+// Uncomment as needed
+export enum Service {
+    YouTube = 'YouTube',
+    // Nebula = 'Nebula',
+    PeerTube = 'PeerTube',
+    // RSS = 'RSS',
+    // Corridor = 'Corridor',
+    // Lbry = 'Lbry'
+}
+
 export interface Segment { 
     category: Category; 
     segment: number[]; 

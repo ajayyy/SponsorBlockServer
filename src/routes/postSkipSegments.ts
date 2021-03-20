@@ -13,6 +13,7 @@ import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
 import { skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
+import { Service } from '../types/segments.model';
 
 
 async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
@@ -45,8 +46,8 @@ async function sendWebhookNotification(userID: string, videoID: string, UUID: st
     });
 }
 
-async function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo: any) {
-    if (config.youtubeAPIKey !== null) {
+async function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo: any, service: Service) {
+    if (config.youtubeAPIKey !== null && service == Service.YouTube) {
         const userSubmissionCountRow = await db.prepare('get', `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
 
         YouTubeAPI.listVideos(videoID, (err: any, data: any) => {
@@ -267,7 +268,10 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const videoID = req.query.videoID || req.body.videoID;
     let userID = req.query.userID || req.body.userID;
-
+    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
+    if (!Object.values(Service).some((val) => val == service)) {
+        service = Service.YouTube;
+    }
 
     let segments = req.body.segments;
     if (segments === undefined) {
@@ -367,7 +371,7 @@ export async function postSkipSegments(req: Request, res: Response) {
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
-            and "endTime" = ? and "category" = ? and "videoID" = ?`, [startTime, endTime, segments[i].category, videoID]);
+            and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
         if (duplicateCheck2Row.count > 0) {
             res.sendStatus(409);
             return;
@@ -375,7 +379,7 @@ export async function postSkipSegments(req: Request, res: Response) {
     }
 
     // Auto moderator check
-    if (!isVIP) {
+    if (!isVIP && service == Service.YouTube) {
         const autoModerateResult = await autoModerateSubmission({userID, videoID, segments});//startTime, endTime, category: segments[i].category});
         if (autoModerateResult == "Rejected based on NeuralBlock predictions.") {
             // If NB automod rejects, the submission will start with -2 votes.
@@ -491,9 +495,9 @@ export async function postSkipSegments(req: Request, res: Response) {
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned, getHash(videoID, 1),
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, shadowBanned, getHash(videoID, 1),
                     ],
                 );
 
@@ -529,7 +533,7 @@ export async function postSkipSegments(req: Request, res: Response) {
     res.json(newSegments);
 
     for (let i = 0; i < segments.length; i++) {
-        sendWebhooks(userID, videoID, UUIDs[i], segments[i]);
+        sendWebhooks(userID, videoID, UUIDs[i], segments[i], service);
     }
 }
 

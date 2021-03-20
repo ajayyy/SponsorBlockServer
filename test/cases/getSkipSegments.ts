@@ -5,16 +5,17 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getSkipSegments', () => {
     before(async () => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
-        await db.prepare("run", startOfQuery + "('testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest', 1) + "')");
-        await db.prepare("run", startOfQuery + "('testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 0, '" + getHash('testtesttest', 1) + "')");
-        await db.prepare("run", startOfQuery + "('testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('testtesttest,test', 1) + "')");
-        await db.prepare("run", startOfQuery + "('test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 1) + "')");
-        await db.prepare("run", startOfQuery + "('test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 0, '" + getHash('test3', 1) + "')");
-        await db.prepare("run", startOfQuery + "('multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 1) + "')");
-        await db.prepare("run", startOfQuery + "('multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 0, '" + getHash('multiple', 1) + "')");
-        await db.prepare("run", startOfQuery + "('locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 0, '" + getHash('locked', 1) + "')");
-        await db.prepare("run", startOfQuery + "('locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 0, '" + getHash('locked', 1) + "')");
+        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "service", "shadowHidden", "hashedVideoID") VALUES';
+        await db.prepare("run", startOfQuery + "('testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 'YouTube', 0, '" + getHash('testtesttest', 1) + "')");
+        await db.prepare("run", startOfQuery + "('testtesttest2', 1, 11, 2, 0, '1-uuid-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 0, '" + getHash('testtesttest2', 1) + "')");
+        await db.prepare("run", startOfQuery + "('testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 'YouTube', 0, '" + getHash('testtesttest', 1) + "')");
+        await db.prepare("run", startOfQuery + "('testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, '" + getHash('testtesttest,test', 1) + "')");
+        await db.prepare("run", startOfQuery + "('test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 0, '" + getHash('test3', 1) + "')");
+        await db.prepare("run", startOfQuery + "('test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 'YouTube', 0, '" + getHash('test3', 1) + "')");
+        await db.prepare("run", startOfQuery + "('multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 'YouTube', 0, '" + getHash('multiple', 1) + "')");
+        await db.prepare("run", startOfQuery + "('multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'YouTube', 0, '" + getHash('multiple', 1) + "')");
+        await db.prepare("run", startOfQuery + "('locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'YouTube', 0, '" + getHash('locked', 1) + "')");
+        await db.prepare("run", startOfQuery + "('locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'YouTube', 0, '" + getHash('locked', 1) + "')");
     
         return;
     });
@@ -28,6 +29,23 @@ describe('getSkipSegments', () => {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0") {
+                    return;
+                } else {
+                    return ("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(err => "Couldn't call endpoint");
+    });
+
+    it('Should be able to get a time by category for a different service 1', () => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=sponsor&service=PeerTube")
+        .then(async res => {
+            if (res.status !== 200) return ("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
+                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0-1") {
                     return;
                 } else {
                     return ("Received incorrect body: " + (await res.text()));
