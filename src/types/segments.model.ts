@@ -12,8 +12,9 @@ export type HashedIP = IPAddress & HashedValue;
 // Uncomment as needed
 export enum Service {
     YouTube = 'YouTube',
-    // Nebula = 'Nebula',
     PeerTube = 'PeerTube',
+    // Twitch = 'Twitch',
+    // Nebula = 'Nebula',
     // RSS = 'RSS',
     // Corridor = 'Corridor',
     // Lbry = 'Lbry'
