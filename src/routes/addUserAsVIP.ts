@@ -27,14 +27,14 @@ export async function addUserAsVIP(req: Request, res: Response) {
     }
 
     //check to see if this user is already a vip
-    const row = db.prepare('get', "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]);
+    const row = await db.prepare('get', 'SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?', [userID]);
 
     if (enabled && row.userCount == 0) {
         //add them to the vip list
-        db.prepare('run', "INSERT INTO vipUsers VALUES(?)", [userID]);
+        await db.prepare('run', 'INSERT INTO "vipUsers" VALUES(?)', [userID]);
     } else if (!enabled && row.userCount > 0) {
         //remove them from the shadow ban list
-        db.prepare('run', "DELETE FROM vipUsers WHERE userID = ?", [userID]);
+        await db.prepare('run', 'DELETE FROM "vipUsers" WHERE "userID" = ?', [userID]);
     }
 
     res.sendStatus(200);

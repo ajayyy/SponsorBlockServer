@@ -1,13 +1,7 @@
 export interface IDatabase {
-    init(): void;
+    async init(): Promise<void>;
 
-    prepare(type: QueryType, query: string, params: any[]): any;
-
-    get<TModel>(query: string, params: any[]): TModel;
-    getAll<TModel>(query: string, params: any[]): TModel[];
-    run(query: string, params: any[]): void;
-
-    exec(query: string): any;
+    prepare(type: QueryType, query: string, params?: any[]): Promise<any | any[] | void>;
 }
 
 export type QueryType = 'get' | 'all' | 'run';

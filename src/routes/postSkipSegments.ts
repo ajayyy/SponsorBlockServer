@@ -15,8 +15,8 @@ import { skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
 
 
-function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
-    const row = db.prepare('get', "SELECT userName FROM userNames WHERE userID = ?", [userID]);
+async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
+    const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
     const userName = row !== undefined ? row.userName : null;
     const video = youtubeData.items[0];
 
@@ -45,9 +45,9 @@ function sendWebhookNotification(userID: string, videoID: string, UUID: string, 
     });
 }
 
-function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo: any) {
+async function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo: any) {
     if (config.youtubeAPIKey !== null) {
-        const userSubmissionCountRow = db.prepare('get', "SELECT count(*) as submissionCount FROM sponsorTimes WHERE userID = ?", [userID]);
+        const userSubmissionCountRow = await db.prepare('get', `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
 
         YouTubeAPI.listVideos(videoID, (err: any, data: any) => {
             if (err || data.items.length === 0) {
@@ -105,11 +105,11 @@ function sendWebhooks(userID: string, videoID: string, UUID: string, segmentInfo
     }
 }
 
-function sendWebhooksNB(userID: string, videoID: string, UUID: string, startTime: number, endTime: number, category: string, probability: number, ytData: any) {
-    const submissionInfoRow = db.prepare('get', "SELECT " +
-        "(select count(1) from sponsorTimes where userID = ?) count, " +
-        "(select count(1) from sponsorTimes where userID = ? and votes <= -2) disregarded, " +
-        "coalesce((select userName FROM userNames WHERE userID = ?), ?) userName",
+async function sendWebhooksNB(userID: string, videoID: string, UUID: string, startTime: number, endTime: number, category: string, probability: number, ytData: any) {
+    const submissionInfoRow = await db.prepare('get', `SELECT
+        (select count(1) from "sponsorTimes" where "userID" = ?) count,
+        (select count(1) from "sponsorTimes" where "userID" = ? and "votes" <= -2) disregarded,
+        coalesce((select "userName" FROM "userNames" WHERE "userID" = ?), ?) "userName"`,
         [userID, userID, userID, userID]);
 
     let submittedBy: string;
@@ -304,20 +304,20 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
-    const warningsCount = db.prepare('get', "SELECT count(1) as count FROM warnings WHERE userID = ? AND issueTime > ? AND enabled = 1",
+    const warningsCount = (await db.prepare('get', `SELECT count(1) as count FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
         [userID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
-    ).count;
+    )).count;
 
     if (warningsCount >= config.maxNumberOfActiveWarnings) {
         return res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
-    const noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]).map((list: any) => {
+    const noSegmentList = (await db.prepare('all', 'SELECT category from "noSegments" where "videoID" = ?', [videoID])).map((list: any) => {
         return list.category;
     });
 
     //check if this user is on the vip list
-    const isVIP = db.prepare("get", "SELECT count(*) as userCount FROM vipUsers WHERE userID = ?", [userID]).userCount > 0;
+    const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [userID])).userCount > 0;
 
     const decreaseVotes = 0;
 
@@ -366,8 +366,8 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         //check if this info has already been submitted before
-        const duplicateCheck2Row = db.prepare('get', "SELECT COUNT(*) as count FROM sponsorTimes WHERE startTime = ? " +
-            "and endTime = ? and category = ? and videoID = ?", [startTime, endTime, segments[i].category, videoID]);
+        const duplicateCheck2Row = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
+            and "endTime" = ? and "category" = ? and "videoID" = ?`, [startTime, endTime, segments[i].category, videoID]);
         if (duplicateCheck2Row.count > 0) {
             res.sendStatus(409);
             return;
@@ -391,6 +391,7 @@ export async function postSkipSegments(req: Request, res: Response) {
     }
     // Will be filled when submitting
     const UUIDs = [];
+    const newSegments = [];
 
     try {
         //get current time
@@ -401,7 +402,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         // Disable IP ratelimiting for now
         if (false) {
             //check to see if this ip has submitted too many sponsors today
-            const rateLimitCheckRow = privateDB.prepare('get', "SELECT COUNT(*) as count FROM sponsorTimes WHERE hashedIP = ? AND videoID = ? AND timeSubmitted > ?", [hashedIP, videoID, yesterday]);
+            const rateLimitCheckRow = await privateDB.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
 
             if (rateLimitCheckRow.count >= 10) {
                 //too many sponsors for the same video from the same ip address
@@ -414,7 +415,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         // Disable max submissions for now
         if (false) {
             //check to see if the user has already submitted sponsors for this video
-            const duplicateCheckRow = db.prepare('get', "SELECT COUNT(*) as count FROM sponsorTimes WHERE userID = ? and videoID = ?", [userID, videoID]);
+            const duplicateCheckRow = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
 
             if (duplicateCheckRow.count >= 16) {
                 //too many sponsors for the same video from the same user
@@ -425,7 +426,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         //check to see if this user is shadowbanned
-        const shadowBanRow = privateDB.prepare('get', "SELECT count(*) as userCount FROM shadowBannedUsers WHERE userID = ?", [userID]);
+        const shadowBanRow = await privateDB.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
         let shadowBanned = shadowBanRow.userCount;
 
@@ -445,7 +446,7 @@ export async function postSkipSegments(req: Request, res: Response) {
                 Logger.error("Error while submitting when connecting to YouTube API: " + err);
             } else {
                 //get all segments for this video and user
-                const allSubmittedByUser = db.prepare('all', "SELECT startTime, endTime FROM sponsorTimes WHERE userID = ? and videoID = ? and votes > -1", [userID, videoID]);
+                const allSubmittedByUser = await db.prepare('all', `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ? and "votes" > -1`, [userID, videoID]);
                 const allSegmentTimes = [];
                 if (allSubmittedByUser !== undefined) {
                     //add segments the user has previously submitted
@@ -489,15 +490,15 @@ export async function postSkipSegments(req: Request, res: Response) {
 
             const startingLocked = isVIP ? 1 : 0;
             try {
-                db.prepare('run', "INSERT INTO sponsorTimes " +
-                    "(videoID, startTime, endTime, votes, locked, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID)" +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                await db.prepare('run', `INSERT INTO "sponsorTimes" 
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                         videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, shadowBanned, getHash(videoID, 1),
                     ],
                 );
 
                 //add to private db as well
-                privateDB.prepare('run', "INSERT INTO sponsorTimes VALUES(?, ?, ?)", [videoID, hashedIP, timeSubmitted]);
+                await privateDB.prepare('run', `INSERT INTO "sponsorTimes" VALUES(?, ?, ?)`, [videoID, hashedIP, timeSubmitted]);
             
                 // Clear redis cache for this video
                 redis.delAsync(skipSegmentsKey(videoID));
@@ -511,6 +512,11 @@ export async function postSkipSegments(req: Request, res: Response) {
             }
 
             UUIDs.push(UUID);
+            newSegments.push({
+                UUID: UUID,
+                category: segmentInfo.category,
+                segment: segmentInfo.segment,
+            });
         }
     } catch (err) {
         Logger.error(err);
@@ -520,7 +526,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         return;
     }
 
-    res.sendStatus(200);
+    res.json(newSegments);
 
     for (let i = 0; i < segments.length; i++) {
         sendWebhooks(userID, videoID, UUIDs[i], segments[i]);

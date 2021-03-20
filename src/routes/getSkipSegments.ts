@@ -11,8 +11,8 @@ import { Logger } from '../utils/logger';
 import redis from '../utils/redis';
 
 
-function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Segment[] {
-    const filteredSegments = segments.filter((segment) => {
+async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
+    const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1) {
             return false; //too untrustworthy, just ignore it
         }
@@ -24,7 +24,7 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
         }
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID] = privateDB.prepare('all', 'SELECT hashedIP FROM sponsorTimes WHERE videoID = ?', [videoID]) as { hashedIP: HashedIP }[];
+            cache.shadowHiddenSegmentIPs[videoID] = await privateDB.prepare('all', 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ?', [videoID]) as { hashedIP: HashedIP }[];
         }
 
         //if this isn't their ip, don't send it to them
@@ -36,7 +36,9 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
 
             return shadowHiddenSegment.hashedIP === cache.userHashedIP;
         });
-    });
+    }));
+    
+    const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
     return chooseSegments(filteredSegments).map((chosenSegment) => ({
         category,
@@ -45,17 +47,21 @@ function prepareCategorySegments(req: Request, videoID: VideoID, category: Categ
     }));
 }
 
-function getSegmentsByVideoID(req: Request, videoID: string, categories: Category[]): Segment[] {
+async function getSegmentsByVideoID(req: Request, videoID: string, categories: Category[]): Promise<Segment[]> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Segment[] = [];
 
     try {
-        const segmentsByCategory: SBRecord<Category, DBSegment[]> = db
+        categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
+        if (categories.length === 0) return null;
+
+        const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await db
             .prepare(
                 'all',
-                `SELECT startTime, endTime, votes, locked, UUID, category, shadowHidden FROM sponsorTimes WHERE videoID = ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
-                [videoID, categories]
-            ).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
+                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden" FROM "sponsorTimes" 
+                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
+                [videoID]
+            )).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
                 acc[segment.category].push(segment);
 
@@ -63,7 +69,7 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
             }, {});
 
         for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
-            segments.push(...prepareCategorySegments(req, videoID as VideoID, category as Category, categorySegments, cache));
+            segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, categorySegments, cache)));
         }
 
         return segments;
@@ -75,19 +81,23 @@ function getSegmentsByVideoID(req: Request, videoID: string, categories: Categor
     }
 }
 
-function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): SBRecord<VideoID, VideoData> {
+async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[]): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
         type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerCategory: SBRecord<Category, DBSegment[]>}>;
 
-        const segmentPerVideoID: SegmentWithHashPerVideoID = db
+        categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
+        if (categories.length === 0) return null;
+
+        const segmentPerVideoID: SegmentWithHashPerVideoID = (await db
             .prepare(
                 'all',
-                `SELECT videoID, startTime, endTime, votes, locked, UUID, category, shadowHidden, hashedVideoID FROM sponsorTimes WHERE hashedVideoID LIKE ? AND category IN (${Array(categories.length).fill('?').join()}) ORDER BY startTime`,
-                [hashedVideoIDPrefix + '%', categories]
-            ).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
+                `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+                WHERE "hashedVideoID" LIKE ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) ORDER BY "startTime"`,
+                [hashedVideoIDPrefix + '%']
+            )).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
                     hash: segment.hashedVideoID,
                     segmentPerCategory: {},
@@ -107,7 +117,7 @@ function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categ
             };
 
             for (const [category, segmentPerCategory] of Object.entries(videoData.segmentPerCategory)) {
-                segments[videoID].segments.push(...prepareCategorySegments(req, videoID as VideoID, category as Category, segmentPerCategory, cache));
+                segments[videoID].segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, segmentPerCategory, cache)));
             }
         }
 
@@ -241,7 +251,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         }
     }
 
-    const segments = getSegmentsByVideoID(req, videoID, categories);
+    const segments = await getSegmentsByVideoID(req, videoID, categories);
 
     if (segments === null || segments === undefined) {
         res.sendStatus(500);

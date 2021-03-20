@@ -1,3 +1,4 @@
+import { PoolConfig } from 'pg';
 import * as redis from 'redis';
 
 export interface SBSConfig {
@@ -37,6 +38,7 @@ export interface SBSConfig {
     maximumPrefix?: string;
     redis?: redis.ClientOpts;
     maxRewardTimePerSegmentInSeconds?: number;
+    postgres?: PoolConfig;
 }
 
 export interface WebhookConfig {
@@ -50,4 +52,14 @@ export interface RateLimitConfig {
     max: number;
     message: string;
     statusCode: number;
+}
+
+export interface PostgresConfig {
+    dbSchemaFileName: string;
+    dbSchemaFolder: string;
+    fileNamePrefix: string;
+    readOnly: boolean;
+    createDbIfNotExists: boolean;
+    enableWalCheckpointNumber: boolean;
+    postgres: PoolConfig;
 }

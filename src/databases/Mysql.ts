@@ -9,15 +9,11 @@ export class Mysql implements IDatabase {
     constructor(private config: any) {
     }
 
-    init() {
+    async init(): Promise<void> {
         this.connection = new MysqlInterface(this.config);
     }
 
-    exec(query: string) {
-        this.prepare('run', query, []);
-    }
-
-    prepare(type: QueryType, query: string, params: any[]) {
+    prepare(type: QueryType, query: string, params?: any[]) {
         Logger.debug(`prepare (mysql): type: ${type}, query: ${query}, params: ${params}`);
         const queryResult = this.connection.query(query, params);
 
@@ -34,16 +30,5 @@ export class Mysql implements IDatabase {
         }
     }
 
-    public get<TModel>(query: string, params: any[]): TModel {
-        return this.prepare('get', query, params);
-    }
-
-    public getAll<TModel>(query: string, params: any[]): TModel[] {
-        return this.prepare('all', query, params);
-    }
-
-    public run(query: string, params: any[]): void {
-        this.prepare('run', query, params);
-    }
 }
 

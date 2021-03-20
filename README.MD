@@ -6,7 +6,7 @@ This is the server backend for it
 
 # Server
 
-This is a simple Sqlite database that will hold all the timing data.
+This uses a Postgres or Sqlite database to hold all the timing data.
 
 To make sure that this project doesn't die, I have made the database publicly downloadable at https://sponsor.ajay.app/database.db. You can download a backup or get archive.org to take a backup if you do desire. The database is under [this license](https://creativecommons.org/licenses/by-nc-sa/4.0/) unless you get explicit permission from me.
 

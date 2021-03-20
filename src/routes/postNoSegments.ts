@@ -4,7 +4,7 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {db} from '../databases/databases';
 import {Request, Response} from 'express';
 
-export function postNoSegments(req: Request, res: Response) {
+export async function postNoSegments(req: Request, res: Response) {
     // Collect user input data
     let videoID = req.body.videoID;
     let userID = req.body.userID;
@@ -25,7 +25,7 @@ export function postNoSegments(req: Request, res: Response) {
 
     // Check if user is VIP
     userID = getHash(userID);
-    let userIsVIP = isUserVIP(userID);
+    let userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {
         res.status(403).json({
@@ -35,7 +35,7 @@ export function postNoSegments(req: Request, res: Response) {
     }
 
     // Get existing no segment markers
-    let noSegmentList = db.prepare('all', 'SELECT category from noSegments where videoID = ?', [videoID]);
+    let noSegmentList = await db.prepare('all', 'SELECT "category" from "noSegments" where "videoID" = ?', [videoID]);
     if (!noSegmentList || noSegmentList.length === 0) {
         noSegmentList = [];
     } else {
@@ -57,9 +57,9 @@ export function postNoSegments(req: Request, res: Response) {
     });
 
     // create database entry
-    categoriesToMark.forEach((category) => {
+    for (const category of categoriesToMark) {
         try {
-            db.prepare('run', "INSERT INTO noSegments (videoID, userID, category) VALUES(?, ?, ?)", [videoID, userID, category]);
+            await db.prepare('run', `INSERT INTO "noSegments" ("videoID", "userID", "category") VALUES(?, ?, ?)`, [videoID, userID, category]);
         } catch (err) {
             Logger.error("Error submitting 'noSegment' marker for category '" + category + "' for video '" + videoID + "'");
             Logger.error(err);
@@ -67,7 +67,7 @@ export function postNoSegments(req: Request, res: Response) {
                 message: "Internal Server Error: Could not write marker to the database.",
             });
         }
-    });
+    };
 
     res.status(200).json({
         submitted: categoriesToMark,

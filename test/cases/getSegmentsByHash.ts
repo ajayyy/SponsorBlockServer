@@ -11,13 +11,12 @@ const sinonStub = mockManager.mock('listVideos');
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('getSegmentsByHash', () => {
-    before(() => {
-        let startOfQuery = "INSERT INTO sponsorTimes (videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID) VALUES";
-        db.exec(startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        db.exec(startOfQuery + "('getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        db.exec(startOfQuery + "('getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 0, 'fdaffnoMatchHash')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        db.exec(startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
-
+    before(async () => {
+        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 0, 'fdaffnoMatchHash')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -96,10 +95,10 @@ describe('getSegmentsByHash', () => {
         .catch(err => done("Couldn't call endpoint"));
     });
 
-    it('Should return 500 for bad format categories', (done: Done) => { // should probably be 400
-        fetch(getbaseURL() + '/api/skipSegments/?categories=shilling')
+    it('Should return 400 for bad format categories', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/fdaf?categories=shilling')
         .then(res => {
-            if (res.status !== 500) done("expected 500 got " + res.status);
+            if (res.status !== 400) done("expected 400 got " + res.status);
             else done(); // pass
         })
         .catch(err => done("Couldn't call endpoint"));

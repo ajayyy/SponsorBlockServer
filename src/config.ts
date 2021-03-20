@@ -46,6 +46,7 @@ addDefaults(config, {
     userCounterURL: null,
     youtubeAPIKey: null,
     maxRewardTimePerSegmentInSeconds: 86400,
+    postgres: null
 });
 
 // Add defaults

@@ -3,6 +3,11 @@ BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS "vipUsers" (
 	"userID"	TEXT NOT NULL
 );
+
+COMMIT;
+
+BEGIN TRANSACTION;
+
 CREATE TABLE IF NOT EXISTS "sponsorTimes" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
@@ -22,7 +27,7 @@ CREATE TABLE IF NOT EXISTS "userNames" (
 CREATE TABLE IF NOT EXISTS "categoryVotes" (
 	"UUID"	TEXT NOT NULL,
 	"category"	TEXT NOT NULL,
-	"votes"	INTEGER NOT NULL default '0'
+	"votes"	INTEGER NOT NULL default 0
 );
 
 CREATE TABLE IF NOT EXISTS "config" (
@@ -30,7 +35,6 @@ CREATE TABLE IF NOT EXISTS "config" (
 	"value" TEXT NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS sponsorTimes_videoID on sponsorTimes(videoID);
-CREATE INDEX IF NOT EXISTS sponsorTimes_UUID on sponsorTimes(UUID);
+CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 
 COMMIT;

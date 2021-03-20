@@ -1,6 +1,7 @@
 import {config} from '../config';
 import {Sqlite} from './Sqlite';
 import {Mysql} from './Mysql';
+import {Postgres} from './Postgres';
 import {IDatabase} from './IDatabase';
 
 
@@ -9,8 +10,37 @@ let privateDB: IDatabase;
 if (config.mysql) {
     db = new Mysql(config.mysql);
     privateDB = new Mysql(config.privateMysql);
-}
-else {
+} else if (config.postgres) {
+    db = new Postgres({
+        dbSchemaFileName: config.dbSchema,
+        dbSchemaFolder: config.schemaFolder,
+        fileNamePrefix: 'sponsorTimes',
+        readOnly: config.readOnly,
+        createDbIfNotExists: config.createDatabaseIfNotExist,
+        postgres: {
+            user: config.postgres?.user,
+            host: config.postgres?.host,
+            database: "sponsorTimes",
+            password: config.postgres?.password,
+            port: config.postgres?.port,
+        }
+    });
+
+    privateDB = new Postgres({
+        dbSchemaFileName: config.privateDBSchema,
+        dbSchemaFolder: config.schemaFolder,
+        fileNamePrefix: 'private',
+        readOnly: config.readOnly,
+        createDbIfNotExists: config.createDatabaseIfNotExist,
+        postgres: {
+            user: config.postgres?.user,
+            host: config.postgres?.host,
+            database: "privateDB",
+            password: config.postgres?.password,
+            port: config.postgres?.port,
+        }
+    });
+} else {
     db = new Sqlite({
         dbPath: config.db,
         dbSchemaFileName: config.dbSchema,
@@ -30,9 +60,9 @@ else {
         enableWalCheckpointNumber: false
     });
 }
-function initDb() {
-    db.init();
-    privateDB.init();
+async function initDb() {
+    await db.init();
+    await privateDB.init();
 
     if (db instanceof Sqlite) {
         // Attach private db to main db
