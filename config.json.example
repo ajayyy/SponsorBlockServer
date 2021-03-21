@@ -38,5 +38,30 @@
         "max": 20, // 20 requests in 15min time window
         "statusCode": 200
       }
+    },
+    "dumpDatabase": {
+        "enabled": true,
+        "minTimeBetweenMs": 60000, // 1 minute between dumps
+        "exportPath": "/opt/exports",
+        "tables": [{
+            "name": "sponsorTimes",
+            "order": "timeSubmitted"
+        },
+        {
+            "name": "userNames"
+        },
+        {
+            "name": "categoryVotes"
+        },
+        {
+            "name": "noSegments",
+        },
+        {
+            "name": "warnings",
+            "order": "issueTime"
+        },
+        {
+            "name": "vipUsers"
+        }]
     }
 }
