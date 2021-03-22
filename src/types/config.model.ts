@@ -67,7 +67,8 @@ export interface PostgresConfig {
 export interface DumpDatabase {
     enabled: boolean;
     minTimeBetweenMs: number;
-    exportPath: string;
+    appExportPath: string;
+    postgresExportPath: string;
     tables: DumpDatabaseTable[];
 }
 

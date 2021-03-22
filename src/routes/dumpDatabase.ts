@@ -2,10 +2,29 @@ import {db} from '../databases/databases';
 import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
 import { config } from '../config';
+const util = require('util');
+const fs = require('fs');
+const path = require('path');
+const unlink = util.promisify(fs.unlink);
+const fstat = util.promisify(fs.fstat);
 
 const ONE_MINUTE = 1000 * 60;
 
-const styleHeader = `<style>body{font-family: sans-serif}</style>`
+const styleHeader = `<style>
+    body {
+        font-family: sans-serif
+    }
+    table th,
+    table td {
+        padding: 2px 4px;
+    }
+    table th {
+        text-align: left;
+    }
+    table tbody tr:nth-child(odd) {
+        background: #efefef;
+    }
+</style>`
 
 const licenseHeader = `<p>The API and database follow <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="nofollow">CC BY-NC-SA 4.0</a> unless you have explicit permission.</p>
 <p><a href="https://gist.github.com/ajayyy/4b27dfc66e33941a45aeaadccb51de71">Attribution Template</a></p>
@@ -13,7 +32,15 @@ const licenseHeader = `<p>The API and database follow <a href="https://creativec
 
 const tables = config?.dumpDatabase?.tables ?? [];
 const MILLISECONDS_BETWEEN_DUMPS = config?.dumpDatabase?.minTimeBetweenMs ?? ONE_MINUTE;
-const exportPath = config?.dumpDatabase?.exportPath ?? '/opt/exports';
+const appExportPath = config?.dumpDatabase?.appExportPath ?? '/opt/exports';
+const postgresExportPath = config?.dumpDatabase?.postgresExportPath ?? '/opt/exports';
+const tableNames = tables.map(table => table.name);
+
+interface TableDumpList {
+    fileName: string;
+    tableName: string;
+};
+let latestDumpFiles: TableDumpList[] = [];
 
 if (tables.length === 0) {
     Logger.warn('[dumpDatabase] No tables configured');
@@ -26,7 +53,50 @@ const linksHTML: string = tables.map((table) => `<p><a href="/database/${table.n
 
 let lastUpdate = 0;
 
-export default function dumpDatabase(req: Request, res: Response, showPage: boolean) {
+function removeOutdatedDumps(exportPath: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        // Get list of table names
+        // Create array for each table
+        const tableFiles = tableNames.reduce((obj: any, tableName) => {
+            obj[tableName] = [];
+            return obj;
+        }, {});
+        // read files in export directory
+        fs.readdir(exportPath, (err: any, files: string[]) => {
+            if (err) Logger.error(err);
+            if (err) return resolve();
+            files.forEach(file => {
+                // we only care about files that start with "<tablename>_" and ends with .csv
+                tableNames.forEach(tableName => {
+                    if (file.startsWith(`${tableName}_`) && file.endsWith('.csv')) {
+                        // extract the timestamp from the filename
+                        // we could also use the fs.stat mtime
+                        const timestamp = Number(file.split('_')[1].replace('.csv', ''));
+                        tableFiles[tableName].push({
+                            file: path.join(exportPath, file),
+                            timestamp,
+                        });
+                    }
+                });
+            });
+            const outdatedTime = Math.floor(Date.now() - (MILLISECONDS_BETWEEN_DUMPS * 1.5));
+            for (let tableName in tableFiles) {
+                const files = tableFiles[tableName];
+                files.forEach(async (item: any) => {
+                    if (item.timestamp < outdatedTime) {
+                        // remove old file
+                        await unlink(item.file).catch((error: any) => {
+                            Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
+                        });
+                    }
+                });
+            }
+            resolve();
+        });
+    });
+}
+
+export default async function dumpDatabase(req: Request, res: Response, showPage: boolean) {
     if (config?.dumpDatabase?.enabled === false) {
         res.status(404).send("Database dump is disabled");
         return;
@@ -48,22 +118,58 @@ export default function dumpDatabase(req: Request, res: Response, showPage: bool
             Send a request to <code>https://sponsor.ajay.app/database.json</code>, or visit this page to trigger the database dump to run.
             Then, you can download the csv files below, or use the links returned from the JSON request.
             <h3>Links</h3>
-            ${linksHTML}<br/>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>CSV</th>
+                    </tr>
+                </thead>
+                <tbody>
+                ${latestDumpFiles.map((item:any) => {
+                    return `
+                    <tr>
+                        <td>${item.tableName}</td>
+                        <td><a href="/download/${item.fileName}">${item.fileName}</a></td>
+                    </tr>
+                    `;
+                }).join('')}
+                ${latestDumpFiles.length === 0 ? '<tr><td colspan="2">Please wait: Generating files</td></tr>' : ''}
+                </tbody>
+            </table>
+            <hr/>
             ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
     } else {
         res.send({
             lastUpdated: lastUpdate,
             updateQueued,
-            links
+            links: latestDumpFiles.map((item:any) => {
+                return {
+                    table: item.tableName,
+                    url: `/download/${item.fileName}`,
+                    size: item.fileSize,
+                };
+            }),
         })
     }
 
     if (updateQueued) {
         lastUpdate = Date.now();
+        
+        await removeOutdatedDumps(appExportPath);
+        
+        const dumpFiles = [];
 
         for (const table of tables) {
-            db.prepare('run', `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
-                    TO '${exportPath}/${table.name}.csv' WITH (FORMAT CSV, HEADER true);`);
+            const fileName = `${table.name}_${lastUpdate}.csv`;
+            const file = `${postgresExportPath}/${fileName}`;
+            await db.prepare('run', `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
+                    TO '${file}' WITH (FORMAT CSV, HEADER true);`);
+            dumpFiles.push({
+                fileName,
+                tableName: table.name,
+            });
         }
+        latestDumpFiles = [...dumpFiles];
     }
 }

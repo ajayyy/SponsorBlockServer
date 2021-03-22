@@ -42,7 +42,8 @@
     "dumpDatabase": {
         "enabled": true,
         "minTimeBetweenMs": 60000, // 1 minute between dumps
-        "exportPath": "/opt/exports",
+        "appExportPath": "/opt/exports",
+        "postgresExportPath": "/opt/exports",
         "tables": [{
             "name": "sponsorTimes",
             "order": "timeSubmitted"

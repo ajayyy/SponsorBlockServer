@@ -49,7 +49,8 @@ addDefaults(config, {
     dumpDatabase: {
         enabled: true,
         minTimeBetweenMs: 60000,
-        exportPath: '/opt/exports',
+        appExportPath: '/opt/exports',
+        postgresExportPath: '/opt/exports',
         tables: [{
             name: "sponsorTimes",
             order: "timeSubmitted"
