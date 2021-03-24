@@ -14,10 +14,10 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_UUID"
     ON public."sponsorTimes" USING btree
     ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
-
-CREATE INDEX IF NOT EXISTS "sponsorTimes_hashedVideoID"
-    ON public."sponsorTimes" USING btree
-    ("hashedVideoID" COLLATE pg_catalog."default" ASC NULLS LAST, category COLLATE pg_catalog."default" ASC NULLS LAST, "startTime" ASC NULLS LAST)
+    
+CREATE INDEX "sponsorTimes_hashedVideoID_gin"
+    ON public."sponsorTimes" USING gin
+    ("hashedVideoID" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "sponsorTimes_videoID"

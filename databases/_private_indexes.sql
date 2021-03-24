@@ -1,14 +1,14 @@
 -- sponsorTimes
 
-CREATE INDEX IF NOT EXISTS "idx_16928_sponsorTimes_hashedIP"
-    ON public."sponsorTimes" USING btree
-    ("hashedIP" COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
-
 CREATE INDEX IF NOT EXISTS "sponsorTimes_hashedIP"
     ON public."sponsorTimes" USING btree
     ("hashedIP" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+CREATE INDEX "privateDB_sponsorTimes_videoID"
+    ON public."sponsorTimes" USING btree
+    ("videoID" ASC NULLS LAST)
+;
 
 -- votes
 
