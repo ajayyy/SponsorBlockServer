@@ -11,7 +11,7 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
 import { Category, IncomingSegment, Segment, Service, VideoDuration, VideoID } from '../types/segments.model';
 
@@ -497,13 +497,14 @@ export async function postSkipSegments(req: Request, res: Response) {
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
             const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]));
+            const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
                     ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "shadowHidden", "hashedVideoID")
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, shadowBanned, getHash(videoID, 1),
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, shadowBanned, hashedVideoID,
                     ],
                 );
 
@@ -512,6 +513,7 @@ export async function postSkipSegments(req: Request, res: Response) {
             
                 // Clear redis cache for this video
                 redis.delAsync(skipSegmentsKey(videoID));
+                redis.delAsync(skipSegmentsHashKey(hashedVideoID, service));
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(500);
