@@ -24,7 +24,12 @@ export class Postgres implements IDatabase {
             // Upgrade database if required
             await this.upgradeDB(this.config.fileNamePrefix, this.config.dbSchemaFolder);
 
-            await this.applyIndexes(this.config.fileNamePrefix, this.config.dbSchemaFolder);
+            try {
+                await this.applyIndexes(this.config.fileNamePrefix, this.config.dbSchemaFolder);
+            } catch (e) {
+                Logger.warn("Applying indexes failed. See https://github.com/ajayyy/SponsorBlockServer/wiki/Postgres-Extensions for more information.");
+                Logger.warn(e);
+            }
         }
     }
 

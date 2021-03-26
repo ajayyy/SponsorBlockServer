@@ -5,7 +5,7 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_hashedIP"
     ("hashedIP" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
 
-CREATE INDEX "privateDB_sponsorTimes_videoID"
+CREATE INDEX IF NOT EXISTS "privateDB_sponsorTimes_videoID"
     ON public."sponsorTimes" USING btree
     ("videoID" ASC NULLS LAST)
 ;

@@ -1,6 +1,6 @@
 -- sponsorTimes
 
-CREATE INDEX IF NOT EXISTS "sponsorTiems_timeSubmitted"
+CREATE INDEX IF NOT EXISTS "sponsorTime_timeSubmitted"
     ON public."sponsorTimes" USING btree
     ("timeSubmitted" ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -14,8 +14,8 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_UUID"
     ON public."sponsorTimes" USING btree
     ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
-    
-CREATE INDEX "sponsorTimes_hashedVideoID_gin"
+
+CREATE INDEX IF NOT EXISTS "sponsorTimes_hashedVideoID_gin"
     ON public."sponsorTimes" USING gin
     ("hashedVideoID" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
     TABLESPACE pg_default;
@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS "vipUsers_index"
 
 -- warnings
 
-CREATE INDEX IF NOT EXISTS warnings_index
+CREATE INDEX IF NOT EXISTS "warnings_index"
     ON public.warnings USING btree
     ("userID" COLLATE pg_catalog."default" ASC NULLS LAST, "issueTime" DESC NULLS LAST, enabled DESC NULLS LAST)
     TABLESPACE pg_default;
