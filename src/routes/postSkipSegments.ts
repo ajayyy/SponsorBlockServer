@@ -424,9 +424,9 @@ export async function postSkipSegments(req: Request, res: Response) {
         apiVideoInfo = await getYouTubeVideoInfo(videoID);
     }
     const apiVideoDuration = getYouTubeVideoDuration(apiVideoInfo);
-    if (!apiVideoDuration || Math.abs(videoDuration - apiVideoDuration) > 2) {
+    if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
         // If api duration is far off, take that one instead (it is only precise to seconds, not millis)
-        videoDuration = apiVideoDuration;
+        videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
     // Auto moderator check

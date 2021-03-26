@@ -97,7 +97,7 @@ describe('postSkipSegments', () => {
         .catch(err => done(err));
     });
 
-    it('Should be able to submit a single time with a duration (JSON method)', (done: Done) => {
+    it('Should be able to submit a single time with a duration from the YouTube API (JSON method)', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
             method: 'POST',
@@ -129,7 +129,39 @@ describe('postSkipSegments', () => {
         .catch(err => done(err));
     });
 
-    it('Should be able to submit a single time with a duration from the API (JSON method)', (done: Done) => {
+    it('Should be able to submit a single time with a precise duration close to the one from the YouTube API (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXZH",
+                videoDuration: 5010.20,
+                segments: [{
+                    segment: [1, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZH"]);
+                if (row.startTime === 1 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 5010.20) {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit a single time with a duration in the body (JSON method)', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
             method: 'POST',
