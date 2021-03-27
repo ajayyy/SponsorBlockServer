@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { RedisClient } from 'redis';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
-import { skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import { SBRecord } from '../types/lib.model';
 import { Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHash } from '../utils/getHash';
@@ -92,13 +92,9 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
         if (categories.length === 0) return null;
 
-        const segmentPerVideoID: SegmentWithHashPerVideoID = (await db
-            .prepare(
-                'all',
-                `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
-                WHERE "hashedVideoID" LIKE ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) AND "service" = ? ORDER BY "startTime"`,
-                [hashedVideoIDPrefix + '%', service]
-            )).reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
+        const segmentPerVideoID: SegmentWithHashPerVideoID = (await getSegmentsFromDB(hashedVideoIDPrefix, service))
+            .filter((segment: DBSegment) => categories.includes(segment?.category))
+            .reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
                     hash: segment.hashedVideoID,
                     segmentPerCategory: {},
@@ -129,6 +125,37 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             return null;
         }
     }
+}
+
+async function getSegmentsFromDB(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<DBSegment[]> {
+    const fetchFromDB = () => db
+        .prepare(
+            'all',
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+            WHERE "hashedVideoID" LIKE ? AND "service" = ? ORDER BY "startTime"`,
+            [hashedVideoIDPrefix + '%', service]
+        );
+
+    if (hashedVideoIDPrefix.length === 4) {
+        const key = skipSegmentsHashKey(hashedVideoIDPrefix, service);
+        const {err, reply} = await redis.getAsync(key);
+    
+        if (!err && reply) {
+            try {
+                Logger.debug("Got data from redis: " + reply);
+                return JSON.parse(reply);
+            } catch (e) {
+                // If all else, continue on to fetching from the database
+            }
+        }
+
+        const data = await fetchFromDB();
+
+        redis.setAsync(key, JSON.stringify(data));
+        return data;
+    }
+
+    return await fetchFromDB();
 }
 
 //gets a weighted random choice from the choices array based on their `votes` property.

@@ -23,6 +23,13 @@ export class Postgres implements IDatabase {
 
             // Upgrade database if required
             await this.upgradeDB(this.config.fileNamePrefix, this.config.dbSchemaFolder);
+
+            try {
+                await this.applyIndexes(this.config.fileNamePrefix, this.config.dbSchemaFolder);
+            } catch (e) {
+                Logger.warn("Applying indexes failed. See https://github.com/ajayyy/SponsorBlockServer/wiki/Postgres-Extensions for more information.");
+                Logger.warn(e);
+            }
         }
     }
 
@@ -116,6 +123,15 @@ export class Postgres implements IDatabase {
             Logger.debug('db update: trying ' + path);
         }
         Logger.debug('db update: no file ' + path);
+    }
+
+    private async applyIndexes(fileNamePrefix: string, schemaFolder: string) {
+        const path = schemaFolder + "/_" + fileNamePrefix + "_indexes.sql";
+        if (fs.existsSync(path)) {
+            await this.pool.query(fs.readFileSync(path).toString());
+        } else {
+            Logger.debug('failed to apply indexes to ' + fileNamePrefix);
+        }
     }
 
     private processUpgradeQuery(query: string): string {
