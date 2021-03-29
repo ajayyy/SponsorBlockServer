@@ -13,7 +13,8 @@ import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
-import { Category, IncomingSegment, Segment, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { Category, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { deleteNoSegments } from './deleteNoSegments';
 
 interface APIVideoInfo {
     err: string | boolean,
@@ -357,7 +358,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         return res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
-    const noSegmentList = (await db.prepare('all', 'SELECT category from "noSegments" where "videoID" = ?', [videoID])).map((list: any) => {
+    let noSegmentList = (await db.prepare('all', 'SELECT category from "noSegments" where "videoID" = ?', [videoID])).map((list: any) => {
         return list.category;
     });
 
@@ -365,6 +366,31 @@ export async function postSkipSegments(req: Request, res: Response) {
     const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [userID])).userCount > 0;
 
     const decreaseVotes = 0;
+
+    let apiVideoInfo: APIVideoInfo = null;
+    if (service == Service.YouTube) {
+        apiVideoInfo = await getYouTubeVideoInfo(videoID);
+    }
+    const apiVideoDuration = getYouTubeVideoDuration(apiVideoInfo);
+    if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
+        // If api duration is far off, take that one instead (it is only precise to seconds, not millis)
+        videoDuration = apiVideoDuration || 0 as VideoDuration;
+    }
+
+    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 AND "shadowHidden" = 0 AND "votes" >= 0`, [videoID, service]) as 
+                        {videoDuration: VideoDuration, UUID: SegmentUUID}[];
+    // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
+    const videoDurationChanged = previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
+    if (videoDurationChanged) {
+        // Hide all previous submissions
+        for (const submission of previousSubmissions) {
+            await db.prepare('run', `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
+        }
+
+        // Reset no segments
+        noSegmentList = [];
+        deleteNoSegments(videoID, null);
+    }
 
     // Check if all submissions are correct
     for (let i = 0; i < segments.length; i++) {
@@ -417,16 +443,6 @@ export async function postSkipSegments(req: Request, res: Response) {
             res.sendStatus(409);
             return;
         }
-    }
-
-    let apiVideoInfo: APIVideoInfo = null;
-    if (service == Service.YouTube) {
-        apiVideoInfo = await getYouTubeVideoInfo(videoID);
-    }
-    const apiVideoDuration = getYouTubeVideoDuration(apiVideoInfo);
-    if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
-        // If api duration is far off, take that one instead (it is only precise to seconds, not millis)
-        videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
     // Auto moderator check

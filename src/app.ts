@@ -5,7 +5,7 @@ import {oldGetVideoSponsorTimes} from './routes/oldGetVideoSponsorTimes';
 import {postSegmentShift} from './routes/postSegmentShift';
 import {postWarning} from './routes/postWarning';
 import {getIsUserVIP} from './routes/getIsUserVIP';
-import {deleteNoSegments} from './routes/deleteNoSegments';
+import {deleteNoSegmentsEndpoint} from './routes/deleteNoSegments';
 import {postNoSegments} from './routes/postNoSegments';
 import {getUserInfo} from './routes/getUserInfo';
 import {getDaysSavedFormatted} from './routes/getDaysSavedFormatted';
@@ -117,7 +117,7 @@ function setupRoutes(app: Express) {
     //submit video containing no segments
     app.post('/api/noSegments', postNoSegments);
 
-    app.delete('/api/noSegments', deleteNoSegments);
+    app.delete('/api/noSegments', deleteNoSegmentsEndpoint);
 
     //get if user is a vip
     app.get('/api/isUserVIP', getIsUserVIP);

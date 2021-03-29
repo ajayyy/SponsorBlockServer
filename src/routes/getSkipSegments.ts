@@ -60,7 +60,7 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
             .prepare(
                 'all',
                 `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden" FROM "sponsorTimes" 
-                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) AND "service" = ? ORDER BY "startTime"`,
+                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
                 [videoID, service]
             )).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
@@ -132,7 +132,7 @@ async function getSegmentsFromDB(hashedVideoIDPrefix: VideoIDHash, service: Serv
         .prepare(
             'all',
             `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
-            WHERE "hashedVideoID" LIKE ? AND "service" = ? ORDER BY "startTime"`,
+            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [hashedVideoIDPrefix + '%', service]
         );
 
