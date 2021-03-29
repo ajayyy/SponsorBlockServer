@@ -388,7 +388,7 @@ export async function postSkipSegments(req: Request, res: Response) {
                 + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
                 + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                 "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n " : "")
-                + "If you believe this is incorrect, please contact someone on Discord.",
+                + "If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app",
             );
             return;
         }
