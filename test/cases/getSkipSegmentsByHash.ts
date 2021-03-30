@@ -12,12 +12,13 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('getSegmentsByHash', () => {
     before(async () => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "service", "shadowHidden", "hashedVideoID") VALUES';
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'YouTube', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'YouTube', 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 'fdaffnoMatchHash')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
+        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "service", "hidden", "shadowHidden", "hashedVideoID") VALUES';
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 0, 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'YouTube', 0, 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'fdaffnoMatchHash')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
+        await db.prepare("run", startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
+        await db.prepare("run", startOfQuery + "('onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'YouTube', 1, 0, '" + getHash('onlyHidden', 1) + "')"); // hash = f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -44,6 +45,19 @@ describe('getSegmentsByHash', () => {
 
     it('Should be able to get an empty array if no videos', (done: Done) => {
         fetch(getbaseURL() + '/api/skipSegments/11111?categories=["shilling"]')
+        .then(async res => {
+            if (res.status !== 404) done("non 404 status code, was " + res.status);
+            else {
+                const body = await res.text();
+                if (JSON.parse(body).length === 0 && body === '[]') done(); // pass
+                else done("non empty array returned");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get an empty array if only hidden videos', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/f3a1?categories=["sponsor"]')
         .then(async res => {
             if (res.status !== 404) done("non 404 status code, was " + res.status);
             else {
