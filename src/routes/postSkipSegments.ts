@@ -377,7 +377,8 @@ export async function postSkipSegments(req: Request, res: Response) {
         videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
-    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 AND "shadowHidden" = 0 AND "votes" >= 0`, [videoID, service]) as 
+    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 
+                    AND "shadowHidden" = 0 AND "votes" >= 0 AND "videoDuration" != 0`, [videoID, service]) as 
                         {videoDuration: VideoDuration, UUID: SegmentUUID}[];
     // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
     const videoDurationChanged = previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
