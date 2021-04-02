@@ -136,7 +136,7 @@ export class Postgres implements IDatabase {
 
     private processUpgradeQuery(query: string): string {
         let result = query;
-        result = result.replace(/sha256\((.*?)\)/gm, "digest($1, 'sha256')");
+        result = result.replace(/sha256\((.*?)\)/gm, "encode(digest($1, 'sha256'), 'hex')");
         result = result.replace(/integer/gmi, "NUMERIC");
 
         return result;
