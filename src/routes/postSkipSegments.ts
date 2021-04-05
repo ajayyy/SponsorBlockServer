@@ -4,7 +4,7 @@ import {db, privateDB} from '../databases/databases';
 import {YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
 import fetch from 'node-fetch';
-import isoDurations from 'iso8601-duration';
+import isoDurations, { end } from 'iso8601-duration';
 import {getHash} from '../utils/getHash';
 import {getIP} from '../utils/getIP';
 import {getFormattedTime} from '../utils/getFormattedTime';
@@ -425,7 +425,8 @@ export async function postSkipSegments(req: Request, res: Response) {
         let endTime = parseFloat(segments[i].segment[1]);
 
         if (isNaN(startTime) || isNaN(endTime)
-            || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
+                || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
+                || (segments[i].category !== "highlight" && startTime === endTime) || (segments[i].category === "highlight" && startTime !== endTime)) {
             //invalid request
             res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
             return;
