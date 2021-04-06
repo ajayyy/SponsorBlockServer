@@ -170,6 +170,10 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         res.status(400).send("Category doesn't exist.");
         return;
     }
+    if (category === "highlight") {
+        res.status(400).send("Cannot vote for this category");
+        return;
+    }
 
     const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category]);
 
