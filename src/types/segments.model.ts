@@ -73,3 +73,8 @@ export interface SegmentCache {
     shadowHiddenSegmentIPs: SBRecord<VideoID, {hashedIP: HashedIP}[]>,
     userHashedIP?: HashedIP
 }
+
+export enum CategoryActionType {
+    Skippable,
+    POI
+}

@@ -13,8 +13,9 @@ import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
-import { Category, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteNoSegments } from './deleteNoSegments';
+import { getCategoryActionType } from '../utils/categoryInfo';
 
 interface APIVideoInfo {
     err: string | boolean,
@@ -426,7 +427,8 @@ export async function postSkipSegments(req: Request, res: Response) {
 
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
-                || (segments[i].category !== "highlight" && startTime === endTime) || (segments[i].category === "highlight" && startTime !== endTime)) {
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime) 
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
             //invalid request
             res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
             return;

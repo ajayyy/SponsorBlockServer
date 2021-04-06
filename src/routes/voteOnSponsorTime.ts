@@ -13,7 +13,8 @@ import {config} from '../config';
 import { UserID } from '../types/user.model';
 import redis from '../utils/redis';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
-import { Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
+import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
+import { getCategoryActionType } from '../utils/categoryInfo';
 
 const voteTypes = {
     normal: 0,
@@ -170,7 +171,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         res.status(400).send("Category doesn't exist.");
         return;
     }
-    if (category === "highlight") {
+    if (getCategoryActionType(category) !== CategoryActionType.Skippable) {
         res.status(400).send("Cannot vote for this category");
         return;
     }
