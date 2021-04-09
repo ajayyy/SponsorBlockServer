@@ -19,7 +19,7 @@ import { getCategoryActionType } from '../utils/categoryInfo';
 
 interface APIVideoInfo {
     err: string | boolean,
-    data: any
+    data?: any
 }
 
 async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
@@ -276,11 +276,9 @@ function getYouTubeVideoDuration(apiVideoInfo: APIVideoInfo): VideoDuration {
     return duration ? isoDurations.toSeconds(isoDurations.parse(duration)) as VideoDuration : null;
 }
 
-async function getYouTubeVideoInfo(videoID: VideoID): Promise<APIVideoInfo> {
+async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
     if (config.youtubeAPIKey !== null) {
-        return new Promise((resolve) => {
-            YouTubeAPI.listVideos(videoID, (err: any, data: any) => resolve({err, data}));
-        });
+        return YouTubeAPI.listVideos(videoID, ignoreCache);
     } else {
         return null;
     }
@@ -368,9 +366,16 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const decreaseVotes = 0;
 
+    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 
+                    AND "shadowHidden" = 0 AND "votes" >= 0 AND "videoDuration" != 0`, [videoID, service]) as 
+                        {videoDuration: VideoDuration, UUID: SegmentUUID}[];
+    // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
+    const videoDurationChanged = (videoDuration: number) => previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
+
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
-        apiVideoInfo = await getYouTubeVideoInfo(videoID);
+        // Don't use cache if we don't know the video duraton, or the client claims that it has changed
+        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDuration || videoDurationChanged(videoDuration));
     }
     const apiVideoDuration = getYouTubeVideoDuration(apiVideoInfo);
     if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
@@ -378,12 +383,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
-    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 
-                    AND "shadowHidden" = 0 AND "votes" >= 0 AND "videoDuration" != 0`, [videoID, service]) as 
-                        {videoDuration: VideoDuration, UUID: SegmentUUID}[];
-    // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
-    const videoDurationChanged = previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
-    if (videoDurationChanged) {
+    if (videoDurationChanged(videoDuration)) {
         // Hide all previous submissions
         for (const submission of previousSubmissions) {
             await db.prepare('run', `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
