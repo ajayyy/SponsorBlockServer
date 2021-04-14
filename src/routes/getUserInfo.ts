@@ -5,7 +5,7 @@ import {Logger} from '../utils/logger'
 
 async function dbGetSubmittedSegmentSummary(userID: string): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        let row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved", count(*) as "segmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
+        let row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved", count(1) as "segmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         if (row.minutesSaved != null) {
             return {
                 minutesSaved: row.minutesSaved,
@@ -39,12 +39,7 @@ async function dbGetUsername(userID: string) {
 async function dbGetViewsForUser(userID: string) {
     try {
         let row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
-        //increase the view count by one
-        if (row.viewCount != null) {
-            return row.viewCount;
-        } else {
-            return 0;
-        }
+        return row?.viewCount ?? 0;
     } catch (err) {
         return false;
     }
