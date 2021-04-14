@@ -52,8 +52,8 @@ async function dbGetViewsForUser(userID: string) {
 
 async function dbGetWarningsForUser(userID: string): Promise<number> {
     try {
-        let rows = await db.prepare('all', `SELECT * FROM "warnings" WHERE "userID" = ?`, [userID]);
-        return rows.length;
+        let row = await db.prepare('get', `SELECT COUNT(1) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
+        return row?.total ?? 0;
     } catch (err) {
         Logger.error('Couldn\'t get warnings for user ' + userID + '. returning 0');
         return 0;
