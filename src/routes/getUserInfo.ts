@@ -1,9 +1,10 @@
 import {db} from '../databases/databases';
 import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
-import {Logger} from '../utils/logger'
+import {Logger} from '../utils/logger';
+import { HashedUserID, UserID } from '../types/user.model';
 
-async function dbGetSubmittedSegmentSummary(userID: string): Promise<{ minutesSaved: number, segmentCount: number }> {
+async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
         let row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved", count(1) as "segmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         if (row.minutesSaved != null) {
@@ -22,7 +23,7 @@ async function dbGetSubmittedSegmentSummary(userID: string): Promise<{ minutesSa
     }
 }
 
-async function dbGetUsername(userID: string) {
+async function dbGetUsername(userID: HashedUserID) {
     try {
         let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         if (row !== undefined) {
@@ -36,7 +37,7 @@ async function dbGetUsername(userID: string) {
     }
 }
 
-async function dbGetViewsForUser(userID: string) {
+async function dbGetViewsForUser(userID: HashedUserID) {
     try {
         let row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         return row?.viewCount ?? 0;
@@ -45,7 +46,7 @@ async function dbGetViewsForUser(userID: string) {
     }
 }
 
-async function dbGetWarningsForUser(userID: string): Promise<number> {
+async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
         let row = await db.prepare('get', `SELECT COUNT(1) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
         return row?.total ?? 0;
@@ -56,7 +57,7 @@ async function dbGetWarningsForUser(userID: string): Promise<number> {
 }
 
 export async function getUserInfo(req: Request, res: Response) {
-    let userID = req.query.userID as string;
+    let userID = req.query.userID as UserID;
 
     if (userID == undefined) {
         //invalid request
