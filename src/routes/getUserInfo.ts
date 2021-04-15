@@ -1,5 +1,6 @@
 import {db} from '../databases/databases';
 import {getHash} from '../utils/getHash';
+import {isUserVIP} from '../utils/isUserVIP';
 import {Request, Response} from 'express';
 import {Logger} from '../utils/logger';
 import { HashedUserID, UserID } from '../types/user.model';
@@ -66,17 +67,18 @@ export async function getUserInfo(req: Request, res: Response) {
     }
 
     //hash the userID
-    userID = getHash(userID);
+    const hashedUserID: HashedUserID = getHash(userID);
 
-    const segmentsSummary = await dbGetSubmittedSegmentSummary(userID);
+    const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     if (segmentsSummary) {
         res.send({
-            userID,
-            userName: await dbGetUsername(userID),
+            userID: hashedUserID,
+            userName: await dbGetUsername(hashedUserID),
             minutesSaved: segmentsSummary.minutesSaved,
             segmentCount: segmentsSummary.segmentCount,
-            viewCount: await dbGetViewsForUser(userID),
-            warnings: await dbGetWarningsForUser(userID),
+            viewCount: await dbGetViewsForUser(hashedUserID),
+            warnings: await dbGetWarningsForUser(hashedUserID),
+            vip: await isUserVIP(hashedUserID),
         });
     } else {
         res.status(400).send();
