@@ -368,10 +368,25 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=1")
         .then(async res => {
-            if (res.status === 403) {
+            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            if (res.status === 403 && row.votes === -3) {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403");
+                done("Status code was " + res.status + ", row is " + JSON.stringify(row));
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Non-VIP should not be able to downvote "dead" submission', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=0")
+        .then(async res => {
+            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            if (res.status === 200 && row.votes === -3) {
+                done();
+            } else {
+                done("Status code was " + res.status + ", row is " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));

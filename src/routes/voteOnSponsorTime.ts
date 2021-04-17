@@ -286,13 +286,19 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, finalResponse, res);
     }
 
-    if (type == 1 && !isVIP && !isOwnSubmission) {
+    if (type !== undefined && !isVIP && !isOwnSubmission) {
         // Check if upvoting hidden segment
         const voteInfo = await db.prepare('get', `SELECT votes FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
 
         if (voteInfo && voteInfo.votes <= -2) {
-            res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
-            return;
+            if (type == 1) {
+                res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
+                return;
+            } else if (type == 0) {
+                // Already downvoted enough, ignore
+                res.status(200).send();
+                return;
+            }
         }
     }
 
