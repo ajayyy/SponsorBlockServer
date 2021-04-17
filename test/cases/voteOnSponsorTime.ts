@@ -410,12 +410,13 @@ describe('voteOnSponsorTime', () => {
 
     it('Non-VIP should not be able to downvote on a segment with no-segments category', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&type=0")
+            + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=0")
         .then(async res => {
-            if (res.status === 403) {
+            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
+            if (res.status === 403 && row.votes === 2) {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403");
+                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));
@@ -423,12 +424,13 @@ describe('voteOnSponsorTime', () => {
 
     it('Non-VIP should be able to upvote on a segment with no-segments category', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&type=1")
+            + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=1")
         .then(async res => {
-            if (res.status === 200) {
+            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
+            if (res.status === 200 && row.votes === 3) {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 200");
+                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));
@@ -436,12 +438,13 @@ describe('voteOnSponsorTime', () => {
 
     it('Non-VIP should not be able to category vote on a segment with no-segments category', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/voteOnSponsorTime?userID=no-segments-voter&UUID=no-sponsor-segments-uuid-0&category=outro")
+            + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&category=outro")
         .then(async res => {
-            if (res.status === 403) {
+            let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
+            if (res.status === 403 && row.category === "sponsor") {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403");
+                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));
