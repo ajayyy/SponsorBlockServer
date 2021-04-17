@@ -6,6 +6,7 @@ import {db} from '../../src/databases/databases';
 import {ImportMock} from 'ts-mock-imports';
 import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
 import {YouTubeApiMock} from '../youtubeMock';
+import e from 'express';
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
 const sinonStub = mockManager.mock('listVideos');
@@ -86,6 +87,177 @@ describe('postSkipSegments', () => {
             if (res.status === 200) {
                 const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcF"]);
                 if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor") {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit a single time with a duration from the YouTube API (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXZX",
+                videoDuration: 100,
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZX"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 5010) {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit a single time with a precise duration close to the one from the YouTube API (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXZH",
+                videoDuration: 5010.20,
+                segments: [{
+                    segment: [1, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZH"]);
+                if (row.startTime === 1 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 5010.20) {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit a single time with a duration in the body (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "noDuration",
+                videoDuration: 100,
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["noDuration"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 100) {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit with a new duration, and hide old submissions and remove segment locks', async () => {
+        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") 
+            VALUES ('` + getHash("VIPUser-noSegments") + "', 'noDuration', 'sponsor')");
+
+        try {
+            const res = await fetch(getbaseURL()
+                + "/api/postVideoSponsorTimes", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userID: "test",
+                    videoID: "noDuration",
+                    videoDuration: 100,
+                    segments: [{
+                        segment: [1, 10],
+                        category: "sponsor",
+                    }],
+                }),
+            });
+
+            if (res.status === 200) {
+                const noSegmentsRow = await db.prepare('get', `SELECT * from "noSegments" WHERE videoID = ?`, ["noDuration"]);
+                const videoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
+                    FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, ["noDuration"]);
+                const videoRow = videoRows[0];
+                const hiddenVideoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
+                    FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, ["noDuration"]);
+                if (noSegmentsRow === undefined && videoRows.length === 1 && hiddenVideoRows.length === 1 && videoRow.startTime === 1 && videoRow.endTime === 10 
+                        && videoRow.locked === 0 && videoRow.category === "sponsor" && videoRow.videoDuration === 100) {
+                    return;
+                } else {
+                    return "Submitted times were not saved. Actual submission: " + JSON.stringify(videoRow);
+                }
+            } else {
+                return "Status code was " + res.status;
+            }
+        } catch (e) {
+            return e;
+        }
+    });
+
+    it('Should be able to submit a single time under a different service (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcG",
+                service: "PeerTube",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "service" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcG"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.service === "PeerTube") {
                     done();
                 } else {
                     done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
@@ -244,7 +416,7 @@ describe('postSkipSegments', () => {
                 }),
             })
         .then(async res => {
-            if (res.status === 400) {
+            if (res.status === 403) {
                 const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["n9rIGdXnSJc"]);
                 let success = true;
                 if (rows.length === 4) {
@@ -292,7 +464,7 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 400) {
+            if (res.status === 403) {
                 const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["80percent_video"]);
                 let success = rows.length == 2;
                 for (const row of rows) {

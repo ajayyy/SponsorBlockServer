@@ -5,7 +5,7 @@ import {oldGetVideoSponsorTimes} from './routes/oldGetVideoSponsorTimes';
 import {postSegmentShift} from './routes/postSegmentShift';
 import {postWarning} from './routes/postWarning';
 import {getIsUserVIP} from './routes/getIsUserVIP';
-import {deleteNoSegments} from './routes/deleteNoSegments';
+import {deleteNoSegmentsEndpoint} from './routes/deleteNoSegments';
 import {postNoSegments} from './routes/postNoSegments';
 import {getUserInfo} from './routes/getUserInfo';
 import {getDaysSavedFormatted} from './routes/getDaysSavedFormatted';
@@ -26,6 +26,7 @@ import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
+import dumpDatabase from './routes/dumpDatabase';
 
 
 export function createServer(callback: () => void) {
@@ -116,7 +117,7 @@ function setupRoutes(app: Express) {
     //submit video containing no segments
     app.post('/api/noSegments', postNoSegments);
 
-    app.delete('/api/noSegments', deleteNoSegments);
+    app.delete('/api/noSegments', deleteNoSegmentsEndpoint);
 
     //get if user is a vip
     app.get('/api/isUserVIP', getIsUserVIP);
@@ -127,7 +128,12 @@ function setupRoutes(app: Express) {
     //get if user is a vip
     app.post('/api/segmentShift', postSegmentShift);
 
-    app.get('/database.db', function (req: Request, res: Response) {
-        res.sendFile("./databases/sponsorTimes.db", {root: "./"});
-    });
+    if (config.postgres) {
+        app.get('/database', (req, res) => dumpDatabase(req, res, true));
+        app.get('/database.json', (req, res) => dumpDatabase(req, res, false));
+    } else {
+        app.get('/database.db', function (req: Request, res: Response) {
+            res.sendFile("./databases/sponsorTimes.db", {root: "./"});
+        });
+    }
 }
