@@ -49,7 +49,7 @@
             ]
         }
     ],
-    "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"],
+    "categoryList": ["sponsor", "selfpromo", "interaction",  "intro", "outro", "preview", "music_offtopic"],
     "maxNumberOfActiveWarnings": 3,
     "hoursAfterWarningExpires": 24,
     "rateLimit": {

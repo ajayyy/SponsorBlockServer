@@ -16,7 +16,7 @@ addDefaults(config, {
     privateDBSchema: "./databases/_private.db.sql",
     readOnly: false,
     webhooks: [],
-    categoryList: ["sponsor", "intro", "outro", "interaction", "selfpromo", "music_offtopic"],
+    categoryList: ["sponsor", "selfpromo", "interaction",  "intro", "outro", "preview", "music_offtopic"],
     maxNumberOfActiveWarnings: 3,
     hoursAfterWarningExpires: 24,
     adminUserID: "",
@@ -46,7 +46,33 @@ addDefaults(config, {
     userCounterURL: null,
     youtubeAPIKey: null,
     maxRewardTimePerSegmentInSeconds: 86400,
-    postgres: null
+    postgres: null,
+    dumpDatabase: {
+        enabled: true,
+        minTimeBetweenMs: 60000,
+        appExportPath: './docker/database-export',
+        postgresExportPath: '/opt/exports',
+        tables: [{
+            name: "sponsorTimes",
+            order: "timeSubmitted"
+        },
+        {
+            name: "userNames"
+        },
+        {
+            name: "categoryVotes"
+        },
+        {
+            name: "noSegments",
+        },
+        {
+            name: "warnings",
+            order: "issueTime"
+        },
+        {
+            name: "vipUsers"
+        }]
+    }
 });
 
 // Add defaults

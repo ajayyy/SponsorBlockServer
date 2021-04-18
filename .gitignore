@@ -99,6 +99,7 @@ test/databases/sponsorTimes.db
 test/databases/sponsorTimes.db-shm
 test/databases/sponsorTimes.db-wal
 test/databases/private.db
+docker/database-export
 
 # Config files
 config.json
