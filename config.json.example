@@ -42,7 +42,7 @@
     "dumpDatabase": {
         "enabled": true,
         "minTimeBetweenMs": 60000, // 1 minute between dumps
-        "appExportPath": "/opt/exports",
+        "appExportPath": "./docker/database-export",
         "postgresExportPath": "/opt/exports",
         "tables": [{
             "name": "sponsorTimes",
