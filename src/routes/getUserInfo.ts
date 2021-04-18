@@ -7,7 +7,9 @@ import { HashedUserID, UserID } from '../types/user.model';
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        let row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved", count(1) as "segmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
+        let row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved",
+                                            count(*) as "segmentCount" FROM "sponsorTimes" 
+                                            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         if (row.minutesSaved != null) {
             return {
                 minutesSaved: row.minutesSaved,
@@ -49,7 +51,7 @@ async function dbGetViewsForUser(userID: HashedUserID) {
 
 async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
-        let row = await db.prepare('get', `SELECT COUNT(1) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
+        let row = await db.prepare('get', `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
         return row?.total ?? 0;
     } catch (err) {
         Logger.error('Couldn\'t get warnings for user ' + userID + '. returning 0');
