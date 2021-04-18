@@ -49,7 +49,7 @@ addDefaults(config, {
     dumpDatabase: {
         enabled: true,
         minTimeBetweenMs: 60000,
-        appExportPath: '/opt/exports',
+        appExportPath: './docker/database-export',
         postgresExportPath: '/opt/exports',
         tables: [{
             name: "sponsorTimes",

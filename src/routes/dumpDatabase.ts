@@ -2,11 +2,10 @@ import {db} from '../databases/databases';
 import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
 import { config } from '../config';
-const util = require('util');
-const fs = require('fs');
-const path = require('path');
+import util from 'util';
+import fs from 'fs';
+import path from 'path';
 const unlink = util.promisify(fs.unlink);
-const fstat = util.promisify(fs.fstat);
 
 const ONE_MINUTE = 1000 * 60;
 
@@ -16,7 +15,7 @@ const styleHeader = `<style>
     }
     table th,
     table td {
-        padding: 2px 4px;
+        padding: 7px;
     }
     table th {
         text-align: left;
@@ -32,7 +31,7 @@ const licenseHeader = `<p>The API and database follow <a href="https://creativec
 
 const tables = config?.dumpDatabase?.tables ?? [];
 const MILLISECONDS_BETWEEN_DUMPS = config?.dumpDatabase?.minTimeBetweenMs ?? ONE_MINUTE;
-const appExportPath = config?.dumpDatabase?.appExportPath ?? '/opt/exports';
+const appExportPath = config?.dumpDatabase?.appExportPath ?? './docker/database-export';
 const postgresExportPath = config?.dumpDatabase?.postgresExportPath ?? '/opt/exports';
 const tableNames = tables.map(table => table.name);
 
@@ -46,14 +45,9 @@ if (tables.length === 0) {
     Logger.warn('[dumpDatabase] No tables configured');
 }
 
-const links: string[] = tables.map((table) => `/database/${table.name}.csv`);
-
-const linksHTML: string = tables.map((table) => `<p><a href="/database/${table.name}.csv">${table.name}.csv</a></p>`)
-                        .reduce((acc, url) => acc + url, "");
-
 let lastUpdate = 0;
 
-function removeOutdatedDumps(exportPath: string): Promise<any> {
+function removeOutdatedDumps(exportPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         // Get list of table names
         // Create array for each table
@@ -61,10 +55,12 @@ function removeOutdatedDumps(exportPath: string): Promise<any> {
             obj[tableName] = [];
             return obj;
         }, {});
+
         // read files in export directory
         fs.readdir(exportPath, (err: any, files: string[]) => {
             if (err) Logger.error(err);
             if (err) return resolve();
+
             files.forEach(file => {
                 // we only care about files that start with "<tablename>_" and ends with .csv
                 tableNames.forEach(tableName => {
@@ -79,6 +75,7 @@ function removeOutdatedDumps(exportPath: string): Promise<any> {
                     }
                 });
             });
+
             const outdatedTime = Math.floor(Date.now() - (MILLISECONDS_BETWEEN_DUMPS * 1.5));
             for (let tableName in tableFiles) {
                 const files = tableFiles[tableName];
@@ -91,13 +88,14 @@ function removeOutdatedDumps(exportPath: string): Promise<any> {
                     }
                 });
             }
+
             resolve();
         });
     });
 }
 
 export default async function dumpDatabase(req: Request, res: Response, showPage: boolean) {
-    if (config?.dumpDatabase?.enabled === false) {
+    if (!config?.dumpDatabase?.enabled) {
         res.status(404).send("Database dump is disabled");
         return;
     }
@@ -130,7 +128,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
                     return `
                     <tr>
                         <td>${item.tableName}</td>
-                        <td><a href="/download/${item.fileName}">${item.fileName}</a></td>
+                        <td><a href="/database/${item.fileName}">${item.fileName}</a></td>
                     </tr>
                     `;
                 }).join('')}
@@ -146,7 +144,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             links: latestDumpFiles.map((item:any) => {
                 return {
                     table: item.tableName,
-                    url: `/download/${item.fileName}`,
+                    url: `/database/${item.fileName}`,
                     size: item.fileSize,
                 };
             }),
