@@ -38,6 +38,7 @@ export interface SBSConfig {
     maximumPrefix?: string;
     redis?: redis.ClientOpts;
     postgres?: PoolConfig;
+    dumpDatabase?: DumpDatabase;
 }
 
 export interface WebhookConfig {
@@ -61,4 +62,17 @@ export interface PostgresConfig {
     createDbIfNotExists: boolean;
     enableWalCheckpointNumber: boolean;
     postgres: PoolConfig;
+}
+
+export interface DumpDatabase {
+    enabled: boolean;
+    minTimeBetweenMs: number;
+    appExportPath: string;
+    postgresExportPath: string;
+    tables: DumpDatabaseTable[];
+}
+
+export interface DumpDatabaseTable {
+    name: string;
+    order?: string;
 }

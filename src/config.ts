@@ -45,7 +45,33 @@ addDefaults(config, {
     },
     userCounterURL: null,
     youtubeAPIKey: null,
-    postgres: null
+    postgres: null,
+    dumpDatabase: {
+        enabled: true,
+        minTimeBetweenMs: 60000,
+        appExportPath: './docker/database-export',
+        postgresExportPath: '/opt/exports',
+        tables: [{
+            name: "sponsorTimes",
+            order: "timeSubmitted"
+        },
+        {
+            name: "userNames"
+        },
+        {
+            name: "categoryVotes"
+        },
+        {
+            name: "noSegments",
+        },
+        {
+            name: "warnings",
+            order: "issueTime"
+        },
+        {
+            name: "vipUsers"
+        }]
+    }
 });
 
 // Add defaults
