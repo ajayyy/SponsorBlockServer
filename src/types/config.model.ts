@@ -37,6 +37,7 @@ export interface SBSConfig {
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: redis.ClientOpts;
+    maxRewardTimePerSegmentInSeconds?: number;
     postgres?: PoolConfig;
     dumpDatabase?: DumpDatabase;
 }

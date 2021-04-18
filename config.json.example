@@ -39,6 +39,7 @@
         "statusCode": 200
       }
     },
+    "maxRewardTimePerSegmentInSeconds": 86400, // maximum time a user get rewarded in the leaderboard for a single segment
     "dumpDatabase": {
         "enabled": true,
         "minTimeBetweenMs": 60000, // 1 minute between dumps
