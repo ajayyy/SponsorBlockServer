@@ -41,6 +41,11 @@ interface TableDumpList {
 };
 let latestDumpFiles: TableDumpList[] = [];
 
+interface TableFile {
+    file: string,
+    timestamp: number
+};
+
 if (tables.length === 0) {
     Logger.warn('[dumpDatabase] No tables configured');
 }
@@ -51,42 +56,37 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         // Get list of table names
         // Create array for each table
-        const tableFiles = tableNames.reduce((obj: any, tableName) => {
+        const tableFiles: Record<string, TableFile[]> = tableNames.reduce((obj: any, tableName) => {
             obj[tableName] = [];
             return obj;
         }, {});
 
         // read files in export directory
-        fs.readdir(exportPath, (err: any, files: string[]) => {
+        fs.readdir(exportPath, async (err: any, files: string[]) => {
             if (err) Logger.error(err);
             if (err) return resolve();
 
             files.forEach(file => {
                 // we only care about files that start with "<tablename>_" and ends with .csv
                 tableNames.forEach(tableName => {
-                    if (file.startsWith(`${tableName}_`) && file.endsWith('.csv')) {
-                        // extract the timestamp from the filename
-                        // we could also use the fs.stat mtime
-                        const timestamp = Number(file.split('_')[1].replace('.csv', ''));
+                    if (file.startsWith(`${tableName}`) && file.endsWith('.csv')) {
+                        const filePath = path.join(exportPath, file);
                         tableFiles[tableName].push({
-                            file: path.join(exportPath, file),
-                            timestamp,
+                            file: filePath,
+                            timestamp: fs.statSync(filePath).mtime.getTime()
                         });
                     }
                 });
             });
 
-            const outdatedTime = Math.floor(Date.now() - (MILLISECONDS_BETWEEN_DUMPS * 1.5));
             for (let tableName in tableFiles) {
-                const files = tableFiles[tableName];
-                files.forEach(async (item: any) => {
-                    if (item.timestamp < outdatedTime) {
-                        // remove old file
-                        await unlink(item.file).catch((error: any) => {
-                            Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
-                        });
-                    }
-                });
+                const files = tableFiles[tableName].sort((a, b) => b.timestamp - a.timestamp);
+                for (let i = 2; i < files.length; i++) {
+                    // remove old file
+                    await unlink(files[i].file).catch((error: any) => {
+                        Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
+                    });
+                }
             }
 
             resolve();
