@@ -129,7 +129,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
                     return `
                     <tr>
                         <td>${item.tableName}</td>
-                        <td><a href="/database/${item.tableName}">${item.tableName}</a></td>
+                        <td><a href="/database/${item.tableName}.csv">${item.tableName}.csv</a></td>
                     </tr>
                     `;
                 }).join('')}
@@ -145,7 +145,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             links: latestDumpFiles.map((item:any) => {
                 return {
                     table: item.tableName,
-                    url: `/database/${item.tableName}`,
+                    url: `/database/${item.tableName}.csv`,
                     size: item.fileSize,
                 };
             }),
@@ -176,7 +176,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
 }
 
 export async function redirectLink(req: Request, res: Response): Promise<void> {
-    const file = latestDumpFiles.find((value) => "/database/" + value.tableName === req.path);
+    const file = latestDumpFiles.find((value) => `/database/${value.tableName}.csv` === req.path);
 
     if (file) {
         res.redirect("/download/" + file.fileName);
