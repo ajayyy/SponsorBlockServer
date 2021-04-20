@@ -105,8 +105,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
         return;
     }
 
-    const now = Date.now();
-    updateQueued ||= now - lastUpdate > MILLISECONDS_BETWEEN_DUMPS;
+    updateQueueTime();
 
     res.status(200)
     
@@ -114,8 +113,11 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
         res.send(`${styleHeader}
             <h1>SponsorBlock database dumps</h1>${licenseHeader}
             <h3>How this works</h3>
-            Send a request to <code>https://sponsor.ajay.app/database.json</code>, or visit this page to trigger the database dump to run.
-            Then, you can download the csv files below, or use the links returned from the JSON request.
+
+            Send a request to <code>https://sponsor.ajay.app/database.json</code>, or visit this page to get a list of urls and the update status database dump to run.
+            Then, you can download the csv files below, or use the links returned from the JSON request. 
+            A dump will also be triggered by making a request to one of these urls.
+
             <h3>Links</h3>
             <table>
                 <thead>
@@ -152,6 +154,37 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
         })
     }
 
+    await queueDump();
+}
+
+export async function redirectLink(req: Request, res: Response): Promise<void> {
+    if (!config?.dumpDatabase?.enabled) {
+        res.status(404).send("Database dump is disabled");
+        return;
+    }
+    if (!config.postgres) {
+        res.status(404).send("Not supported on this instance");
+        return;
+    }
+    
+    const file = latestDumpFiles.find((value) => `/database/${value.tableName}.csv` === req.path);
+
+    updateQueueTime();
+
+    if (file) {
+        res.redirect("/download/" + file.fileName);
+    } else {
+        res.status(404).send();
+    }
+
+    await queueDump();
+}
+
+function updateQueueTime(): void {
+    updateQueued ||= Date.now() - lastUpdate > MILLISECONDS_BETWEEN_DUMPS;
+}
+
+async function queueDump(): Promise<void> {
     if (updateQueued) {
         lastUpdate = Date.now();
         
@@ -172,15 +205,5 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
         latestDumpFiles = [...dumpFiles];
 
         updateQueued = false;
-    }
-}
-
-export async function redirectLink(req: Request, res: Response): Promise<void> {
-    const file = latestDumpFiles.find((value) => `/database/${value.tableName}.csv` === req.path);
-
-    if (file) {
-        res.redirect("/download/" + file.fileName);
-    } else {
-        res.status(404).send();
     }
 }
