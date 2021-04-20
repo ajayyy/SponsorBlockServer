@@ -26,7 +26,7 @@ import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
-import dumpDatabase from './routes/dumpDatabase';
+import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
 
 
 export function createServer(callback: () => void) {
@@ -131,6 +131,7 @@ function setupRoutes(app: Express) {
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
         app.get('/database.json', (req, res) => dumpDatabase(req, res, false));
+        app.get('/database/*', redirectLink)
     } else {
         app.get('/database.db', function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", {root: "./"});

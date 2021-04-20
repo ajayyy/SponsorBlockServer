@@ -51,6 +51,7 @@ if (tables.length === 0) {
 }
 
 let lastUpdate = 0;
+let updateQueued = false;
 
 function removeOutdatedDumps(exportPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -105,7 +106,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
     }
 
     const now = Date.now();
-    const updateQueued = now - lastUpdate > MILLISECONDS_BETWEEN_DUMPS;
+    updateQueued ||= now - lastUpdate > MILLISECONDS_BETWEEN_DUMPS;
 
     res.status(200)
     
@@ -128,7 +129,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
                     return `
                     <tr>
                         <td>${item.tableName}</td>
-                        <td><a href="/database/${item.fileName}">${item.fileName}</a></td>
+                        <td><a href="/database/${item.tableName}">${item.tableName}</a></td>
                     </tr>
                     `;
                 }).join('')}
@@ -144,7 +145,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             links: latestDumpFiles.map((item:any) => {
                 return {
                     table: item.tableName,
-                    url: `/database/${item.fileName}`,
+                    url: `/database/${item.tableName}`,
                     size: item.fileSize,
                 };
             }),
@@ -169,5 +170,17 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             });
         }
         latestDumpFiles = [...dumpFiles];
+
+        updateQueued = false;
+    }
+}
+
+export async function redirectLink(req: Request, res: Response): Promise<void> {
+    const file = latestDumpFiles.find((value) => "/database/" + value.tableName === req.path);
+
+    if (file) {
+        res.redirect("/download/" + file.fileName);
+    } else {
+        res.status(404).send();
     }
 }
