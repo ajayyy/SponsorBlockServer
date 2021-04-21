@@ -187,7 +187,7 @@ function updateQueueTime(): void {
 
 async function queueDump(): Promise<void> {
     if (updateQueued && !updateRunning) {
-        lastUpdate = Date.now();
+        const startTime = Date.now();
         updateRunning = true;
 
         await removeOutdatedDumps(appExportPath);
@@ -195,7 +195,7 @@ async function queueDump(): Promise<void> {
         const dumpFiles = [];
 
         for (const table of tables) {
-            const fileName = `${table.name}_${lastUpdate}.csv`;
+            const fileName = `${table.name}_${startTime}.csv`;
             const file = `${postgresExportPath}/${fileName}`;
             await db.prepare('run', `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
                     TO '${file}' WITH (FORMAT CSV, HEADER true);`);
@@ -208,5 +208,6 @@ async function queueDump(): Promise<void> {
 
         updateQueued = false;
         updateRunning = false;
+        lastUpdate = startTime;
     }
 }
