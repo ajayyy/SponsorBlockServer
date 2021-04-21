@@ -52,6 +52,7 @@ if (tables.length === 0) {
 
 let lastUpdate = 0;
 let updateQueued = false;
+let updateRunning = false;
 
 function removeOutdatedDumps(exportPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -185,9 +186,10 @@ function updateQueueTime(): void {
 }
 
 async function queueDump(): Promise<void> {
-    if (updateQueued) {
+    if (updateQueued && !updateRunning) {
         lastUpdate = Date.now();
-        
+        updateRunning = true;
+
         await removeOutdatedDumps(appExportPath);
         
         const dumpFiles = [];
@@ -205,5 +207,6 @@ async function queueDump(): Promise<void> {
         latestDumpFiles = [...dumpFiles];
 
         updateQueued = false;
+        updateRunning = false;
     }
 }
