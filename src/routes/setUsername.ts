@@ -21,6 +21,10 @@ export async function setUsername(req: Request, res: Response) {
         res.sendStatus(200);
         return;
     }
+    
+    // remove unicode control characters from username (example: \n, \r, \t etc.)
+    // source: https://en.wikipedia.org/wiki/Control_character#In_Unicode
+    userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 
     if (adminUserIDInput != undefined) {
         //this is the admin controlling the other users account, don't hash the controling account's ID
