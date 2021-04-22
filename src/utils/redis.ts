@@ -29,6 +29,10 @@ if (config.redis) {
     exportObject.getAsync = (key) => new Promise((resolve) => client.get(key, (err, reply) => resolve({err, reply})));
     exportObject.setAsync = (key, value) => new Promise((resolve) => client.set(key, value, (err, reply) => resolve({err, reply})));
     exportObject.delAsync = (...keys) => new Promise((resolve) => client.del(keys, (err) => resolve(err)));
+
+    client.on("error", function(error) {
+        Logger.error(error);
+    });
 }
 
 export default exportObject;
