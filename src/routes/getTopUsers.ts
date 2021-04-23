@@ -71,6 +71,10 @@ export async function getTopUsers(req: Request, res: Response) {
         return;
     }
 
+    //TODO: remove. This is broken for now
+    res.status(200).send();
+    return;
+
     //setup which sort type to use
     let sortBy = '';
     if (sortType == 0) {
