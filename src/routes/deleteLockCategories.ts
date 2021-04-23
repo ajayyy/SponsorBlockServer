@@ -5,7 +5,7 @@ import {db} from '../databases/databases';
 import { Category, VideoID } from '../types/segments.model';
 import { UserID } from '../types/user.model';
 
-export async function deleteNoSegmentsEndpoint(req: Request, res: Response) {
+export async function deleteLockCategoriesEndpoint(req: Request, res: Response) {
     // Collect user input data
     const videoID = req.body.videoID as VideoID;
     const userID = req.body.userID as UserID;
@@ -35,9 +35,9 @@ export async function deleteNoSegmentsEndpoint(req: Request, res: Response) {
         return;
     }
 
-    deleteNoSegments(videoID, categories);  
+    deleteLockCategories(videoID, categories);  
 
-    res.status(200).json({message: 'Removed no segments entrys for video ' + videoID});
+    res.status(200).json({message: 'Removed lock categories entrys for video ' + videoID});
 }
 
 /**
@@ -45,12 +45,12 @@ export async function deleteNoSegmentsEndpoint(req: Request, res: Response) {
  * @param videoID 
  * @param categories If null, will remove all
  */
-export async function deleteNoSegments(videoID: VideoID, categories: Category[]): Promise<void> {
-    const entries = (await db.prepare("all", 'SELECT * FROM "noSegments" WHERE "videoID" = ?', [videoID])).filter((entry: any) => {
+export async function deleteLockCategories(videoID: VideoID, categories: Category[]): Promise<void> {
+    const entries = (await db.prepare("all", 'SELECT * FROM "lockCategories" WHERE "videoID" = ?', [videoID])).filter((entry: any) => {
         return categories === null || categories.indexOf(entry.category) !== -1;
     });
 
     for (const entry of entries) {
-        await db.prepare('run', 'DELETE FROM "noSegments" WHERE "videoID" = ? AND "category" = ?', [videoID, entry.category]);
+        await db.prepare('run', 'DELETE FROM "lockCategories" WHERE "videoID" = ? AND "category" = ?', [videoID, entry.category]);
     }
 }
