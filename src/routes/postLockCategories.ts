@@ -4,7 +4,7 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {db} from '../databases/databases';
 import {Request, Response} from 'express';
 
-export async function postNoSegments(req: Request, res: Response) {
+export async function postLockCategories(req: Request, res: Response) {
     // Collect user input data
     let videoID = req.body.videoID;
     let userID = req.body.userID;
@@ -34,12 +34,12 @@ export async function postNoSegments(req: Request, res: Response) {
         return;
     }
 
-    // Get existing no segment markers
-    let noSegmentList = await db.prepare('all', 'SELECT "category" from "noSegments" where "videoID" = ?', [videoID]);
-    if (!noSegmentList || noSegmentList.length === 0) {
-        noSegmentList = [];
+    // Get existing lock categories markers
+    let noCategoryList = await db.prepare('all', 'SELECT "category" from "lockCategories" where "videoID" = ?', [videoID]);
+    if (!noCategoryList || noCategoryList.length === 0) {
+        noCategoryList = [];
     } else {
-        noSegmentList = noSegmentList.map((obj: any) => {
+        noCategoryList = noCategoryList.map((obj: any) => {
             return obj.category;
         });
     }
@@ -48,7 +48,7 @@ export async function postNoSegments(req: Request, res: Response) {
     let categoriesToMark = categories.filter((category) => {
         return !!category.match(/^[_a-zA-Z]+$/);
     }).filter((category) => {
-        return noSegmentList.indexOf(category) === -1;
+        return noCategoryList.indexOf(category) === -1;
     });
 
     // remove any duplicates
@@ -59,9 +59,9 @@ export async function postNoSegments(req: Request, res: Response) {
     // create database entry
     for (const category of categoriesToMark) {
         try {
-            await db.prepare('run', `INSERT INTO "noSegments" ("videoID", "userID", "category") VALUES(?, ?, ?)`, [videoID, userID, category]);
+            await db.prepare('run', `INSERT INTO "lockCategories" ("videoID", "userID", "category") VALUES(?, ?, ?)`, [videoID, userID, category]);
         } catch (err) {
-            Logger.error("Error submitting 'noSegment' marker for category '" + category + "' for video '" + videoID + "'");
+            Logger.error("Error submitting 'lockCategories' marker for category '" + category + "' for video '" + videoID + "'");
             Logger.error(err);
             res.status(500).json({
                 message: "Internal Server Error: Could not write marker to the database.",

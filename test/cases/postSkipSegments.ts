@@ -195,8 +195,8 @@ describe('postSkipSegments', () => {
     });
 
     it('Should be able to submit with a new duration, and hide old submissions and remove segment locks', async () => {
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") 
-            VALUES ('` + getHash("VIPUser-noSegments") + "', 'noDuration', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") 
+            VALUES ('` + getHash("VIPUser-lockCategories") + "', 'noDuration', 'sponsor')");
 
         try {
             const res = await fetch(getbaseURL()
@@ -217,13 +217,13 @@ describe('postSkipSegments', () => {
             });
 
             if (res.status === 200) {
-                const noSegmentsRow = await db.prepare('get', `SELECT * from "noSegments" WHERE videoID = ?`, ["noDuration"]);
+                const lockCategoriesRow = await db.prepare('get', `SELECT * from "lockCategories" WHERE videoID = ?`, ["noDuration"]);
                 const videoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
                     FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, ["noDuration"]);
                 const videoRow = videoRows[0];
                 const hiddenVideoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
                     FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, ["noDuration"]);
-                if (noSegmentsRow === undefined && videoRows.length === 1 && hiddenVideoRows.length === 1 && videoRow.startTime === 1 && videoRow.endTime === 10 
+                if (lockCategoriesRow === undefined && videoRows.length === 1 && hiddenVideoRows.length === 1 && videoRow.startTime === 1 && videoRow.endTime === 10 
                         && videoRow.locked === 0 && videoRow.category === "sponsor" && videoRow.videoDuration === 100) {
                     return;
                 } else {
