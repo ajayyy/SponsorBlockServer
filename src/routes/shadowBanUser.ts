@@ -43,8 +43,8 @@ export async function shadowBanUser(req: Request, res: Response) {
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
                 await db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ?
-                                AND NOT EXISTS ( SELECT "videoID", "category" FROM "noSegments" WHERE
-                                "sponsorTimes"."videoID" = "noSegments"."videoID" AND "sponsorTimes"."category" = "noSegments"."category")`, [userID]);
+                                AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
+                                "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
             }
         } else if (!enabled && row.userCount > 0) {
             //remove them from the shadow ban list
@@ -53,7 +53,7 @@ export async function shadowBanUser(req: Request, res: Response) {
             //find all previous submissions and unhide them
             if (unHideOldSubmissions) {
                 let segmentsToIgnore = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st
-                                JOIN "noSegments" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category WHERE "st"."userID" = ?`
+                                JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category WHERE "st"."userID" = ?`
                                     , [userID])).map((item: {UUID: string}) => item.UUID);
                 let allSegments = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
                                         .map((item: {UUID: string}) => item.UUID);

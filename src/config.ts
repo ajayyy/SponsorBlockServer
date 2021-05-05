@@ -63,7 +63,7 @@ addDefaults(config, {
             name: "categoryVotes"
         },
         {
-            name: "noSegments",
+            name: "lockCategories",
         },
         {
             name: "warnings",

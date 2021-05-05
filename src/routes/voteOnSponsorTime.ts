@@ -272,8 +272,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     // If not upvote
     if (!isVIP && type !== 1) {
         const isSegmentLocked = async () => !!(await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked; 
-        const isVideoLocked = async () => !!(await db.prepare('get', 'SELECT "noSegments".category from "noSegments" left join "sponsorTimes"' + 
-                                ' on ("noSegments"."videoID" = "sponsorTimes"."videoID" and "noSegments".category = "sponsorTimes".category)' + 
+        const isVideoLocked = async () => !!(await db.prepare('get', 'SELECT "lockCategories".category from "lockCategories" left join "sponsorTimes"' + 
+                                ' on ("lockCategories"."videoID" = "sponsorTimes"."videoID" and "lockCategories".category = "sponsorTimes".category)' + 
                                     ' where "UUID" = ?', [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {

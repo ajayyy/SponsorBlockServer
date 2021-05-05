@@ -4,21 +4,21 @@ import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
 
 
-describe('noSegmentRecords', () => {
+describe('lockCategoriesRecords', () => {
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-noSegments") + "')");
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-lockCategories") + "')");
  
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id', 'intro')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id', 'intro')");
  
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'no-segments-video-id-1', 'intro')");
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'noSubmitVideo', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id-1', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id-1', 'intro')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'lockCategoryVideo', 'sponsor')");
  
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'delete-record', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record', 'sponsor')");
  
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-noSegments") + "', 'delete-record-1', 'intro')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record-1', 'sponsor')");
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record-1', 'intro')");
     });
 
     it('Should update the database version when starting the application', async () => {
@@ -30,7 +30,7 @@ describe('noSegmentRecords', () => {
     it('Should be able to submit categories not in video (http response)', (done: Done) => {
         let json = {
             videoID: 'no-segments-video-id',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'outro',
                 'shilling',
@@ -48,7 +48,7 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ describe('noSegmentRecords', () => {
     it('Should be able to submit categories not in video (sql check)', (done: Done) => {
         let json = {
             videoID: 'no-segments-video-id-1',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'outro',
                 'shilling',
@@ -86,7 +86,7 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
+                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
                 if (result.length !== 4) {
                     console.log(result);
                     done("Expected 4 entrys in db, got " + result.length);
@@ -114,13 +114,13 @@ describe('noSegmentRecords', () => {
     it('Should be able to submit categories with _ in the category', (done: Done) => {
         let json = {
             videoID: 'underscore',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'word_word',
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['underscore']);
+                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
                 if (result.length !== 1) {
                     console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
@@ -148,13 +148,13 @@ describe('noSegmentRecords', () => {
     it('Should be able to submit categories with upper and lower case in the category', (done: Done) => {
         let json = {
             videoID: 'bothCases',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'wordWord',
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['bothCases']);
+                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
                 if (result.length !== 1) {
                     console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
@@ -182,13 +182,13 @@ describe('noSegmentRecords', () => {
     it('Should not be able to submit categories with $ in the category', (done: Done) => {
         let json = {
             videoID: 'specialChar',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'word&word',
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['specialChar']);
+                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
                 if (result.length !== 0) {
                     console.log(result);
                     done("Expected 0 entrys in db, got " + result.length);
@@ -214,7 +214,7 @@ describe('noSegmentRecords', () => {
     });
 
     it('Should return 400 for missing params', (done: Done) => {
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -238,7 +238,7 @@ describe('noSegmentRecords', () => {
             categories: [],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ describe('noSegmentRecords', () => {
             categories: ['sponsor'],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -286,7 +286,7 @@ describe('noSegmentRecords', () => {
             categories: ['sponsor'],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -310,7 +310,7 @@ describe('noSegmentRecords', () => {
             categories: {},
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -334,7 +334,7 @@ describe('noSegmentRecords', () => {
             categories: 'sponsor',
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -360,7 +360,7 @@ describe('noSegmentRecords', () => {
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -377,16 +377,16 @@ describe('noSegmentRecords', () => {
         .catch(err => done(err));
     });
 
-    it('Should be able to delete a noSegment record', (done: Done) => {
+    it('Should be able to delete a lockCategories record', (done: Done) => {
         let json = {
             videoID: 'delete-record',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'sponsor',
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -395,7 +395,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['delete-record']);
+                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record']);
                 if (result.length === 0) {
                     done();
                 } else {
@@ -408,16 +408,16 @@ describe('noSegmentRecords', () => {
         .catch(err => done(err));
     });
 
-    it('Should be able to delete one noSegment record without removing another', (done: Done) => {
+    it('Should be able to delete one lockCategories record without removing another', (done: Done) => {
         let json = {
             videoID: 'delete-record-1',
-            userID: 'VIPUser-noSegments',
+            userID: 'VIPUser-lockCategories',
             categories: [
                 'sponsor',
             ],
         };
 
-        fetch(getbaseURL() + "/api/noSegments", {
+        fetch(getbaseURL() + "/api/lockCategories", {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -426,7 +426,7 @@ describe('noSegmentRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "noSegments"  WHERE "videoID" = ?', ['delete-record-1']);
+                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record-1']);
                 if (result.length === 1) {
                     done();
                 } else {
@@ -445,7 +445,7 @@ describe('noSegmentRecords', () => {
      * To test the submission code properly see ./test/cases/postSkipSegments.js
      */
 
-    it('Should not be able to submit a segment to a video with a no-segment record (single submission)', (done: Done) => {
+    it('Should not be able to submit a segment to a video with a lock-category record (single submission)', (done: Done) => {
         fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
             method: 'POST',
             headers: {
@@ -453,7 +453,7 @@ describe('noSegmentRecords', () => {
             },
             body: JSON.stringify({
                 userID: "testman42",
-                videoID: "noSubmitVideo",
+                videoID: "lockCategoryVideo",
                 segments: [{
                     segment: [20, 40],
                     category: "sponsor",
@@ -478,7 +478,7 @@ describe('noSegmentRecords', () => {
             },
             body: JSON.stringify({
                     userID: "testman42",
-                    videoID: "noSubmitVideo",
+                    videoID: "lockCategoryVideo",
                     segments: [{
                         segment: [20, 40],
                         category: "sponsor",
@@ -507,7 +507,7 @@ describe('noSegmentRecords', () => {
             },
             body: JSON.stringify({
                 userID: "testman42",
-                videoID: "noSubmitVideo",
+                videoID: "lockCategoryVideo",
                 segments: [{
                     segment: [20, 40],
                     category: "intro",

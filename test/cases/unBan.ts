@@ -13,7 +13,7 @@ describe('unBan', () => {
     await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testEntity-unBan')`);
 
     await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-unBan") + "')");
-    await db.prepare("run", `INSERT INTO "noSegments" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");
+    await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");
 
     let startOfInsertSegmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
     await db.prepare("run", startOfInsertSegmentQuery + "('unBan-videoID-0', 1, 11, 2, 'unBan-uuid-0', 'testMan-unBan', 0, 50, 'sponsor', 1, '" + getHash('unBan-videoID-0', 1) + "')");
@@ -47,7 +47,7 @@ describe('unBan', () => {
     .catch(err => done(err));
   });
 
-  it('Should be able to unban a user and re-enable shadow banned segments without noSegment entrys', (done) => {
+  it('Should be able to unban a user and re-enable shadow banned segments without lockCategories entrys', (done) => {
     fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testWoman-unBan&adminUserID=VIPUser-unBan&enabled=false", {
         method: 'POST',
         headers: {
@@ -72,7 +72,7 @@ describe('unBan', () => {
     .catch(err => done(err));
   }); 
 
-  it('Should be able to unban a user and re-enable shadow banned segments with a mix of noSegment entrys', (done) => {
+  it('Should be able to unban a user and re-enable shadow banned segments with a mix of lockCategories entrys', (done) => {
     fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testEntity-unBan&adminUserID=VIPUser-unBan&enabled=false", {
         method: 'POST',
         headers: {
