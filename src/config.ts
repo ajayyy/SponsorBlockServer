@@ -48,7 +48,7 @@ addDefaults(config, {
     maxRewardTimePerSegmentInSeconds: 86400,
     postgres: null,
     dumpDatabase: {
-        enabled: true,
+        enabled: false,
         minTimeBetweenMs: 60000,
         appExportPath: './docker/database-export',
         postgresExportPath: '/opt/exports',
