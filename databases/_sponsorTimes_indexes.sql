@@ -51,10 +51,10 @@ CREATE INDEX IF NOT EXISTS "warnings_issueTime"
     ("issueTime" ASC NULLS LAST)
     TABLESPACE pg_default;
 
--- noSegments
+-- lockCategories
 
 CREATE INDEX IF NOT EXISTS "noSegments_videoID"
-    ON public."noSegments" USING btree
+    ON public."lockCategories" USING btree
     ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, category COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
 
