@@ -5,7 +5,7 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getIsUserVIP', () => {
     before((done: Done) => {
-        db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("supertestman") + "')").then(done);
+        db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash("supertestman")]).then(done);
     });
 
     it('Should be able to get a 200', (done: Done) => {

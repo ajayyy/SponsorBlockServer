@@ -6,19 +6,21 @@ import {db} from '../../src/databases/databases';
 
 describe('lockCategoriesRecords', () => {
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-lockCategories") + "')");
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
+        await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-lockCategories")]);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id', 'intro')");
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'sponsor']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'intro']);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id-1', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id-1', 'intro')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'lockCategoryVideo', 'sponsor')");
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'sponsor']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'intro']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'lockCategoryVideo', 'sponsor']);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record', 'sponsor')");
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record', 'sponsor']);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record-1', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record-1', 'intro')");
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'sponsor']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'intro']);
     });
 
     it('Should update the database version when starting the application', async () => {

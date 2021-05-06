@@ -12,12 +12,10 @@ async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: numb
         shadowHidden = 0,
         hashedVideoID = `hash_${UUID}`;
     await db.prepare("run", `INSERT INTO
-    "sponsorTimes" ("videoID", "startTime", "endTime", votes, "UUID",
-    "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID")
-  VALUES
-    ('${videoID}', ${startTime}, ${endTime}, ${votes}, '${UUID}',
-    '${userID}', ${timeSubmitted}, ${views}, '${category}', ${shadowHidden}, '${hashedVideoID}')
-  `);
+        "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID",
+        "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID")
+    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID]);
 }
 
 async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
@@ -56,7 +54,7 @@ describe('segmentShift', function () {
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid02', 'sponsor');
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid03', 'interaction');
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid04', 'outro');
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('${vipUserID}')`);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
     });
 
     beforeEach(function (done: Done) {

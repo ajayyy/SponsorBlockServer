@@ -5,22 +5,23 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getUserInfo', () => {
     before(async () => {
-        let startOfUserNamesQuery = `INSERT INTO "userNames" ("userID", "userName") VALUES`;
-        await db.prepare("run", startOfUserNamesQuery + "('" + getHash("getuserinfo_user_01") + "', 'Username user 01')");
-        let startOfSponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES';
-        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000001', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000002', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('yyyxxxzzz', 1, 11, -1, 'uuid000003', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 0)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('yyyxxxzzz', 1, 11, -2, 'uuid000004', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 1)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('xzzzxxyyy', 1, 11, -5, 'uuid000005', '" + getHash("getuserinfo_user_01") + "', 0, 10, 'sponsor', 1)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('zzzxxxyyy', 1, 11, 2, 'uuid000006', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 0)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000007', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
-        await db.prepare("run", startOfSponsorTimesQuery + "('xxxyyyzzz', 1, 11, 2, 'uuid000008', '" + getHash("getuserinfo_user_02") + "', 0, 10, 'sponsor', 1)");
+        const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_01"), 'Username user 01']);
 
-    
-        await db.prepare("run", `INSERT INTO warnings ("userID", "issueTime", "issuerUserID", enabled) VALUES ('` + getHash('getuserinfo_warning_0') + "', 10, 'getuserinfo_vip', 1)");
-        await db.prepare("run", `INSERT INTO warnings ("userID", "issueTime", "issuerUserID", enabled) VALUES ('` + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
-        await db.prepare("run", `INSERT INTO warnings ("userID", "issueTime", "issuerUserID", enabled) VALUES ('` + getHash('getuserinfo_warning_1') + "', 10, 'getuserinfo_vip', 1)");
+        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", sponsorTimesQuery, ['xxxyyyzzz', 1, 11, 2, 'uuid000001', getHash("getuserinfo_user_01"), 0, 10, 'sponsor', 0]);
+        await db.prepare("run", sponsorTimesQuery, ['xxxyyyzzz', 1, 11, 2, 'uuid000002', getHash("getuserinfo_user_01"), 0, 10, 'sponsor', 0]);
+        await db.prepare("run", sponsorTimesQuery, ['yyyxxxzzz', 1, 11, -1, 'uuid000003', getHash("getuserinfo_user_01"), 0, 10, 'sponsor', 0]);
+        await db.prepare("run", sponsorTimesQuery, ['yyyxxxzzz', 1, 11, -2, 'uuid000004', getHash("getuserinfo_user_01"), 0, 10, 'sponsor', 1]);
+        await db.prepare("run", sponsorTimesQuery, ['xzzzxxyyy', 1, 11, -5, 'uuid000005', getHash("getuserinfo_user_01"), 0, 10, 'sponsor', 1]);
+        await db.prepare("run", sponsorTimesQuery, ['zzzxxxyyy', 1, 11, 2, 'uuid000006', getHash("getuserinfo_user_02"), 0, 10, 'sponsor', 0]);
+        await db.prepare("run", sponsorTimesQuery, ['xxxyyyzzz', 1, 11, 2, 'uuid000007', getHash("getuserinfo_user_02"), 0, 10, 'sponsor', 1]);
+        await db.prepare("run", sponsorTimesQuery, ['xxxyyyzzz', 1, 11, 2, 'uuid000008', getHash("getuserinfo_user_02"), 0, 10, 'sponsor', 1]);
+
+        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertWarningQuery, [getHash('getuserinfo_warning_0'), 10, 'getuserinfo_vip', 1]);
+        await db.prepare("run", insertWarningQuery, [getHash('getuserinfo_warning_1'), 10, 'getuserinfo_vip', 1]);
+        await db.prepare("run", insertWarningQuery, [getHash('getuserinfo_warning_1'), 10, 'getuserinfo_vip', 1]);
     });
 
     it('Should be able to get a 200', (done: Done) => {

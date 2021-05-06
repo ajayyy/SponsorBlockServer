@@ -6,7 +6,6 @@ import {db} from '../../src/databases/databases';
 import {ImportMock} from 'ts-mock-imports';
 import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
 import {YouTubeApiMock} from '../youtubeMock';
-import e from 'express';
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
 const sinonStub = mockManager.mock('listVideos');
@@ -14,11 +13,10 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('postSkipSegments', () => {
     before(() => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
-
-        db.prepare("run", startOfQuery + "('80percent_video', 0, 1000, 0, '80percent-uuid-0', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
-        db.prepare("run", startOfQuery + "('80percent_video', 1001, 1005, 0, '80percent-uuid-1', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
-        db.prepare("run", startOfQuery + "('80percent_video', 0, 5000, -2, '80percent-uuid-2', '" + getHash("test") + "', 0, 0, 'interaction', 0, '80percent_video')");
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 0, 1000, 0, '80percent-uuid-0', getHash("test"), 0, 0, 'interaction', 0, '80percent_video']);
+        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 1001, 1005, 0, '80percent-uuid-1', getHash("test"), 0, 0, 'interaction', 0, '80percent_video']);
+        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 0, 5000, -2, '80percent-uuid-2', getHash("test"), 0, 0, 'interaction', 0, '80percent_video']);
 
         const now = Date.now();
         const warnVip01Hash = getHash("warn-vip01");
@@ -27,21 +25,23 @@ describe('postSkipSegments', () => {
         const warnUser03Hash = getHash("warn-user03");
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
-        const startOfWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", enabled) VALUES';
-        db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser01Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser02Hash + "', '" + now + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 1000)) + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser02Hash + "', '" + (now - (warningExpireTime + 2000)) + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser03Hash + "', '" + now + "', '" + warnVip01Hash + "', 0)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 1000) + "', '" + warnVip01Hash + "', 0)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 2000) + "', '" + warnVip01Hash + "', 1)");
-        db.prepare("run", startOfWarningQuery + "('" + warnUser03Hash + "', '" + (now - 3601000) + "', '" + warnVip01Hash + "', 1)");
 
-        db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUserSubmission") + "')");
+        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 1000), warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 2000), warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 3601000), warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 1000)), warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, now, warnVip01Hash, 0]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 1000), warnVip01Hash, 0]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 2000), warnVip01Hash, 1]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 3601000), warnVip01Hash, 1]);
+
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
+        db.prepare("run", insertVipUserQuery, [getHash("VIPUserSubmission")]);
     });
 
     it('Should be able to submit a single time (Params method)', (done: Done) => {
@@ -196,7 +196,7 @@ describe('postSkipSegments', () => {
 
     it('Should be able to submit with a new duration, and hide old submissions and remove segment locks', async () => {
         await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") 
-            VALUES ('` + getHash("VIPUser-lockCategories") + "', 'noDuration', 'sponsor')");
+            VALUES(?, ?, ?)`, [getHash("VIPUser-lockCategories"), 'noDuration', 'sponsor']);
 
         try {
             const res = await fetch(getbaseURL()
