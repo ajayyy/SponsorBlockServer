@@ -25,6 +25,7 @@ import {endpoint as getSkipSegments} from './routes/getSkipSegments';
 import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
+import {apiCspMiddleware} from './middleware/apiCsp';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
 import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
 
@@ -36,6 +37,7 @@ export function createServer(callback: () => void) {
     //setup CORS correctly
     app.use(corsMiddleware);
     app.use(loggerMiddleware);
+    app.use("/api/", apiCspMiddleware);
     app.use(express.json());
 
     if (config.userCounterURL) app.use(userCounter);
