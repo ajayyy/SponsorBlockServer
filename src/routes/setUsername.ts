@@ -39,6 +39,12 @@ export async function setUsername(req: Request, res: Response) {
         //hash the userID
         userID = getHash(userID);
     }
+    
+    if (userID === "7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97") {
+        // Don't allow
+        res.sendStatus(200);
+        return;   
+    }
 
     try {
         //check if username is already set
