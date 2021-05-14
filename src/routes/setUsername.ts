@@ -40,7 +40,7 @@ export async function setUsername(req: Request, res: Response) {
         userID = getHash(userID);
     }
     
-    if (userID === "7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97") {
+    if (["7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97", "e1839ce056d185f176f30a3d04a79242110fe46ad6e9bd1a9170f56857d1b148"].includes(userID)) {
         // Don't allow
         res.sendStatus(200);
         return;   
