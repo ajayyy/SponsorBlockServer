@@ -5,14 +5,11 @@ import fetch from 'node-fetch';
 import {YouTubeAPI} from '../utils/youtubeApi';
 import {db, privateDB} from '../databases/databases';
 import {dispatchEvent, getVoteAuthor, getVoteAuthorRaw} from '../utils/webhookUtils';
-import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {getFormattedTime} from '../utils/getFormattedTime';
 import {getIP} from '../utils/getIP';
 import {getHash} from '../utils/getHash';
 import {config} from '../config';
 import { UserID } from '../types/user.model';
-import redis from '../utils/redis';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../middleware/queryCacher';
@@ -418,31 +415,6 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             }
 
             QueryCacher.clearVideoCache(videoInfo);
-
-            //for each positive vote, see if a hidden submission can be shown again
-            if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
-                //find the UUID that submitted the submission that was voted on
-                const submissionUserIDInfo = await db.prepare('get', 'SELECT "userID" FROM "sponsorTimes" WHERE "UUID" = ?', [UUID]);
-                if (!submissionUserIDInfo) {
-                    // They are voting on a non-existent submission
-                    res.status(400).send("Voting on a non-existent submission");
-                    return;
-                }
-
-                const submissionUserID = submissionUserIDInfo.userID;
-
-                //check if any submissions are hidden
-                const hiddenSubmissionsRow = await db.prepare('get', 'SELECT count(*) as "hiddenSubmissions" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" > 0', [submissionUserID]);
-
-                if (hiddenSubmissionsRow.hiddenSubmissions > 0) {
-                    //see if some of this users submissions should be visible again
-
-                    if (await isUserTrustworthy(submissionUserID)) {
-                        //they are trustworthy again, show 2 of their submissions again, if there are two to show
-                        await db.prepare('run', 'UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE ROWID IN (SELECT ROWID FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = 1 LIMIT 2)', [submissionUserID]);
-                    }
-                }
-            }
         }
 
         res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
