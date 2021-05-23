@@ -1,7 +1,8 @@
 import redis from "../utils/redis";
 import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey } from "./redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
+import { UserID } from "../types/user.model";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     const {err, reply} = await redis.getAsync(key);
@@ -21,10 +22,11 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     return data;
 }
 
-function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; }) {
+function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID: UserID; }) {
     if (videoInfo) {
         redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
         redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
+        redis.delAsync(reputationKey(videoInfo.userID));
     }
 }
 

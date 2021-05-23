@@ -1,7 +1,7 @@
 import { db } from "../databases/databases";
 import { UserID } from "../types/user.model";
 import { QueryCacher } from "./queryCacher";
-import { userKey } from "./redisKeys";
+import { reputationKey } from "./redisKeys";
 
 interface ReputationDBResult {
     totalSubmissions: number,
@@ -19,7 +19,7 @@ export async function getReputation(userID: UserID) {
                 SUM(CASE WHEN "timeSubmitted" < ? AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
             FROM "sponsorTimes" WHERE "userID" = ?`, [pastDate, userID]) as Promise<ReputationDBResult>;
 
-    const result = await QueryCacher.get(fetchFromDB, userKey(userID));
+    const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
 
     // Grace period
     if (result.totalSubmissions < 5) {

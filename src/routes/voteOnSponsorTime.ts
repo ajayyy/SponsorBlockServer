@@ -156,8 +156,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         return;
     }
 
-    const videoInfo = (await db.prepare('get', `SELECT "category", "videoID", "hashedVideoID", "service" FROM "sponsorTimes" WHERE "UUID" = ?`,
-                             [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service};
+    const videoInfo = (await db.prepare('get', `SELECT "category", "videoID", "hashedVideoID", "service", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`,
+                             [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID};
     if (!videoInfo) {
         // Submission doesn't exist
         res.status(400).send("Submission doesn't exist.");
@@ -364,8 +364,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         }
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        const videoInfo = await db.prepare('get', `SELECT "videoID", "hashedVideoID", "service", "votes", "views" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as 
-                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number};
+        const videoInfo = await db.prepare('get', `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as 
+                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number, userID: UserID};
 
         if (voteTypeEnum === voteTypes.normal) {
             if ((isVIP || isOwnSubmission) && incrementAmount < 0) {

@@ -13,6 +13,6 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
     return "segments." + service + "." + hashedVideoIDPrefix;
 } 
 
-export function userKey(userID: UserID): string {
-    return "user." + userID;
+export function reputationKey(userID: UserID): string {
+    return "reputation.user." + userID;
 }

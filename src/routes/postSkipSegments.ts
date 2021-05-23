@@ -532,7 +532,8 @@ export async function postSkipSegments(req: Request, res: Response) {
                 QueryCacher.clearVideoCache({
                     videoID,
                     hashedVideoID,
-                    service
+                    service,
+                    userID
                 });
             } catch (err) {
                 //a DB change probably occurred
