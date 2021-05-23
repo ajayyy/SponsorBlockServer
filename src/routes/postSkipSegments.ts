@@ -14,7 +14,7 @@ import {Request, Response} from 'express';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import redis from '../utils/redis';
 import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
-import { deleteNoSegments } from './deleteNoSegments';
+import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
 
 interface APIVideoInfo {
@@ -357,7 +357,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         return res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
-    let noSegmentList = (await db.prepare('all', 'SELECT category from "noSegments" where "videoID" = ?', [videoID])).map((list: any) => {
+    let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => {
         return list.category;
     });
 
@@ -389,9 +389,9 @@ export async function postSkipSegments(req: Request, res: Response) {
             await db.prepare('run', `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
         }
 
-        // Reset no segments
-        noSegmentList = [];
-        deleteNoSegments(videoID, null);
+        // Reset lock categories
+        lockedCategoryList = [];
+        deleteLockCategories(videoID, null);
     }
 
     // Check if all submissions are correct
@@ -407,8 +407,8 @@ export async function postSkipSegments(req: Request, res: Response) {
             return;
         }
 
-        // Reject segemnt if it's in the no segments list
-        if (!isVIP && noSegmentList.indexOf(segments[i].category) !== -1) {
+        // Reject segment if it's in the locked categories list
+        if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
             Logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
             res.status(403).send(

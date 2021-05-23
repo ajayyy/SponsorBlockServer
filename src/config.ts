@@ -45,7 +45,34 @@ addDefaults(config, {
     },
     userCounterURL: null,
     youtubeAPIKey: null,
-    postgres: null
+    maxRewardTimePerSegmentInSeconds: 86400,
+    postgres: null,
+    dumpDatabase: {
+        enabled: false,
+        minTimeBetweenMs: 60000,
+        appExportPath: './docker/database-export',
+        postgresExportPath: '/opt/exports',
+        tables: [{
+            name: "sponsorTimes",
+            order: "timeSubmitted"
+        },
+        {
+            name: "userNames"
+        },
+        {
+            name: "categoryVotes"
+        },
+        {
+            name: "lockCategories",
+        },
+        {
+            name: "warnings",
+            order: "issueTime"
+        },
+        {
+            name: "vipUsers"
+        }]
+    }
 });
 
 // Add defaults

@@ -7,9 +7,10 @@ services:
       - database.env
     volumes:
       - database-data:/var/lib/postgresql/data
-      - ./database-export/:/opt/exports
+      - ./database-export/:/opt/exports # To make this work, run chmod 777 ./database-exports
     ports:
-      - 127.0.0.1:5432:5432
+      - 5432:5432
+    restart: always
   redis:
     container_name: redis
     image: redis
@@ -17,7 +18,8 @@ services:
     volumes:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
-      - 127.0.0.1:32773:6379
+      - 32773:6379
+    restart: always
 
 volumes:
   database-data:

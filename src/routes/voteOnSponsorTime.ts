@@ -180,51 +180,54 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     const timeSubmitted = Date.now();
 
     const voteAmount = isVIP ? 500 : 1;
+    const ableToVote = isVIP || finalResponse.finalStatus === 200 || true;
 
-    // Add the vote
-    if ((await db.prepare('get', `select count(*) as count from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category])).count > 0) {
-        // Update the already existing db entry
-        await db.prepare('run', `update "categoryVotes" set "votes" = "votes" + ? where "UUID" = ? and "category" = ?`, [voteAmount, UUID, category]);
-    } else {
-        // Add a db entry
-        await db.prepare('run', `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, category, voteAmount]);
-    }
+    if (ableToVote) {
+        // Add the vote
+        if ((await db.prepare('get', `select count(*) as count from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category])).count > 0) {
+            // Update the already existing db entry
+            await db.prepare('run', `update "categoryVotes" set "votes" = "votes" + ? where "UUID" = ? and "category" = ?`, [voteAmount, UUID, category]);
+        } else {
+            // Add a db entry
+            await db.prepare('run', `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, category, voteAmount]);
+        }
 
-    // Add the info into the private db
-    if (usersLastVoteInfo?.votes > 0) {
-        // Reverse the previous vote
-        await db.prepare('run', `update "categoryVotes" set "votes" = "votes" - ? where "UUID" = ? and "category" = ?`, [voteAmount, UUID, usersLastVoteInfo.category]);
+        // Add the info into the private db
+        if (usersLastVoteInfo?.votes > 0) {
+            // Reverse the previous vote
+            await db.prepare('run', `update "categoryVotes" set "votes" = "votes" - ? where "UUID" = ? and "category" = ?`, [voteAmount, UUID, usersLastVoteInfo.category]);
 
-        await privateDB.prepare('run', `update "categoryVotes" set "category" = ?, "timeSubmitted" = ?, "hashedIP" = ? where "userID" = ? and "UUID" = ?`, [category, timeSubmitted, hashedIP, userID, UUID]);
-    } else {
-        await privateDB.prepare('run', `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, category, timeSubmitted]);
-    }
+            await privateDB.prepare('run', `update "categoryVotes" set "category" = ?, "timeSubmitted" = ?, "hashedIP" = ? where "userID" = ? and "UUID" = ?`, [category, timeSubmitted, hashedIP, userID, UUID]);
+        } else {
+            await privateDB.prepare('run', `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, category, timeSubmitted]);
+        }
 
-    // See if the submissions category is ready to change
-    const currentCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, videoInfo.category]);
+        // See if the submissions category is ready to change
+        const currentCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, videoInfo.category]);
 
-    const submissionInfo = await db.prepare("get", `SELECT "userID", "timeSubmitted", "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-    const isSubmissionVIP = submissionInfo && await isUserVIP(submissionInfo.userID);
-    const startingVotes = isSubmissionVIP ? 10000 : 1;
+        const submissionInfo = await db.prepare("get", `SELECT "userID", "timeSubmitted", "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        const isSubmissionVIP = submissionInfo && await isUserVIP(submissionInfo.userID);
+        const startingVotes = isSubmissionVIP ? 10000 : 1;
 
-    // Change this value from 1 in the future to make it harder to change categories
-    // Done this way without ORs incase the value is zero
-    const currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? startingVotes : currentCategoryInfo.votes;
+        // Change this value from 1 in the future to make it harder to change categories
+        // Done this way without ORs incase the value is zero
+        const currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? startingVotes : currentCategoryInfo.votes;
 
-    // Add submission as vote
-    if (!currentCategoryInfo && submissionInfo) {
-        await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, videoInfo.category, currentCategoryCount]);
+        // Add submission as vote
+        if (!currentCategoryInfo && submissionInfo) {
+            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, videoInfo.category, currentCategoryCount]);
 
-        await privateDB.prepare("run", `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, submissionInfo.userID, "unknown", videoInfo.category, submissionInfo.timeSubmitted]);
-    }
+            await privateDB.prepare("run", `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, submissionInfo.userID, "unknown", videoInfo.category, submissionInfo.timeSubmitted]);
+        }
 
-    const nextCategoryCount = (nextCategoryInfo?.votes || 0) + voteAmount;
+        const nextCategoryCount = (nextCategoryInfo?.votes || 0) + voteAmount;
 
-    //TODO: In the future, raise this number from zero to make it harder to change categories
-    // VIPs change it every time
-    if (nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2) || isVIP || isOwnSubmission) {
-        // Replace the category
-        await db.prepare('run', `update "sponsorTimes" set "category" = ? where "UUID" = ?`, [category, UUID]);
+        //TODO: In the future, raise this number from zero to make it harder to change categories
+        // VIPs change it every time
+        if (nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2) || isVIP || isOwnSubmission) {
+            // Replace the category
+            await db.prepare('run', `update "sponsorTimes" set "category" = ? where "UUID" = ?`, [category, UUID]);
+        }
     }
 
     clearRedisCache(videoInfo);
@@ -273,8 +276,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     // If not upvote
     if (!isVIP && type !== 1) {
         const isSegmentLocked = async () => !!(await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked; 
-        const isVideoLocked = async () => !!(await db.prepare('get', 'SELECT "noSegments".category from "noSegments" left join "sponsorTimes"' + 
-                                ' on ("noSegments"."videoID" = "sponsorTimes"."videoID" and "noSegments".category = "sponsorTimes".category)' + 
+        const isVideoLocked = async () => !!(await db.prepare('get', 'SELECT "lockCategories".category from "lockCategories" left join "sponsorTimes"' + 
+                                ' on ("lockCategories"."videoID" = "sponsorTimes"."videoID" and "lockCategories".category = "sponsorTimes".category)' + 
                                     ' where "UUID" = ?', [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {
@@ -287,13 +290,19 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, finalResponse, res);
     }
 
-    if (type == 1 && !isVIP && !isOwnSubmission) {
+    if (type !== undefined && !isVIP && !isOwnSubmission) {
         // Check if upvoting hidden segment
         const voteInfo = await db.prepare('get', `SELECT votes FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
 
         if (voteInfo && voteInfo.votes <= -2) {
-            res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
-            return;
+            if (type == 1) {
+                res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
+                return;
+            } else if (type == 0) {
+                // Already downvoted enough, ignore
+                res.status(200).send();
+                return;
+            }
         }
     }
 
@@ -378,7 +387,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         const ableToVote = isVIP
             || ((await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
                 && (await privateDB.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
-                && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined);
+                && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
+                && finalResponse.finalStatus === 200;
 
         if (ableToVote) {
             //update the votes table

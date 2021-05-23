@@ -38,5 +38,32 @@
         "max": 20, // 20 requests in 15min time window
         "statusCode": 200
       }
+    },
+    "maxRewardTimePerSegmentInSeconds": 86400, // maximum time a user get rewarded in the leaderboard for a single segment
+    "dumpDatabase": {
+        "enabled": true,
+        "minTimeBetweenMs": 60000, // 1 minute between dumps
+        "appExportPath": "./docker/database-export",
+        "postgresExportPath": "/opt/exports",
+        "tables": [{
+            "name": "sponsorTimes",
+            "order": "timeSubmitted"
+        },
+        {
+            "name": "userNames"
+        },
+        {
+            "name": "categoryVotes"
+        },
+        {
+            "name": "lockCategories"
+        },
+        {
+            "name": "warnings",
+            "order": "issueTime"
+        },
+        {
+            "name": "vipUsers"
+        }]
     }
 }

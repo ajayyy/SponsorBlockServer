@@ -268,6 +268,10 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         : req.query.category
             ? [req.query.category]
             : ['sponsor'];
+    if (!Array.isArray(categories)) {
+        res.status(400).send("Categories parameter does not match format requirements.");
+        return false;
+    }
 
     let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
     if (!Object.values(Service).some((val) => val == service)) {

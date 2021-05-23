@@ -5,6 +5,7 @@ import {Request, Response} from 'express';
 
 const MILLISECONDS_IN_MINUTE = 60000;
 const getTopUsersWithCache = createMemoryCache(generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
+const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boolean = false) {
     const userNames = [];
@@ -24,14 +25,14 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
     }
 
     const rows = await db.prepare('all', `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
-        SUM(("sponsorTimes"."endTime" - "sponsorTimes"."startTime") / 60 * "sponsorTimes"."views") as "minutesSaved",
+        SUM(((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ${maxRewardTimePerSegmentInSeconds} THEN ${maxRewardTimePerSegmentInSeconds} ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views") as "minutesSaved",
         SUM("votes") as "userVotes", ` +
         additionalFields +
         `IFNULL("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "privateDB"."shadowBannedUsers" ON "sponsorTimes"."userID"="privateDB"."shadowBannedUsers"."userID"
         WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "privateDB"."shadowBannedUsers"."userID" IS NULL
         GROUP BY IFNULL("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
-        ORDER BY "` + sortBy + `" DESC LIMIT 100`, []);
+        ORDER BY "${sortBy}" DESC LIMIT 100`, []);
 
     for (let i = 0; i < rows.length; i++) {
         userNames[i] = rows[i].userName;
@@ -69,6 +70,10 @@ export async function getTopUsers(req: Request, res: Response) {
         res.sendStatus(400);
         return;
     }
+
+    //TODO: remove. This is broken for now
+    res.status(200).send();
+    return;
 
     //setup which sort type to use
     let sortBy = '';

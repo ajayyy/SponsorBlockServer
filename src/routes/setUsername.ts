@@ -21,6 +21,10 @@ export async function setUsername(req: Request, res: Response) {
         res.sendStatus(200);
         return;
     }
+    
+    // remove unicode control characters from username (example: \n, \r, \t etc.)
+    // source: https://en.wikipedia.org/wiki/Control_character#In_Unicode
+    userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 
     if (adminUserIDInput != undefined) {
         //this is the admin controlling the other users account, don't hash the controling account's ID
@@ -34,6 +38,12 @@ export async function setUsername(req: Request, res: Response) {
     } else {
         //hash the userID
         userID = getHash(userID);
+    }
+    
+    if (["7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97", "e1839ce056d185f176f30a3d04a79242110fe46ad6e9bd1a9170f56857d1b148"].includes(userID)) {
+        // Don't allow
+        res.sendStatus(200);
+        return;   
     }
 
     try {

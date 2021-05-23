@@ -5,8 +5,8 @@ import {oldGetVideoSponsorTimes} from './routes/oldGetVideoSponsorTimes';
 import {postSegmentShift} from './routes/postSegmentShift';
 import {postWarning} from './routes/postWarning';
 import {getIsUserVIP} from './routes/getIsUserVIP';
-import {deleteNoSegmentsEndpoint} from './routes/deleteNoSegments';
-import {postNoSegments} from './routes/postNoSegments';
+import {deleteLockCategoriesEndpoint} from './routes/deleteLockCategories';
+import {postLockCategories} from './routes/postLockCategories';
 import {getUserInfo} from './routes/getUserInfo';
 import {getDaysSavedFormatted} from './routes/getDaysSavedFormatted';
 import {getTotalStats} from './routes/getTotalStats';
@@ -25,8 +25,9 @@ import {endpoint as getSkipSegments} from './routes/getSkipSegments';
 import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
+import {apiCspMiddleware} from './middleware/apiCsp';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
-import dumpDatabase from './routes/dumpDatabase';
+import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
 
 
 export function createServer(callback: () => void) {
@@ -36,6 +37,7 @@ export function createServer(callback: () => void) {
     //setup CORS correctly
     app.use(corsMiddleware);
     app.use(loggerMiddleware);
+    app.use("/api/", apiCspMiddleware);
     app.use(express.json());
 
     if (config.userCounterURL) app.use(userCounter);
@@ -114,10 +116,12 @@ function setupRoutes(app: Express) {
     //send out a formatted time saved total
     app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
-    //submit video containing no segments
-    app.post('/api/noSegments', postNoSegments);
+    //submit video to lock categories
+    app.post('/api/noSegments', postLockCategories);
+    app.post('/api/lockCategories', postLockCategories);
 
-    app.delete('/api/noSegments', deleteNoSegmentsEndpoint);
+    app.delete('/api/noSegments', deleteLockCategoriesEndpoint);
+    app.delete('/api/lockCategories', deleteLockCategoriesEndpoint);
 
     //get if user is a vip
     app.get('/api/isUserVIP', getIsUserVIP);
@@ -131,6 +135,7 @@ function setupRoutes(app: Express) {
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
         app.get('/database.json', (req, res) => dumpDatabase(req, res, false));
+        app.get('/database/*', redirectLink)
     } else {
         app.get('/database.db', function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", {root: "./"});
