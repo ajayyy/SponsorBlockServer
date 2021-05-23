@@ -3,7 +3,7 @@ import { Logger } from "../utils/logger";
 import { skipSegmentsHashKey, skipSegmentsKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 
-async function get<T>(fetchFromDB: () => Promise<T[]>, key: string): Promise<T[]> {
+async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     const {err, reply} = await redis.getAsync(key);
 
     if (!err && reply) {
