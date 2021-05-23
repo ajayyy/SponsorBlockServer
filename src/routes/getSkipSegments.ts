@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
 import { SBRecord } from '../types/lib.model';
 import { Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
-import { QueryCacher } from '../middleware/queryCacher'
-import { getReputation } from '../middleware/reputation';
+import { QueryCacher } from '../utils/queryCacher'
+import { getReputation } from '../utils/reputation';
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {

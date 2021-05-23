@@ -11,13 +11,13 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
 import redis from '../utils/redis';
 import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
-import { QueryCacher } from '../middleware/queryCacher';
-import { getReputation } from '../middleware/reputation';
+import { QueryCacher } from '../utils/queryCacher';
+import { getReputation } from '../utils/reputation';
 
 interface APIVideoInfo {
     err: string | boolean,

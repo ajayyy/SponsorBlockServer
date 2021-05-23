@@ -12,7 +12,7 @@ import {config} from '../config';
 import { UserID } from '../types/user.model';
 import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
 import { getCategoryActionType } from '../utils/categoryInfo';
-import { QueryCacher } from '../middleware/queryCacher';
+import { QueryCacher } from '../utils/queryCacher';
 
 const voteTypes = {
     normal: 0,
