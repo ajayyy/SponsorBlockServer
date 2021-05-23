@@ -469,7 +469,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
 function clearRedisCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; }) {
     if (videoInfo) {
-        redis.delAsync(skipSegmentsKey(videoInfo.videoID));
+        redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
         redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
     }
 }

@@ -528,7 +528,7 @@ export async function postSkipSegments(req: Request, res: Response) {
                 await privateDB.prepare('run', `INSERT INTO "sponsorTimes" VALUES(?, ?, ?)`, [videoID, hashedIP, timeSubmitted]);
             
                 // Clear redis cache for this video
-                redis.delAsync(skipSegmentsKey(videoID));
+                redis.delAsync(skipSegmentsKey(videoID, service));
                 redis.delAsync(skipSegmentsHashKey(hashedVideoID, service));
             } catch (err) {
                 //a DB change probably occurred
