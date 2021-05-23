@@ -10,7 +10,7 @@ interface ReputationDBResult {
     oldUpvotedSubmissions: number
 }
 
-export async function getReputation(userID: UserID) {
+export async function getReputation(userID: UserID): Promise<number> {
     const pastDate = Date.now() - 1000 * 1000 * 60 * 60 * 24 * 45; // 45 days ago
     const fetchFromDB = () => db.prepare("get", 
             `SELECT COUNT(*) AS "totalSubmissions",
@@ -32,7 +32,7 @@ export async function getReputation(userID: UserID) {
     }
 
     if (result.oldUpvotedSubmissions < 3 || result.upvotedSum < 5) {
-        return 0
+        return 0;
     }
 
     return convertRange(Math.min(result.upvotedSum, 50), 5, 50, 0, 15);

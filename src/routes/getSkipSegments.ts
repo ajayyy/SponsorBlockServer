@@ -9,6 +9,7 @@ import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
 import { QueryCacher } from '../middleware/queryCacher'
+import { getReputation } from '../middleware/reputation';
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
@@ -41,7 +42,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
     const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? 32 : 1
-    return chooseSegments(filteredSegments, maxSegments).map((chosenSegment) => ({
+    return (await chooseSegments(filteredSegments, maxSegments)).map((chosenSegment) => ({
         category,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
         UUID: chosenSegment.UUID,
@@ -128,7 +129,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
     const fetchFromDB = () => db
         .prepare(
             'all',
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "videoDuration", "reputation", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [hashedVideoIDPrefix + '%', service]
         ) as Promise<DBSegment[]>;
@@ -144,7 +145,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     const fetchFromDB = () => db
         .prepare(
             'all',
-            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden" FROM "sponsorTimes" 
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "videoDuration", "reputation", "shadowHidden" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [videoID, service]
         ) as Promise<DBSegment[]>;
@@ -170,7 +171,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
     let choicesWithWeights: TWithWeight[] = choices.map(choice => {
         //The 3 makes -2 the minimum votes before being ignored completely
         //this can be changed if this system increases in popularity.
-        const weight = Math.exp((choice.votes + 3));
+        const weight = Math.exp((choice.votes + 3 + choice.reputation));
         totalWeight += weight;
 
         return {...choice, weight};
@@ -200,7 +201,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
-function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
+async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSegment[]> {
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
@@ -209,9 +210,9 @@ function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
     const overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
-    segments.forEach(segment => {
+    for (const segment of segments) {
         if (segment.startTime > cursor) {
-            currentGroup = {segments: [], votes: 0, locked: false};
+            currentGroup = {segments: [], votes: 0, reputation: 0, locked: false};
             overlappingSegmentsGroups.push(currentGroup);
         }
 
@@ -221,17 +222,24 @@ function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
             currentGroup.votes += segment.votes;
         }
 
+        segment.reputation = Math.min(segment.reputation, await getReputation(segment.userID));
+        if (segment.reputation > 0) {
+            currentGroup.reputation += segment.reputation;
+        }
+
         if (segment.locked) {
             currentGroup.locked = true;
         }
 
         cursor = Math.max(cursor, segment.endTime);
-    });
+    };
 
     overlappingSegmentsGroups.forEach((group) => {
         if (group.locked) {
             group.segments = group.segments.filter((segment) => segment.locked);
         }
+
+        group.reputation = group.reputation / group.segments.length;
     });
 
     //if there are too many groups, find the best ones

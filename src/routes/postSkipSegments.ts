@@ -17,6 +17,7 @@ import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Se
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../middleware/queryCacher';
+import { getReputation } from '../middleware/reputation';
 
 interface APIVideoInfo {
     err: string | boolean,
@@ -508,6 +509,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         let startingVotes = 0 + decreaseVotes;
+        const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
             //this can just be a hash of the data
@@ -519,9 +521,9 @@ export async function postSkipSegments(req: Request, res: Response) {
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, shadowBanned, hashedVideoID,
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, reputation, shadowBanned, hashedVideoID,
                     ],
                 );
 
