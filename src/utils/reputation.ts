@@ -11,7 +11,7 @@ interface ReputationDBResult {
 }
 
 export async function getReputation(userID: UserID): Promise<number> {
-    const pastDate = Date.now() - 1000 * 1000 * 60 * 60 * 24 * 45; // 45 days ago
+    const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
     const fetchFromDB = () => db.prepare("get", 
             `SELECT COUNT(*) AS "totalSubmissions",
                 SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
@@ -20,7 +20,7 @@ export async function getReputation(userID: UserID): Promise<number> {
             FROM "sponsorTimes" WHERE "userID" = ?`, [pastDate, userID]) as Promise<ReputationDBResult>;
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
-
+    
     // Grace period
     if (result.totalSubmissions < 5) {
         return 0;
