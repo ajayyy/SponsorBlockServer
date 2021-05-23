@@ -69,34 +69,34 @@ async function sendWebhooks(voteData: VoteData) {
             const isUpvote = voteData.incrementAmount > 0;
             // Send custom webhooks
             dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
-                // "user": {
-                //     "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
-                // },
-                // "video": {
-                //     "id": submissionInfoRow.videoID,
-                //     "title": data.items[0].snippet.title,
-                //     "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
-                //     "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                // },
-                // "submission": {
-                //     "UUID": voteData.UUID,
-                //     "views": voteData.row.views,
-                //     "category": voteData.category,
-                //     "startTime": submissionInfoRow.startTime,
-                //     "endTime": submissionInfoRow.endTime,
-                //     "user": {
-                //         "UUID": submissionInfoRow.userID,
-                //         "username": submissionInfoRow.userName,
-                //         "submissions": {
-                //             "total": submissionInfoRow.count,
-                //             "ignored": submissionInfoRow.disregarded,
-                //         },
-                //     },
-                // },
-                // "votes": {
-                //     "before": voteData.row.votes,
-                //     "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
-                // },
+                "user": {
+                    "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                },
+                "video": {
+                    "id": submissionInfoRow.videoID,
+                    "title": data.items[0].snippet.title,
+                    "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
+                    "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                },
+                "submission": {
+                    "UUID": voteData.UUID,
+                    "views": voteData.row.views,
+                    "category": voteData.category,
+                    "startTime": submissionInfoRow.startTime,
+                    "endTime": submissionInfoRow.endTime,
+                    "user": {
+                        "UUID": submissionInfoRow.userID,
+                        "username": submissionInfoRow.userName,
+                        "submissions": {
+                            "total": submissionInfoRow.count,
+                            "ignored": submissionInfoRow.disregarded,
+                        },
+                    },
+                },
+                "votes": {
+                    "before": voteData.row.votes,
+                    "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
+                },
             });
 
             // Send discord message
