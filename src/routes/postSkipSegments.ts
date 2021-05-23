@@ -290,14 +290,10 @@ function proxySubmission(req: Request) {
             body: req.body,
         })
         .then(async res => {
-            if (config.mode === 'development') {
-                Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
-            }
+            Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
         })
         .catch(err => {
-            if (config.mode === 'development') {
-                Logger.error("Proxy Submission: Failed to make call");
-            }
+            Logger.error("Proxy Submission: Failed to make call");
         });
 }
 
