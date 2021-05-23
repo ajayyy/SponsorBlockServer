@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { RedisClient } from 'redis';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
@@ -9,8 +8,7 @@ import { getCategoryActionType } from '../utils/categoryInfo';
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
-import redis from '../utils/redis';
-import { getSkipSegmentsByHash } from './getSkipSegmentsByHash';
+import { QueryCacher } from '../middleware/queryCacher'
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
@@ -133,10 +131,10 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
             `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [hashedVideoIDPrefix + '%', service]
-        );
+        ) as Promise<DBSegment[]>;
 
     if (hashedVideoIDPrefix.length === 4) {
-        return await getSegmentsFromDB(fetchFromDB, skipSegmentsHashKey(hashedVideoIDPrefix, service))
+        return await QueryCacher.get(fetchFromDB, skipSegmentsHashKey(hashedVideoIDPrefix, service))
     }
 
     return await fetchFromDB();
@@ -149,27 +147,9 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
             `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [videoID, service]
-        );
+        ) as Promise<DBSegment[]>;
 
-    return await getSegmentsFromDB(fetchFromDB, skipSegmentsKey(videoID, service))
-}
-
-async function getSegmentsFromDB(fetchFromDB: () => Promise<DBSegment[]>, key: string): Promise<DBSegment[]> {
-    const {err, reply} = await redis.getAsync(key);
-
-    if (!err && reply) {
-        try {
-            Logger.debug("Got data from redis: " + reply);
-            return JSON.parse(reply);
-        } catch (e) {
-            // If all else, continue on to fetching from the database
-        }
-    }
-
-    const data = await fetchFromDB();
-
-    redis.setAsync(key, JSON.stringify(data));
-    return data;
+    return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service))
 }
 
 //gets a weighted random choice from the choices array based on their `votes` property.

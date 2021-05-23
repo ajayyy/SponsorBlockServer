@@ -15,6 +15,7 @@ import redis from '../utils/redis';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
 import { getCategoryActionType } from '../utils/categoryInfo';
+import { QueryCacher } from '../middleware/queryCacher';
 
 const voteTypes = {
     normal: 0,
@@ -230,7 +231,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         }
     }
 
-    clearRedisCache(videoInfo);
+    QueryCacher.clearVideoCache(videoInfo);
 
     res.sendStatus(finalResponse.finalStatus);
 }
@@ -416,7 +417,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                  await db.prepare('run', 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
             }
 
-            clearRedisCache(videoInfo);
+            QueryCacher.clearVideoCache(videoInfo);
 
             //for each positive vote, see if a hidden submission can be shown again
             if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
@@ -464,12 +465,5 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         Logger.error(err);
 
         res.status(500).json({error: 'Internal error creating segment vote'});
-    }
-}
-
-function clearRedisCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; }) {
-    if (videoInfo) {
-        redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
-        redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
     }
 }

@@ -16,6 +16,7 @@ import redis from '../utils/redis';
 import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
+import { QueryCacher } from '../middleware/queryCacher';
 
 interface APIVideoInfo {
     err: string | boolean,
@@ -528,8 +529,11 @@ export async function postSkipSegments(req: Request, res: Response) {
                 await privateDB.prepare('run', `INSERT INTO "sponsorTimes" VALUES(?, ?, ?)`, [videoID, hashedIP, timeSubmitted]);
             
                 // Clear redis cache for this video
-                redis.delAsync(skipSegmentsKey(videoID, service));
-                redis.delAsync(skipSegmentsHashKey(hashedVideoID, service));
+                QueryCacher.clearVideoCache({
+                    videoID,
+                    hashedVideoID,
+                    service
+                });
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(500);
