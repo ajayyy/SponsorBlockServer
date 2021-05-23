@@ -4,7 +4,8 @@ import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import { SBRecord } from '../types/lib.model';
-import { Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
+import { Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
+import { getCategoryActionType } from '../utils/categoryInfo';
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
@@ -40,7 +41,8 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
-    return chooseSegments(filteredSegments).map((chosenSegment) => ({
+    const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? 32 : 1
+    return chooseSegments(filteredSegments, maxSegments).map((chosenSegment) => ({
         category,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
         UUID: chosenSegment.UUID,
@@ -206,7 +208,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
-function chooseSegments(segments: DBSegment[]): DBSegment[] {
+function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
@@ -240,8 +242,8 @@ function chooseSegments(segments: DBSegment[]): DBSegment[] {
         }
     });
 
-    //if there are too many groups, find the best 8
-    return getWeightedRandomChoice(overlappingSegmentsGroups, 32).map(
+    //if there are too many groups, find the best ones
+    return getWeightedRandomChoice(overlappingSegmentsGroups, max).map(
         //randomly choose 1 good segment per group and return them
         group => getWeightedRandomChoice(group.segments, 1)[0],
     );

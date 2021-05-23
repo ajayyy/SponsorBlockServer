@@ -500,6 +500,51 @@ describe('postSkipSegments', () => {
         .catch(err => done("Couldn't call endpoint"));
     });
 
+    it('Should be rejected if segment starts and ends at the same time', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/skipSegments?videoID=qqwerty&startTime=90&endTime=90&userID=testing&category=intro", {
+            method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 400) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 400 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
+    it('Should be accepted if highlight segment starts and ends at the same time', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30&userID=testing&category=highlight", {
+            method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 200) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 200 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
+    it('Should be rejected if highlight segment doesn\'t start and end at the same time', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=highlight", {
+            method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 400) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 400 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
     it('Should be rejected if a sponsor is less than 1 second', (done: Done) => {
         fetch(getbaseURL()
             + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", {

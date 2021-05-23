@@ -13,7 +13,8 @@ import {config} from '../config';
 import { UserID } from '../types/user.model';
 import redis from '../utils/redis';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
-import { Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
+import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
+import { getCategoryActionType } from '../utils/categoryInfo';
 
 const voteTypes = {
     normal: 0,
@@ -59,90 +60,89 @@ async function sendWebhooks(voteData: VoteData) {
         }
 
         if (config.youtubeAPIKey !== null) {
-            YouTubeAPI.listVideos(submissionInfoRow.videoID, (err, data) => {
-                if (err || data.items.length === 0) {
-                    err && Logger.error(err.toString());
-                    return;
-                }
-                const isUpvote = voteData.incrementAmount > 0;
-                // Send custom webhooks
-                dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
+            const { err, data } = await YouTubeAPI.listVideos(submissionInfoRow.videoID);
+
+            if (err || data.items.length === 0) {
+                if (err) Logger.error(err.toString());
+                return;
+            }
+            const isUpvote = voteData.incrementAmount > 0;
+            // Send custom webhooks
+            dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
+                "user": {
+                    "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                },
+                "video": {
+                    "id": submissionInfoRow.videoID,
+                    "title": data.items[0].snippet.title,
+                    "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
+                    "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                },
+                "submission": {
+                    "UUID": voteData.UUID,
+                    "views": voteData.row.views,
+                    "category": voteData.category,
+                    "startTime": submissionInfoRow.startTime,
+                    "endTime": submissionInfoRow.endTime,
                     "user": {
-                        "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
-                    },
-                    "video": {
-                        "id": submissionInfoRow.videoID,
-                        "title": data.items[0].snippet.title,
-                        "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
-                        "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                    },
-                    "submission": {
-                        "UUID": voteData.UUID,
-                        "views": voteData.row.views,
-                        "category": voteData.category,
-                        "startTime": submissionInfoRow.startTime,
-                        "endTime": submissionInfoRow.endTime,
-                        "user": {
-                            "UUID": submissionInfoRow.userID,
-                            "username": submissionInfoRow.userName,
-                            "submissions": {
-                                "total": submissionInfoRow.count,
-                                "ignored": submissionInfoRow.disregarded,
-                            },
+                        "UUID": submissionInfoRow.userID,
+                        "username": submissionInfoRow.userName,
+                        "submissions": {
+                            "total": submissionInfoRow.count,
+                            "ignored": submissionInfoRow.disregarded,
                         },
                     },
-                    "votes": {
-                        "before": voteData.row.votes,
-                        "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
-                    },
-                });
-
-                // Send discord message
-                if (webhookURL !== null && !isUpvote) {
-                    fetch(webhookURL, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            "embeds": [{
-                                "title": data.items[0].snippet.title,
-                                "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID
-                                    + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
-                                "description": "**" + voteData.row.votes + " Votes Prior | " +
-                                    (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount) + " Votes Now | " + voteData.row.views
-                                    + " Views**\n\n**Submission ID:** " + voteData.UUID
-                                    + "\n**Category:** " + submissionInfoRow.category
-                                    + "\n\n**Submitted by:** " + submissionInfoRow.userName + "\n " + submissionInfoRow.userID
-                                    + "\n\n**Total User Submissions:** " + submissionInfoRow.count
-                                    + "\n**Ignored User Submissions:** " + submissionInfoRow.disregarded
-                                    + "\n\n**Timestamp:** " +
-                                    getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
-                                "color": 10813440,
-                                "author": {
-                                    "name": voteData.finalResponse?.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
-                                },
-                                "thumbnail": {
-                                    "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
-                                },
-                            }],
-                        }),
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(async res => {
-                        if (res.status >= 400) {
-                            Logger.error("Error sending reported submission Discord hook");
-                            Logger.error(JSON.stringify((await res.text())));
-                            Logger.error("\n");
-                        }
-                    })
-                    .catch(err => {
-                        Logger.error("Failed to send reported submission Discord hook.");
-                        Logger.error(JSON.stringify(err));
-                        Logger.error("\n");
-                    });
-                }
-
+                },
+                "votes": {
+                    "before": voteData.row.votes,
+                    "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
+                },
             });
+
+            // Send discord message
+            if (webhookURL !== null && !isUpvote) {
+                fetch(webhookURL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        "embeds": [{
+                            "title": data.items[0].snippet.title,
+                            "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID
+                                + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
+                            "description": "**" + voteData.row.votes + " Votes Prior | " +
+                                (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount) + " Votes Now | " + voteData.row.views
+                                + " Views**\n\n**Submission ID:** " + voteData.UUID
+                                + "\n**Category:** " + submissionInfoRow.category
+                                + "\n\n**Submitted by:** " + submissionInfoRow.userName + "\n " + submissionInfoRow.userID
+                                + "\n\n**Total User Submissions:** " + submissionInfoRow.count
+                                + "\n**Ignored User Submissions:** " + submissionInfoRow.disregarded
+                                + "\n\n**Timestamp:** " +
+                                getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
+                            "color": 10813440,
+                            "author": {
+                                "name": voteData.finalResponse?.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                            },
+                            "thumbnail": {
+                                "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                            },
+                        }],
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(async res => {
+                    if (res.status >= 400) {
+                        Logger.error("Error sending reported submission Discord hook");
+                        Logger.error(JSON.stringify((await res.text())));
+                        Logger.error("\n");
+                    }
+                })
+                .catch(err => {
+                    Logger.error("Failed to send reported submission Discord hook.");
+                    Logger.error(JSON.stringify(err));
+                    Logger.error("\n");
+                });
+            }
         }
     }
 }
@@ -168,6 +168,10 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
     if (!config.categoryList.includes(category)) {
         res.status(400).send("Category doesn't exist.");
+        return;
+    }
+    if (getCategoryActionType(category) !== CategoryActionType.Skippable) {
+        res.status(400).send("Cannot vote for this category");
         return;
     }
 

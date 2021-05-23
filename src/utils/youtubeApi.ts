@@ -10,43 +10,45 @@ _youTubeAPI.authenticate({
 });
 
 export class YouTubeAPI {
-    static listVideos(videoID: string, callback: (err: string | boolean, data: any) => void) {
+    static async listVideos(videoID: string, ignoreCache = false): Promise<{err: string | boolean, data?: any}> {
         const part = 'contentDetails,snippet';
         if (!videoID || videoID.length !== 11 || videoID.includes(".")) {
-            callback("Invalid video ID", undefined);
-            return;
+            return { err: "Invalid video ID" };
         }
 
         const redisKey = "youtube.video." + videoID;
-        redis.get(redisKey, (getErr, result) => {
-            if (getErr || !result) {
+        if (!ignoreCache) {
+            const {err, reply} =  await redis.getAsync(redisKey);
+
+            if (!err && reply) {
                 Logger.debug("redis: no cache for video information: " + videoID);
-                _youTubeAPI.videos.list({
-                    part,
-                    id: videoID,
-                }, (ytErr: boolean | string, { data }: any) => {
-                    if (!ytErr) {
-                        // Only set cache if data returned
-                        if (data.items.length > 0) {
-                            redis.set(redisKey, JSON.stringify(data), (setErr) => {
-                                if (setErr) {
-                                    Logger.warn(setErr.message);
-                                } else {
-                                    Logger.debug("redis: video information cache set for: " + videoID);
-                                }
-                                callback(false, data); // don't fail
-                            });
-                        } else {
-                            callback(false, data); // don't fail
-                        }
-                    } else {
-                        callback(ytErr, data);
-                    }
-                });
-            } else {
-                Logger.debug("redis: fetched video information from cache: " + videoID);
-                callback(getErr?.message, JSON.parse(result));
+
+                return { err: err?.message, data: JSON.parse(reply) }
             }
-        });
-    };
+       }
+
+       const { ytErr, data } = await new Promise((resolve) => _youTubeAPI.videos.list({
+            part,
+            id: videoID,
+        }, (ytErr: boolean | string, { data }: any) => resolve({ytErr, data})));
+
+        if (!ytErr) {
+            // Only set cache if data returned
+            if (data.items.length > 0) {
+                const { err: setErr } = await redis.setAsync(redisKey, JSON.stringify(data));
+
+                if (setErr) {
+                    Logger.warn(setErr.message);
+                } else {
+                    Logger.debug("redis: video information cache set for: " + videoID);
+                }
+
+                return { err: false, data }; // don't fail
+            } else {
+                return { err: false, data }; // don't fail
+            }
+        } else {
+            return { err: ytErr, data };
+        }
+    }
 }

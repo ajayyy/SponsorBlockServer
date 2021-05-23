@@ -264,6 +264,24 @@ describe('voteOnSponsorTime', () => {
         .catch(err => done(err));
     });
 
+    it('Should not able to change to highlight category', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=highlight")
+        .then(async res => {
+            if (res.status === 400) {
+                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
+                if (row.category === "sponsor") {
+                    done();
+                } else {
+                    done("Vote did not succeed. Submission went from sponsor to " + row.category);
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
     it('Should be able to change your vote for a category and it should add your vote to the database', (done: Done) => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=outro")
