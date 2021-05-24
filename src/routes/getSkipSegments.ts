@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
-import { RedisClient } from 'redis';
 import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
 import { SBRecord } from '../types/lib.model';
 import { Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
 import { Logger } from '../utils/logger';
-import redis from '../utils/redis';
+import { QueryCacher } from '../utils/queryCacher'
+import { getReputation } from '../utils/reputation';
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
@@ -42,7 +42,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
     const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? 32 : 1
-    return chooseSegments(filteredSegments, maxSegments).map((chosenSegment) => ({
+    return (await chooseSegments(filteredSegments, maxSegments)).map((chosenSegment) => ({
         category,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
         UUID: chosenSegment.UUID,
@@ -50,7 +50,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     }));
 }
 
-async function getSegmentsByVideoID(req: Request, videoID: string, categories: Category[], service: Service): Promise<Segment[]> {
+async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Segment[] = [];
 
@@ -58,13 +58,9 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
         categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
         if (categories.length === 0) return null;
 
-        const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await db
-            .prepare(
-                'all',
-                `SELECT "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden" FROM "sponsorTimes" 
-                WHERE "videoID" = ? AND "category" IN (${categories.map((c) => "'" + c + "'")}) AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
-                [videoID, service]
-            )).reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
+        const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await getSegmentsFromDBByVideoID(videoID, service))
+            .filter((segment: DBSegment) => categories.includes(segment?.category))
+            .reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 acc[segment.category] = acc[segment.category] || [];
                 acc[segment.category].push(segment);
 
@@ -72,7 +68,7 @@ async function getSegmentsByVideoID(req: Request, videoID: string, categories: C
             }, {});
 
         for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
-            segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, categorySegments, cache)));
+            segments.push(...(await prepareCategorySegments(req, videoID, category as Category, categorySegments, cache)));
         }
 
         return segments;
@@ -94,7 +90,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
         if (categories.length === 0) return null;
 
-        const segmentPerVideoID: SegmentWithHashPerVideoID = (await getSegmentsFromDB(hashedVideoIDPrefix, service))
+        const segmentPerVideoID: SegmentWithHashPerVideoID = (await getSegmentsFromDBByHash(hashedVideoIDPrefix, service))
             .filter((segment: DBSegment) => categories.includes(segment?.category))
             .reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
@@ -129,35 +125,32 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
     }
 }
 
-async function getSegmentsFromDB(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<DBSegment[]> {
+async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<DBSegment[]> {
     const fetchFromDB = () => db
         .prepare(
             'all',
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "category", "videoDuration", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "videoDuration", "reputation", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [hashedVideoIDPrefix + '%', service]
-        );
+        ) as Promise<DBSegment[]>;
 
     if (hashedVideoIDPrefix.length === 4) {
-        const key = skipSegmentsHashKey(hashedVideoIDPrefix, service);
-        const {err, reply} = await redis.getAsync(key);
-    
-        if (!err && reply) {
-            try {
-                Logger.debug("Got data from redis: " + reply);
-                return JSON.parse(reply);
-            } catch (e) {
-                // If all else, continue on to fetching from the database
-            }
-        }
-
-        const data = await fetchFromDB();
-
-        redis.setAsync(key, JSON.stringify(data));
-        return data;
+        return await QueryCacher.get(fetchFromDB, skipSegmentsHashKey(hashedVideoIDPrefix, service))
     }
 
     return await fetchFromDB();
+}
+
+async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise<DBSegment[]> {
+    const fetchFromDB = () => db
+        .prepare(
+            'all',
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "videoDuration", "reputation", "shadowHidden" FROM "sponsorTimes" 
+            WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
+            [videoID, service]
+        ) as Promise<DBSegment[]>;
+
+    return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service))
 }
 
 //gets a weighted random choice from the choices array based on their `votes` property.
@@ -176,9 +169,11 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
     //assign a weight to each choice
     let totalWeight = 0;
     let choicesWithWeights: TWithWeight[] = choices.map(choice => {
+        const boost = Math.min(choice.reputation, Math.max(0, choice.votes * 2));
+
         //The 3 makes -2 the minimum votes before being ignored completely
         //this can be changed if this system increases in popularity.
-        const weight = Math.exp((choice.votes + 3));
+        const weight = Math.exp(choice.votes * Math.min(1, choice.reputation + 1) + 3 + boost);
         totalWeight += weight;
 
         return {...choice, weight};
@@ -208,7 +203,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
-function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
+async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSegment[]> {
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
@@ -217,9 +212,9 @@ function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
     const overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
-    segments.forEach(segment => {
+    for (const segment of segments) {
         if (segment.startTime > cursor) {
-            currentGroup = {segments: [], votes: 0, locked: false};
+            currentGroup = {segments: [], votes: 0, reputation: 0, locked: false};
             overlappingSegmentsGroups.push(currentGroup);
         }
 
@@ -229,17 +224,24 @@ function chooseSegments(segments: DBSegment[], max: number): DBSegment[] {
             currentGroup.votes += segment.votes;
         }
 
+        if (segment.userID) segment.reputation = Math.min(segment.reputation, await getReputation(segment.userID));
+        if (segment.reputation > 0) {
+            currentGroup.reputation += segment.reputation;
+        }
+
         if (segment.locked) {
             currentGroup.locked = true;
         }
 
         cursor = Math.max(cursor, segment.endTime);
-    });
+    };
 
     overlappingSegmentsGroups.forEach((group) => {
         if (group.locked) {
             group.segments = group.segments.filter((segment) => segment.locked);
         }
+
+        group.reputation = group.reputation / group.segments.length;
     });
 
     //if there are too many groups, find the best ones
@@ -278,18 +280,6 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         service = Service.YouTube;
     }
 
-    // Only 404s are cached at the moment
-    const redisResult = await redis.getAsync(skipSegmentsKey(videoID));
-    
-    if (redisResult.reply) {
-        const redisSegments = JSON.parse(redisResult.reply);
-        if (redisSegments?.length === 0) {
-            res.sendStatus(404);
-            Logger.debug("Using segments from cache for " + videoID);
-            return false;
-        }
-    }
-
     const segments = await getSegmentsByVideoID(req, videoID, categories, service);
 
     if (segments === null || segments === undefined) {
@@ -299,9 +289,6 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
 
     if (segments.length === 0) {
         res.sendStatus(404);
-
-        // Save in cache
-        if (categories.length == 7) redis.setAsync(skipSegmentsKey(videoID), JSON.stringify(segments));
 
         return false;
     }

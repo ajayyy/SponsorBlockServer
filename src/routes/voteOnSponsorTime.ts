@@ -5,16 +5,14 @@ import fetch from 'node-fetch';
 import {YouTubeAPI} from '../utils/youtubeApi';
 import {db, privateDB} from '../databases/databases';
 import {dispatchEvent, getVoteAuthor, getVoteAuthorRaw} from '../utils/webhookUtils';
-import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {getFormattedTime} from '../utils/getFormattedTime';
 import {getIP} from '../utils/getIP';
 import {getHash} from '../utils/getHash';
 import {config} from '../config';
 import { UserID } from '../types/user.model';
-import redis from '../utils/redis';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
 import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from '../types/segments.model';
 import { getCategoryActionType } from '../utils/categoryInfo';
+import { QueryCacher } from '../utils/queryCacher';
 
 const voteTypes = {
     normal: 0,
@@ -158,8 +156,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         return;
     }
 
-    const videoInfo = (await db.prepare('get', `SELECT "category", "videoID", "hashedVideoID", "service" FROM "sponsorTimes" WHERE "UUID" = ?`,
-                             [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service};
+    const videoInfo = (await db.prepare('get', `SELECT "category", "videoID", "hashedVideoID", "service", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`,
+                             [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID};
     if (!videoInfo) {
         // Submission doesn't exist
         res.status(400).send("Submission doesn't exist.");
@@ -230,7 +228,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         }
     }
 
-    clearRedisCache(videoInfo);
+    QueryCacher.clearVideoCache(videoInfo);
 
     res.sendStatus(finalResponse.finalStatus);
 }
@@ -366,8 +364,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         }
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        const videoInfo = await db.prepare('get', `SELECT "videoID", "hashedVideoID", "service", "votes", "views" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as 
-                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number};
+        const videoInfo = await db.prepare('get', `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as 
+                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number, userID: UserID};
 
         if (voteTypeEnum === voteTypes.normal) {
             if ((isVIP || isOwnSubmission) && incrementAmount < 0) {
@@ -385,7 +383,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
         // Only change the database if they have made a submission before and haven't voted recently
         const ableToVote = isVIP
-            || ((await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
+            || (!(isOwnSubmission && incrementAmount > 0)
+                && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
                 && (await privateDB.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
                 && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
                 && finalResponse.finalStatus === 200;
@@ -416,32 +415,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                  await db.prepare('run', 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
             }
 
-            clearRedisCache(videoInfo);
-
-            //for each positive vote, see if a hidden submission can be shown again
-            if (incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
-                //find the UUID that submitted the submission that was voted on
-                const submissionUserIDInfo = await db.prepare('get', 'SELECT "userID" FROM "sponsorTimes" WHERE "UUID" = ?', [UUID]);
-                if (!submissionUserIDInfo) {
-                    // They are voting on a non-existent submission
-                    res.status(400).send("Voting on a non-existent submission");
-                    return;
-                }
-
-                const submissionUserID = submissionUserIDInfo.userID;
-
-                //check if any submissions are hidden
-                const hiddenSubmissionsRow = await db.prepare('get', 'SELECT count(*) as "hiddenSubmissions" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" > 0', [submissionUserID]);
-
-                if (hiddenSubmissionsRow.hiddenSubmissions > 0) {
-                    //see if some of this users submissions should be visible again
-
-                    if (await isUserTrustworthy(submissionUserID)) {
-                        //they are trustworthy again, show 2 of their submissions again, if there are two to show
-                        await db.prepare('run', 'UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE ROWID IN (SELECT ROWID FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = 1 LIMIT 2)', [submissionUserID]);
-                    }
-                }
-            }
+            QueryCacher.clearVideoCache(videoInfo);
         }
 
         res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
@@ -464,12 +438,5 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         Logger.error(err);
 
         res.status(500).json({error: 'Internal error creating segment vote'});
-    }
-}
-
-function clearRedisCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; }) {
-    if (videoInfo) {
-        redis.delAsync(skipSegmentsKey(videoInfo.videoID));
-        redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
     }
 }

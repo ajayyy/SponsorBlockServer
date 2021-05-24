@@ -11,11 +11,13 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
 import redis from '../utils/redis';
 import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
+import { QueryCacher } from '../utils/queryCacher';
+import { getReputation } from '../utils/reputation';
 
 interface APIVideoInfo {
     err: string | boolean,
@@ -290,14 +292,10 @@ function proxySubmission(req: Request) {
             body: req.body,
         })
         .then(async res => {
-            if (config.mode === 'development') {
-                Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
-            }
+            Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
         })
         .catch(err => {
-            if (config.mode === 'development') {
-                Logger.error("Proxy Submission: Failed to make call");
-            }
+            Logger.error("Proxy Submission: Failed to make call");
         });
 }
 
@@ -511,6 +509,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         let startingVotes = 0 + decreaseVotes;
+        const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
             //this can just be a hash of the data
@@ -522,9 +521,9 @@ export async function postSkipSegments(req: Request, res: Response) {
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, shadowBanned, hashedVideoID,
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, reputation, shadowBanned, hashedVideoID,
                     ],
                 );
 
@@ -532,8 +531,12 @@ export async function postSkipSegments(req: Request, res: Response) {
                 await privateDB.prepare('run', `INSERT INTO "sponsorTimes" VALUES(?, ?, ?)`, [videoID, hashedIP, timeSubmitted]);
             
                 // Clear redis cache for this video
-                redis.delAsync(skipSegmentsKey(videoID));
-                redis.delAsync(skipSegmentsHashKey(hashedVideoID, service));
+                QueryCacher.clearVideoCache({
+                    videoID,
+                    hashedVideoID,
+                    service,
+                    userID
+                });
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(500);

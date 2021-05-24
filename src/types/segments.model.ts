@@ -1,5 +1,6 @@
 import { HashedValue } from "./hash.model";
 import { SBRecord } from "./lib.model";
+import { UserID } from "./user.model";
 
 export type SegmentUUID = string  & { __segmentUUIDBrand: unknown };
 export type VideoID = string & { __videoIDBrand: unknown };
@@ -42,11 +43,13 @@ export interface DBSegment {
     startTime: number;
     endTime: number;
     UUID: SegmentUUID;
+    userID: UserID;
     votes: number;
     locked: boolean;
     shadowHidden: Visibility;
     videoID: VideoID;
     videoDuration: VideoDuration;
+    reputation: number;
     hashedVideoID: VideoIDHash;
 }
 
@@ -54,10 +57,12 @@ export interface OverlappingSegmentGroup {
     segments: DBSegment[],
     votes: number;
     locked: boolean; // Contains a locked segment
+    reputation: number;
 }
 
 export interface VotableObject {
     votes: number;
+    reputation: number;
 }
 
 export interface VotableObjectWithWeight extends VotableObject {
