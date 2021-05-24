@@ -4,6 +4,7 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {Request, Response} from 'express';
 import {Logger} from '../utils/logger';
 import { HashedUserID, UserID } from '../types/user.model';
+import { getReputation } from '../utils/reputation';
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
@@ -60,16 +61,15 @@ async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
 }
 
 export async function getUserInfo(req: Request, res: Response) {
-    let userID = req.query.userID as UserID;
+    const userID = req.query.userID as UserID;
+    const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
 
-    if (userID == undefined) {
+    if (hashedUserID == undefined) {
         //invalid request
         res.status(400).send('Parameters are not valid');
         return;
     }
 
-    //hash the userID
-    const hashedUserID: HashedUserID = getHash(userID);
 
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     if (segmentsSummary) {
@@ -80,6 +80,7 @@ export async function getUserInfo(req: Request, res: Response) {
             segmentCount: segmentsSummary.segmentCount,
             viewCount: await dbGetViewsForUser(hashedUserID),
             warnings: await dbGetWarningsForUser(hashedUserID),
+            reputation: await getReputation(hashedUserID),
             vip: await isUserVIP(hashedUserID),
         });
     } else {

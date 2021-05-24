@@ -41,7 +41,7 @@ describe('getUserInfo', () => {
         .catch(err => done('couldn\'t call endpoint'));
     });
 
-    it('Should done(info', (done: Done) => {
+    it('Should be able to get user info', (done: Done) => {
         fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
         .then(async res => {
             if (res.status !== 200) {
@@ -56,6 +56,8 @@ describe('getUserInfo', () => {
                     done('Returned incorrect viewCount "' + data.viewCount + '"');
                 } else if (data.segmentCount !== 3) {
                     done('Returned incorrect segmentCount "' + data.segmentCount + '"');
+                } else if (Math.abs(data.reputation - -0.928) > 0.001) {
+                    done('Returned incorrect reputation "' + data.reputation + '"');
                 } else {
                     done(); // pass
                 }
@@ -76,6 +78,21 @@ describe('getUserInfo', () => {
             }
         })
         .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('Should get warning data with public ID', async () => {
+        try {
+            const res = await fetch(getbaseURL() + '/api/getUserInfo?userID=' + await getHash("getuserinfo_warning_0"))
+            
+            if (res.status !== 200) {
+                return 'non 200 (' + res.status + ')';
+            } else {
+                const data = await res.json();;
+                if (data.warnings !== 1) return 'wrong number of warnings: ' + data.warnings + ', not ' + 1;
+            }
+        } catch (err) {
+            return "couldn't call endpoint";
+        }
     });
 
     it('Should get multiple warnings', (done: Done) => {
