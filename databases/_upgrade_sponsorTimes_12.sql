@@ -1,6 +1,6 @@
 BEGIN TRANSACTION;
 
-/* Add Service field */
+/* Add reputation field */
 CREATE TABLE "sqlb_temp_table_12" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
