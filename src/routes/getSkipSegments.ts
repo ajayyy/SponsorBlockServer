@@ -224,7 +224,7 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
             currentGroup.votes += segment.votes;
         }
 
-        segment.reputation = Math.min(segment.reputation, await getReputation(segment.userID));
+        if (segment.userID) segment.reputation = Math.min(segment.reputation, await getReputation(segment.userID));
         if (segment.reputation > 0) {
             currentGroup.reputation += segment.reputation;
         }
