@@ -12,11 +12,12 @@ interface ReputationDBResult {
 
 export async function getReputation(userID: UserID): Promise<number> {
     const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
+    // 1596240000000 is August 1st 2020, a little after auto upvote was disabled
     const fetchFromDB = () => db.prepare("get", 
             `SELECT COUNT(*) AS "totalSubmissions",
                 SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
-                SUM(CASE WHEN "votes" > 0 THEN "votes" ELSE 0 END) AS "upvotedSum",
-                SUM(CASE WHEN "timeSubmitted" < ? AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
+                SUM(CASE WHEN "votes" > 0 AND "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "upvotedSum",
+                SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
             FROM "sponsorTimes" WHERE "userID" = ?`, [pastDate, userID]) as Promise<ReputationDBResult>;
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
@@ -35,7 +36,7 @@ export async function getReputation(userID: UserID): Promise<number> {
         return 0;
     }
 
-    return convertRange(Math.min(result.upvotedSum, 50), 5, 50, 0, 15);
+    return convertRange(Math.min(result.upvotedSum, 150), 5, 150, 0, 15);
 }
 
 function convertRange(value: number, currentMin: number, currentMax: number, targetMin: number, targetMax: number): number {
