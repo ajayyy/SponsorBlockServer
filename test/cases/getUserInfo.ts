@@ -24,7 +24,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should be able to get a 200', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_user_01')
         .then(res => {
             if (res.status !== 200) done('non 200 (' + res.status + ')');
             else done(); // pass
@@ -33,7 +33,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should be able to get a 400 (No userID parameter)', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo')
+        fetch(getbaseURL() + '/api/userInfo')
         .then(res => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
@@ -42,7 +42,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should be able to get user info', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_01')
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_user_01')
         .then(async res => {
             if (res.status !== 200) {
                 done("non 200");
@@ -67,7 +67,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should get warning data', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_warning_0')
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_warning_0')
         .then(async res => {
             if (res.status !== 200) {
                 done('non 200 (' + res.status + ')');
@@ -82,7 +82,7 @@ describe('getUserInfo', () => {
 
     it('Should get warning data with public ID', async () => {
         try {
-            const res = await fetch(getbaseURL() + '/api/getUserInfo?userID=' + await getHash("getuserinfo_warning_0"))
+            const res = await fetch(getbaseURL() + '/api/userInfo?userID=' + await getHash("getuserinfo_warning_0"))
             
             if (res.status !== 200) {
                 return 'non 200 (' + res.status + ')';
@@ -96,7 +96,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should get multiple warnings', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_warning_1')
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_warning_1')
         .then(async res => {
             if (res.status !== 200) {
                 done('non 200 (' + res.status + ')');
@@ -110,7 +110,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should not get warnings if noe', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_warning_2')
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_warning_2')
         .then(async res => {
             if (res.status !== 200) {
                 done('non 200 (' + res.status + ')');
@@ -124,7 +124,7 @@ describe('getUserInfo', () => {
     });
 
     it('Should done(userID for userName (No userName set)', (done: Done) => {
-        fetch(getbaseURL() + '/api/getUserInfo?userID=getuserinfo_user_02')
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_user_02')
         .then(async res => {
             if (res.status !== 200) {
                 done('non 200 (' + res.status + ')');

@@ -112,6 +112,7 @@ function setupRoutes(app: Express) {
     app.get('/api/getTotalStats', getTotalStats);
 
     app.get('/api/getUserInfo', getUserInfo);
+    app.get('/api/userInfo', getUserInfo);
 
     //send out a formatted time saved total
     app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
