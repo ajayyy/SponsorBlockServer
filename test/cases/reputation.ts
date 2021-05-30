@@ -10,6 +10,7 @@ const userIDNewSubmissions = "reputation-newsubmissions" as UserID;
 const userIDLowSum = "reputation-lowsum" as UserID;
 const userIDHighRepBeforeManualVote = "reputation-oldhighrep" as UserID;
 const userIDHighRep = "reputation-highrep" as UserID;
+const userIDHighRepAndLocked = "reputation-highlockedrep" as UserID;
 
 describe('reputation', () => {
     before(async () => {
@@ -64,6 +65,15 @@ describe('reputation', () => {
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, -1, 0, 'reputation-5-uuid-5', '${getHash(userIDHighRep)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-5-uuid-6', '${getHash(userIDHighRep)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-5-uuid-7', '${getHash(userIDHighRep)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+    
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 1, 'reputation-6-uuid-0', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 1, 'reputation-6-uuid-1', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 1, 'reputation-6-uuid-2', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 1, 'reputation-6-uuid-3', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 0, 'reputation-6-uuid-4', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, -1, 0, 'reputation-6-uuid-5', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-6-uuid-6', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-6-uuid-7', '${getHash(userIDHighRepAndLocked)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
     });
 
     it("user in grace period", async () => {
@@ -82,12 +92,16 @@ describe('reputation', () => {
         assert.strictEqual(await getReputation(getHash(userIDLowSum)), 0);
     });
 
-    it("user with high reputation", async () => {
+    it("user with lots of old votes (before autovote was disabled) ", async () => {
         assert.strictEqual(await getReputation(getHash(userIDHighRepBeforeManualVote)), 0);
     });
 
     it("user with high reputation", async () => {
-        assert.strictEqual(await getReputation(getHash(userIDHighRep)), 0.5172413793103449);
+        assert.strictEqual(await getReputation(getHash(userIDHighRep)), 0.24137931034482757);
+    });
+
+    it("user with high reputation and locked segments", async () => {
+        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), 1.8413793103448277);
     });
 
 });

@@ -7,6 +7,7 @@ interface ReputationDBResult {
     totalSubmissions: number,
     downvotedSubmissions: number,
     upvotedSum: number,
+    lockedSum: number,
     oldUpvotedSubmissions: number
 }
 
@@ -17,6 +18,7 @@ export async function getReputation(userID: UserID): Promise<number> {
             `SELECT COUNT(*) AS "totalSubmissions",
                 SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
                 SUM(CASE WHEN "votes" > 0 AND "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "upvotedSum",
+                SUM(locked) AS "lockedSum",
                 SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
             FROM "sponsorTimes" WHERE "userID" = ?`, [pastDate, userID]) as Promise<ReputationDBResult>;
 
@@ -36,7 +38,7 @@ export async function getReputation(userID: UserID): Promise<number> {
         return 0;
     }
 
-    return convertRange(Math.min(result.upvotedSum, 150), 5, 150, 0, 15);
+    return convertRange(Math.min(result.upvotedSum, 150), 5, 150, 0, 7) + convertRange(Math.min(result.lockedSum, 50), 0, 50, 0, 20);
 }
 
 function convertRange(value: number, currentMin: number, currentMax: number, targetMin: number, targetMax: number): number {
