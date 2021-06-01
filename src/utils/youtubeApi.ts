@@ -27,28 +27,32 @@ export class YouTubeAPI {
             }
        }
 
-       const { ytErr, data } = await new Promise((resolve) => _youTubeAPI.videos.list({
-            part,
-            id: videoID,
-        }, (ytErr: boolean | string, { data }: any) => resolve({ytErr, data})));
+        try {
+            const { ytErr, data } = await new Promise((resolve) => _youTubeAPI.videos.list({
+                part,
+                id: videoID,
+            }, (ytErr: boolean | string, { data }: any) => resolve({ytErr, data})));
 
-        if (!ytErr) {
-            // Only set cache if data returned
-            if (data.items.length > 0) {
-                const { err: setErr } = await redis.setAsync(redisKey, JSON.stringify(data));
+            if (!ytErr) {
+                // Only set cache if data returned
+                if (data.items.length > 0) {
+                    const { err: setErr } = await redis.setAsync(redisKey, JSON.stringify(data));
 
-                if (setErr) {
-                    Logger.warn(setErr.message);
+                    if (setErr) {
+                        Logger.warn(setErr.message);
+                    } else {
+                        Logger.debug("redis: video information cache set for: " + videoID);
+                    }
+
+                    return { err: false, data }; // don't fail
                 } else {
-                    Logger.debug("redis: video information cache set for: " + videoID);
+                    return { err: false, data }; // don't fail
                 }
-
-                return { err: false, data }; // don't fail
             } else {
-                return { err: false, data }; // don't fail
+                return { err: ytErr, data };
             }
-        } else {
-            return { err: ytErr, data };
-        }
+        } catch (err) {
+            return {err, data: null}
+        }       
     }
 }
