@@ -31,7 +31,7 @@ export class YouTubeAPI {
             const { ytErr, data } = await new Promise((resolve) => _youTubeAPI.videos.list({
                 part,
                 id: videoID,
-            }, (ytErr: boolean | string, { data }: any) => resolve({ytErr, data})));
+            }, (ytErr: boolean | string, result: any) => resolve({ytErr, data: result?.data})));
 
             if (!ytErr) {
                 // Only set cache if data returned
