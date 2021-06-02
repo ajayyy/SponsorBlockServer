@@ -38,7 +38,7 @@ export async function getReputation(userID: UserID): Promise<number> {
         return 0;
     }
 
-    return convertRange(Math.min(result.upvotedSum, 150), 5, 150, 0, 7) + convertRange(Math.min(result.lockedSum, 50), 0, 50, 0, 20);
+    return convertRange(Math.min(result.upvotedSum, 150), 5, 150, 0, 7) + convertRange(Math.min(result.lockedSum ?? 0, 50), 0, 50, 0, 20);
 }
 
 function convertRange(value: number, currentMin: number, currentMax: number, targetMin: number, targetMax: number): number {
