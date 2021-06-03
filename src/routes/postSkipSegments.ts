@@ -1,7 +1,7 @@
 import {config} from '../config';
 import {Logger} from '../utils/logger';
 import {db, privateDB} from '../databases/databases';
-import {YouTubeAPI} from '../utils/youtubeApi';
+import {getMaxResThumbnail, YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
 import fetch from 'node-fetch';
 import isoDurations, { end } from 'iso8601-duration';
@@ -18,16 +18,11 @@ import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../utils/queryCacher';
 import { getReputation } from '../utils/reputation';
+import { APIVideoData, APIVideoInfo } from '../types/youtubeApi.model';
 
-interface APIVideoInfo {
-    err: string | boolean,
-    data?: any
-}
-
-async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
+async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: APIVideoData, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
     const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
     const userName = row !== undefined ? row.userName : null;
-    const video = youtubeData.items[0];
 
     let scopeName = "submissions.other";
     if (submissionCount <= 1) {
@@ -37,8 +32,8 @@ async function sendWebhookNotification(userID: string, videoID: string, UUID: st
     dispatchEvent(scopeName, {
         "video": {
             "id": videoID,
-            "title": video.snippet.title,
-            "thumbnail": video.snippet.thumbnails.maxres ? video.snippet.thumbnails.maxres : null,
+            "title": youtubeData?.title,
+            "thumbnail": getMaxResThumbnail(youtubeData) || null,
             "url": "https://www.youtube.com/watch?v=" + videoID,
         },
         "submission": {
@@ -76,7 +71,7 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
             method: 'POST',
             body: JSON.stringify({
                 "embeds": [{
-                    "title": data.items[0].snippet.title,
+                    "title": data?.title,
                     "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseInt(startTime.toFixed(0)) - 2),
                     "description": "Submission ID: " + UUID +
                         "\n\nTimestamp: " +
@@ -87,7 +82,7 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
                         "name": userID,
                     },
                     "thumbnail": {
-                        "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                        "url": getMaxResThumbnail(data) || "",
                     },
                 }],
             }),
@@ -177,10 +172,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
         const {err, data} = apiVideoInfo;
         if (err) return false;
 
-        // Check to see if video exists
-        if (data.pageInfo.totalResults === 0) return "No video exists with id " + submission.videoID;
-
-        const duration = getYouTubeVideoDuration(apiVideoInfo);
+        const duration = apiVideoInfo?.data?.lengthSeconds;
         const segments = submission.segments;
         let nbString = "";
         for (let i = 0; i < segments.length; i++) {
@@ -220,8 +212,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
             return a[0] - b[0] || a[1] - b[1];
         }));
 
-        let videoDuration = data.items[0].contentDetails.duration;
-        videoDuration = isoDurations.toSeconds(isoDurations.parse(videoDuration));
+        const videoDuration = data.lengthSeconds;
         if (videoDuration != 0) {
             let allSegmentDuration = 0;
             //sum all segment times together
@@ -273,13 +264,8 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
     }
 }
 
-function getYouTubeVideoDuration(apiVideoInfo: APIVideoInfo): VideoDuration {
-    const duration = apiVideoInfo?.data?.items[0]?.contentDetails?.duration;
-    return duration ? isoDurations.toSeconds(isoDurations.parse(duration)) as VideoDuration : null;
-}
-
 async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
-    if (config.youtubeAPIKey !== null) {
+    if (config.newLeafURL !== null) {
         return YouTubeAPI.listVideos(videoID, ignoreCache);
     } else {
         return null;
@@ -375,7 +361,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         // Don't use cache if we don't know the video duraton, or the client claims that it has changed
         apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDuration || videoDurationChanged(videoDuration));
     }
-    const apiVideoDuration = getYouTubeVideoDuration(apiVideoInfo);
+    const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
     if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
         // If api duration is far off, take that one instead (it is only precise to seconds, not millis)
         videoDuration = apiVideoDuration || 0 as VideoDuration;

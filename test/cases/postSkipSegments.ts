@@ -118,7 +118,7 @@ describe('postSkipSegments', () => {
         .then(async res => {
             if (res.status === 200) {
                 const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZX"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 5010) {
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 4980) {
                     done();
                 } else {
                     done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
@@ -140,7 +140,7 @@ describe('postSkipSegments', () => {
             body: JSON.stringify({
                 userID: "test",
                 videoID: "dQw4w9WgXZH",
-                videoDuration: 5010.20,
+                videoDuration: 4980.20,
                 segments: [{
                     segment: [1, 10],
                     category: "sponsor",
@@ -150,7 +150,7 @@ describe('postSkipSegments', () => {
         .then(async res => {
             if (res.status === 200) {
                 const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZH"]);
-                if (row.startTime === 1 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 5010.20) {
+                if (row.startTime === 1 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 4980.20) {
                     done();
                 } else {
                     done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
@@ -235,6 +235,21 @@ describe('postSkipSegments', () => {
         } catch (e) {
             return e;
         }
+    });
+
+    it('Should still not be allowed if youtube thinks duration is 0', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", {
+                method: 'POST',
+        })
+        .then(async res => {
+            if (res.status === 403) done(); // pass
+            else {
+                const body = await res.text();
+                done("non 403 status code: " + res.status + " (" + body + ")");
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should be able to submit a single time under a different service (JSON method)', (done: Done) => {
@@ -664,34 +679,6 @@ describe('postSkipSegments', () => {
             }
         })
         .catch(err => done(err));
-    });
-
-    it('Should be allowed if youtube thinks duration is 0', (done: Done) => {
-        fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", {
-                method: 'POST',
-        })
-        .then(async res => {
-            if (res.status === 200) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 200 status code: " + res.status + " (" + body + ")");
-            }
-        })
-        .catch(err => done("Couldn't call endpoint"));
-    });
-
-    it('Should be rejected if not a valid videoID', (done: Done) => {
-        fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=knownWrongID&startTime=30&endTime=1000000&userID=testing")
-        .then(async res => {
-            if (res.status === 403) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 403 status code: " + res.status + " (" + body + ")");
-            }
-        })
-        .catch(err => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 for missing params (Params method)', (done: Done) => {

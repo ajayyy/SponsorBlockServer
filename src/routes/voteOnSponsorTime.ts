@@ -2,7 +2,7 @@ import {Request, Response} from 'express';
 import {Logger} from '../utils/logger';
 import {isUserVIP} from '../utils/isUserVIP';
 import fetch from 'node-fetch';
-import {YouTubeAPI} from '../utils/youtubeApi';
+import {getMaxResThumbnail, YouTubeAPI} from '../utils/youtubeApi';
 import {db, privateDB} from '../databases/databases';
 import {dispatchEvent, getVoteAuthor, getVoteAuthorRaw} from '../utils/webhookUtils';
 import {getFormattedTime} from '../utils/getFormattedTime';
@@ -57,11 +57,11 @@ async function sendWebhooks(voteData: VoteData) {
             webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
         }
 
-        if (config.youtubeAPIKey !== null) {
+        if (config.newLeafURL !== null) {
             const { err, data } = await YouTubeAPI.listVideos(submissionInfoRow.videoID);
 
-            if (err || data.items.length === 0) {
-                if (err) Logger.error(err.toString());
+            if (err) {
+                Logger.error(err.toString());
                 return;
             }
             const isUpvote = voteData.incrementAmount > 0;
@@ -72,9 +72,9 @@ async function sendWebhooks(voteData: VoteData) {
                 },
                 "video": {
                     "id": submissionInfoRow.videoID,
-                    "title": data.items[0].snippet.title,
+                    "title": data?.title,
                     "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID,
-                    "thumbnail": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                    "thumbnail": getMaxResThumbnail(data) || null,
                 },
                 "submission": {
                     "UUID": voteData.UUID,
@@ -103,7 +103,7 @@ async function sendWebhooks(voteData: VoteData) {
                     method: 'POST',
                     body: JSON.stringify({
                         "embeds": [{
-                            "title": data.items[0].snippet.title,
+                            "title": data?.title,
                             "url": "https://www.youtube.com/watch?v=" + submissionInfoRow.videoID
                                 + "&t=" + (submissionInfoRow.startTime.toFixed(0) - 2),
                             "description": "**" + voteData.row.votes + " Votes Prior | " +
@@ -120,7 +120,7 @@ async function sendWebhooks(voteData: VoteData) {
                                 "name": voteData.finalResponse?.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
                             },
                             "thumbnail": {
-                                "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                                "url": getMaxResThumbnail(data) || "",
                             },
                         }],
                     }),

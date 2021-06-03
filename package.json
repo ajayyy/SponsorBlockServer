@@ -13,6 +13,7 @@
   "author": "Ajay Ramachandran",
   "license": "MIT",
   "dependencies": {
+    "abort-controller": "^3.0.0",
     "better-sqlite3": "^7.1.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -23,8 +24,7 @@
     "pg": "^8.5.1",
     "redis": "^3.1.1",
     "sync-mysql": "^3.0.1",
-    "uuid": "^3.3.2",
-    "youtube-api": "^3.0.1"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.0",
