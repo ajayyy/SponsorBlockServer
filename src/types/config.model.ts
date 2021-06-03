@@ -6,7 +6,7 @@ export interface SBSConfig {
     mockPort?: number;
     globalSalt: string;
     adminUserID: string;
-    newLeafURL?: string;
+    newLeafURLs?: string[];
     discordReportChannelWebhookURL?: string;
     discordFirstTimeSubmissionsWebhookURL?: string;
     discordCompletelyIncorrectReportWebhookURL?: string;

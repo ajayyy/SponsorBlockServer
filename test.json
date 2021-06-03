@@ -3,7 +3,7 @@
     "mockPort": 8081,
     "globalSalt": "testSalt",
     "adminUserID": "testUserId",
-    "newLeafURL": "placeholder",
+    "newLeafURLs": ["placeholder"],
     "discordReportChannelWebhookURL": "http://127.0.0.1:8081/ReportChannelWebhook",
     "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/FirstTimeSubmissionsWebhook",
     "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/CompletelyIncorrectReportWebhook",

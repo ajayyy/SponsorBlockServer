@@ -21,15 +21,15 @@ export class YouTubeAPI {
             }
         }
 
-        if (!config.newLeafURL) return {err: "NewLeaf URL not found", data: null};
+        if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return {err: "NewLeaf URL not found", data: null};
 
         try {
-            const result = await fetch(config.newLeafURL + "/api/v1/videos/" + videoID, { method: "GET" });
+            const result = await fetch(config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)] + "/api/v1/videos/" + videoID, { method: "GET" });
 
             if (result.ok) {
                 const data = await result.json();
                 if (data.error) {
-                    Logger.warn("CloudTube API Error: " + data.error)
+                    Logger.warn("NewLeaf API Error: " + data.error)
                     return { err: data.error, data: null };
                 }
 

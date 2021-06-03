@@ -44,7 +44,7 @@ addDefaults(config, {
         },
     },
     userCounterURL: null,
-    newLeafURL: null,
+    newLeafURLs: null,
     maxRewardTimePerSegmentInSeconds: 86400,
     postgres: null,
     dumpDatabase: {

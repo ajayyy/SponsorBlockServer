@@ -57,10 +57,10 @@ async function sendWebhooks(voteData: VoteData) {
             webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
         }
 
-        if (config.newLeafURL !== null) {
+        if (config.newLeafURLs !== null) {
             const { err, data } = await YouTubeAPI.listVideos(submissionInfoRow.videoID);
             if (err) return;
-            
+
             const isUpvote = voteData.incrementAmount > 0;
             // Send custom webhooks
             dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
