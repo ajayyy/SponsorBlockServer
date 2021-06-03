@@ -32,10 +32,6 @@ Run the server with `npm start`.
 
 If you want to make changes, run `npm run dev` to automatically reload the server and run tests whenever a file is saved.
 
-# Privacy Policy
-
-If you set the `youtubeAPIKey` option in `config.json`, you must follow [Google's Privacy Policy](https://policies.google.com/privacy) and [YouTube's Terms of Service](https://www.youtube.com/t/terms)
-
 # API Docs
 
 Available [here](https://github.com/ajayyy/SponsorBlock/wiki/API-Docs)

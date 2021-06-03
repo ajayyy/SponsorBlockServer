@@ -1,28 +1,14 @@
-/*
-YouTubeAPI.videos.list({
-  part: "snippet",
-  id: videoID
-}, function (err, data) {});
- */
-
-// https://developers.google.com/youtube/v3/docs/videos
-
+import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model";
 
 export class YouTubeApiMock {
-    static async listVideos(videoID: string, ignoreCache = false): Promise<{err: string | boolean, data?: any}> {
+    static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
         const obj = {
             id: videoID
         };
 
         if (obj.id === "knownWrongID") {
             return {
-                err: null,
-                data: {
-                    pageInfo: {
-                        totalResults: 0,
-                    },
-                    items: [],
-                }
+                err: "No video found"
             };
         }
 
@@ -30,49 +16,35 @@ export class YouTubeApiMock {
             return {
                 err: null,
                 data: {
-                    pageInfo: {
-                        totalResults: 1,
-                    },
-                    items: [
+                    title: "Example Title",
+                    lengthSeconds: 0,
+                    videoThumbnails: [
                         {
-                            contentDetails: {
-                                duration: "PT0S",
-                            },
-                            snippet: {
-                                title: "Example Title",
-                                thumbnails: {
-                                    maxres: {
-                                        url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                                    },
-                                },
-                            },
+                           quality: "maxres",
+                           url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           width: 1280,
+                           height: 720
                         },
-                    ],
-                }
+                    ]
+                } as APIVideoData
             };
         } else {
             return {
                 err: null,
                 data: {
-                    pageInfo: {
-                        totalResults: 1,
-                    },
-                    items: [
+                    title: "Example Title",
+                    lengthSeconds: 4980,
+                    videoThumbnails: [
                         {
-                            contentDetails: {
-                                duration: "PT1H23M30S",
-                            },
-                            snippet: {
-                                title: "Example Title",
-                                thumbnails: {
-                                    maxres: {
-                                        url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                                    },
-                                },
-                            },
+                           quality: "maxres",
+                           url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           width: 1280,
+                           height: 720
                         },
-                    ],
-                }
+                    ]
+                } as APIVideoData
             };
         }
     }

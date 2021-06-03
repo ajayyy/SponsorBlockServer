@@ -1,22 +1,16 @@
+import fetch from 'node-fetch';
 import {config} from '../config';
 import {Logger} from './logger';
 import redis from './redis';
-// @ts-ignore
-import _youTubeAPI from 'youtube-api';
-
-_youTubeAPI.authenticate({
-    type: "key",
-    key: config.youtubeAPIKey,
-});
+import { APIVideoData, APIVideoInfo } from '../types/youtubeApi.model';
 
 export class YouTubeAPI {
-    static async listVideos(videoID: string, ignoreCache = false): Promise<{err: string | boolean, data?: any}> {
-        const part = 'contentDetails,snippet';
+    static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
         if (!videoID || videoID.length !== 11 || videoID.includes(".")) {
             return { err: "Invalid video ID" };
         }
 
-        const redisKey = "youtube.video." + videoID;
+        const redisKey = "yt.newleaf.video." + videoID;
         if (!ignoreCache) {
             const {err, reply} =  await redis.getAsync(redisKey);
 
@@ -25,34 +19,37 @@ export class YouTubeAPI {
 
                 return { err: err?.message, data: JSON.parse(reply) }
             }
-       }
+        }
+
+        if (!config.newLeafURL) return {err: "NewLeaf URL not found", data: null};
 
         try {
-            const { ytErr, data } = await new Promise((resolve) => _youTubeAPI.videos.list({
-                part,
-                id: videoID,
-            }, (ytErr: boolean | string, result: any) => resolve({ytErr, data: result?.data})));
+            const result = await fetch(config.newLeafURL + "/api/v1/videos/" + videoID, { method: "GET" });
 
-            if (!ytErr) {
-                // Only set cache if data returned
-                if (data.items.length > 0) {
-                    const { err: setErr } = await redis.setAsync(redisKey, JSON.stringify(data));
+            if (result.ok) {
+                const data = await result.json();
+                if (data.error) {
+                    return { err: data.err, data: null };
+                }
 
-                    if (setErr) {
-                        Logger.warn(setErr.message);
+                redis.setAsync(redisKey, JSON.stringify(data)).then((result) => {
+                    if (result?.err) {
+                        Logger.warn(result?.err.message);
                     } else {
                         Logger.debug("redis: video information cache set for: " + videoID);
                     }
-
-                    return { err: false, data }; // don't fail
-                } else {
-                    return { err: false, data }; // don't fail
-                }
+                });
+                
+                return { err: false, data };
             } else {
-                return { err: ytErr, data };
+                return { err: result.statusText, data: null };
             }
         } catch (err) {
             return {err, data: null}
         }       
     }
+}
+
+export function getMaxResThumbnail(apiInfo: APIVideoData): string | void {
+    return apiInfo?.videoThumbnails?.find((elem) => elem.quality === "maxres")?.second__originalUrl;
 }

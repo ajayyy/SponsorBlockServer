@@ -44,7 +44,7 @@ addDefaults(config, {
         },
     },
     userCounterURL: null,
-    youtubeAPIKey: null,
+    newLeafURL: null,
     maxRewardTimePerSegmentInSeconds: 86400,
     postgres: null,
     dumpDatabase: {
