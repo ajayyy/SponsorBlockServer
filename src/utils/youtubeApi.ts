@@ -29,7 +29,7 @@ export class YouTubeAPI {
             if (result.ok) {
                 const data = await result.json();
                 if (data.error) {
-                    Logger.warn("NewLeaf API Error: " + data.error)
+                    Logger.warn("NewLeaf API Error for " + videoID + ": " + data.error)
                     return { err: data.error, data: null };
                 }
 
