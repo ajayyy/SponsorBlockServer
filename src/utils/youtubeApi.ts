@@ -29,7 +29,8 @@ export class YouTubeAPI {
             if (result.ok) {
                 const data = await result.json();
                 if (data.error) {
-                    return { err: data.err, data: null };
+                    Logger.warn("CloudTube API Error: " + data.error)
+                    return { err: data.error, data: null };
                 }
 
                 redis.setAsync(redisKey, JSON.stringify(data)).then((result) => {

@@ -212,7 +212,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
             return a[0] - b[0] || a[1] - b[1];
         }));
 
-        const videoDuration = data.lengthSeconds;
+        const videoDuration = data?.lengthSeconds;
         if (videoDuration != 0) {
             let allSegmentDuration = 0;
             //sum all segment times together

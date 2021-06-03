@@ -59,11 +59,8 @@ async function sendWebhooks(voteData: VoteData) {
 
         if (config.newLeafURL !== null) {
             const { err, data } = await YouTubeAPI.listVideos(submissionInfoRow.videoID);
-
-            if (err) {
-                Logger.error(err.toString());
-                return;
-            }
+            if (err) return;
+            
             const isUpvote = voteData.incrementAmount > 0;
             // Send custom webhooks
             dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
