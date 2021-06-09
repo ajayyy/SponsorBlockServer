@@ -8,6 +8,7 @@ export interface SBSConfig {
     adminUserID: string;
     newLeafURLs?: string[];
     discordReportChannelWebhookURL?: string;
+    discordFailedReportChannelWebhookURL?: string;
     discordFirstTimeSubmissionsWebhookURL?: string;
     discordCompletelyIncorrectReportWebhookURL?: string;
     neuralBlockURL?: string;
