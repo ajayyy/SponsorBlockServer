@@ -298,7 +298,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
         if (await isSegmentLocked() || await isVideoLocked()) {
             finalResponse.blockVote = true;
-            finalResponse.webhookType = VoteWebhookType.Normal
+            finalResponse.webhookType = VoteWebhookType.Rejected
             finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct"
         }
     }
