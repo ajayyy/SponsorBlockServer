@@ -426,7 +426,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
             //update the vote count on this sponsorTime
             //oldIncrementAmount will be zero is row is null
-            await db.prepare('run', 'UPDATE "sponsorTimes" SET ' + columnName + ' = ' + columnName + ' + ? WHERE "UUID" = ?', [incrementAmount - oldIncrementAmount, UUID]);
+            await db.prepare('run', 'UPDATE "sponsorTimes" SET "' + columnName + '" = ' + columnName + ' + ? WHERE "UUID" = ?', [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Lock this submission
                 await db.prepare('run', 'UPDATE "sponsorTimes" SET locked = 1 WHERE "UUID" = ?', [UUID]);
