@@ -333,7 +333,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         return res.status(403).send('Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
-    const voteTypeEnum = (type == 0 || type == 1) ? voteTypes.normal : voteTypes.incorrect;
+    const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
 
     try {
         //check if vote has already happened
@@ -426,7 +426,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
             //update the vote count on this sponsorTime
             //oldIncrementAmount will be zero is row is null
-            await db.prepare('run', 'UPDATE "sponsorTimes" SET "' + columnName + '" = ' + columnName + ' + ? WHERE "UUID" = ?', [incrementAmount - oldIncrementAmount, UUID]);
+            await db.prepare('run', 'UPDATE "sponsorTimes" SET "' + columnName + '" = "' + columnName + '" + ? WHERE "UUID" = ?', [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Lock this submission
                 await db.prepare('run', 'UPDATE "sponsorTimes" SET locked = 1 WHERE "UUID" = ?', [UUID]);
