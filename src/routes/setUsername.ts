@@ -40,7 +40,7 @@ export async function setUsername(req: Request, res: Response) {
         userID = getHash(userID);
     }
     
-    if (["7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97", "e1839ce056d185f176f30a3d04a79242110fe46ad6e9bd1a9170f56857d1b148"].includes(userID)) {
+    if (["7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97", "e1839ce056d185f176f30a3d04a79242110fe46ad6e9bd1a9170f56857d1b148", "c3424f0d1f99631e6b36e5bf634af953e96b790705abd86a9c5eb312239cb765"].includes(userID)) {
         // Don't allow
         res.sendStatus(200);
         return;   
