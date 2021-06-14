@@ -19,9 +19,17 @@ const voteTypes = {
     incorrect: 1,
 };
 
+enum VoteWebhookType {
+    Normal,
+    Rejected
+}
+
 interface FinalResponse {
+    blockVote: boolean,
     finalStatus: number
-    finalMessage: string
+    finalMessage: string,
+    webhookType: VoteWebhookType,
+    webhookMessage: string
 }
 
 interface VoteData {
@@ -52,7 +60,15 @@ async function sendWebhooks(voteData: VoteData) {
     if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
         let webhookURL: string = null;
         if (voteData.voteTypeEnum === voteTypes.normal) {
-            webhookURL = config.discordReportChannelWebhookURL;
+            switch (voteData.finalResponse.webhookType) {
+                case VoteWebhookType.Normal:
+                    webhookURL = config.discordReportChannelWebhookURL;
+                    break;
+                case VoteWebhookType.Rejected:
+                    webhookURL = config.discordFailedReportChannelWebhookURL;
+                    break;
+            }
+            
         } else if (voteData.voteTypeEnum === voteTypes.incorrect) {
             webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
         }
@@ -114,7 +130,9 @@ async function sendWebhooks(voteData: VoteData) {
                                 getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
                             "color": 10813440,
                             "author": {
-                                "name": voteData.finalResponse?.finalMessage ?? getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                                "name": voteData.finalResponse?.webhookMessage ??
+                                        voteData.finalResponse?.finalMessage ?? 
+                                        getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
                             },
                             "thumbnail": {
                                 "url": getMaxResThumbnail(data) || "",
@@ -252,8 +270,11 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
     // To force a non 200, change this early
     let finalResponse: FinalResponse = {
+        blockVote: false,
         finalStatus: 200,
-        finalMessage: null
+        finalMessage: null,
+        webhookType: VoteWebhookType.Normal,
+        webhookMessage: null
     }
 
     //x-forwarded-for if this server is behind a proxy
@@ -276,8 +297,9 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                                     ' where "UUID" = ?', [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {
-            finalResponse.finalStatus = 403;
-            finalResponse.finalMessage = "Vote rejected: A moderator has decided that this segment is correct"
+            finalResponse.blockVote = true;
+            finalResponse.webhookType = VoteWebhookType.Rejected
+            finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct"
         }
     }
 
@@ -311,7 +333,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         return res.status(403).send('Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
-    const voteTypeEnum = (type == 0 || type == 1) ? voteTypes.normal : voteTypes.incorrect;
+    const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
 
     try {
         //check if vote has already happened
@@ -384,6 +406,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                 && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
                 && (await privateDB.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
                 && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
+                && !finalResponse.blockVote
                 && finalResponse.finalStatus === 200;
 
         if (ableToVote) {
@@ -403,7 +426,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
             //update the vote count on this sponsorTime
             //oldIncrementAmount will be zero is row is null
-            await db.prepare('run', 'UPDATE "sponsorTimes" SET ' + columnName + ' = ' + columnName + ' + ? WHERE "UUID" = ?', [incrementAmount - oldIncrementAmount, UUID]);
+            await db.prepare('run', 'UPDATE "sponsorTimes" SET "' + columnName + '" = "' + columnName + '" + ? WHERE "UUID" = ?', [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Lock this submission
                 await db.prepare('run', 'UPDATE "sponsorTimes" SET locked = 1 WHERE "UUID" = ?', [UUID]);

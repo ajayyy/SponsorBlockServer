@@ -1,6 +1,7 @@
 import {db, privateDB} from '../databases/databases';
 import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
+import { config } from '../config';
 
 export async function shadowBanUser(req: Request, res: Response) {
     const userID = req.query.userID as string;
@@ -8,11 +9,14 @@ export async function shadowBanUser(req: Request, res: Response) {
     let adminUserIDInput = req.query.adminUserID as string;
 
     const enabled = req.query.enabled === undefined
-        ? false
+        ? true
         : req.query.enabled === 'true';
 
     //if enabled is false and the old submissions should be made visible again
     const unHideOldSubmissions = req.query.unHideOldSubmissions !== "false";
+
+    const categories: string[] = req.query.categories ? JSON.parse(req.query.categories as string) : config.categoryList;
+    categories.filter((category) => typeof category === "string" && !(/[^a-z|_|-]/.test(category)));
 
     if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined)) {
         //invalid request
@@ -42,7 +46,7 @@ export async function shadowBanUser(req: Request, res: Response) {
 
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
-                await db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ?
+                await db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                                 AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
                                 "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
             }
@@ -61,7 +65,7 @@ export async function shadowBanUser(req: Request, res: Response) {
                 await Promise.all(allSegments.filter((item: {uuid: string}) => {
                     return segmentsToIgnore.indexOf(item) === -1;
                 }).map((UUID: string) => {
-                    return db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ?`, [UUID]);
+                    return db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]);
                 }));
             }
         }

@@ -446,10 +446,10 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=0")
         .then(async res => {
             let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 403 && row.votes === 2) {
+            if (res.status === 200 && row.votes === 2) {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
+                done("Status code was " + res.status + " instead of 200, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));
@@ -474,10 +474,10 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&category=outro")
         .then(async res => {
             let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 403 && row.category === "sponsor") {
+            if (res.status === 200 && row.category === "sponsor") {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
+                done("Status code was " + res.status + " instead of 200, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));
