@@ -39,11 +39,18 @@ export async function setUsername(req: Request, res: Response) {
         //hash the userID
         userID = getHash(userID);
     }
-    
-    if (["7e7eb6c6dbbdba6a106a38e87eae29ed8689d0033cb629bb324a8dab615c5a97", "e1839ce056d185f176f30a3d04a79242110fe46ad6e9bd1a9170f56857d1b148", "c3424f0d1f99631e6b36e5bf634af953e96b790705abd86a9c5eb312239cb765"].includes(userID)) {
-        // Don't allow
-        res.sendStatus(200);
-        return;   
+
+    try {
+        const row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
+        if (adminUserIDInput === undefined && row.count > 0) {
+            res.sendStatus(200);
+            return;
+        }
+    }
+    catch (error) {
+        Logger.error(error);
+        res.sendStatus(500);
+        return;
     }
 
     try {
@@ -55,7 +62,7 @@ export async function setUsername(req: Request, res: Response) {
             await db.prepare('run', `UPDATE "userNames" SET "userName" = ? WHERE "userID" = ?`, [userName, userID]);
         } else {
             //add to the db
-            await db.prepare('run', `INSERT INTO "userNames" VALUES(?, ?)`, [userID, userName]);
+            await db.prepare('run', `INSERT INTO "userNames"("userID", "userName") VALUES(?, ?)`, [userID, userName]);
         }
 
         res.sendStatus(200);
