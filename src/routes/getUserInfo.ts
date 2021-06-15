@@ -27,6 +27,15 @@ async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ min
     }
 }
 
+async function dbGetIgnoredSegmentCount(userID: HashedUserID): Promise<{ ignoredSegmentCount: number }> {
+    try {
+        let row = await db.prepare("get", `SELECT COUNT(*) as "ignoredSegmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID]);
+        return row?.ignoredSegmentCount ?? 0
+    } catch (err) {
+        return null;
+    }
+}
+
 async function dbGetUsername(userID: HashedUserID) {
     try {
         let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
@@ -45,6 +54,15 @@ async function dbGetViewsForUser(userID: HashedUserID) {
     try {
         let row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         return row?.viewCount ?? 0;
+    } catch (err) {
+        return false;
+    }
+}
+
+async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
+    try {
+        let row = await db.prepare('get', `SELECT SUM("views") as "ignoredViewCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID]);
+        return row?.ignoredViewCount ?? 0;
     } catch (err) {
         return false;
     }
@@ -70,7 +88,6 @@ export async function getUserInfo(req: Request, res: Response) {
         return;
     }
 
-
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     if (segmentsSummary) {
         res.send({
@@ -78,7 +95,9 @@ export async function getUserInfo(req: Request, res: Response) {
             userName: await dbGetUsername(hashedUserID),
             minutesSaved: segmentsSummary.minutesSaved,
             segmentCount: segmentsSummary.segmentCount,
+            ignoredSegmentCount: await dbGetIgnoredSegmentCount(hashedUserID),
             viewCount: await dbGetViewsForUser(hashedUserID),
+            ignoredViewCount: await dbGetIgnoredViewsForUser(hashedUserID),
             warnings: await dbGetWarningsForUser(hashedUserID),
             reputation: await getReputation(hashedUserID),
             vip: await isUserVIP(hashedUserID),

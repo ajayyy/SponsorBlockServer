@@ -54,8 +54,12 @@ describe('getUserInfo', () => {
                     done('Returned incorrect minutesSaved "' + data.minutesSaved + '"');
                 } else if (data.viewCount !== 30) {
                     done('Returned incorrect viewCount "' + data.viewCount + '"');
+                } else if (data.ignoredViewCount !== 20) {
+                    done('Returned incorrect ignoredViewCount "' + data.ignoredViewCount + '"');
                 } else if (data.segmentCount !== 3) {
                     done('Returned incorrect segmentCount "' + data.segmentCount + '"');
+                } else if (data.ignoredSegmentCount !== 2) {
+                    done('Returned incorrect ignoredSegmentCount "' + data.ignoredSegmentCount + '"');
                 } else if (Math.abs(data.reputation - -0.928) > 0.001) {
                     done('Returned incorrect reputation "' + data.reputation + '"');
                 } else {
