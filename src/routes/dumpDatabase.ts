@@ -143,6 +143,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
     } else {
         res.send({
+            dbVersion: await getDbVersion(),
             lastUpdated: lastUpdate,
             updateQueued,
             links: latestDumpFiles.map((item:any) => {
@@ -156,6 +157,12 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
     }
 
     await queueDump();
+}
+
+async function getDbVersion(): Promise<number> {
+    const row = await db.prepare('get', `SELECT "value" FROM "config" WHERE "key" = 'version'`);
+    if (row === undefined) return 0;
+    return row.value;
 }
 
 export async function redirectLink(req: Request, res: Response): Promise<void> {
