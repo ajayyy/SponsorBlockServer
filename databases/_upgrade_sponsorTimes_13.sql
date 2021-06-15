@@ -1,10 +1,10 @@
 BEGIN TRANSACTION;
 
-/* Add reputation field */
+/* Add locked field */
 CREATE TABLE "sqlb_temp_table_13" (
 	"userID"	TEXT NOT NULL,
 	"userName"	TEXT NOT NULL,
-  "locked" INTEGER NOT NULL default '0'
+	"locked" INTEGER NOT NULL default '0'
 );
 
 INSERT INTO sqlb_temp_table_13 SELECT "userID", "userName", 0 FROM "userNames";
