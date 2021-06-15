@@ -81,7 +81,7 @@ async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
 
 async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUID> {
     try {
-        let row = await db.prepare('get', `SELECT "timeSubmitted", "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID]);
+        let row = await db.prepare('get', `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID]);
         return row?.UUID ?? null;
     } catch (err) {
         return null;
