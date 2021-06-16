@@ -13,7 +13,7 @@ describe('getSkipSegments', () => {
         await db.prepare("run", startOfQuery + "('test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 200, 0, 0, '" + getHash('test3', 1) + "')");
         await db.prepare("run", startOfQuery + "('test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('test3', 1) + "')");
         await db.prepare("run", startOfQuery + "('multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 'YouTube', 400, 0, 0, '" + getHash('multiple', 1) + "')");
-        await db.prepare("run", startOfQuery + "('multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'YouTube', 500, 0, 0, '" + getHash('multiple', 1) + "')");
+        await db.prepare("run", startOfQuery + "('multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'YouTube', 400, 0, 0, '" + getHash('multiple', 1) + "')");
         await db.prepare("run", startOfQuery + "('locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'YouTube', 230, 0, 0, '" + getHash('locked', 1) + "')");
         await db.prepare("run", startOfQuery + "('locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'YouTube', 190, 0, 0, '" + getHash('locked', 1) + "')");
         await db.prepare("run", startOfQuery + "('onlyHiddenSegments', 20, 34, 100000, 0, 'onlyHiddenSegments', 'testman', 0, 50, 'sponsor', 'YouTube', 190, 1, 0, '" + getHash('onlyHiddenSegments', 1) + "')");
@@ -107,18 +107,11 @@ describe('getSkipSegments', () => {
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should be empty if all submissions are hidden', (done: Done) => {
+    it('Should return 404 if all submissions are hidden', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=onlyHiddenSegments")
-        .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 0) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+        .then(res => {
+            if (res.status !== 404) done("non 404 respone code: " + res.status);
+            else done(); // pass
         })
         .catch(err => ("Couldn't call endpoint"));
     });
@@ -134,9 +127,9 @@ describe('getSkipSegments', () => {
                     let success = true;
                     for (const segment of data) {
                         if ((segment.segment[0] !== 20 || segment.segment[1] !== 33
-                            || segment.category !== "intro" || segment.UUID !== "1-uuid-7" || segment.videoDuration === 500) &&
+                            || segment.category !== "intro" || segment.UUID !== "1-uuid-7") &&
                             (segment.segment[0] !== 1 || segment.segment[1] !== 11
-                                || segment.category !== "intro" || segment.UUID !== "1-uuid-6" || segment.videoDuration === 400)) {
+                                || segment.category !== "intro" || segment.UUID !== "1-uuid-6")) {
                             success = false;
                             break;
                         }
