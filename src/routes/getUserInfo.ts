@@ -5,6 +5,7 @@ import {Request, Response} from 'express';
 import {Logger} from '../utils/logger';
 import { HashedUserID, UserID } from '../types/user.model';
 import { getReputation } from '../utils/reputation';
+import { SegmentUUID } from "../types/segments.model";
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
@@ -22,6 +23,15 @@ async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ min
                 segmentCount: 0,
             };
         }
+    } catch (err) {
+        return null;
+    }
+}
+
+async function dbGetIgnoredSegmentCount(userID: HashedUserID): Promise<number> {
+    try {
+        let row = await db.prepare("get", `SELECT COUNT(*) as "ignoredSegmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID]);
+        return row?.ignoredSegmentCount ?? 0
     } catch (err) {
         return null;
     }
@@ -50,6 +60,15 @@ async function dbGetViewsForUser(userID: HashedUserID) {
     }
 }
 
+async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
+    try {
+        let row = await db.prepare('get', `SELECT SUM("views") as "ignoredViewCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID]);
+        return row?.ignoredViewCount ?? 0;
+    } catch (err) {
+        return false;
+    }
+}
+
 async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
         let row = await db.prepare('get', `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
@@ -57,6 +76,15 @@ async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     } catch (err) {
         Logger.error('Couldn\'t get warnings for user ' + userID + '. returning 0');
         return 0;
+    }
+}
+
+async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUID> {
+    try {
+        let row = await db.prepare('get', `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID]);
+        return row?.UUID ?? null;
+    } catch (err) {
+        return null;
     }
 }
 
@@ -70,7 +98,6 @@ export async function getUserInfo(req: Request, res: Response) {
         return;
     }
 
-
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     if (segmentsSummary) {
         res.send({
@@ -78,10 +105,13 @@ export async function getUserInfo(req: Request, res: Response) {
             userName: await dbGetUsername(hashedUserID),
             minutesSaved: segmentsSummary.minutesSaved,
             segmentCount: segmentsSummary.segmentCount,
+            ignoredSegmentCount: await dbGetIgnoredSegmentCount(hashedUserID),
             viewCount: await dbGetViewsForUser(hashedUserID),
+            ignoredViewCount: await dbGetIgnoredViewsForUser(hashedUserID),
             warnings: await dbGetWarningsForUser(hashedUserID),
             reputation: await getReputation(hashedUserID),
             vip: await isUserVIP(hashedUserID),
+            lastSegmentID: await dbGetLastSegmentForUser(hashedUserID),
         });
     } else {
         res.status(400).send();
