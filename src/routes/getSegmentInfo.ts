@@ -10,9 +10,9 @@ async function getSegmentFromDBByUUID(UUID: SegmentUUID): Promise<DBSegment> {
             `SELECT "videoID", "startTime", "endTime", "votes", "locked",
                 "UUID", "userID", "timeSubmitted", "views", "category",
                 "service", "videoDuration", "hidden", "reputation", "shadowHidden" FROM "sponsorTimes"
-            WHERE "UUID" = ?`, [UUID])
+            WHERE "UUID" = ?`, [UUID]);
     } catch (err) {
-        return null
+        return null;
     }
 }
 
@@ -25,7 +25,7 @@ async function getSegmentsByUUID(UUIDs: SegmentUUID[]): Promise<DBSegment[]> {
         }
         DBSegments.push(await getSegmentFromDBByUUID(UUID as SegmentUUID));
     }
-    return DBSegments
+    return DBSegments;
 }
 
 async function handleGetSegmentInfo(req: Request, res: Response) {
@@ -34,7 +34,7 @@ async function handleGetSegmentInfo(req: Request, res: Response) {
     ? JSON.parse(req.query.UUIDs as string)
     : req.query.UUID
         ? [req.query.UUID]
-        : null
+        : null;
     // deduplicate with set
     UUIDs = [ ...new Set(UUIDs)];
     // if more than 10 entries, slice
