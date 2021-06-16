@@ -306,7 +306,9 @@ async function endpoint(req: Request, res: Response): Promise<void> {
             res.send(segments);
         }
     } catch (err) {
-        res.status(500).send();
+        if (err instanceof SyntaxError) {
+            res.status(400).send("Categories parameter does not match format requirements.");
+        } else res.status(500).send();
     }
 }
 

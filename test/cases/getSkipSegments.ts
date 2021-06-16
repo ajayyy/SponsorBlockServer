@@ -227,6 +227,14 @@ describe('getSkipSegments', () => {
         .catch(err => ("couldn't call endpoint"));
     });
 
+    it('Should return 400 if bad categories argument', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&categories=[not-quoted,not-quoted]")
+        .then(res => {
+            if (res.status !== 400) done("non 400 respone code: " + res.status);
+            else done(); // pass
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
 
     it('Should be able send a comma in a query param', () => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest,test&category=sponsor")
