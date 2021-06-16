@@ -80,19 +80,18 @@ describe('getUserInfo', () => {
         .catch(err => ("couldn't call endpoint"));
     });
 
-    it('Should get warning data with public ID', async () => {
-        try {
-            const res = await fetch(getbaseURL() + '/api/userInfo?userID=' + await getHash("getuserinfo_warning_0"))
-            
+    it('Should get warning data with public ID', (done: Done) => {
+        fetch(getbaseURL() + '/api/userInfo?publicUserID=' + getHash("getuserinfo_warning_0"))
+        .then(async res => {
             if (res.status !== 200) {
-                return 'non 200 (' + res.status + ')';
+                done('non 200 (' + res.status + ')');
             } else {
-                const data = await res.json();;
-                if (data.warnings !== 1) return 'wrong number of warnings: ' + data.warnings + ', not ' + 1;
+                const data = await res.json();
+                if (data.warnings !== 1) done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
+                else done();
             }
-        } catch (err) {
-            return "couldn't call endpoint";
-        }
+        })
+        .catch(err => ("couldn't call endpoint"));
     });
 
     it('Should get multiple warnings', (done: Done) => {

@@ -22,111 +22,111 @@ describe('getSkipSegments', () => {
     });
 
 
-    it('Should be able to get a time by category 1', () => {
+    it('Should be able to get a time by category 1', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=sponsor")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" && data[0].videoDuration === 100) {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
         .catch(err => "Couldn't call endpoint");
     });
 
-    it('Should be able to get a time by category for a different service 1', () => {
-        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=sponsor&service=PeerTube")
+    it('Should be able to get a time by category for a different service 1', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest2&category=sponsor&service=PeerTube")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0-1" && data[0].videoDuration === 120) {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
         .catch(err => "Couldn't call endpoint");
     });
 
-    it('Should be able to get a time by category 2', () => {
+    it('Should be able to get a time by category 2', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=intro")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 20 && data[0].segment[1] === 33
                     && data[0].category === "intro" && data[0].UUID === "1-uuid-2") {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should be able to get a time by categories array', () => {
+    it('Should be able to get a time by categories array', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&categories=[\"sponsor\"]")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" && data[0].videoDuration === 100) {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should be able to get a time by categories array 2', () => {
+    it('Should be able to get a time by categories array 2', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&categories=[\"intro\"]")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 20 && data[0].segment[1] === 33
                     && data[0].category === "intro" && data[0].UUID === "1-uuid-2" && data[0].videoDuration === 101) {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should be empty if all submissions are hidden', () => {
+    it('Should be empty if all submissions are hidden', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=onlyHiddenSegments")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 0) {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should be able to get multiple times by category', () => {
+    it('Should be able to get multiple times by category', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=multiple&categories=[\"intro\"]")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200)done("Status code was: " + res.status);
             else {
                 const body = await res.text();
                 const data = JSON.parse(body);
@@ -142,20 +142,20 @@ describe('getSkipSegments', () => {
                         }
                     }
 
-                    if (success) return;
-                    else return ("Received incorrect body: " + body);
+                    if (success) done();
+                    else done("Received incorrect body: " + body);
                 } else {
-                    return ("Received incorrect body: " + body);
+                    done("Received incorrect body: " + body);
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint\n\n" + err));
     });
 
-    it('Should be able to get multiple times by multiple categories', () => {
+    it('Should be able to get multiple times by multiple categories', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&categories=[\"sponsor\", \"intro\"]")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const body = await res.text();
                 const data = JSON.parse(body);
@@ -172,91 +172,91 @@ describe('getSkipSegments', () => {
                         }
                     }
 
-                    if (success) return;
-                    else return ("Received incorrect body: " + body);
+                    if (success) done();
+                    else done("Received incorrect body: " + body);
                 } else {
-                    return ("Received incorrect body: " + body);
+                    done("Received incorrect body: " + body);
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should be possible to send unexpected query parameters', () => {
+    it('Should be possible to send unexpected query parameters', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&fakeparam=hello&category=sponsor")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const body = await res.text();
                 const data = JSON.parse(body);
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0") {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + body);
+                    done("Received incorrect body: " + body);
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(err => done("Couldn't call endpoint"));
     });
 
-    it('Low voted submissions should be hidden', () => {
+    it('Low voted submissions should be hidden', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=test3&category=sponsor")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const body = await res.text();
                 const data = JSON.parse(body);
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-4") {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + body);
+                    done("Received incorrect body: " + body);
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should return 404 if no segment found', () => {
+    it('Should return 404 if no segment found', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=notarealvideo")
         .then(res => {
-            if (res.status !== 404) return ("non 404 respone code: " + res.status);
-            else return; // pass
+            if (res.status !== 404) done("non 404 respone code: " + res.status);
+            else done(); // pass
         })
         .catch(err => ("couldn't call endpoint"));
     });
 
 
-    it('Should be able send a comma in a query param', () => {
+    it('Should be able send a comma in a query param', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest,test&category=sponsor")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done ("Status code was: " + res.status);
             else {
                 const body = await res.text();
                 const data = JSON.parse(body);
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-1") {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + body);
+                    done("Received incorrect body: " + body);
                 }
             }
         })
         .catch(err => ("Couldn't call endpoint"));
     });
 
-    it('Should always get locked segment', () => {
+    it('Should always get locked segment', (done: Done) => {
         fetch(getbaseURL() + "/api/skipSegments?videoID=locked&category=intro")
         .then(async res => {
-            if (res.status !== 200) return ("Status code was: " + res.status);
+            if (res.status !== 200) done ("Status code was: " + res.status);
             else {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 20 && data[0].segment[1] === 33
                     && data[0].category === "intro" && data[0].UUID === "1-uuid-locked-8") {
-                    return;
+                    done();
                 } else {
-                    return ("Received incorrect body: " + (await res.text()));
+                    done("Received incorrect body: " + (await res.text()));
                 }
             }
         })
