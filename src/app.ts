@@ -28,7 +28,7 @@ import {corsMiddleware} from './middleware/cors';
 import {apiCspMiddleware} from './middleware/apiCsp';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
 import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
-
+import {endpoint as getSegmentInfo} from './routes/getSegmentInfo';
 
 export function createServer(callback: () => void) {
     // Create a service (the app object is just a callback).
@@ -132,6 +132,9 @@ function setupRoutes(app: Express) {
 
     //get if user is a vip
     app.post('/api/segmentShift', postSegmentShift);
+
+    //get segment info
+    app.get('/api/segmentInfo', getSegmentInfo);
 
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
