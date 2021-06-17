@@ -101,7 +101,7 @@ describe('postWarning', () => {
         .catch(err => done(err));
     });
 
-    it('Should not be able to create warning if vip (exp 403)', (done: Done) => {
+    it('Should not be able to create warning if not vip (exp 403)', (done: Done) => {
         let json = {
             issuerUserID: 'warning-not-vip',
             userID: 'warning-1',
