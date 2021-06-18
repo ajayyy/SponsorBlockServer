@@ -33,7 +33,7 @@ export async function postClearCache(req: Request, res: Response) {
     const hashedVideoID: VideoIDHash = getHash(videoID, 1);
 
     // Ensure user is a VIP
-    if (!await isUserVIP(hashedUserID)){
+    if (!(await isUserVIP(hashedUserID))){
         Logger.warn("Permission violation: User " + hashedUserID + " attempted to clear cache for video " + videoID + ".");
         res.status(403).json({"message": "Not a VIP"});
         return false;
