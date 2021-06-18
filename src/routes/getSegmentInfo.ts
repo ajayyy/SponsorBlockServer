@@ -20,9 +20,7 @@ async function getSegmentsByUUID(UUIDs: SegmentUUID[]): Promise<DBSegment[]> {
     const DBSegments: DBSegment[] = [];
     for (let UUID of UUIDs) {
         // if UUID is invalid, skip
-        if (!isValidSegmentUUID(UUID)) {
-            continue;
-        }
+        if (!isValidSegmentUUID(UUID)) continue;
         DBSegments.push(await getSegmentFromDBByUUID(UUID as SegmentUUID));
     }
     return DBSegments;
@@ -45,7 +43,7 @@ async function handleGetSegmentInfo(req: Request, res: Response) {
     }
     const DBSegments = await getSegmentsByUUID(UUIDs);
     // all uuids failed lookup
-    if (DBSegments.length === 0) {
+    if (!DBSegments?.length) {
         res.sendStatus(400);
         return false;
     }
