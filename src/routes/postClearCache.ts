@@ -9,7 +9,9 @@ import { UserID } from '../types/user.model';
 export async function postClearCache(req: Request, res: Response) {
     const videoID = req.query.videoID as VideoID;
     let userID = req.query.userID as UserID;
-    let service = req.query.service as Service ?? Service.YouTube;
+    const service = req.query.service as Service ?? Service.YouTube;
+    // hash the userID as early as possible
+    userID = getHash(userID);
 
     const invalidFields = [];
     if (typeof videoID !== 'string') {
@@ -26,8 +28,6 @@ export async function postClearCache(req: Request, res: Response) {
       return false;
     }
 
-    // hash the userID
-    userID = getHash(userID);
     // hash videoID
     const hashedVideoID = getHash(videoID, 1);
 

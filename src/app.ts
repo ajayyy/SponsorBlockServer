@@ -29,6 +29,7 @@ import {apiCspMiddleware} from './middleware/apiCsp';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
 import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
 import {endpoint as getSegmentInfo} from './routes/getSegmentInfo';
+import {postClearCache} from './routes/postClearCache';
 
 export function createServer(callback: () => void) {
     // Create a service (the app object is just a callback).
@@ -135,6 +136,9 @@ function setupRoutes(app: Express) {
 
     //get segment info
     app.get('/api/segmentInfo', getSegmentInfo);
+
+    //clear cache as VIP
+    app.post('/api/clearCache', postClearCache)
 
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
