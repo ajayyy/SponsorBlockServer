@@ -3,6 +3,7 @@ import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 
+const ENOENTID =        "0000000000000000000000000000000000000000000000000000000000000000"
 const upvotedID =       "a000000000000000000000000000000000000000000000000000000000000000"
 const downvotedID =     "b000000000000000000000000000000000000000000000000000000000000000"
 const lockedupID =      "c000000000000000000000000000000000000000000000000000000000000000"
@@ -214,10 +215,10 @@ describe('getSegmentInfo', () => {
         .catch(err => "Couldn't call endpoint");
     });
 
-    it('Should return 404 if array passed to UUID', (done: Done) => {
+    it('Should return 400 if array passed to UUID', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=["${upvotedID}", "${downvotedID}"]`)
         .then(res => {
-            if (res.status !== 404) done("non 404 respone code: " + res.status);
+            if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
         .catch(err => ("couldn't call endpoint"));
@@ -232,19 +233,19 @@ describe('getSegmentInfo', () => {
         .catch(err => ("couldn't call endpoint"));
     });
 
-    it('Should return 404 if bad UUID passed', (done: Done) => {
+    it('Should return 400 if bad UUID passed', (done: Done) => {
         fetch(getbaseURL() + "/api/segmentInfo?UUID=notarealuuid")
         .then(res => {
-            if (res.status !== 404) done("non 404 respone code: " + res.status);
+            if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
         .catch(err => ("couldn't call endpoint"));
     });
 
-    it('Should return 404 if bad UUIDs passed in array', (done: Done) => {
+    it('Should return 400 if bad UUIDs passed in array', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=["notarealuuid", "anotherfakeuuid"]`)
         .then(res => {
-            if (res.status !== 404) done("non 404 respone code: " + res.status);
+            if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
         .catch(err => ("couldn't call endpoint"));
@@ -296,6 +297,15 @@ describe('getSegmentInfo', () => {
                     done("Received incorrect body: " + (await res.text()));
                 }
             }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('Should return 400 if UUID not found', (done: Done) => {
+        fetch(getbaseURL() + `/api/segmentInfo?UUID=${ENOENTID}`)
+        .then(res => {
+            if (res.status !== 400) done("non 400 respone code: " + res.status);
+            else done(); // pass
         })
         .catch(err => ("couldn't call endpoint"));
     });

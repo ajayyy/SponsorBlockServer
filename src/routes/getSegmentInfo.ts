@@ -44,12 +44,14 @@ async function handleGetSegmentInfo(req: Request, res: Response) {
         return false;
     }
     const DBSegments = await getSegmentsByUUID(UUIDs);
-    if (DBSegments === null || DBSegments === undefined) {
+    // all uuids failed lookup
+    if (DBSegments.length === 0) {
         res.sendStatus(400);
         return false;
     }
-    if (DBSegments.length === 0) {
-        res.sendStatus(404);
+    // uuids valid but not found
+    if (DBSegments[0] === null || DBSegments[0] === undefined) {
+        res.sendStatus(400);
         return false;
     }
     return DBSegments;
