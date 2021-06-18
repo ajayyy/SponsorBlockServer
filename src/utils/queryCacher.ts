@@ -22,14 +22,13 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     return data;
 }
 
-function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID: UserID; }) {
+function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }) {
     if (videoInfo) {
         redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
         redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
-        redis.delAsync(reputationKey(videoInfo.userID));
+        if (videoInfo.userID) redis.delAsync(reputationKey(videoInfo.userID));
     }
 }
-
 
 export const QueryCacher = {
     get,
