@@ -1,5 +1,5 @@
 export interface IDatabase {
-    async init(): Promise<void>;
+    init(): Promise<void>;
 
     prepare(type: QueryType, query: string, params?: any[]): Promise<any | any[] | void>;
 }
