@@ -52,11 +52,13 @@ export async function shadowBanUser(req: Request, res: Response) {
                 await db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                                 AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
                                 "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
+               
                 // clear cache for all old videos
                 (await db.prepare('all', `SELECT "videoID", "hashedVideoID", "service", "votes", "views" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]))
-                .map((videoInfo: {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID}) => {
-                    QueryCacher.clearVideoCache(videoInfo);
-                });
+                    .forEach((videoInfo: {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID}) => {
+                        QueryCacher.clearVideoCache(videoInfo);
+                    }
+                );
             }
         } else if (!enabled && row.userCount > 0) {
             //remove them from the shadow ban list
@@ -75,10 +77,11 @@ export async function shadowBanUser(req: Request, res: Response) {
                 }).map(async (UUID: string) => {
                     // collect list for unshadowbanning
                     (await db.prepare('all', `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" = 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
-                        .map((videoInfo: {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID}) => {
+                        .forEach((videoInfo: {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID}) => {
                             QueryCacher.clearVideoCache(videoInfo);  
-                    })
-                    // unhide
+                        }
+                    );
+
                     return db.prepare('run', `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]);
                 }));
             }
