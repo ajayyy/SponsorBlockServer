@@ -21,7 +21,8 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
             SUM(CASE WHEN category = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
             SUM(CASE WHEN category = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
             SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
-            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic", `;
+            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
+            SUM(CASE WHEN category = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview", `;
     }
 
     const rows = await db.prepare('all', `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
@@ -48,6 +49,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
                 rows[i].categorySumInteraction,
                 rows[i].categorySelfpromo,
                 rows[i].categoryMusicOfftopic,
+                rows[i].categorySumPreview
             ];
         }
     }
