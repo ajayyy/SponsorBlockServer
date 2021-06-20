@@ -8,9 +8,9 @@ import { Logger } from '../../src/utils/logger.js';
 
 describe('unBan', () => {
   before(async () => {
-    await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testMan-unBan')`);
-    await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testWoman-unBan')`);
-    await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testEntity-unBan')`);
+    await db.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testMan-unBan')`);
+    await db.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testWoman-unBan')`);
+    await db.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('testEntity-unBan')`);
 
     await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-unBan") + "')");
     await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-unBan") + "', 'unBan-videoID-1', 'sponsor')");

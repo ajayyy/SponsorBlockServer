@@ -1,4 +1,4 @@
-import {db, privateDB} from '../databases/databases';
+import {db} from '../databases/databases';
 import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
 import { config } from '../config';
@@ -39,13 +39,13 @@ export async function shadowBanUser(req: Request, res: Response) {
 
     if (userID) {
         //check to see if this user is already shadowbanned
-        const row = await privateDB.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
         if (enabled && row.userCount == 0) {
             //add them to the shadow ban list
 
             //add it to the table
-            await privateDB.prepare('run', `INSERT INTO "shadowBannedUsers" VALUES(?)`, [userID]);
+            await db.prepare('run', `INSERT INTO "shadowBannedUsers" VALUES(?)`, [userID]);
 
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
@@ -62,7 +62,7 @@ export async function shadowBanUser(req: Request, res: Response) {
             }
         } else if (!enabled && row.userCount > 0) {
             //remove them from the shadow ban list
-            await privateDB.prepare('run', `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+            await db.prepare('run', `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
             //find all previous submissions and unhide them
             if (unHideOldSubmissions) {
@@ -106,7 +106,7 @@ export async function shadowBanUser(req: Request, res: Response) {
             }
         } /*else if (!enabled && row.userCount > 0) {
             // //remove them from the shadow ban list
-            // await privateDB.prepare('run', "DELETE FROM shadowBannedUsers WHERE userID = ?", [userID]);
+            // await db.prepare('run', "DELETE FROM shadowBannedUsers WHERE userID = ?", [userID]);
 
             // //find all previous submissions and unhide them
             // if (unHideOldSubmissions) {

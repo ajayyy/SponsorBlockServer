@@ -57,7 +57,7 @@ describe('voteOnSponsorTime', () => {
 
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser") + "')");
-        await privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES ('` + getHash("randomID4") + "')");
+        await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES ('` + getHash("randomID4") + "')");
 
         await db.prepare("run", `INSERT INTO "lockCategories" ("videoID", "userID", "category") VALUES ('no-sponsor-segments-video', 'someUser', 'sponsor')`);
 

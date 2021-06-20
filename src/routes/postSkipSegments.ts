@@ -485,7 +485,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         //check to see if this user is shadowbanned
-        const shadowBanRow = await privateDB.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+        const shadowBanRow = await db.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
         let shadowBanned = shadowBanRow.userCount;
 

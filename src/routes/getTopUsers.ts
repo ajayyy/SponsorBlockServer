@@ -29,8 +29,8 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
         SUM("votes") as "userVotes", ` +
         additionalFields +
         `IFNULL("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
-        LEFT JOIN "privateDB"."shadowBannedUsers" ON "sponsorTimes"."userID"="privateDB"."shadowBannedUsers"."userID"
-        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "privateDB"."shadowBannedUsers"."userID" IS NULL
+        LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
+        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
         GROUP BY IFNULL("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
         ORDER BY "${sortBy}" DESC LIMIT 100`, []);
 
@@ -70,10 +70,6 @@ export async function getTopUsers(req: Request, res: Response) {
         res.sendStatus(400);
         return;
     }
-
-    //TODO: remove. This is broken for now
-    res.status(200).send();
-    return;
 
     //setup which sort type to use
     let sortBy = '';

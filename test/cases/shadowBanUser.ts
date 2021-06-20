@@ -17,7 +17,7 @@ describe('shadowBanUser', () => {
         db.prepare("run", startOfQuery + "('testtesttest', 1, 11, 2, 0, 'shadow-3-uuid-0', 'shadowBanned3', 0, 50, 'sponsor', 'YouTube', 100, 0, 1, '" + getHash('testtesttest', 1) + "')");
         db.prepare("run", startOfQuery + "('testtesttest2', 1, 11, 2, 0, 'shadow-3-uuid-0-1', 'shadowBanned3', 0, 50, 'sponsor', 'PeerTube', 120, 0, 1, '" + getHash('testtesttest2', 1) + "')");
         db.prepare("run", startOfQuery + "('testtesttest', 20, 33, 2, 0, 'shadow-3-uuid-2', 'shadowBanned3', 0, 50, 'intro', 'YouTube', 101, 0, 1, '" + getHash('testtesttest', 1) + "')");
-        privateDB.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('shadowBanned3')`);
+        db.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES('shadowBanned3')`);
 
         db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("shadow-ban-vip") + "')");
     });
@@ -31,7 +31,7 @@ describe('shadowBanUser', () => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned", 1]);
-                const shadowRow = await privateDB.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
+                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
 
                 if (shadowRow && videoRow?.length === 3) {
                     done();
@@ -51,7 +51,7 @@ describe('shadowBanUser', () => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned", 1]);
-                const shadowRow = await privateDB.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
+                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
 
                 if (!shadowRow && videoRow?.length === 3) {
                     done();
@@ -71,7 +71,7 @@ describe('shadowBanUser', () => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const videoRow: {category: string, shadowHidden: number}[] = (await db.prepare('all', `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned2", 1]));
-                const shadowRow = await privateDB.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
+                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
 
                 if (shadowRow && 2 == videoRow?.length && 2 === videoRow?.filter((elem) => elem?.category === "sponsor")?.length) {
                     done();
@@ -91,7 +91,7 @@ describe('shadowBanUser', () => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned2", 1]);
-                const shadowRow = await privateDB.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
+                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
 
                 if (!shadowRow && videoRow?.length === 0) {
                     done();
@@ -111,7 +111,7 @@ describe('shadowBanUser', () => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const videoRow = await db.prepare('all', `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned3", 1]);
-                const shadowRow = await privateDB.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned3"]);
+                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned3"]);
 
                 if (!shadowRow && videoRow?.length === 1 && videoRow[0]?.category === "intro") {
                     done();

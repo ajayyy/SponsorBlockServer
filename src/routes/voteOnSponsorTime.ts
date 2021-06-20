@@ -404,7 +404,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         const ableToVote = isVIP
             || (!(isOwnSubmission && incrementAmount > 0)
                 && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
-                && (await privateDB.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
+                && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
                 && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
                 && !finalResponse.blockVote
                 && finalResponse.finalStatus === 200;

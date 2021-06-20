@@ -64,3 +64,10 @@ CREATE INDEX IF NOT EXISTS "categoryVotes_UUID_public"
     ON public."categoryVotes" USING btree
     ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST, category COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+-- shadowBannedUsers
+
+CREATE INDEX IF NOT EXISTS "shadowBannedUsers_index"
+    ON public."shadowBannedUsers" USING btree
+    ("userID" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
