@@ -6,6 +6,7 @@ import { getReputation } from '../../src/utils/reputation';
 
 const userIDLowSubmissions = "reputation-lowsubmissions" as UserID;
 const userIDHighDownvotes = "reputation-highdownvotes" as UserID;
+const userIDHighNonSelfDownvotes = "reputation-highnonselfdownvotes" as UserID;
 const userIDNewSubmissions = "reputation-newsubmissions" as UserID;
 const userIDLowSum = "reputation-lowsum" as UserID;
 const userIDHighRepBeforeManualVote = "reputation-oldhighrep" as UserID;
@@ -29,6 +30,17 @@ describe('reputation', () => {
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, -1, 0, 'reputation-1-uuid-5', '${getHash(userIDHighDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-uuid-6', '${getHash(userIDHighDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-uuid-7', '${getHash(userIDHighDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+
+        // Each downvote is on a different video (ie. they didn't resubmit to fix their downvote)
+        await db.prepare("run", startOfQuery + `('${videoID}A', 1, 11, 2, 0, 'reputation-1-1-uuid-0', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        // Different category, same video
+        await db.prepare("run", startOfQuery + `('${videoID}A', 1, 11, -2, 0, 'reputation-1-1-uuid-1', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'intro', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-1-uuid-2', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-1-uuid-3', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-1-uuid-4', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, -1, 0, 'reputation-1-1-uuid-5', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-1-uuid-6', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
+        await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-1-uuid-7', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
     
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 0, 'reputation-2-uuid-0', '${getHash(userIDNewSubmissions)}', ${Date.now()}, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 2, 0, 'reputation-2-uuid-1', '${getHash(userIDNewSubmissions)}', ${Date.now()}, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
@@ -81,7 +93,11 @@ describe('reputation', () => {
     });
 
     it("user with high downvote ratio", async () => {
-        assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), -0.9642857142857144);
+        assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), -2.125);
+    });
+
+    it("user with high non self downvote ratio", async () => {
+        assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), -1.6428571428571428);
     });
 
     it("user with mostly new submissions", async () => {

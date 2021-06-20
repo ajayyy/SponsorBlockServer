@@ -60,7 +60,7 @@ describe('getUserInfo', () => {
                     done('Returned incorrect segmentCount "' + data.segmentCount + '"');
                 } else if (data.ignoredSegmentCount !== 2) {
                     done('Returned incorrect ignoredSegmentCount "' + data.ignoredSegmentCount + '"');
-                } else if (Math.abs(data.reputation - -0.928) > 0.001) {
+                } else if (data.reputation !== -2) {
                     done('Returned incorrect reputation "' + data.reputation + '"');
                 } else if (data.lastSegmentID !== "uuid000005") {
                     done('Returned incorrect last segment "' + data.lastSegmentID + '"');

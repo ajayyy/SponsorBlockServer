@@ -6,6 +6,7 @@ import { reputationKey } from "./redisKeys";
 interface ReputationDBResult {
     totalSubmissions: number,
     downvotedSubmissions: number,
+    nonSelfDownvotedSubmissions: number,
     upvotedSum: number,
     lockedSum: number,
     oldUpvotedSubmissions: number
@@ -17,10 +18,15 @@ export async function getReputation(userID: UserID): Promise<number> {
     const fetchFromDB = () => db.prepare("get", 
             `SELECT COUNT(*) AS "totalSubmissions",
                 SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
+                SUM(CASE WHEN "votes" < 0 AND "videoID" NOT IN 
+                    (SELECT b."videoID" FROM "sponsorTimes" as b 
+					 	WHERE b."userID" = ?
+                            AND b."votes" > 0 AND b."category" = "a"."category" AND b."videoID" = "a"."videoID" LIMIT 1)
+					THEN 1 ELSE 0 END) AS "nonSelfDownvotedSubmissions",
                 SUM(CASE WHEN "votes" > 0 AND "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "upvotedSum",
                 SUM(locked) AS "lockedSum",
                 SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
-            FROM "sponsorTimes" WHERE "userID" = ?`, [pastDate, userID]) as Promise<ReputationDBResult>;
+            FROM "sponsorTimes" as "a" WHERE "userID" = ?`, [userID, pastDate, userID]) as Promise<ReputationDBResult>;
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
     
@@ -31,7 +37,12 @@ export async function getReputation(userID: UserID): Promise<number> {
 
     const downvoteRatio = result.downvotedSubmissions / result.totalSubmissions;
     if (downvoteRatio > 0.3) {
-        return convertRange(downvoteRatio, 0.3, 1, -0.5, -1.5);
+        return convertRange(Math.min(downvoteRatio, 0.7), 0.3, 0.7, -0.5, -2.5);
+    }
+
+    const nonSelfDownvoteRatio = result.nonSelfDownvotedSubmissions / result.totalSubmissions;
+    if (nonSelfDownvoteRatio > 0.05) {
+        return convertRange(Math.min(nonSelfDownvoteRatio, 0.4), 0.05, 0.4, -0.5, -2.5);
     }
 
     if (result.oldUpvotedSubmissions < 3 || result.upvotedSum < 5) {
