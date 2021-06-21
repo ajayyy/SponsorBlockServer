@@ -67,7 +67,6 @@ describe('lockCategoriesRecords', () => {
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -99,14 +98,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
                 if (result.length !== 4) {
-                    console.log(result);
                     done("Expected 4 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -133,14 +130,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
                 if (result.length !== 1) {
-                    console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -167,14 +162,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
                 if (result.length !== 1) {
-                    console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -201,14 +194,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
                 if (result.length !== 0) {
-                    console.log(result);
                     done("Expected 0 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
