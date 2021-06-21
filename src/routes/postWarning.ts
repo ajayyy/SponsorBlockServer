@@ -32,7 +32,7 @@ export async function postWarning(req: Request, res: Response) {
             return;
         }
     } else {
-        await db.prepare('run', 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
+        await db.prepare('run', 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ?', [userID]);
         resultStatus = "removed from";
     }
 

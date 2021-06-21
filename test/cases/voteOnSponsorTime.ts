@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import {config} from '../../src/config';
-import {db, privateDB} from '../../src/databases/databases';
+import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {ImportMock} from 'ts-mock-imports';
@@ -57,7 +57,7 @@ describe('voteOnSponsorTime', () => {
 
 
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash("VIPUser")]);
-        await privateDB.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
+        await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
 
         await db.prepare("run", 'INSERT INTO "lockCategories" ("videoID", "userID", "category") VALUES (?, ?, ?)', ['no-sponsor-segments-video', 'someUser', 'sponsor']);
     });
@@ -263,6 +263,24 @@ describe('voteOnSponsorTime', () => {
         .catch(err => done(err));
     });
 
+    it('Should not able to change to highlight category', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=highlight")
+        .then(async res => {
+            if (res.status === 400) {
+                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
+                if (row.category === "sponsor") {
+                    done();
+                } else {
+                    done("Vote did not succeed. Submission went from sponsor to " + row.category);
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
     it('Should be able to change your vote for a category and it should add your vote to the database', (done: Done) => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=outro")
@@ -427,10 +445,10 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=0")
         .then(async res => {
             let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 403 && row.votes === 2) {
+            if (res.status === 200 && row.votes === 2) {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
+                done("Status code was " + res.status + " instead of 200, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));
@@ -455,10 +473,10 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&category=outro")
         .then(async res => {
             let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 403 && row.category === "sponsor") {
+            if (res.status === 200 && row.category === "sponsor") {
                 done();
             } else {
-                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
+                done("Status code was " + res.status + " instead of 200, row was " + JSON.stringify(row));
             }
         })
         .catch(err => done(err));

@@ -1,52 +1,56 @@
+import fetch from 'node-fetch';
 import {config} from '../config';
 import {Logger} from './logger';
 import redis from './redis';
-// @ts-ignore
-import _youTubeAPI from 'youtube-api';
-
-_youTubeAPI.authenticate({
-    type: "key",
-    key: config.youtubeAPIKey,
-});
+import { APIVideoData, APIVideoInfo } from '../types/youtubeApi.model';
 
 export class YouTubeAPI {
-    static listVideos(videoID: string, callback: (err: string | boolean, data: any) => void) {
-        const part = 'contentDetails,snippet';
+    static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
         if (!videoID || videoID.length !== 11 || videoID.includes(".")) {
-            callback("Invalid video ID", undefined);
-            return;
+            return { err: "Invalid video ID" };
         }
 
-        const redisKey = "youtube.video." + videoID;
-        redis.get(redisKey, (getErr, result) => {
-            if (getErr || !result) {
+        const redisKey = "yt.newleaf.video." + videoID;
+        if (!ignoreCache) {
+            const {err, reply} =  await redis.getAsync(redisKey);
+
+            if (!err && reply) {
                 Logger.debug("redis: no cache for video information: " + videoID);
-                _youTubeAPI.videos.list({
-                    part,
-                    id: videoID,
-                }, (ytErr: boolean | string, { data }: any) => {
-                    if (!ytErr) {
-                        // Only set cache if data returned
-                        if (data.items.length > 0) {
-                            redis.set(redisKey, JSON.stringify(data), (setErr) => {
-                                if (setErr) {
-                                    Logger.warn(setErr.message);
-                                } else {
-                                    Logger.debug("redis: video information cache set for: " + videoID);
-                                }
-                                callback(false, data); // don't fail
-                            });
-                        } else {
-                            callback(false, data); // don't fail
-                        }
+
+                return { err: err?.message, data: JSON.parse(reply) }
+            }
+        }
+
+        if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return {err: "NewLeaf URL not found", data: null};
+
+        try {
+            const result = await fetch(config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)] + "/api/v1/videos/" + videoID, { method: "GET" });
+
+            if (result.ok) {
+                const data = await result.json();
+                if (data.error) {
+                    Logger.warn("NewLeaf API Error for " + videoID + ": " + data.error)
+                    return { err: data.error, data: null };
+                }
+
+                redis.setAsync(redisKey, JSON.stringify(data)).then((result) => {
+                    if (result?.err) {
+                        Logger.warn(result?.err.message);
                     } else {
-                        callback(ytErr, data);
+                        Logger.debug("redis: video information cache set for: " + videoID);
                     }
                 });
+                
+                return { err: false, data };
             } else {
-                Logger.debug("redis: fetched video information from cache: " + videoID);
-                callback(getErr?.message, JSON.parse(result));
+                return { err: result.statusText, data: null };
             }
-        });
-    };
+        } catch (err) {
+            return {err, data: null}
+        }       
+    }
+}
+
+export function getMaxResThumbnail(apiInfo: APIVideoData): string | void {
+    return apiInfo?.videoThumbnails?.find((elem) => elem.quality === "maxres")?.second__originalUrl;
 }

@@ -1,30 +1,28 @@
 import {config} from '../config';
 import {Logger} from '../utils/logger';
 import {db, privateDB} from '../databases/databases';
-import {YouTubeAPI} from '../utils/youtubeApi';
+import {getMaxResThumbnail, YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
 import fetch from 'node-fetch';
-import isoDurations from 'iso8601-duration';
+import isoDurations, { end } from 'iso8601-duration';
 import {getHash} from '../utils/getHash';
 import {getIP} from '../utils/getIP';
 import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../middleware/redisKeys';
+import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
 import redis from '../utils/redis';
-import { Category, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
+import { getCategoryActionType } from '../utils/categoryInfo';
+import { QueryCacher } from '../utils/queryCacher';
+import { getReputation } from '../utils/reputation';
+import { APIVideoData, APIVideoInfo } from '../types/youtubeApi.model';
 
-interface APIVideoInfo {
-    err: string | boolean,
-    data: any
-}
-
-async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: any, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
+async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: APIVideoData, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
     const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
     const userName = row !== undefined ? row.userName : null;
-    const video = youtubeData.items[0];
 
     let scopeName = "submissions.other";
     if (submissionCount <= 1) {
@@ -34,8 +32,8 @@ async function sendWebhookNotification(userID: string, videoID: string, UUID: st
     dispatchEvent(scopeName, {
         "video": {
             "id": videoID,
-            "title": video.snippet.title,
-            "thumbnail": video.snippet.thumbnails.maxres ? video.snippet.thumbnails.maxres : null,
+            "title": youtubeData?.title,
+            "thumbnail": getMaxResThumbnail(youtubeData) || null,
             "url": "https://www.youtube.com/watch?v=" + videoID,
         },
         "submission": {
@@ -73,7 +71,7 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
             method: 'POST',
             body: JSON.stringify({
                 "embeds": [{
-                    "title": data.items[0].snippet.title,
+                    "title": data?.title,
                     "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseInt(startTime.toFixed(0)) - 2),
                     "description": "Submission ID: " + UUID +
                         "\n\nTimestamp: " +
@@ -84,7 +82,7 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
                         "name": userID,
                     },
                     "thumbnail": {
-                        "url": data.items[0].snippet.thumbnails.maxres ? data.items[0].snippet.thumbnails.maxres.url : "",
+                        "url": getMaxResThumbnail(data) || "",
                     },
                 }],
             }),
@@ -174,10 +172,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
         const {err, data} = apiVideoInfo;
         if (err) return false;
 
-        // Check to see if video exists
-        if (data.pageInfo.totalResults === 0) return "No video exists with id " + submission.videoID;
-
-        const duration = getYouTubeVideoDuration(apiVideoInfo);
+        const duration = apiVideoInfo?.data?.lengthSeconds;
         const segments = submission.segments;
         let nbString = "";
         for (let i = 0; i < segments.length; i++) {
@@ -217,8 +212,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
             return a[0] - b[0] || a[1] - b[1];
         }));
 
-        let videoDuration = data.items[0].contentDetails.duration;
-        videoDuration = isoDurations.toSeconds(isoDurations.parse(videoDuration));
+        const videoDuration = data?.lengthSeconds;
         if (videoDuration != 0) {
             let allSegmentDuration = 0;
             //sum all segment times together
@@ -270,16 +264,9 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
     }
 }
 
-function getYouTubeVideoDuration(apiVideoInfo: APIVideoInfo): VideoDuration {
-    const duration = apiVideoInfo?.data?.items[0]?.contentDetails?.duration;
-    return duration ? isoDurations.toSeconds(isoDurations.parse(duration)) as VideoDuration : null;
-}
-
-async function getYouTubeVideoInfo(videoID: VideoID): Promise<APIVideoInfo> {
-    if (config.youtubeAPIKey !== null) {
-        return new Promise((resolve) => {
-            YouTubeAPI.listVideos(videoID, (err: any, data: any) => resolve({err, data}));
-        });
+async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
+    if (config.newLeafURLs !== null) {
+        return YouTubeAPI.listVideos(videoID, ignoreCache);
     } else {
         return null;
     }
@@ -291,14 +278,10 @@ function proxySubmission(req: Request) {
             body: req.body,
         })
         .then(async res => {
-            if (config.mode === 'development') {
-                Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
-            }
+            Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
         })
         .catch(err => {
-            if (config.mode === 'development') {
-                Logger.error("Proxy Submission: Failed to make call");
-            }
+            Logger.error("Proxy Submission: Failed to make call");
         });
 }
 
@@ -367,22 +350,24 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const decreaseVotes = 0;
 
+    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 
+                    AND "shadowHidden" = 0 AND "votes" >= 0 AND "videoDuration" != 0`, [videoID, service]) as 
+                        {videoDuration: VideoDuration, UUID: SegmentUUID}[];
+    // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
+    const videoDurationChanged = (videoDuration: number) => videoDuration != 0 && previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
+
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
-        apiVideoInfo = await getYouTubeVideoInfo(videoID);
+        // Don't use cache if we don't know the video duraton, or the client claims that it has changed
+        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDuration || videoDurationChanged(videoDuration));
     }
-    const apiVideoDuration = getYouTubeVideoDuration(apiVideoInfo);
+    const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
     if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
         // If api duration is far off, take that one instead (it is only precise to seconds, not millis)
         videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
-    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 
-                    AND "shadowHidden" = 0 AND "votes" >= 0 AND "videoDuration" != 0`, [videoID, service]) as 
-                        {videoDuration: VideoDuration, UUID: SegmentUUID}[];
-    // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
-    const videoDurationChanged = previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
-    if (videoDurationChanged) {
+    if (videoDurationChanged(videoDuration)) {
         // Hide all previous submissions
         for (const submission of previousSubmissions) {
             await db.prepare('run', `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
@@ -411,10 +396,10 @@ export async function postSkipSegments(req: Request, res: Response) {
             // TODO: Do something about the fradulent submission
             Logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
             res.status(403).send(
-                "Request rejected by auto moderator: New submissions are not allowed for the following category: '"
+                "New submissions are not allowed for the following category: '"
                 + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
                 + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
-                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n " : "")
+                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")
                 + "If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app",
             );
             return;
@@ -425,7 +410,9 @@ export async function postSkipSegments(req: Request, res: Response) {
         let endTime = parseFloat(segments[i].segment[1]);
 
         if (isNaN(startTime) || isNaN(endTime)
-            || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime >= endTime) {
+                || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime) 
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
             //invalid request
             res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
             return;
@@ -498,7 +485,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         //check to see if this user is shadowbanned
-        const shadowBanRow = await privateDB.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+        const shadowBanRow = await db.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
         let shadowBanned = shadowBanRow.userCount;
 
@@ -508,6 +495,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
         let startingVotes = 0 + decreaseVotes;
+        const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
             //this can just be a hash of the data
@@ -519,9 +507,9 @@ export async function postSkipSegments(req: Request, res: Response) {
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, shadowBanned, hashedVideoID,
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, reputation, shadowBanned, hashedVideoID,
                     ],
                 );
 
@@ -529,8 +517,12 @@ export async function postSkipSegments(req: Request, res: Response) {
                 await privateDB.prepare('run', `INSERT INTO "sponsorTimes" VALUES(?, ?, ?)`, [videoID, hashedIP, timeSubmitted]);
             
                 // Clear redis cache for this video
-                redis.delAsync(skipSegmentsKey(videoID));
-                redis.delAsync(skipSegmentsHashKey(hashedVideoID, service));
+                QueryCacher.clearVideoCache({
+                    videoID,
+                    hashedVideoID,
+                    service,
+                    userID
+                });
             } catch (err) {
                 //a DB change probably occurred
                 res.sendStatus(500);

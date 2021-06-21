@@ -41,6 +41,19 @@ export async function setUsername(req: Request, res: Response) {
     }
 
     try {
+        const row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
+        if (adminUserIDInput === undefined && row.count > 0) {
+            res.sendStatus(200);
+            return;
+        }
+    }
+    catch (error) {
+        Logger.error(error);
+        res.sendStatus(500);
+        return;
+    }
+
+    try {
         //check if username is already set
         let row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ?`, [userID]);
 
@@ -49,7 +62,7 @@ export async function setUsername(req: Request, res: Response) {
             await db.prepare('run', `UPDATE "userNames" SET "userName" = ? WHERE "userID" = ?`, [userName, userID]);
         } else {
             //add to the db
-            await db.prepare('run', `INSERT INTO "userNames" VALUES(?, ?)`, [userID, userName]);
+            await db.prepare('run', `INSERT INTO "userNames"("userID", "userName") VALUES(?, ?)`, [userID, userName]);
         }
 
         res.sendStatus(200);

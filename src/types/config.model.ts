@@ -6,8 +6,9 @@ export interface SBSConfig {
     mockPort?: number;
     globalSalt: string;
     adminUserID: string;
-    youtubeAPIKey?: string;
+    newLeafURLs?: string[];
     discordReportChannelWebhookURL?: string;
+    discordFailedReportChannelWebhookURL?: string;
     discordFirstTimeSubmissionsWebhookURL?: string;
     discordCompletelyIncorrectReportWebhookURL?: string;
     neuralBlockURL?: string;

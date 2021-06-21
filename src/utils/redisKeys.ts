@@ -1,8 +1,9 @@
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { Logger } from "../utils/logger";
+import { UserID } from "../types/user.model";
+import { Logger } from "./logger";
 
-export function skipSegmentsKey(videoID: VideoID): string {
-    return "segments-" + videoID;
+export function skipSegmentsKey(videoID: VideoID, service: Service): string {
+    return "segments." + service + ".videoID." + videoID;
 } 
 
 export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
@@ -11,3 +12,7 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
     
     return "segments." + service + "." + hashedVideoIDPrefix;
 } 
+
+export function reputationKey(userID: UserID): string {
+    return "reputation.user." + userID;
+}

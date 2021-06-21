@@ -1,6 +1,7 @@
 import {config} from '../config';
 import {Logger} from '../utils/logger';
 import fetch from 'node-fetch';
+import AbortController from "abort-controller";
 
 function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
@@ -30,7 +31,8 @@ function dispatchEvent(scope: string, data: any): void {
     let webhooks = config.webhooks;
     if (webhooks === undefined || webhooks.length === 0) return;
     Logger.debug("Dispatching webhooks");
-    webhooks.forEach(webhook => {
+
+    for (const webhook of webhooks) {
         let webhookURL = webhook.url;
         let authKey = webhook.key;
         let scopes = webhook.scopes || [];
@@ -43,13 +45,13 @@ function dispatchEvent(scope: string, data: any): void {
                 "Authorization": authKey,
                 "Event-Type": scope, // Maybe change this in the future?
                 'Content-Type': 'application/json'
-            },
+            }
         })
         .catch(err => {
             Logger.warn('Couldn\'t send webhook to ' + webhook.url);
             Logger.warn(err);
         });
-    });
+    }
 }
 
 export {

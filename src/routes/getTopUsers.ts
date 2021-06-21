@@ -21,17 +21,18 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
             SUM(CASE WHEN category = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
             SUM(CASE WHEN category = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
             SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
-            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic", `;
+            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
+            SUM(CASE WHEN category = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview", `;
     }
 
     const rows = await db.prepare('all', `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
         SUM(((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views") as "minutesSaved",
         SUM("votes") as "userVotes", ` +
         additionalFields +
-        `IFNULL("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
+        `COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "privateDB"."shadowBannedUsers" ON "sponsorTimes"."userID"="privateDB"."shadowBannedUsers"."userID"
-        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "privateDB"."shadowBannedUsers"."userID" IS NULL
-        GROUP BY IFNULL("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
+        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
+        GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
         ORDER BY ? DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, sortBy]);
 
     for (let i = 0; i < rows.length; i++) {
@@ -48,6 +49,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
                 rows[i].categorySumInteraction,
                 rows[i].categorySelfpromo,
                 rows[i].categoryMusicOfftopic,
+                rows[i].categorySumPreview
             ];
         }
     }
@@ -70,10 +72,6 @@ export async function getTopUsers(req: Request, res: Response) {
         res.sendStatus(400);
         return;
     }
-
-    //TODO: remove. This is broken for now
-    res.status(200).send();
-    return;
 
     //setup which sort type to use
     let sortBy = '';

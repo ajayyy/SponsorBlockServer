@@ -1,14 +1,14 @@
 import fetch from 'node-fetch';
 import * as utils from  '../utils';
 import { getHash } from '../../src/utils/getHash';
-import { db, privateDB } from '../../src/databases/databases';
+import { db } from '../../src/databases/databases';
 
 describe('unBan', () => {
   before(async () => {
     const insertShadowBannedUserQuery = 'INSERT INTO "shadowBannedUsers" VALUES(?)';
-    await privateDB.prepare("run", insertShadowBannedUserQuery, ['testMan-unBan']);
-    await privateDB.prepare("run", insertShadowBannedUserQuery, ['testWoman-unBan']);
-    await privateDB.prepare("run", insertShadowBannedUserQuery, ['testEntity-unBan']);
+    await db.prepare("run", insertShadowBannedUserQuery, ['testMan-unBan']);
+    await db.prepare("run", insertShadowBannedUserQuery, ['testWoman-unBan']);
+    await db.prepare("run", insertShadowBannedUserQuery, ['testEntity-unBan']);
 
     const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
     await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-unBan")]);

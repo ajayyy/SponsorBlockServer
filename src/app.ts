@@ -25,9 +25,11 @@ import {endpoint as getSkipSegments} from './routes/getSkipSegments';
 import {userCounter} from './middleware/userCounter';
 import {loggerMiddleware} from './middleware/logger';
 import {corsMiddleware} from './middleware/cors';
+import {apiCspMiddleware} from './middleware/apiCsp';
 import {rateLimitMiddleware} from './middleware/requestRateLimit';
 import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
-
+import {endpoint as getSegmentInfo} from './routes/getSegmentInfo';
+import {postClearCache} from './routes/postClearCache';
 
 export function createServer(callback: () => void) {
     // Create a service (the app object is just a callback).
@@ -36,6 +38,7 @@ export function createServer(callback: () => void) {
     //setup CORS correctly
     app.use(corsMiddleware);
     app.use(loggerMiddleware);
+    app.use("/api/", apiCspMiddleware);
     app.use(express.json());
 
     if (config.userCounterURL) app.use(userCounter);
@@ -110,6 +113,7 @@ function setupRoutes(app: Express) {
     app.get('/api/getTotalStats', getTotalStats);
 
     app.get('/api/getUserInfo', getUserInfo);
+    app.get('/api/userInfo', getUserInfo);
 
     //send out a formatted time saved total
     app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
@@ -129,6 +133,12 @@ function setupRoutes(app: Express) {
 
     //get if user is a vip
     app.post('/api/segmentShift', postSegmentShift);
+
+    //get segment info
+    app.get('/api/segmentInfo', getSegmentInfo);
+
+    //clear cache as VIP
+    app.post('/api/clearCache', postClearCache)
 
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));

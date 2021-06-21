@@ -1,69 +1,51 @@
-/*
-YouTubeAPI.videos.list({
-  part: "snippet",
-  id: videoID
-}, function (err, data) {});
- */
-
-// https://developers.google.com/youtube/v3/docs/videos
-
+import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model";
 
 export class YouTubeApiMock {
-    static listVideos(videoID: string, callback: (ytErr: any, data: any) => void) {
+    static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
         const obj = {
             id: videoID
         };
 
         if (obj.id === "knownWrongID") {
-            callback(undefined, {
-                pageInfo: {
-                    totalResults: 0,
-                },
-                items: [],
-            });
+            return {
+                err: "No video found"
+            };
         }
+
         if (obj.id === "noDuration") {
-            callback(undefined, {
-                pageInfo: {
-                    totalResults: 1,
-                },
-                items: [
-                    {
-                        contentDetails: {
-                            duration: "PT0S",
+            return {
+                err: null,
+                data: {
+                    title: "Example Title",
+                    lengthSeconds: 0,
+                    videoThumbnails: [
+                        {
+                           quality: "maxres",
+                           url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           width: 1280,
+                           height: 720
                         },
-                        snippet: {
-                            title: "Example Title",
-                            thumbnails: {
-                                maxres: {
-                                    url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                                },
-                            },
-                        },
-                    },
-                ],
-            });
+                    ]
+                } as APIVideoData
+            };
         } else {
-            callback(undefined, {
-                pageInfo: {
-                    totalResults: 1,
-                },
-                items: [
-                    {
-                        contentDetails: {
-                            duration: "PT1H23M30S",
+            return {
+                err: null,
+                data: {
+                    title: "Example Title",
+                    lengthSeconds: 4980,
+                    videoThumbnails: [
+                        {
+                           quality: "maxres",
+                           url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                           width: 1280,
+                           height: 720
                         },
-                        snippet: {
-                            title: "Example Title",
-                            thumbnails: {
-                                maxres: {
-                                    url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                                },
-                            },
-                        },
-                    },
-                ],
-            });
+                    ]
+                } as APIVideoData
+            };
         }
     }
 }
