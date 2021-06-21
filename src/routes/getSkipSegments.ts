@@ -268,7 +268,9 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
     const categories = req.query.categories
         ? JSON.parse(req.query.categories as string)
         : req.query.category
-            ? [req.query.category]
+            ? Array.isArray(req.query.category)
+                ? req.query.category
+                : [req.query.category]
             : ['sponsor'];
     if (!Array.isArray(categories)) {
         res.status(400).send("Categories parameter does not match format requirements.");

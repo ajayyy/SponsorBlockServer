@@ -309,4 +309,22 @@ describe('getSegmentInfo', () => {
         })
         .catch(err => ("couldn't call endpoint"));
     });
+
+    it('Should be able to retreive multiple segments with multiple parameters', (done: Done) => {
+        fetch(getbaseURL() + `/api/segmentInfo?UUID=${upvotedID}&UUID=${downvotedID}`)
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 2 &&
+                    (data[0].videoID === "upvoted" && data[0].votes === 2) &&
+                    (data[1].videoID === "downvoted" && data[1].votes === -2)) {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(err => "Couldn't call endpoint");
+    });
 });
