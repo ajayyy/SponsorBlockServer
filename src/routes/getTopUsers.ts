@@ -30,10 +30,10 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
         SUM("votes") as "userVotes", ` +
         additionalFields +
         `COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
-        LEFT JOIN "privateDB"."shadowBannedUsers" ON "sponsorTimes"."userID"="privateDB"."shadowBannedUsers"."userID"
+        LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
         WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
         GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING "userVotes" > 20
-        ORDER BY ? DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, sortBy]);
+        ORDER BY "${sortBy}" DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds]);
 
     for (let i = 0; i < rows.length; i++) {
         userNames[i] = rows[i].userName;
