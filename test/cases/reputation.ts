@@ -31,7 +31,7 @@ describe('reputation', () => {
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-uuid-6', '${getHash(userIDHighDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         await db.prepare("run", startOfQuery + `('${videoID}', 1, 11, 0, 0, 'reputation-1-uuid-7', '${getHash(userIDHighDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
 
-        // Each downvote is on a different video (ie. they didn't resubmit to fix their downvote)
+        // First video is considered a normal downvote, second is considered a self-downvote (ie. they didn't resubmit to fix their downvote)
         await db.prepare("run", startOfQuery + `('${videoID}A', 1, 11, 2, 0, 'reputation-1-1-uuid-0', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
         // Different category, same video
         await db.prepare("run", startOfQuery + `('${videoID}A', 1, 11, -2, 0, 'reputation-1-1-uuid-1', '${getHash(userIDHighNonSelfDownvotes)}', 1606240000000, 50, 'intro', 'YouTube', 100, 0, 0, '${getHash(videoID, 1)}')`);
