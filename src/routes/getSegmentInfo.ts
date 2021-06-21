@@ -29,10 +29,12 @@ async function getSegmentsByUUID(UUIDs: SegmentUUID[]): Promise<DBSegment[]> {
 async function handleGetSegmentInfo(req: Request, res: Response) {
     // If using params instead of JSON, only one UUID can be pulled
     let UUIDs = req.query.UUIDs
-    ? JSON.parse(req.query.UUIDs as string)
-    : req.query.UUID
-        ? [req.query.UUID]
-        : null;
+        ? JSON.parse(req.query.UUIDs as string)
+        : req.query.UUID
+            ? Array.isArray(req.query.UUID)
+                ? req.query.UUID
+                : [req.query.UUID]
+            : null;
     // deduplicate with set
     UUIDs = [ ...new Set(UUIDs)];
     // if more than 10 entries, slice
