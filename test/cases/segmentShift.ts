@@ -57,13 +57,12 @@ describe('segmentShift', function () {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
     });
 
-    beforeEach(function (done: Done) {
+    beforeEach(async function () {
         // resetting startTime and endTime to reuse them
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid01', 0, 10);
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid02', 60, 90);
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid03', 40, 45);
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid04', 120, 140);
-        done();
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid01', 0, 10);
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid02', 60, 90);
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid03', 40, 45);
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid04', 120, 140);
     });
 
     it('Reject none VIP user', function (done: Done) {

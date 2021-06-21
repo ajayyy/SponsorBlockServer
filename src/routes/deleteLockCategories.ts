@@ -35,7 +35,7 @@ export async function deleteLockCategoriesEndpoint(req: Request, res: Response) 
         return;
     }
 
-    deleteLockCategories(videoID, categories);  
+    await deleteLockCategories(videoID, categories);  
 
     res.status(200).json({message: 'Removed lock categories entrys for video ' + videoID});
 }

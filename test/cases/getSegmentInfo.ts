@@ -20,21 +20,24 @@ const oldID =           "a0000000-0000-0000-0000-000000000000"
 
 describe('getSegmentInfo', () => {
     before(async () => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES';
-        await db.prepare("run", startOfQuery + "('upvoted', 1, 10, 2, 0, '" + upvotedID+ "', 'testman', 0, 50, 'sponsor', 'YouTube', 100, 0, 0, '" + getHash('upvoted', 1) + "')");
-        await db.prepare("run", startOfQuery + "('downvoted', 1, 10, -2, 0, '" + downvotedID+ "', 'testman', 0, 50, 'sponsor', 'YouTube', 120, 0, 0, '" + getHash('downvoted', 1) + "')");
-        await db.prepare("run", startOfQuery + "('locked-up', 1, 10, 2, 1, '"+ lockedupID +"', 'testman', 0, 50, 'sponsor', 'YouTube', 101, 0, 0, '" + getHash('locked-up', 1) + "')");
-        await db.prepare("run", startOfQuery + "('infvotes', 1, 10, 100000, 0, '"+infvotesID+"', 'testman', 0, 50, 'sponsor', 'YouTube', 101, 0, 0, '" + getHash('infvotes', 1) + "')");
-        await db.prepare("run", startOfQuery + "('hidden', 1, 10, 2, 0, '"+hiddenID+"', 'testman', 0, 50, 'sponsor', 'YouTube', 140, 1, 0, '" + getHash('hidden', 1) + "')");
-        await db.prepare("run", startOfQuery + "('shadowhidden', 1, 10, 2, 0, '"+shadowhiddenID+"', 'testman', 0, 50, 'sponsor', 'YouTube', 140, 0, 1, '" + getHash('shadowhidden', 1) + "')");
-        await db.prepare("run", startOfQuery + "('locked-down', 1, 10, -2, 1, '"+lockeddownID+"', 'testman', 0, 50, 'sponsor', 'YouTube', 200, 0, 0, '" + getHash('locked-down', 1) + "')");
-        await db.prepare("run", startOfQuery + "('oldID', 1, 10, 1, 0, '"+oldID+"', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('oldID', 1) + "')");
-
-        await db.prepare("run", startOfQuery + "('filler', 1, 2, 1, 0, '"+fillerID1+"', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('filler', 1) + "')");
-        await db.prepare("run", startOfQuery + "('filler', 2, 3, 1, 0, '"+fillerID2+"', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('filler', 1) + "')");
-        await db.prepare("run", startOfQuery + "('filler', 3, 4, 1, 0, '"+fillerID3+"', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('filler', 1) + "')");
-        await db.prepare("run", startOfQuery + "('filler', 4, 5, 1, 0, '"+fillerID4+"', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('filler', 1) + "')");
-        await db.prepare("run", startOfQuery + "('filler', 5, 6, 1, 0, '"+fillerID5+"', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('filler', 1) + "')");
+        let insertQuery = `INSERT INTO 
+            "sponsorTimes"("videoID", "startTime", "endTime", "votes", "locked",
+            "UUID", "userID", "timeSubmitted", "views", "category", "service",
+            "videoDuration", "hidden", "shadowHidden", "hashedVideoID") 
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await db.prepare("run", insertQuery, ['upvoted', 1, 10, 2, 0, upvotedID, 'testman', 0, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash('upvoted', 1)]);
+        await db.prepare("run", insertQuery, ['downvoted', 1, 10, -2, 0, downvotedID, 'testman', 0, 50, 'sponsor', 'YouTube', 120, 0, 0, getHash('downvoted', 1)]);
+        await db.prepare("run", insertQuery, ['locked-up', 1, 10, 2, 1, lockedupID, 'testman', 0, 50, 'sponsor', 'YouTube', 101, 0, 0, getHash('locked-up', 1)]);
+        await db.prepare("run", insertQuery, ['infvotes', 1, 10, 100000, 0, infvotesID, 'testman', 0, 50, 'sponsor', 'YouTube', 101, 0, 0, getHash('infvotes', 1)]);
+        await db.prepare("run", insertQuery, ['hidden', 1, 10, 2, 0, hiddenID, 'testman', 0, 50, 'sponsor', 'YouTube', 140, 1, 0, getHash('hidden', 1)]);
+        await db.prepare("run", insertQuery, ['shadowhidden', 1, 10, 2, 0, shadowhiddenID, 'testman', 0, 50, 'sponsor', 'YouTube', 140, 0, 1, getHash('shadowhidden', 1)]);
+        await db.prepare("run", insertQuery, ['locked-down', 1, 10, -2, 1, lockeddownID, 'testman', 0, 50, 'sponsor', 'YouTube', 200, 0, 0, getHash('locked-down', 1)]);
+        await db.prepare("run", insertQuery, ['oldID', 1, 10, 1, 0, oldID, 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('oldID', 1)]);
+        await db.prepare("run", insertQuery, ['filler', 1, 2, 1, 0, fillerID1, 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('filler', 1)]);
+        await db.prepare("run", insertQuery, ['filler', 2, 3, 1, 0, fillerID2, 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('filler', 1)]);
+        await db.prepare("run", insertQuery, ['filler', 3, 4, 1, 0, fillerID3, 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('filler', 1)]);
+        await db.prepare("run", insertQuery, ['filler', 4, 5, 1, 0, fillerID4, 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('filler', 1)]);
+        await db.prepare("run", insertQuery, ['filler', 5, 6, 1, 0, fillerID5, 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('filler', 1)]);
     });
 
     it('Should be able to retreive upvoted segment', (done: Done) => {
@@ -267,8 +270,9 @@ describe('getSegmentInfo', () => {
         .catch(err => ("couldn't call endpoint"));
     });
 
-    it('Should cut off array at 10', (done: Done) => {
-        const filledIDArray = `["${upvotedID}", "${downvotedID}", "${lockedupID}", "${shadowhiddenID}", "${lockeddownID}", "${hiddenID}", "${fillerID1}", "${fillerID2}", "${fillerID3}", "${fillerID4}", "${fillerID5}"]`
+    it('Should cut off array at 10', function(done: Done) {
+        this.timeout(10000);
+        const filledIDArray = `["${upvotedID}", "${downvotedID}", "${lockedupID}", "${shadowhiddenID}", "${lockeddownID}", "${hiddenID}", "${fillerID1}", "${fillerID2}", "${fillerID3}", "${fillerID4}", "${fillerID5}"]`;
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=${filledIDArray}`)
         .then(async res => {
             if (res.status !== 200) done("Status code was: " + res.status);

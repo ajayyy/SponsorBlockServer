@@ -296,7 +296,7 @@ describe('lockCategoriesRecords', () => {
         .catch(err => done(err));
     });
 
-    it('Should return 400 object categories)', (done: Done) => {
+    it('Should return 400 object categories', (done: Done) => {
         let json = {
             videoID: 'test',
             userID: 'test',

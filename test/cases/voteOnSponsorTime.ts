@@ -20,7 +20,7 @@ describe('voteOnSponsorTime', () => {
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
 
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertSponsorTimeQuery, ['vote-testtesttest', 1, 11, 2, 'vote-uuid-0', 'testman', 0, 50, 'sponsor', 0, getHash('vote-testtesttest', 1)]);
         await db.prepare("run", insertSponsorTimeQuery, ['vote-testtesttest2', 1, 11, 2, 'vote-uuid-1', 'testman', 0, 50, 'sponsor', 0, getHash('vote-testtesttest2', 1)]);
         await db.prepare("run", insertSponsorTimeQuery, ['vote-testtesttest2', 1, 11, 10, 'vote-uuid-1.5', 'testman', 0, 50, 'outro', 0, getHash('vote-testtesttest2', 1)]);

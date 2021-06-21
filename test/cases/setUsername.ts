@@ -24,7 +24,7 @@ async function addUsername(userID: string, userName: string, locked = 0) {
 }
 
 async function getUsername(userID: string) {
-    const row = await db.prepare('get', 'SELECT "userName" FROM "userNames" WHERE userID = ?', [userID]);
+    const row = await db.prepare('get', 'SELECT "userName" FROM "userNames" WHERE "userID" = ?', [userID]);
     if (!row) {
         return null;
     }
