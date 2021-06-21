@@ -5,19 +5,18 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getSkipSegments', () => {
     before(async () => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES';
-        await db.prepare("run", startOfQuery + "('testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 'YouTube', 100, 0, 0, '" + getHash('testtesttest', 1) + "')");
-        await db.prepare("run", startOfQuery + "('testtesttest2', 1, 11, 2, 0, '1-uuid-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 120, 0, 0, '" + getHash('testtesttest2', 1) + "')");
-        await db.prepare("run", startOfQuery + "('testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 'YouTube', 101, 0, 0, '" + getHash('testtesttest', 1) + "')");
-        await db.prepare("run", startOfQuery + "('testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 'YouTube', 140, 0, 0, '" + getHash('testtesttest,test', 1) + "')");
-        await db.prepare("run", startOfQuery + "('test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 200, 0, 0, '" + getHash('test3', 1) + "')");
-        await db.prepare("run", startOfQuery + "('test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, '" + getHash('test3', 1) + "')");
-        await db.prepare("run", startOfQuery + "('multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 'YouTube', 400, 0, 0, '" + getHash('multiple', 1) + "')");
-        await db.prepare("run", startOfQuery + "('multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'YouTube', 400, 0, 0, '" + getHash('multiple', 1) + "')");
-        await db.prepare("run", startOfQuery + "('locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'YouTube', 230, 0, 0, '" + getHash('locked', 1) + "')");
-        await db.prepare("run", startOfQuery + "('locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'YouTube', 190, 0, 0, '" + getHash('locked', 1) + "')");
-        await db.prepare("run", startOfQuery + "('onlyHiddenSegments', 20, 34, 100000, 0, 'onlyHiddenSegments', 'testman', 0, 50, 'sponsor', 'YouTube', 190, 1, 0, '" + getHash('onlyHiddenSegments', 1) + "')");
-
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ['testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
+        await db.prepare("run", query, ['testtesttest2', 1, 11, 2, 0, '1-uuid-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 120, 0, 0, getHash('testtesttest2', 1)]);
+        await db.prepare("run", query, ['testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 'YouTube', 101, 0, 0, getHash('testtesttest', 1)]);
+        await db.prepare("run", query, ['testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 'YouTube', 140, 0, 0, getHash('testtesttest,test', 1)]);
+        await db.prepare("run", query, ['test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 200, 0, 0, getHash('test3', 1)]);
+        await db.prepare("run", query, ['test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('test3', 1)]);
+        await db.prepare("run", query, ['multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 'YouTube', 400, 0, 0, getHash('multiple', 1)]);
+        await db.prepare("run", query, ['multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'YouTube', 500, 0, 0, getHash('multiple', 1)]);
+        await db.prepare("run", query, ['locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'YouTube', 230, 0, 0, getHash('locked', 1)]);
+        await db.prepare("run", query, ['locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'YouTube', 190, 0, 0, getHash('locked', 1)]);
+        await db.prepare("run", query, ['onlyHiddenSegments', 20, 34, 100000, 0, 'onlyHiddenSegments', 'testman', 0, 50, 'sponsor', 'YouTube', 190, 1, 0, getHash('onlyHiddenSegments', 1)]);
         return;
     });
 

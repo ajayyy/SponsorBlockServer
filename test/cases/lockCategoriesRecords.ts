@@ -6,19 +6,21 @@ import {db} from '../../src/databases/databases';
 
 describe('lockCategoriesRecords', () => {
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("VIPUser-lockCategories") + "')");
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
+        await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-lockCategories")]);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id', 'intro')");
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'sponsor']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'intro']);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id-1', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'no-segments-video-id-1', 'intro')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'lockCategoryVideo', 'sponsor')");
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'sponsor']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'intro']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'lockCategoryVideo', 'sponsor']);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record', 'sponsor')");
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record', 'sponsor']);
  
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record-1', 'sponsor')");
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES ('` + getHash("VIPUser-lockCategories") + "', 'delete-record-1', 'intro')");
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'sponsor']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'intro']);
     });
 
     it('Should update the database version when starting the application', async () => {
@@ -65,7 +67,6 @@ describe('lockCategoriesRecords', () => {
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -97,14 +98,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
                 if (result.length !== 4) {
-                    console.log(result);
                     done("Expected 4 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -131,14 +130,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
                 if (result.length !== 1) {
-                    console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -165,14 +162,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
                 if (result.length !== 1) {
-                    console.log(result);
                     done("Expected 1 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -199,14 +194,12 @@ describe('lockCategoriesRecords', () => {
             if (res.status === 200) {
                 let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
                 if (result.length !== 0) {
-                    console.log(result);
                     done("Expected 0 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
                 const body = await res.text();
-                console.log(body);
                 done("Status code was " + res.status);
             }
         })
@@ -303,7 +296,7 @@ describe('lockCategoriesRecords', () => {
         .catch(err => done(err));
     });
 
-    it('Should return 400 object categories)', (done: Done) => {
+    it('Should return 400 object categories', (done: Done) => {
         let json = {
             videoID: 'test',
             userID: 'test',

@@ -1,8 +1,18 @@
 import { Logger } from '../utils/logger';
 import { IDatabase, QueryType } from './IDatabase';
-import { Client, Pool } from 'pg';
+import { Client, Pool, types } from 'pg';
 
 import fs from "fs";
+
+// return numeric (pg_type oid=1700) as float
+types.setTypeParser(1700, function(val) {
+    return parseFloat(val);
+});
+
+// return int8 (pg_type oid=20) as int
+types.setTypeParser(20, function(val) {
+  return parseInt(val, 10);
+});
 
 export class Postgres implements IDatabase {
     private pool: Pool;
@@ -51,31 +61,10 @@ export class Postgres implements IDatabase {
             case 'get': {
                 const value = queryResult.rows[0];
                 Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
-                if (value) {
-                    for (const [key, v] of Object.entries(value)) {
-                        if (!isNaN(v as any)) {
-                            value[key] = parseFloat(v as string)
-                        }
-                    }
-                }
-
-                Logger.debug(`result (postgres): ${value}`);
                 return value;
             }
             case 'all': {
                 let values = queryResult.rows;
-                if (values) {
-                    values = values.map((row) => {
-                        for (const [key, v] of Object.entries(row)) {
-                            if (!isNaN(v as any)) {
-                                row[key] = parseFloat(v as string)
-                            }
-                        }
-
-                        return row;
-                    });
-                }
-
                 Logger.debug(`result (postgres): ${values}`);
                 return values;
             }

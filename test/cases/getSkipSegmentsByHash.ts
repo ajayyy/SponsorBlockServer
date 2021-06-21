@@ -12,16 +12,15 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('getSegmentsByHash', () => {
     before(async () => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "service", "hidden", "shadowHidden", "hashedVideoID") VALUES';
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 0, 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'YouTube', 0, 0, '" + getHash('getSegmentsByHash-0', 1) + "')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'fdaffnoMatchHash')"); // hash = fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910
-        await db.prepare("run", startOfQuery + "('getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, '" + getHash('getSegmentsByHash-1', 1) + "')"); // hash = 3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b
-        await db.prepare("run", startOfQuery + "('onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'YouTube', 1, 0, '" + getHash('onlyHidden', 1) + "')"); // hash = f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3
-        await db.prepare("run", startOfQuery + "('highlightVid', 60, 60, 2, 'highlightVid-1', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, '" + getHash('highlightVid', 1) + "')"); // hash = c962d387a9e50170c9118405d20b1081cee8659cd600b856b511f695b91455cb
-        await db.prepare("run", startOfQuery + "('highlightVid', 70, 70, 2, 'highlightVid-2', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, '" + getHash('highlightVid', 1) + "')"); // hash = c962d387a9e50170c9118405d20b1081cee8659cd600b856b511f695b91455cb
-
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "service", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'fdaffnoMatchHash']);
+        await db.prepare("run", query, ['getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, '3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b']);
+        await db.prepare("run", query, ['onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'YouTube', 1, 0, 'f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3']);
+        await db.prepare("run", query, ['highlightVid', 60, 60, 2, 'highlightVid-1', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
+        await db.prepare("run", query, ['highlightVid', 70, 70, 2, 'highlightVid-2', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
     });
 
     it('Should be able to get a 200', (done: Done) => {

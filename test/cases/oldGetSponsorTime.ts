@@ -2,25 +2,12 @@ import fetch from 'node-fetch';
 import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
-/*
- *CREATE TABLE IF NOT EXISTS "sponsorTimes" (
-	"videoID"	TEXT NOT NULL,
-	"startTime"	REAL NOT NULL,
-	"endTime"	REAL NOT NULL,
-	"votes"	INTEGER NOT NULL,
-	"UUID"	TEXT NOT NULL UNIQUE,
-	"userID"	TEXT NOT NULL,
-	"timeSubmitted"	INTEGER NOT NULL,
-	"views"	INTEGER NOT NULL,
-	"shadowHidden"	INTEGER NOT NULL
-);
- */
 
 describe('getVideoSponsorTime (Old get method)', () => {
-    before(() => {
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
-        db.prepare("run", startOfQuery + "('old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest', 1) + "')");
-        db.prepare("run", startOfQuery + "('old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0, '" + getHash('old-testtesttest,test', 1) + "')");
+    before(async () => {
+        const insertSponsorTimes = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSponsorTimes, ['old-testtesttest', 1, 11, 2, 'uuid-0', 'testman', 0, 50, 'sponsor', 0, getHash('old-testtesttest', 1)]);
+        await db.prepare("run", insertSponsorTimes, ['old-testtesttest,test', 1, 11, 2, 'uuid-1', 'testman', 0, 50, 'sponsor', 0, getHash('old-testtesttest,test', 1)]);
     });
 
     it('Should be able to get a time', (done: Done) => {

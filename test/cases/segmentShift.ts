@@ -12,12 +12,10 @@ async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: numb
         shadowHidden = 0,
         hashedVideoID = `hash_${UUID}`;
     await db.prepare("run", `INSERT INTO
-    "sponsorTimes" ("videoID", "startTime", "endTime", votes, "UUID",
-    "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID")
-  VALUES
-    ('${videoID}', ${startTime}, ${endTime}, ${votes}, '${UUID}',
-    '${userID}', ${timeSubmitted}, ${views}, '${category}', ${shadowHidden}, '${hashedVideoID}')
-  `);
+        "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID",
+        "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID")
+    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID]);
 }
 
 async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
@@ -56,16 +54,15 @@ describe('segmentShift', function () {
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid02', 'sponsor');
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid03', 'interaction');
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid04', 'outro');
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('${vipUserID}')`);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
     });
 
-    beforeEach(function (done: Done) {
+    beforeEach(async function () {
         // resetting startTime and endTime to reuse them
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid01', 0, 10);
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid02', 60, 90);
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid03', 40, 45);
-        dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid04', 120, 140);
-        done();
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid01', 0, 10);
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid02', 60, 90);
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid03', 40, 45);
+        await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid04', 120, 140);
     });
 
     it('Reject none VIP user', function (done: Done) {
