@@ -263,4 +263,33 @@ describe('getSkipSegments', () => {
         .catch(err => ("Couldn't call endpoint"));
     });
 
+    it('Should be able to get multiple categories with repeating parameters', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=sponsor&category=intro")
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const body = await res.text();
+                const data = JSON.parse(body);
+                if (data.length === 2) {
+
+                    let success = true;
+                    for (const segment of data) {
+                        if ((segment.segment[0] !== 20 || segment.segment[1] !== 33
+                            || segment.category !== "intro" || segment.UUID !== "1-uuid-2") &&
+                            (segment.segment[0] !== 1 || segment.segment[1] !== 11
+                                || segment.category !== "sponsor" || segment.UUID !== "1-uuid-0")) {
+                            success = false;
+                            break;
+                        }
+                    }
+
+                    if (success) done();
+                    else done("Received incorrect body: " + body);
+                } else {
+                    done("Received incorrect body: " + body);
+                }
+            }
+        })
+        .catch(err => ("Couldn't call endpoint"));
+    });
 });
