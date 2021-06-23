@@ -1,9 +1,10 @@
-name: Docker Image CI
+name: PostgreSQL CI
 
 on: [push, pull_request]
 
 jobs:
   build:
+    name: Run Tests with PostgreSQL
     runs-on: ubuntu-latest
 
     steps:
@@ -12,7 +13,7 @@ jobs:
         env:
           PG_USER: ci_db_user
           PG_PASS: ci_db_pass
-        run: docker-compose up -d
+        run: docker-compose -f docker/docker-compose-ci.yml up -d
       - name: Sleep
         uses: jakejarvis/wait-action@master
         with:
