@@ -23,6 +23,12 @@ async function init() {
 
     await initDb();
 
+    const dbMode = config.mysql ? 'mysql'
+        : config.postgres ? 'postgres'
+        : 'sqlite'
+    // print database mode
+    console.log('Database Mode: ' + dbMode)
+
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
 
