@@ -12,6 +12,9 @@ import { Logger } from '../utils/logger';
 
 export function addUnlistedVideo(req: Request, res: Response) {
     const videoID = req.body.videoID;
+    const year = req.body.year || 0;
+    const views = req.body.views || 0;
+    const channelID = req.body.channelID || "Unknown";
 
     if (videoID === undefined || typeof(videoID) !== "string" || videoID.length !== 11) {
         res.status(400).send("Invalid parameters");
@@ -20,7 +23,7 @@ export function addUnlistedVideo(req: Request, res: Response) {
 
     try {
         const timeSubmitted = Date.now();
-        db.prepare('run', `INSERT INTO "unlistedVideos" ("videoID", "timeSubmitted") values (?, ?)`, [videoID, timeSubmitted]);
+        db.prepare('run', `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted") values (?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted]);
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);
