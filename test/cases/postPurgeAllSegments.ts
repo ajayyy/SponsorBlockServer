@@ -19,11 +19,11 @@ async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: numb
     [videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID, hidden]);
 }
 
-async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string) {
+async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string, expectdHidden: number) {
     let seg = await db.prepare('get', `SELECT "hidden", "UUID" FROM "sponsorTimes" WHERE "videoId" = ?`, [videoId]);
     for (let i = 0, len = seg.length; i < len; i++) {
-        if (seg.hidden !== 1) {
-            return `${seg.UUID} hidden expected to be 1 but found ${seg.hidden}`;
+        if (seg.hidden !== expectdHidden) {
+            return `${seg.UUID} hidden expected to be ${expectdHidden} but found ${seg.hidden}`;
         }
     }
     return;
@@ -37,14 +37,15 @@ describe('postPurgeAllSegments', function () {
 
     before(async function () {
         // startTime and endTime get set in beforeEach for consistency
-        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 0, 'vsegpurgetest01uuid01', 'intro');
-        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 0, 'vsegpurgetest01uuid02', 'sponsor');
-        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 0, 'vsegpurgetest01uuid03', 'interaction');
-        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 0, 'vsegpurgetest01uuid04', 'outro');
+        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 1, 'vsegpurgetest01uuid01', 'intro');
+        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 2, 'vsegpurgetest01uuid02', 'sponsor');
+        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 3, 'vsegpurgetest01uuid03', 'interaction');
+        await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 4, 'vsegpurgetest01uuid04', 'outro');
+        await dbSponsorTimesAdd(db, 'vseg-not-purged01', 0, 5, 'vsegpurgetest01uuid05', 'outro');
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
     });
 
-    it('Reject none VIP user', function (done: Done) {
+    it('Reject non-VIP user', function (done: Done) {
         fetch(`${baseURL}${route}`, {
             method: 'POST',
             headers: {
@@ -74,7 +75,7 @@ describe('postPurgeAllSegments', function () {
         })
         .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
-            done(await dbSponsorTimesCompareExpect(db, 'vsegpurge01'));
+            done(await dbSponsorTimesCompareExpect(db, 'vsegpurge01', 1) || await dbSponsorTimesCompareExpect(db, 'vseg-not-purged01', 0));
         })
         .catch(err => done(err));
     });
