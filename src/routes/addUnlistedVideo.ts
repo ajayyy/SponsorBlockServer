@@ -12,7 +12,6 @@ import { Logger } from '../utils/logger';
 
 export function addUnlistedVideo(req: Request, res: Response) {
     const videoID = req.body.videoID;
-    console.log(req.body)
 
     if (videoID === undefined || typeof(videoID) !== "string" || videoID.length !== 11) {
         res.status(400).send("Invalid parameters");
