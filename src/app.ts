@@ -31,6 +31,7 @@ import dumpDatabase, {redirectLink} from './routes/dumpDatabase';
 import {endpoint as getSegmentInfo} from './routes/getSegmentInfo';
 import {postClearCache} from './routes/postClearCache';
 import { addUnlistedVideo } from './routes/addUnlistedVideo';
+import {postPurgeAllSegments} from './routes/postPurgeAllSegments';
 
 export function createServer(callback: () => void) {
     // Create a service (the app object is just a callback).
@@ -139,9 +140,12 @@ function setupRoutes(app: Express) {
     app.get('/api/segmentInfo', getSegmentInfo);
 
     //clear cache as VIP
-    app.post('/api/clearCache', postClearCache)
+    app.post('/api/clearCache', postClearCache);
 
-    app.post('/api/unlistedVideo', addUnlistedVideo)
+    //purge all segments for VIP
+    app.post('/api/purgeAllSegments', postPurgeAllSegments);
+
+    app.post('/api/unlistedVideo', addUnlistedVideo);
 
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
