@@ -1,11 +1,10 @@
-name: CI
+name: SQLite CI
 
 on: [push, pull_request]
 
 jobs:
-
   build:
-    name: Run Tests
+    name: Run Tests with SQLite
     runs-on: ubuntu-latest
 
     steps:
