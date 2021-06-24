@@ -158,4 +158,18 @@ describe('getUserInfo', () => {
         })
         .catch(err => ("couldn't call endpoint"));
     });
+
+    it('Should return zeroes if userid does not exist', (done: Done) => {
+        fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_null')
+        .then(async res => {
+            const data = await res.json();
+            for (var value in data) {
+                if (data[value] === null && value !== "lastSegmentID")  {
+                    done(`returned null for ${value}`)
+                }
+            }
+            done(); // pass
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
 });
