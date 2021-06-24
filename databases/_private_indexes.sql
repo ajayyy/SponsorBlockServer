@@ -17,13 +17,6 @@ CREATE INDEX IF NOT EXISTS "votes_userID"
     ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
 
--- shadowBannedUsers
-
-CREATE INDEX IF NOT EXISTS "shadowBannedUsers_index"
-    ON public."shadowBannedUsers" USING btree
-    ("userID" COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
-
 -- categoryVotes
 
 CREATE INDEX IF NOT EXISTS "categoryVotes_UUID"
