@@ -142,7 +142,10 @@ function setupRoutes(app: Express) {
     //clear cache as VIP
     app.post('/api/clearCache', postClearCache);
 
-    app.post('/api/unlistedVideo', addUnlistedVideo)
+    //purge all segments for VIP
+    app.post('/api/purgeAllSegments', postPurgeAllSegments);
+
+    app.post('/api/unlistedVideo', addUnlistedVideo);
 
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
@@ -153,7 +156,4 @@ function setupRoutes(app: Express) {
             res.sendFile("./databases/sponsorTimes.db", {root: "./"});
         });
     }
-
-    //purge all segments for VIP
-    app.post('/api/purgeAllSegments', postPurgeAllSegments);
 }
