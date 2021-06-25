@@ -11,6 +11,7 @@ describe('getUserID', () => {
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_03"), 'specific user 03']);
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_04"), 'repeating']);
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_05"), 'repeating']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_06"), getHash("getuserid_user_06")]);
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -25,6 +26,25 @@ describe('getUserID', () => {
 
     it('Should be able to get a 400 (No username parameter)', (done: Done) => {
         fetch(getbaseURL() + '/api/userID')
+        .then(res => {
+            if (res.status !== 400) done('non 400 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => done('couldn\'t call endpoint'));
+    });
+
+    it('Should be able to get a 200 (username is public id)', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username='+getHash("getuserid_user_06"))
+        .then(async res => {
+            const text = await res.text()
+            if (res.status !== 200) done('non 200 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => done('couldn\'t call endpoint'));
+    });
+
+    it('Should be able to get a 400 (username longer than 64 chars)', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username='+getHash("getuserid_user_06")+'0')
         .then(res => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass

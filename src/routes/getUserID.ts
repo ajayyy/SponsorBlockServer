@@ -5,7 +5,7 @@ import {Request, Response} from 'express';
 export async function getUserID(req: Request, res: Response) {
     let username = req.query.username as string;
 
-    if (username == undefined) {
+    if (username == undefined || username.length > 64) {
         //invalid request
         res.sendStatus(400);
         return;
