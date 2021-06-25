@@ -292,4 +292,21 @@ describe('getSkipSegments', () => {
         })
         .catch(err => ("Couldn't call endpoint"));
     });
+
+    it('Should be able to get, categories param overriding repeating category', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&categories=[\"sponsor\"]&category=intro")
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
+                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0") {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(err => ("Couldn't call endpoint"));
+    });
 });

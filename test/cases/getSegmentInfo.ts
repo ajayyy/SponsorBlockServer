@@ -331,4 +331,21 @@ describe('getSegmentInfo', () => {
         })
         .catch(err => "Couldn't call endpoint");
     });
+
+    it('Should not parse repeated UUID if UUIDs present', (done: Done) => {
+        fetch(getbaseURL() + `/api/segmentInfo?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=[\"${upvotedID}\"]`)
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 1 &&
+                    (data[0].videoID === "upvoted" && data[0].votes === 2)) {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(err => "Couldn't call endpoint");
+    });
 });
