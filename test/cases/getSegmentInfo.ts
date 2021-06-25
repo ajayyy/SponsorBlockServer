@@ -3,20 +3,20 @@ import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 
-const ENOENTID =        "0000000000000000000000000000000000000000000000000000000000000000"
-const upvotedID =       "a000000000000000000000000000000000000000000000000000000000000000"
-const downvotedID =     "b000000000000000000000000000000000000000000000000000000000000000"
-const lockedupID =      "c000000000000000000000000000000000000000000000000000000000000000"
-const infvotesID =      "d000000000000000000000000000000000000000000000000000000000000000"
-const shadowhiddenID =  "e000000000000000000000000000000000000000000000000000000000000000"
-const lockeddownID =    "f000000000000000000000000000000000000000000000000000000000000000"
-const hiddenID =        "1000000000000000000000000000000000000000000000000000000000000000"
-const fillerID1 =       "1100000000000000000000000000000000000000000000000000000000000000"
-const fillerID2 =       "1200000000000000000000000000000000000000000000000000000000000000"
-const fillerID3 =       "1300000000000000000000000000000000000000000000000000000000000000"
-const fillerID4 =       "1400000000000000000000000000000000000000000000000000000000000000"
-const fillerID5 =       "1500000000000000000000000000000000000000000000000000000000000000"
-const oldID =           "a0000000-0000-0000-0000-000000000000"
+const ENOENTID =        "0".repeat(64);
+const upvotedID =       "a"+"0".repeat(63);
+const downvotedID =     "b"+"0".repeat(63);
+const lockedupID =      "c"+"0".repeat(63);
+const infvotesID =      "d"+"0".repeat(63);
+const shadowhiddenID =  "e"+"0".repeat(63);
+const lockeddownID =    "f"+"0".repeat(63);
+const hiddenID =        "1"+"0".repeat(63);
+const fillerID1 =       "11"+"0".repeat(62);
+const fillerID2 =       "12"+"0".repeat(62);
+const fillerID3 =       "13"+"0".repeat(62);
+const fillerID4 =       "14"+"0".repeat(62);
+const fillerID5 =       "15"+"0".repeat(62);
+const oldID =           `${'0'.repeat(8)}-${'0000-'.repeat(3)}${'0'.repeat(12)}`;
 
 describe('getSegmentInfo', () => {
     before(async () => {

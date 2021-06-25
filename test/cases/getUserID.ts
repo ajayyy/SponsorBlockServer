@@ -12,6 +12,11 @@ describe('getUserID', () => {
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_04"), 'repeating']);
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_05"), 'repeating']);
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_06"), getHash("getuserid_user_06")]);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_07"), '0redos0']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_08"), '%redos%']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_09"), '_redos_']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_10"), 'redos\\%']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_11"), '\\\\\\']);
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -128,7 +133,7 @@ describe('getUserID', () => {
     });
 
     it('Should be able to get with public ID', (done: Done) => {
-        const userID = getHash("getuserid_user_06")
+        const userID = getHash("getuserid_user_06");
         fetch(getbaseURL() + '/api/userID?username='+userID)
         .then(async res => {
             if (res.status !== 200) {
@@ -150,7 +155,7 @@ describe('getUserID', () => {
     });
 
     it('Should be able to get with fuzzy public ID', (done: Done) => {
-        const userID = getHash("getuserid_user_06")
+        const userID = getHash("getuserid_user_06");
         fetch(getbaseURL() + '/api/userID?username='+userID.substr(10,60))
         .then(async res => {
             if (res.status !== 200) {
@@ -192,6 +197,105 @@ describe('getUserID', () => {
                     done(); // pass
                 }
             }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should avoid ReDOS with _', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=_redos_')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 1) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "_redos_") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_09")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should avoid ReDOS with %', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=%redos%')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 1) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "%redos%") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_08")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should return 404 if escaped backslashes present', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=%redos\\\\_')
+        .then(res => {
+            if (res.status !== 404) done('non 404 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should return 404 if backslashes present', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=\\%redos\\_')
+        .then(res => {
+            if (res.status !== 404) done('non 404 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should return user if just backslashes', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=\\\\\\')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 1) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "\\\\\\") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_11")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should not allow usernames more than 64 characters', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username='+'0'.repeat(65))
+        .then(res => {
+            if (res.status !== 400) done('non 400 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should not allow usernames less than 3 characters', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=aa')
+        .then(res => {
+            if (res.status !== 400) done('non 400 (' + res.status + ')');
+            else done(); // pass
         })
         .catch(err => ("couldn't call endpoint"));
     });

@@ -12,15 +12,17 @@ export async function getUserID(req: Request, res: Response) {
     }
     
     // escape [_ % \] to avoid ReDOS
-    userName = userName.replace('\\', '\\\\')
-        .replace('_', '\\_')
-        .replace('%', '\\%')
-    
+    userName = userName.replace(/\\/g, '\\\\')
+        .replace(/_/g, '\\_')
+        .replace(/%/g, '\\%');
+
     // add wildcard to variable
-    userName = `%${userName}%`
+    userName = `%${userName}%`;
+    // LIMIT to reduce overhead
+    // ESCAPE to escape LIKE wildcards
     try {
         let rows = await db.prepare('all', `SELECT "userName", "userID" FROM "userNames"
-            WHERE "userName" LIKE ? LIMIT 10`, [userName]);
+            WHERE "userName" LIKE ? ESCAPE '\\' LIMIT 10`, [userName]);
         if (rows.length === 0) {
             res.sendStatus(404);
             return;
