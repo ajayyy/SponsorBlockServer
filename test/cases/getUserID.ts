@@ -6,11 +6,11 @@ import {getHash} from '../../src/utils/getHash';
 describe('getUserID', () => {
     before(async () => {
         const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_01"), 'fuzzy user 01']);
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_02"), 'fuzzy user 02']);
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_03"), 'specific user 03']);
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_04"), 'repeating']);
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_05"), 'repeating']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_01"), 'fuzzy user 01']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_02"), 'fuzzy user 02']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_03"), 'specific user 03']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_04"), 'repeating']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_05"), 'repeating']);
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -43,7 +43,7 @@ describe('getUserID', () => {
                     done('Returned incorrect number of users "' + data.length + '"');
                 } else if (data[0].userName !== "fuzzy user 01") {
                     done('Returned incorrect username "' + data.userName + '"');
-                } else if (data[0].userID !== getHash("getuserinfo_user_01")) {
+                } else if (data[0].userID !== getHash("getuserid_user_01")) {
                     done('Returned incorrect userID "' + data.userID + '"');
                 } else {
                     done(); // pass
@@ -64,11 +64,11 @@ describe('getUserID', () => {
                     done('Returned incorrect number of users "' + data.length + '"');
                 } else if (data[0].userName !== "fuzzy user 01") {
                     done('Returned incorrect username "' + data.userName + '"');
-                } else if (data[0].userID !== getHash("getuserinfo_user_01")) {
+                } else if (data[0].userID !== getHash("getuserid_user_01")) {
                     done('Returned incorrect userID "' + data.userID + '"');
                 } else if (data[1].userName !== "fuzzy user 02") {
                     done('Returned incorrect username "' + data.userName + '"');
-                } else if (data[1].userID !== getHash("getuserinfo_user_02")) {
+                } else if (data[1].userID !== getHash("getuserid_user_02")) {
                     done('Returned incorrect userID "' + data.userID + '"');
                 } else {
                     done(); // pass
@@ -89,15 +89,15 @@ describe('getUserID', () => {
                     done('Returned incorrect number of users "' + data.length + '"');
                 } else if (data[0].userName !== "fuzzy user 01") {
                     done('Returned incorrect username "' + data.userName + '"');
-                } else if (data[0].userID !== getHash("getuserinfo_user_01")) {
+                } else if (data[0].userID !== getHash("getuserid_user_01")) {
                     done('Returned incorrect userID "' + data.userID + '"');
                 } else if (data[1].userName !== "fuzzy user 02") {
                     done('Returned incorrect username "' + data.userName + '"');
-                } else if (data[1].userID !== getHash("getuserinfo_user_02")) {
+                } else if (data[1].userID !== getHash("getuserid_user_02")) {
                     done('Returned incorrect userID "' + data.userID + '"');
                 } else if (data[2].userName !== "specific user 03") {
                     done('Returned incorrect username "' + data.userName + '"');
-                } else if (data[2].userID !== getHash("getuserinfo_user_03")) {
+                } else if (data[2].userID !== getHash("getuserid_user_03")) {
                     done('Returned incorrect userID "' + data.userID + '"');
                 } else {
                     done(); // pass
