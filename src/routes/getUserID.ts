@@ -1,37 +1,55 @@
 import {db} from '../databases/databases';
-import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
+import {UserID} from '../types/user.model';
 
-export async function getUserID(req: Request, res: Response) {
-    let userName = req.query.username as string;
-
-    if (userName == undefined || userName.length > 64 || userName.length < 3) {
-        //invalid request
-        res.sendStatus(400);
-        return;
-    }
-    
+function getFuzzyUserID(userName: String): Promise<[{userName: String, userID: UserID }]>  {
     // escape [_ % \] to avoid ReDOS
     userName = userName.replace(/\\/g, '\\\\')
         .replace(/_/g, '\\_')
         .replace(/%/g, '\\%');
-
-    // add wildcard to variable
-    userName = `%${userName}%`;
-    // LIMIT to reduce overhead
-    // ESCAPE to escape LIKE wildcards
+    userName = `%${userName}%`; // add wildcard to username
+    // LIMIT to reduce overhead | ESCAPE to escape LIKE wildcards
     try {
-        let rows = await db.prepare('all', `SELECT "userName", "userID" FROM "userNames"
-            WHERE "userName" LIKE ? ESCAPE '\\' LIMIT 10`, [userName]);
-        if (rows.length === 0) {
-            res.sendStatus(404);
-            return;
-        } else {
-            res.send(rows);
-        }
+        return db.prepare('all', `SELECT "userName", "userID" FROM "userNames" WHERE "userName"
+        LIKE ? ESCAPE '\\' LIMIT 10`, [userName])
     } catch (err) {
-        Logger.error(err);
+        return null;
+    }
+}
+
+function getExactUserID(userName: String): Promise<[{userName: String, userID: UserID }]>  {
+    try {
+        return db.prepare('all', `SELECT "userName", "userID" from "userNames" WHERE "userName" = ? LIMIT 10`, [userName]);
+    } catch (err) {
+        return null;
+    }
+}
+
+export async function getUserID(req: Request, res: Response) {
+    let userName = req.query.username as string;
+    const exactSearch = req.query.exact
+        ? req.query.exact == "true"
+        : false as Boolean;
+    
+    // if not exact and length is 1, also skip
+    if (userName == undefined || userName.length > 64 ||
+        (!exactSearch && userName.length < 3)) {
+        // invalid request
+        res.sendStatus(400);
+        return false;
+    }
+    const results = exactSearch
+        ? await getExactUserID(userName)
+        : await getFuzzyUserID(userName);
+
+    if (results === undefined || results === null) {
         res.sendStatus(500);
-        return;
+        return false;
+    } else if (results.length as number === 0) {
+        res.sendStatus(404);
+        return false;
+    } else {
+        res.send(results);
+        return false;
     }
 }

@@ -17,6 +17,7 @@ describe('getUserID', () => {
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_09"), '_redos_']);
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_10"), 'redos\\%']);
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_11"), '\\\\\\']);
+        await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_12"), 'a']);
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -201,6 +202,31 @@ describe('getUserID', () => {
         .catch(err => ("couldn't call endpoint"));
     });
 
+    it('Should be able to get repeating fuzzy username', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=peat')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 2) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "repeating") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_04")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else if (data[1].userName !== "repeating") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[1].userID !== getHash("getuserid_user_05")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
     it('should avoid ReDOS with _', (done: Done) => {
         fetch(getbaseURL() + '/api/userID?username=_redos_')
         .then(async res => {
@@ -296,6 +322,81 @@ describe('getUserID', () => {
         .then(res => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('should allow exact match', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=a&exact=true')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 1) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "a") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_12")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('Should be able to get repeating username with exact username', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=repeating&exact=true')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 2) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "repeating") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_04")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else if (data[1].userName !== "repeating") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[1].userID !== getHash("getuserid_user_05")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
+        })
+        .catch(err => ("couldn't call endpoint"));
+    });
+
+    it('Should not get exact unless explicitly set to true', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID?username=user&exact=1')
+        .then(async res => {
+            if (res.status !== 200) {
+                done("non 200");
+            } else {
+                const data = await res.json();
+                if (data.length !== 3) {
+                    done('Returned incorrect number of users "' + data.length + '"');
+                } else if (data[0].userName !== "fuzzy user 01") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[0].userID !== getHash("getuserid_user_01")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else if (data[1].userName !== "fuzzy user 02") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[1].userID !== getHash("getuserid_user_02")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else if (data[2].userName !== "specific user 03") {
+                    done('Returned incorrect username "' + data.userName + '"');
+                } else if (data[2].userID !== getHash("getuserid_user_03")) {
+                    done('Returned incorrect userID "' + data.userID + '"');
+                } else {
+                    done(); // pass
+                }
+            }
         })
         .catch(err => ("couldn't call endpoint"));
     });
