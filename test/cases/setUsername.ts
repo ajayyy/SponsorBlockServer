@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import { Done, getbaseURL } from '../utils';
-import { db } from '../../src/databases/databases';
+import { db, privateDB } from '../../src/databases/databases';
 import { getHash } from '../../src/utils/getHash';
 
 const adminPrivateUserID = 'testUserId';
@@ -21,6 +21,7 @@ const username07 = 'Username 07';
 
 async function addUsername(userID: string, userName: string, locked = 0) {
     await db.prepare('run', 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
+    await addLogUserNameChange(userID, userName);
 }
 
 async function getUsername(userID: string) {
@@ -29,6 +30,40 @@ async function getUsername(userID: string) {
         return null;
     }
     return row.userName;
+}
+
+async function addLogUserNameChange(userID: string, newUserName: string, oldUserName: string = '') {
+    privateDB.prepare('run',
+        `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedAt", "updatedByAdmin") VALUES(?, ?, ?, ?, ?)`,
+        [getHash(userID), newUserName, oldUserName, new Date().getTime(), + true]
+    );
+}
+
+async function getLastLogUserNameChange(userID: string) {
+    return privateDB.prepare('get', `SELECT * FROM "userNameLogs" WHERE "userID" = ? ORDER BY "updatedAt" DESC LIMIT 1`, [getHash(userID)]);
+}
+
+function wellFormatUserName(userName: string) {
+    return userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+}
+
+async function testUserNameChangelog(userID: string, newUserName: string, oldUserName: string, byAdmin: boolean, done: Done) {
+
+    const log = await getLastLogUserNameChange(userID);
+
+    if (newUserName !== log.newUserName) {
+        return done(`UserID '${userID}' incorrect log on newUserName: ${newUserName} !== ${log.newUserName}`);
+    }
+
+    if (oldUserName !== log.oldUserName) {
+        return done(`UserID '${userID}' incorrect log on oldUserName: ${oldUserName} !== ${log.oldUserName}`);
+    }
+
+    if (byAdmin !== Boolean(log.updatedByAdmin)) {
+        return done(`UserID '${userID}' incorrect log on updatedByAdmin: ${byAdmin} !== ${log.updatedByAdmin}`);
+    }
+
+    return done();
 }
 
 describe('setUsername', () => {
@@ -46,9 +81,11 @@ describe('setUsername', () => {
         fetch(`${getbaseURL()}/api/setUsername?userID=${user01PrivateUserID}&username=Changed%20Username`, {
             method: 'POST',
         })
-        .then(res => {
+        .then(async res => {
             if (res.status !== 200) done(`Status code was ${res.status}`);
-            else done(); // pass
+            else {
+                testUserNameChangelog(user01PrivateUserID, decodeURIComponent('Changed%20Username'), username01, false, done);
+            }
         })
         .catch(err => done(`couldn't call endpoint`));
     });
@@ -113,7 +150,9 @@ describe('setUsername', () => {
         .then(async res => {
             const username = await getUsername(getHash(user03PrivateUserID));
             if (username !== newUsername) done(`Username did not change`);
-            else done();
+            else {
+                testUserNameChangelog(user03PrivateUserID, newUsername, username03, false, done);
+            }
         })
         .catch(err => done(`couldn't call endpoint`));
     });
@@ -139,7 +178,7 @@ describe('setUsername', () => {
         .then(async res => {
             const username = await getUsername(getHash(user05PrivateUserID));
             if (username === newUsername) done(`Username contains unicode control characters`);
-            else  done();
+            else testUserNameChangelog(user05PrivateUserID, wellFormatUserName(newUsername), username05, false, done);
         })
         .catch(err => done(`couldn't call endpoint`));
     });
@@ -164,7 +203,7 @@ describe('setUsername', () => {
         .then(async res => {
             const username = await getUsername(getHash(user06PrivateUserID));
             if (username !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
-            else done();
+            else testUserNameChangelog(user06PrivateUserID, newUsername, username06, true, done);
         })
         .catch(err => done(`couldn't call endpoint`));
     });
@@ -175,9 +214,9 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            const username = await getUsername(getHash(user06PrivateUserID));
-            if (username !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
-            else done();
+            const username = await getUsername(getHash(user07PrivateUserID));
+            if (username !== newUsername) done(`Failed to change username from '${username07}' to '${newUsername}'`);
+            else testUserNameChangelog(user07PrivateUserID, newUsername, username07, true, done);
         })
         .catch(err => done(`couldn't call endpoint`));
     });
