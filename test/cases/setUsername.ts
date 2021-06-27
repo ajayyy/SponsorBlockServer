@@ -59,7 +59,7 @@ async function testUserNameChangelog(userID: string, newUserName: string, oldUse
         return done(`UserID '${userID}' incorrect log on oldUserName: ${oldUserName} !== ${log.oldUserName}`);
     }
 
-    if (+byAdmin !== log.updatedByAdmin) {
+    if (byAdmin !== Boolean(log.updatedByAdmin)) {
         return done(`UserID '${userID}' incorrect log on updatedByAdmin: ${byAdmin} !== ${log.updatedByAdmin}`);
     }
 
