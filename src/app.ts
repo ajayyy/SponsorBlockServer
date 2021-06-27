@@ -32,6 +32,7 @@ import {endpoint as getSegmentInfo} from './routes/getSegmentInfo';
 import {postClearCache} from './routes/postClearCache';
 import { addUnlistedVideo } from './routes/addUnlistedVideo';
 import {postPurgeAllSegments} from './routes/postPurgeAllSegments';
+import {getUserID} from './routes/getUserID';
 
 export function createServer(callback: () => void) {
     // Create a service (the app object is just a callback).
@@ -146,6 +147,9 @@ function setupRoutes(app: Express) {
     app.post('/api/purgeAllSegments', postPurgeAllSegments);
 
     app.post('/api/unlistedVideo', addUnlistedVideo);
+    
+    // get userID from username
+    app.get('/api/userID', getUserID);
 
     if (config.postgres) {
         app.get('/database', (req, res) => dumpDatabase(req, res, true));
