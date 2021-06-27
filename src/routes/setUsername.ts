@@ -1,8 +1,15 @@
 import {config} from '../config';
 import {Logger} from '../utils/logger';
-import {db} from '../databases/databases';
+import {db, privateDB} from '../databases/databases';
 import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
+
+async function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<void>  {
+    return privateDB.prepare('run',
+        `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedByAdmin", "updatedAt") VALUES(?, ?, ?, ?, ?)`,
+        [userID, newUserName, oldUserName, + updatedByAdmin, new Date().getTime()]
+    );
+}
 
 export async function setUsername(req: Request, res: Response) {
     let userID = req.query.userID as string;
@@ -55,15 +62,19 @@ export async function setUsername(req: Request, res: Response) {
 
     try {
         //check if username is already set
-        let row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ?`, [userID]);
+        let row = await db.prepare('get', `SELECT userName FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
+        let oldUserName = '';
 
-        if (row.count > 0) {
+        if (row.userName && row.userName.length !== 0) {
             //already exists, update this row
+            oldUserName = row.userName;
             await db.prepare('run', `UPDATE "userNames" SET "userName" = ? WHERE "userID" = ?`, [userName, userID]);
         } else {
             //add to the db
             await db.prepare('run', `INSERT INTO "userNames"("userID", "userName") VALUES(?, ?)`, [userID, userName]);
         }
+
+        await logUserNameChange(userID, userName, oldUserName, adminUserIDInput !== undefined);
 
         res.sendStatus(200);
     } catch (err) {
