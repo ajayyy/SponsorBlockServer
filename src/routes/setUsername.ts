@@ -62,7 +62,7 @@ export async function setUsername(req: Request, res: Response) {
 
     try {
         //check if username is already set
-        let row = await db.prepare('get', `SELECT userName FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
+        let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
         let oldUserName = '';
 
         if (row.userName && row.userName.length !== 0) {
