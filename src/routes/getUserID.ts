@@ -2,7 +2,7 @@ import {db} from '../databases/databases';
 import {Request, Response} from 'express';
 import {UserID} from '../types/user.model';
 
-function getFuzzyUserID(userName: String): Promise<[{userName: String, userID: UserID }]>  {
+function getFuzzyUserID(userName: String): Promise<{userName: String, userID: UserID }[]>  {
     // escape [_ % \] to avoid ReDOS
     userName = userName.replace(/\\/g, '\\\\')
         .replace(/_/g, '\\_')
@@ -17,7 +17,7 @@ function getFuzzyUserID(userName: String): Promise<[{userName: String, userID: U
     }
 }
 
-function getExactUserID(userName: String): Promise<[{userName: String, userID: UserID }]>  {
+function getExactUserID(userName: String): Promise<{userName: String, userID: UserID }[]>  {
     try {
         return db.prepare('all', `SELECT "userName", "userID" from "userNames" WHERE "userName" = ? LIMIT 10`, [userName]);
     } catch (err) {
@@ -45,7 +45,7 @@ export async function getUserID(req: Request, res: Response) {
     if (results === undefined || results === null) {
         res.sendStatus(500);
         return false;
-    } else if (results.length as number === 0) {
+    } else if (results.length === 0) {
         res.sendStatus(404);
         return false;
     } else {
