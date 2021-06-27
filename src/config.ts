@@ -75,7 +75,8 @@ addDefaults(config, {
         {
             name: "vipUsers"
         }]
-    }
+    },
+    diskCache: null
 });
 
 // Add defaults

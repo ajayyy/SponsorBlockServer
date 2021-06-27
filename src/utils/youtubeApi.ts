@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 import {config} from '../config';
 import {Logger} from './logger';
-import redis from './redis';
 import { APIVideoData, APIVideoInfo } from '../types/youtubeApi.model';
+import DiskCache from './diskCache';
 
 export class YouTubeAPI {
     static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
@@ -10,14 +10,17 @@ export class YouTubeAPI {
             return { err: "Invalid video ID" };
         }
 
-        const redisKey = "yt.newleaf.video." + videoID;
+        const cacheKey = "yt.newleaf.video." + videoID;
         if (!ignoreCache) {
-            const {err, reply} =  await redis.getAsync(redisKey);
+            try {
+                const data = await DiskCache.get(cacheKey);
 
-            if (!err && reply) {
-                Logger.debug("redis: no cache for video information: " + videoID);
-
-                return { err: err?.message, data: JSON.parse(reply) }
+                if (data) {
+                    Logger.debug("YouTube API: cache used for video information: " + videoID);
+                    return { err: null, data: JSON.parse(data) }
+                }
+            } catch (err) {
+                return { err }
             }
         }
 
@@ -33,13 +36,9 @@ export class YouTubeAPI {
                     return { err: data.error, data: null };
                 }
 
-                redis.setAsync(redisKey, JSON.stringify(data)).then((result) => {
-                    if (result?.err) {
-                        Logger.warn(result?.err.message);
-                    } else {
-                        Logger.debug("redis: video information cache set for: " + videoID);
-                    }
-                });
+                DiskCache.set(cacheKey, JSON.stringify(data))
+                .catch((err) => Logger.warn(err))
+                .then(() => Logger.debug("YouTube API: video information cache set for: " + videoID));
                 
                 return { err: false, data };
             } else {

@@ -1,5 +1,6 @@
 import { PoolConfig } from 'pg';
 import * as redis from 'redis';
+import { CacheOptions } from "@ajayyy/lru-diskcache";
 
 export interface SBSConfig {
     port: number;
@@ -41,6 +42,7 @@ export interface SBSConfig {
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: PoolConfig;
     dumpDatabase?: DumpDatabase;
+    diskCache: CacheOptions;
 }
 
 export interface WebhookConfig {

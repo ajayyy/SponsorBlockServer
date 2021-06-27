@@ -13,6 +13,7 @@
   "author": "Ajay Ramachandran",
   "license": "MIT",
   "dependencies": {
+    "@ajayyy/lru-diskcache": "^1.1.9",
     "abort-controller": "^3.0.0",
     "better-sqlite3": "^7.1.5",
     "dotenv": "^8.2.0",
