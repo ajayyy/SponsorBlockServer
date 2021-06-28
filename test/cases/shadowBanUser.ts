@@ -1,10 +1,10 @@
 import fetch from 'node-fetch';
 import {db} from '../../src/databases/databases';
-import {Done, getbaseURL} from '../utils';
+import {getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 
 describe('shadowBanUser', () => {
-    before(async () => {
+    beforeAll(async () => {
         const insertQuery = `INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         await db.prepare("run", insertQuery, ['testtesttest', 1, 11, 2, 0, 'shadow-1-uuid-0', 'shadowBanned', 0, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
         await db.prepare("run", insertQuery, ['testtesttest2', 1, 11, 2, 0, 'shadow-1-uuid-0-1', 'shadowBanned', 0, 50, 'sponsor', 'PeerTube', 120, 0, 0, getHash('testtesttest2', 1)]);
@@ -23,104 +23,79 @@ describe('shadowBanUser', () => {
     });
 
 
-    it('Should be able to ban user and hide submissions', (done: Done) => {
-        fetch(getbaseURL() + "/api/shadowBanUser?userID=shadowBanned&adminUserID=shadow-ban-vip", {
+    it('Should be able to ban user and hide submissions', async () => {
+        const res = await fetch(getbaseURL() + "/api/shadowBanUser?userID=shadowBanned&adminUserID=shadow-ban-vip", {
             method: 'POST'
         })
-        .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned", 1]);
-                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
+        if (res.status !== 200) throw new Error("Status code was: " + res.status);
+        else {
+            const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned", 1]);
+            const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
 
-                if (shadowRow && videoRow?.length === 3) {
-                    done();
-                } else {
-                    done("Ban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
-                }
+            if (!shadowRow || typeof videoRow === 'undefined' || videoRow.length !== 3) {
+                throw new Error("Ban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
             }
-        })
-        .catch(err => done("Couldn't call endpoint"));
+        }
     });
 
-    it('Should be able to unban user without unhiding submissions', (done: Done) => {
-        fetch(getbaseURL() + "/api/shadowBanUser?userID=shadowBanned&adminUserID=shadow-ban-vip&enabled=false&unHideOldSubmissions=false", {
+    it('Should be able to unban user without unhiding submissions', async () => {
+        const res = await fetch(getbaseURL() + "/api/shadowBanUser?userID=shadowBanned&adminUserID=shadow-ban-vip&enabled=false&unHideOldSubmissions=false", {
             method: 'POST'
         })
-        .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned", 1]);
-                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
+        if (res.status !== 200) throw new Error("Status code was: " + res.status);
+        else {
+            const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned", 1]);
+            const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned"]);
 
-                if (!shadowRow && videoRow?.length === 3) {
-                    done();
-                } else {
-                    done("Unban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
-                }
+            if (shadowRow || typeof videoRow === 'undefined' || videoRow.length !== 3) {
+                throw new Error("Unban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
             }
-        })
-        .catch(err => done("Couldn't call endpoint"));
+        }
     });
 
-    it('Should be able to ban user and hide submissions from only some categories', (done: Done) => {
-        fetch(getbaseURL() + '/api/shadowBanUser?userID=shadowBanned2&adminUserID=shadow-ban-vip&categories=["sponsor"]', {
+    it('Should be able to ban user and hide submissions from only some categories', async () => {
+        const res = await fetch(getbaseURL() + '/api/shadowBanUser?userID=shadowBanned2&adminUserID=shadow-ban-vip&categories=["sponsor"]', {
             method: 'POST'
         })
-        .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const videoRow: {category: string, shadowHidden: number}[] = (await db.prepare('all', `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned2", 1]));
-                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
+        if (res.status !== 200) throw new Error("Status code was: " + res.status);
+        else {
+            const videoRow: {category: string, shadowHidden: number}[] = (await db.prepare('all', `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned2", 1]));
+            const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
 
-                if (shadowRow && 2 == videoRow?.length && 2 === videoRow?.filter((elem) => elem?.category === "sponsor")?.length) {
-                    done();
-                } else {
-                    done("Ban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
-                }
+            if (!shadowRow || typeof videoRow === 'undefined' || 2 != videoRow.length || 2 !== videoRow.filter((elem) => elem?.category === "sponsor")?.length) {
+                throw new Error("Ban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
             }
-        })
-        .catch(err => done("Couldn't call endpoint"));
+        }
     });
 
-    it('Should be able to unban user and unhide submissions', (done: Done) => {
-        fetch(getbaseURL() + "/api/shadowBanUser?userID=shadowBanned2&adminUserID=shadow-ban-vip&enabled=false", {
+    it('Should be able to unban user and unhide submissions', async () => {
+        const res = await fetch(getbaseURL() + "/api/shadowBanUser?userID=shadowBanned2&adminUserID=shadow-ban-vip&enabled=false", {
             method: 'POST'
         })
-        .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned2", 1]);
-                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
+        if (res.status !== 200) throw new Error("Status code was: " + res.status);
+        else {
+            const videoRow = await db.prepare('all', `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned2", 1]);
+            const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned2"]);
 
-                if (!shadowRow && videoRow?.length === 0) {
-                    done();
-                } else {
-                    done("Unban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
-                }
+            if (shadowRow || typeof videoRow === 'undefined' || videoRow.length !== 0) {
+                throw new Error("Unban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
             }
-        })
-        .catch(err => done("Couldn't call endpoint"));
+        }
     });
 
-    it('Should be able to unban user and unhide some submissions', (done: Done) => {
-        fetch(getbaseURL() + `/api/shadowBanUser?userID=shadowBanned3&adminUserID=shadow-ban-vip&enabled=false&categories=["sponsor"]`, {
+    it('Should be able to unban user and unhide some submissions', async () => {
+        const res = await fetch(getbaseURL() + `/api/shadowBanUser?userID=shadowBanned3&adminUserID=shadow-ban-vip&enabled=false&categories=["sponsor"]`, {
             method: 'POST'
         })
-        .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const videoRow = await db.prepare('all', `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned3", 1]);
-                const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned3"]);
+        if (res.status !== 200) throw new Error("Status code was: " + res.status);
+        else {
+            const videoRow = await db.prepare('all', `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned3", 1]);
+            const shadowRow = await db.prepare('get', `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned3"]);
 
-                if (!shadowRow && videoRow?.length === 1 && videoRow[0]?.category === "intro") {
-                    done();
-                } else {
-                    done("Unban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
-                }
+            if (shadowRow || typeof videoRow === 'undefined' || videoRow.length !== 1 || typeof videoRow[0] === 'undefined' || videoRow[0].category !== "intro") {
+                throw new Error("Unban failed " + JSON.stringify(videoRow) + " " + JSON.stringify(shadowRow));
             }
-        })
-        .catch(err => done("Couldn't call endpoint"));
+        }
     });
 
 });

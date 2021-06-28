@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import {Done, getbaseURL} from '../utils';
+import {getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 import {IDatabase} from '../../src/databases/IDatabase';
@@ -30,14 +30,14 @@ async function dbSponsorTimesCompareExpect(db: IDatabase, expect: any) {
             if (expect.removed === true && seg.votes === -2) {
                 return;
             } else {
-                return `${expectSeg.UUID} doesnt got removed`;
+                throw new Error(`${expectSeg.UUID} doesnt got removed`);
             }
         }
         if (seg.startTime !== expectSeg.startTime) {
-            return `${expectSeg.UUID} startTime is incorrect. seg.startTime is ${seg.startTime} expected ${expectSeg.startTime}`;
+            throw new Error(`${expectSeg.UUID} startTime is incorrect. seg.startTime is ${seg.startTime} expected ${expectSeg.startTime}`);
         }
         if (seg.endTime !== expectSeg.endTime) {
-            return `${expectSeg.UUID} endTime is incorrect. seg.endTime is ${seg.endTime} expected ${expectSeg.endTime}`;
+            throw new Error(`${expectSeg.UUID} endTime is incorrect. seg.endTime is ${seg.endTime} expected ${expectSeg.endTime}`);
         }
     }
     return;
@@ -48,7 +48,7 @@ describe('segmentShift', function () {
     const vipUserID = getHash(privateVipUserID);
     const baseURL = getbaseURL();
 
-    before(async function () {
+    beforeAll(async function () {
         // startTime and endTime get set in beforeEach for consistency
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid01', 'intro');
         await dbSponsorTimesAdd(db, 'vsegshift01', 0, 0, 'vsegshifttest01uuid02', 'sponsor');
@@ -65,8 +65,8 @@ describe('segmentShift', function () {
         await dbSponsorTimesSetByUUID(db, 'vsegshifttest01uuid04', 120, 140);
     });
 
-    it('Reject none VIP user', function (done: Done) {
-        fetch(`${baseURL}/api/segmentShift`, {
+    it('Reject none VIP user', async function () {
+        const res = await fetch(`${baseURL}/api/segmentShift`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -78,14 +78,11 @@ describe('segmentShift', function () {
                 endTime: 30,
             }),
         })
-        .then(async res => {
-            done(res.status === 403 ? undefined : res.status);
-        })
-        .catch(err => done(err));
+        if (res.status !== 403) throw new Error(`status code: ${res.status}`);
     });
 
-    it('Shift is outside segments', function (done: Done) {
-        fetch(`${baseURL}/api/segmentShift`, {
+    it('Shift is outside segments', async function () {
+        const res = await fetch(`${baseURL}/api/segmentShift`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -97,37 +94,34 @@ describe('segmentShift', function () {
                 endTime: 30,
             }),
         })
-        .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
-            const expect = [
-                {
-                    UUID: 'vsegshifttest01uuid01',
-                    startTime: 0,
-                    endTime: 10,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid02',
-                    startTime: 50,
-                    endTime: 80,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid03',
-                    startTime: 30,
-                    endTime: 35,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid04',
-                    startTime: 110,
-                    endTime: 130,
-                },
-            ];
-            done(await dbSponsorTimesCompareExpect(db, expect));
-        })
-        .catch(err => done(err));
+        if (res.status !== 200) throw new Error(`Status code was ${res.status}`);
+        const expect = [
+            {
+                UUID: 'vsegshifttest01uuid01',
+                startTime: 0,
+                endTime: 10,
+            },
+            {
+                UUID: 'vsegshifttest01uuid02',
+                startTime: 50,
+                endTime: 80,
+            },
+            {
+                UUID: 'vsegshifttest01uuid03',
+                startTime: 30,
+                endTime: 35,
+            },
+            {
+                UUID: 'vsegshifttest01uuid04',
+                startTime: 110,
+                endTime: 130,
+            },
+        ];
+        await dbSponsorTimesCompareExpect(db, expect)
     });
 
-    it('Shift is inside segment', function (done: Done) {
-        fetch(`${baseURL}/api/segmentShift`, {
+    it('Shift is inside segment', async function () {
+        const res = await fetch(`${baseURL}/api/segmentShift`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -139,37 +133,34 @@ describe('segmentShift', function () {
                 endTime: 75,
             }),
         })
-        .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
-            const expect = [
-                {
-                    UUID: 'vsegshifttest01uuid01',
-                    startTime: 0,
-                    endTime: 10,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid02',
-                    startTime: 60,
-                    endTime: 80,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid03',
-                    startTime: 40,
-                    endTime: 45,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid04',
-                    startTime: 110,
-                    endTime: 130,
-                },
-            ];
-            done(await dbSponsorTimesCompareExpect(db, expect));
-        })
-        .catch(err => done(err));
+        if (res.status !== 200) throw new Error(`Status code was ${res.status}`);
+        const expect = [
+            {
+                UUID: 'vsegshifttest01uuid01',
+                startTime: 0,
+                endTime: 10,
+            },
+            {
+                UUID: 'vsegshifttest01uuid02',
+                startTime: 60,
+                endTime: 80,
+            },
+            {
+                UUID: 'vsegshifttest01uuid03',
+                startTime: 40,
+                endTime: 45,
+            },
+            {
+                UUID: 'vsegshifttest01uuid04',
+                startTime: 110,
+                endTime: 130,
+            },
+        ];
+        await dbSponsorTimesCompareExpect(db, expect);
     });
 
-    it('Shift is overlaping startTime of segment', function (done: Done) {
-        fetch(`${baseURL}/api/segmentShift`, {
+    it('Shift is overlaping startTime of segment', async function () {
+        const res = await fetch(`${baseURL}/api/segmentShift`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -181,37 +172,34 @@ describe('segmentShift', function () {
                 endTime: 42,
             }),
         })
-        .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
-            const expect = [
-                {
-                    UUID: 'vsegshifttest01uuid01',
-                    startTime: 0,
-                    endTime: 10,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid02',
-                    startTime: 50,
-                    endTime: 80,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid03',
-                    startTime: 32,
-                    endTime: 35,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid04',
-                    startTime: 110,
-                    endTime: 130,
-                },
-            ];
-            done(await dbSponsorTimesCompareExpect(db, expect));
-        })
-        .catch(err => done(err));
+        if (res.status !== 200) throw new Error(`Status code was ${res.status}`);
+        const expect = [
+            {
+                UUID: 'vsegshifttest01uuid01',
+                startTime: 0,
+                endTime: 10,
+            },
+            {
+                UUID: 'vsegshifttest01uuid02',
+                startTime: 50,
+                endTime: 80,
+            },
+            {
+                UUID: 'vsegshifttest01uuid03',
+                startTime: 32,
+                endTime: 35,
+            },
+            {
+                UUID: 'vsegshifttest01uuid04',
+                startTime: 110,
+                endTime: 130,
+            },
+        ];
+        await dbSponsorTimesCompareExpect(db, expect);
     });
 
-    it('Shift is overlaping endTime of segment', function (done: Done) {
-        fetch(`${baseURL}/api/segmentShift`, {
+    it('Shift is overlaping endTime of segment', async function () {
+        const res = await fetch(`${baseURL}/api/segmentShift`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -223,37 +211,34 @@ describe('segmentShift', function () {
                 endTime: 95,
             }),
         })
-        .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
-            const expect = [
-                {
-                    UUID: 'vsegshifttest01uuid01',
-                    startTime: 0,
-                    endTime: 10,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid02',
-                    startTime: 60,
-                    endTime: 85,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid03',
-                    startTime: 40,
-                    endTime: 45,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid04',
-                    startTime: 110,
-                    endTime: 130,
-                },
-            ];
-            done(await dbSponsorTimesCompareExpect(db, expect));
-        })
-        .catch(err => done(err));
+        if (res.status !== 200) throw new Error(`Status code was ${res.status}`);
+        const expect = [
+            {
+                UUID: 'vsegshifttest01uuid01',
+                startTime: 0,
+                endTime: 10,
+            },
+            {
+                UUID: 'vsegshifttest01uuid02',
+                startTime: 60,
+                endTime: 85,
+            },
+            {
+                UUID: 'vsegshifttest01uuid03',
+                startTime: 40,
+                endTime: 45,
+            },
+            {
+                UUID: 'vsegshifttest01uuid04',
+                startTime: 110,
+                endTime: 130,
+            },
+        ];
+        await dbSponsorTimesCompareExpect(db, expect);
     });
 
-    it('Shift is overlaping segment', function (done: Done) {
-        fetch(`${baseURL}/api/segmentShift`, {
+    it('Shift is overlaping segment', async function () {
+        const res = await fetch(`${baseURL}/api/segmentShift`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -265,33 +250,30 @@ describe('segmentShift', function () {
                 endTime: 55,
             }),
         })
-        .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
-            const expect = [
-                {
-                    UUID: 'vsegshifttest01uuid01',
-                    startTime: 0,
-                    endTime: 10,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid02',
-                    startTime: 40,
-                    endTime: 70,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid03',
-                    startTime: 40,
-                    endTime: 45,
-                    removed: true,
-                },
-                {
-                    UUID: 'vsegshifttest01uuid04',
-                    startTime: 100,
-                    endTime: 120,
-                },
-            ];
-            done(await dbSponsorTimesCompareExpect(db, expect));
-        })
-        .catch(err => done(err));
+        if (res.status !== 200) throw new Error(`Status code was ${res.status}`);
+        const expect = [
+            {
+                UUID: 'vsegshifttest01uuid01',
+                startTime: 0,
+                endTime: 10,
+            },
+            {
+                UUID: 'vsegshifttest01uuid02',
+                startTime: 40,
+                endTime: 70,
+            },
+            {
+                UUID: 'vsegshifttest01uuid03',
+                startTime: 40,
+                endTime: 45,
+                removed: true,
+            },
+            {
+                UUID: 'vsegshifttest01uuid04',
+                startTime: 100,
+                endTime: 120,
+            },
+        ];
+        await dbSponsorTimesCompareExpect(db, expect);
     });
 });

@@ -14,8 +14,7 @@ const userIDHighRep = "reputation-highrep" as UserID;
 const userIDHighRepAndLocked = "reputation-highlockedrep" as UserID;
 
 describe('reputation', () => {
-    before(async function() {
-        this.timeout(5000); // this preparation takes longer then usual
+    beforeAll(async () => {
         const videoID = "reputation-videoID";
 
         let sponsorTimesInsertQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
@@ -87,7 +86,7 @@ describe('reputation', () => {
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, 'reputation-6-uuid-5', getHash(userIDHighRepAndLocked), 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash(videoID, 1)]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, 'reputation-6-uuid-6', getHash(userIDHighRepAndLocked), 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash(videoID, 1)]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, 'reputation-6-uuid-7', getHash(userIDHighRepAndLocked), 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash(videoID, 1)]);
-    });
+    }, 5000);  // this preparation takes longer then usual
 
     it("user in grace period", async () => {
         assert.strictEqual(await getReputation(getHash(userIDLowSubmissions)), 0);

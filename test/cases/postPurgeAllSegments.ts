@@ -23,10 +23,9 @@ async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string, expec
     let seg = await db.prepare('get', `SELECT "hidden", "UUID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoId]);
     for (let i = 0, len = seg.length; i < len; i++) {
         if (seg.hidden !== expectdHidden) {
-            return `${seg.UUID} hidden expected to be ${expectdHidden} but found ${seg.hidden}`;
+            throw new Error(`${seg.UUID} hidden expected to be ${expectdHidden} but found ${seg.hidden}`);
         }
     }
-    return;
 }
 
 describe('postPurgeAllSegments', function () {
@@ -35,7 +34,7 @@ describe('postPurgeAllSegments', function () {
     const vipUserID = getHash(privateVipUserID);
     const baseURL = getbaseURL();
 
-    before(async function () {
+    beforeAll(async function () {
         // startTime and endTime get set in beforeEach for consistency
         await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 1, 'vsegpurgetest01uuid01', 'intro');
         await dbSponsorTimesAdd(db, 'vsegpurge01', 0, 2, 'vsegpurgetest01uuid02', 'sponsor');
@@ -45,8 +44,8 @@ describe('postPurgeAllSegments', function () {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
     });
 
-    it('Reject non-VIP user', function (done: Done) {
-        fetch(`${baseURL}${route}`, {
+    it('Reject non-VIP user', async function () {
+        const res = await fetch(`${baseURL}${route}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -56,14 +55,12 @@ describe('postPurgeAllSegments', function () {
                 userID: 'segshift_randomuser001',
             }),
         })
-        .then(async res => {
-            done(res.status === 403 ? undefined : res.status);
-        })
-        .catch(err => done(err));
+        if (res.status !== 403)
+            throw new Error(res.status.toString());
     });
 
-    it('Purge all segments success', function (done: Done) {
-        fetch(`${baseURL}${route}`, {
+    it('Purge all segments success', async function () {
+        const res = await fetch(`${baseURL}${route}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,10 +70,8 @@ describe('postPurgeAllSegments', function () {
                 userID: privateVipUserID,
             }),
         })
-        .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
-            done(await dbSponsorTimesCompareExpect(db, 'vsegpurge01', 1) || await dbSponsorTimesCompareExpect(db, 'vseg-not-purged01', 0));
-        })
-        .catch(err => done(err));
+        if (res.status !== 200) throw new Error(`Status code was ${res.status}`);
+        await dbSponsorTimesCompareExpect(db, 'vsegpurge01', 1)
+        await dbSponsorTimesCompareExpect(db, 'vseg-not-purged01', 0);
     });
 });

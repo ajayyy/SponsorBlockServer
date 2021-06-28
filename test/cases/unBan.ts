@@ -4,7 +4,7 @@ import { getHash } from '../../src/utils/getHash';
 import { db } from '../../src/databases/databases';
 
 describe('unBan', () => {
-  before(async () => {
+  beforeAll(async () => {
     const insertShadowBannedUserQuery = 'INSERT INTO "shadowBannedUsers" VALUES(?)';
     await db.prepare("run", insertShadowBannedUserQuery, ['testMan-unBan']);
     await db.prepare("run", insertShadowBannedUserQuery, ['testWoman-unBan']);
@@ -23,78 +23,63 @@ describe('unBan', () => {
     await db.prepare("run", insertSponsorTimeQuery, ['unBan-videoID-2', 1, 11, 2, 'unBan-uuid-3', 'testEntity-unBan', 0, 60, 'sponsor', 1, getHash('unBan-videoID-2', 1)]);
   });
 
-  it('Should be able to unban a user and re-enable shadow banned segments', (done) => {
-    fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testMan-unBan&adminUserID=VIPUser-unBan&enabled=false", {
+  it('Should be able to unban a user and re-enable shadow banned segments', async () => {
+    const res = await fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testMan-unBan&adminUserID=VIPUser-unBan&enabled=false", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
     })
-    .then(async res => {
-      if (res.status === 200) {
-        let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
-        if (result.length !== 0) {
-          console.log(result);
-          done("Expected 0 banned entrys in db, got " + result.length);
-        } else {
-          done();
-        }
-      } else {
-        const body = await res.text();
-        console.log(body);
-        done("Status code was " + res.status);
+    if (res.status === 200) {
+      let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ['unBan-videoID-0', 'testMan-unBan', 1]);
+      if (result.length !== 0) {
+        console.log(result);
+        throw new Error("Expected 0 banned entrys in db, got " + result.length);
       }
-    })
-    .catch(err => done(err));
+    } else {
+      const body = await res.text();
+      console.log(body);
+      throw new Error("Status code was " + res.status);
+    }
   });
 
-  it('Should be able to unban a user and re-enable shadow banned segments without lockCategories entrys', (done) => {
-    fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testWoman-unBan&adminUserID=VIPUser-unBan&enabled=false", {
+  it('Should be able to unban a user and re-enable shadow banned segments without lockCategories entrys', async () => {
+    const res = await fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testWoman-unBan&adminUserID=VIPUser-unBan&enabled=false", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
     })
-    .then(async res => {
-        if (res.status === 200) {
-            let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
-            if (result.length !== 1) {
-                console.log(result);
-                done("Expected 1 banned entry1 in db, got " + result.length);
-            } else {
-              done();
-            }
-        } else {
-            const body = await res.text();
-            console.log(body);
-            done("Status code was " + res.status);
+    if (res.status === 200) {
+        let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ['unBan-videoID-1', 'testWoman-unBan', 1]);
+        if (result.length !== 1) {
+            console.log(result);
+            throw new Error("Expected 1 banned entry1 in db, got " + result.length);
         }
-    })
-    .catch(err => done(err));
+    } else {
+        const body = await res.text();
+        console.log(body);
+        throw new Error("Status code was " + res.status);
+    }
   }); 
 
-  it('Should be able to unban a user and re-enable shadow banned segments with a mix of lockCategories entrys', (done) => {
-    fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testEntity-unBan&adminUserID=VIPUser-unBan&enabled=false", {
+  it('Should be able to unban a user and re-enable shadow banned segments with a mix of lockCategories entrys', async () => {
+    const res = await fetch(utils.getbaseURL() + "/api/shadowBanUser?userID=testEntity-unBan&adminUserID=VIPUser-unBan&enabled=false", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
     })
-    .then(async res => {
-      if (res.status === 200) {
-        let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?', ['testEntity-unBan', 1]);
-        if (result.length !== 1) {
-          console.log(result);
-          done("Expected 1 banned entry1 in db, got " + result.length);
-        } else {
-          done();
-        }
-      } else {
-          const body = await res.text();
-          console.log(body);
-          done("Status code was " + res.status);
+    if (res.status === 200) {
+      let result = await db.prepare('all', 'SELECT * FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?', ['testEntity-unBan', 1]);
+      if (result.length !== 1) {
+        console.log(result);
+        throw new Error("Expected 1 banned entry1 in db, got " + result.length);
       }
-    })
-    .catch(err => done(err));
+    } else {
+      const body = await res.text();
+      console.log(body);
+      throw new Error("Status code was " + res.status);
+    }
   }); 
 });
