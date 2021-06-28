@@ -55,14 +55,16 @@ export async function setUsername(req: Request, res: Response) {
 
     try {
         //check if username is already set
-        let row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const locked = adminUserIDInput === undefined ? 0 : 1;
 
         if (row.count > 0) {
             //already exists, update this row
             await db.prepare('run', `UPDATE "userNames" SET "userName" = ? WHERE "userID" = ?`, [userName, userID]);
+            await db.prepare('run', `UPDATE "userNames" SET "locked" = ? WHERE "userID" = ?`, [locked, userID]);
         } else {
             //add to the db
-            await db.prepare('run', `INSERT INTO "userNames"("userID", "userName") VALUES(?, ?)`, [userID, userName]);
+            await db.prepare('run', `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [userID, userName, locked]);
         }
 
         res.sendStatus(200);

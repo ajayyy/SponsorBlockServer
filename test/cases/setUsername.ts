@@ -23,12 +23,12 @@ async function addUsername(userID: string, userName: string, locked = 0) {
     await db.prepare('run', 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
 }
 
-async function getUsername(userID: string) {
-    const row = await db.prepare('get', 'SELECT "userName" FROM "userNames" WHERE "userID" = ?', [userID]);
+async function getUsernameInfo(userID: string): Promise<{ userName: string, locked: string }> {
+    const row = await db.prepare('get', 'SELECT "userName", "locked" FROM "userNames" WHERE "userID" = ?', [userID]);
     if (!row) {
         return null;
     }
-    return row.userName;
+    return row;
 }
 
 describe('setUsername', () => {
@@ -95,8 +95,8 @@ describe('setUsername', () => {
         .then(async res => {
             if (res.status !== 200) done(`Status code was ${res.status}`);
             else {
-                const userName = await getUsername(getHash(user02PrivateUserID));
-                if (userName === newUsername) {
+                const userNameInfo = await getUsernameInfo(getHash(user02PrivateUserID));
+                if (userNameInfo.userName === newUsername) {
                     done(`Username '${username02}' got changed to '${newUsername}'`);
                 }
                 else done();
@@ -111,8 +111,9 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            const username = await getUsername(getHash(user03PrivateUserID));
-            if (username !== newUsername) done(`Username did not change`);
+            const usernameInfo = await getUsernameInfo(getHash(user03PrivateUserID));
+            if (usernameInfo.userName !== newUsername) done(`Username did not change`);
+            if (usernameInfo.locked == "1") done(`Username was locked when it shouldn't have been`);
             else done();
         })
         .catch(err => done(`couldn't call endpoint`));
@@ -124,8 +125,9 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            const username = await getUsername(getHash(user04PrivateUserID));
-            if (username === newUsername) done(`Username '${username04}' got changed to '${username}'`);
+            const usernameInfo = await getUsernameInfo(getHash(user04PrivateUserID));
+            if (usernameInfo.userName === newUsername) done(`Username '${username04}' got changed to '${usernameInfo}'`);
+            if (usernameInfo.locked == "0") done(`Username was unlocked when it shouldn't have been`);
             else done();
         })
         .catch(err => done(`couldn't call endpoint`));
@@ -137,8 +139,8 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            const username = await getUsername(getHash(user05PrivateUserID));
-            if (username === newUsername) done(`Username contains unicode control characters`);
+            const usernameInfo = await getUsernameInfo(getHash(user05PrivateUserID));
+            if (usernameInfo.userName === newUsername) done(`Username contains unicode control characters`);
             else  done();
         })
         .catch(err => done(`couldn't call endpoint`));
@@ -162,8 +164,9 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            const username = await getUsername(getHash(user06PrivateUserID));
-            if (username !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
+            const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
+            if (usernameInfo.userName !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
+            if (usernameInfo.locked == "0") done(`Username was not locked`);
             else done();
         })
         .catch(err => done(`couldn't call endpoint`));
@@ -175,8 +178,9 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            const username = await getUsername(getHash(user06PrivateUserID));
-            if (username !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
+            const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
+            if (usernameInfo.userName !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
+            if (usernameInfo.locked == "0") done(`Username was unlocked when it shouldn't have been`);
             else done();
         })
         .catch(err => done(`couldn't call endpoint`));
