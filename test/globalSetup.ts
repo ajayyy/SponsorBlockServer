@@ -20,6 +20,12 @@ import {createServer} from "../src/app";
     if (fs.existsSync(config.privateDB)) fs.unlinkSync(config.privateDB);
 
     await initDb();
+
+    const dbMode = config.mysql ? 'mysql'
+        : config.postgres ? 'postgres'
+            : 'sqlite'
+    Logger.info('Database Mode: ' + dbMode)
+    
     return new Promise(res => {
         (global as any).mockServer = createMockServer(() => {
                 Logger.info("Started mock HTTP Server");
