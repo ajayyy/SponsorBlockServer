@@ -4,7 +4,7 @@
   "description": "Server that holds the SponsorBlock database",
   "main": "src/index.ts",
   "scripts": {
-    "test": "jest",
+    "test": "jest --runInBand",
     "dev": "nodemon",
     "dev:bash": "nodemon -x 'npm test ; npm start'",
     "start": "ts-node src/index.ts",
