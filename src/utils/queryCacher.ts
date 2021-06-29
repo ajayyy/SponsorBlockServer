@@ -15,7 +15,8 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
             // If all else, continue on to fetching from the database
         }
     }
-
+    
+    Logger.error("--- returned data querycacher")
     const data = await fetchFromDB();
 
     redis.setAsync(key, JSON.stringify(data));
