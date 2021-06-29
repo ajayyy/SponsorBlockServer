@@ -1,7 +1,7 @@
 import fs from 'fs';
 import {SBSConfig} from "./types/config.model";
 
-const isTestMode = process.env.npm_lifecycle_script === 'ts-node test/test.ts';
+const isTestMode = process.env.npm_lifecycle_script === require('../package.json').scripts.test;
 const configFile = process.env.TEST_POSTGRES ? 'ci.json'
     : isTestMode ? 'test.json'
     : 'config.json';
