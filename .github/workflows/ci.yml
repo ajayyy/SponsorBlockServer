@@ -14,4 +14,5 @@ jobs:
       - run: npm install
 
       - name: Run Tests
+        timeout-minutes: 5
         run: npm test

@@ -19,6 +19,7 @@
     "schemaFolder": "./databases",
     "dbSchema": "./databases/_sponsorTimes.db.sql",
     "privateDBSchema": "./databases/_private.db.sql",
+    // when using redis, add `"enable_offline_queue": false` to force commands to fail instead of timing out
     "mode": "development",
     "readOnly": false,
     "webhooks": [],
