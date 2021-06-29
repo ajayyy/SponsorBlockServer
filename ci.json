@@ -16,6 +16,11 @@
         "host": "localhost",
         "port": 5432
     },
+    "redis": {
+        "host": "127.0.0.2",
+        "port": 6379,
+        "enable_offline_queue": false
+    },
     "createDatabaseIfNotExist": true,
     "schemaFolder": "./databases",
     "dbSchema": "./databases/_sponsorTimes.db.sql",
