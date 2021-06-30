@@ -4,6 +4,8 @@ import { db, privateDB } from '../../src/databases/databases';
 import { getHash } from '../../src/utils/getHash';
 
 const adminPrivateUserID = 'testUserId';
+const user00PrivateUserID = 'setUsername_00';
+const username00 = 'Username 00';
 const user01PrivateUserID = 'setUsername_01';
 const username01 = 'Username 01';
 const user02PrivateUserID = 'setUsername_02';
@@ -75,6 +77,20 @@ describe('setUsername', () => {
         await addUsername(getHash(user05PrivateUserID), username05, 0);
         await addUsername(getHash(user06PrivateUserID), username06, 0);
         await addUsername(getHash(user07PrivateUserID), username07, 1);
+    });
+
+    it('Should be able to set username that has never been set', (done: Done) => {
+        fetch(`${getbaseURL()}/api/setUsername?userID=${user00PrivateUserID}&username=${username00}`, {
+            method: 'POST',
+        })
+        .then(async res => {
+            const usernameInfo = await getUsernameInfo(getHash(user00PrivateUserID));
+            if (res.status !== 200) done(`Status code was ${res.status}`);
+            if (usernameInfo.userName !== username00) done(`Username did not change. Currently is ${usernameInfo.userName}`);
+            if (usernameInfo.locked == "1") done(`Username was locked when it shouldn't have been`);
+            done();
+        })
+        .catch(err => done(`couldn't call endpoint`));
     });
 
     it('Should return 200', (done: Done) => {
