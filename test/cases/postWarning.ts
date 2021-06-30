@@ -12,6 +12,7 @@ describe('postWarning', () => {
         let json = {
             issuerUserID: 'warning-vip',
             userID: 'warning-0',
+            reason: 'warning-reason-0'
         };
         fetch(getbaseURL()
             + "/api/warnUser", {
@@ -23,8 +24,8 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
-                if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
+                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
+                if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID) && row?.reason === json.reason) {
                     done();
                 } else {
                     done("Warning missing from database");
