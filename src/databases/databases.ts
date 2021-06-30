@@ -68,6 +68,7 @@ async function initDb() {
         // Attach private db to main db
         (db as Sqlite).attachDatabase(config.privateDB, 'privateDB');
     }
+    return {db, privateDB}
 }
 
 export {

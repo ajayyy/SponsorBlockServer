@@ -1,7 +1,9 @@
 import fetch from 'node-fetch';
-import {db} from '../../src/databases/databases';
 import {getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
+import {IDatabase} from "../../src/databases/IDatabase";
+
+declare const db: IDatabase
 
 const ENOENTID =        "0".repeat(64);
 const upvotedID =       "a"+"0".repeat(63);

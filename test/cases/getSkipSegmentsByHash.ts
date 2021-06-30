@@ -1,10 +1,12 @@
 import fetch from 'node-fetch';
-import {db} from '../../src/databases/databases';
 import {getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {ImportMock,} from 'ts-mock-imports';
 import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
 import {YouTubeApiMock} from '../youtubeMock';
+import {IDatabase} from "../../src/databases/IDatabase";
+
+declare const db: IDatabase
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
 const sinonStub = mockManager.mock('listVideos');

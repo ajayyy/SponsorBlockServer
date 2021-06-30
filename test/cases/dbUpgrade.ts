@@ -1,4 +1,7 @@
-import {db, privateDB} from '../../src/databases/databases';
+import {IDatabase} from "../../src/databases/IDatabase";
+
+declare const db: IDatabase
+declare const privateDB: IDatabase
 
 describe('dbUpgrade', () => {
     it('Should update the database version when starting the application', async () => {

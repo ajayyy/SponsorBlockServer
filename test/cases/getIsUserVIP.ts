@@ -1,7 +1,9 @@
 import fetch from 'node-fetch';
 import {getbaseURL} from '../utils';
-import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
+import {IDatabase} from "../../src/databases/IDatabase";
+
+declare const db: IDatabase
 
 describe('getIsUserVIP', () => {
     beforeAll(() =>

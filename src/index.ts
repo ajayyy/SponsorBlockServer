@@ -6,9 +6,8 @@ import {Logger} from "./utils/logger";
 async function init() {
     await initDb();
 
-    createServer(() => {
-        Logger.info("Server started on port " + config.port + ".");
-    });
+    await createServer()
+    Logger.info("Server started on port " + config.port + ".");
 }
  
 init();

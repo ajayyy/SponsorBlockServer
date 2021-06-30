@@ -1,8 +1,9 @@
 import fetch from 'node-fetch';
-import {Done, getbaseURL} from '../utils';
-import {db} from '../../src/databases/databases';
+import {getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {IDatabase} from '../../src/databases/IDatabase';
+
+declare const db: IDatabase
 
 async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
     const votes = 0,

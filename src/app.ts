@@ -33,8 +33,9 @@ import {postClearCache} from './routes/postClearCache';
 import { addUnlistedVideo } from './routes/addUnlistedVideo';
 import {postPurgeAllSegments} from './routes/postPurgeAllSegments';
 import {getUserID} from './routes/getUserID';
+import {Server} from "http";
 
-export function createServer(callback: () => void) {
+export function createServer(): Promise<Server> {
     // Create a service (the app object is just a callback).
     const app = express();
 
@@ -54,7 +55,9 @@ export function createServer(callback: () => void) {
 
     setupRoutes(app);
 
-    return app.listen(config.port, callback);
+    return new Promise(res => {
+        const server = app.listen(config.port, () => res(server))
+    });
 }
 
 function setupRoutes(app: Express) {

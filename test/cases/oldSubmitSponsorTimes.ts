@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
 import {getbaseURL} from '../utils';
-import {db} from '../../src/databases/databases';
+import {IDatabase} from "../../src/databases/IDatabase";
 
+declare const db: IDatabase
 
 describe('postVideoSponsorTime (Old submission method)', () => {
     it('Should be able to submit a time (GET)', async () => {

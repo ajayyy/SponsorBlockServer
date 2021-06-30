@@ -1,8 +1,10 @@
 import assert from 'assert';
-import { db } from '../../src/databases/databases';
 import { UserID } from '../../src/types/user.model';
 import { getHash } from '../../src/utils/getHash';
 import { getReputation } from '../../src/utils/reputation';
+import {IDatabase} from "../../src/databases/IDatabase";
+
+declare const db: IDatabase
 
 const userIDLowSubmissions = "reputation-lowsubmissions" as UserID;
 const userIDHighDownvotes = "reputation-highdownvotes" as UserID;

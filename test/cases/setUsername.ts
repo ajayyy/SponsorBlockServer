@@ -1,7 +1,10 @@
 import fetch from 'node-fetch';
 import { getbaseURL } from '../utils';
-import { db, privateDB } from '../../src/databases/databases';
 import { getHash } from '../../src/utils/getHash';
+import {IDatabase} from "../../src/databases/IDatabase";
+
+declare const db: IDatabase
+declare const privateDB: IDatabase
 
 const adminPrivateUserID = 'testUserId';
 const user00PrivateUserID = 'setUsername_00';
