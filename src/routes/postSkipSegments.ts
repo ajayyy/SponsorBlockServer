@@ -486,7 +486,31 @@ export async function postSkipSegments(req: Request, res: Response) {
 
         const yesterday = timeSubmitted - 86400000;
 
+        // Disable IP ratelimiting for now
+        if (false) {
+            //check to see if this ip has submitted too many sponsors today
+            const rateLimitCheckRow = await privateDB.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
 
+            if (rateLimitCheckRow.count >= 10) {
+                //too many sponsors for the same video from the same ip address
+                res.sendStatus(429);
+
+                return;
+            }
+        }
+
+        // Disable max submissions for now
+        if (false) {
+            //check to see if the user has already submitted sponsors for this video
+            const duplicateCheckRow = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
+
+            if (duplicateCheckRow.count >= 16) {
+                //too many sponsors for the same video from the same user
+                res.sendStatus(429);
+
+                return;
+            }
+        }
 
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
