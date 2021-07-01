@@ -23,22 +23,25 @@ describe('postSkipSegments', () => {
         const warnUser01Hash = getHash("warn-user01");
         const warnUser02Hash = getHash("warn-user02");
         const warnUser03Hash = getHash("warn-user03");
+        const reason01 = 'Reason01';
+        const reason02 = '';
+        const reason03 = 'Reason03';
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
 
-        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
-        db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 1000), warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 2000), warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 3601000), warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 1000)), warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, now, warnVip01Hash, 0]);
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 1000), warnVip01Hash, 0]);
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 2000), warnVip01Hash, 1]);
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 3601000), warnVip01Hash, 1]);
+        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES(?, ?, ?, ?, ?)';
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash, 1, reason01]);
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 1000), warnVip01Hash, 1, reason01]);
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 2000), warnVip01Hash, 1, reason01]);
+        db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 3601000), warnVip01Hash, 1, reason01]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash, 1, reason02]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash, 1, reason02]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 1000)), warnVip01Hash, 1, reason02]);
+        db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash, 1, reason02]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, now, warnVip01Hash, 0, reason03]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 1000), warnVip01Hash, 0, reason03]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 2000), warnVip01Hash, 1, reason03]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 3601000), warnVip01Hash, 1, reason03]);
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         db.prepare("run", insertVipUserQuery, [getHash("VIPUserSubmission")]);
@@ -619,7 +622,12 @@ describe('postSkipSegments', () => {
         })
         .then(async res => {
             if (res.status === 403) {
-                done(); // success
+                const errorMessage = await res.text();
+                if (errorMessage === 'Reason01') {
+                    done(); // success
+                } else {
+                    done("Status code was 403 but message was: " + errorMessage);
+                }
             } else {
                 done("Status code was " + res.status);
             }
