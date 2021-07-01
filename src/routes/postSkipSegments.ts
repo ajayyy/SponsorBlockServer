@@ -4,7 +4,6 @@ import {db, privateDB} from '../databases/databases';
 import {getMaxResThumbnail, YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
 import fetch from 'node-fetch';
-import isoDurations, { end } from 'iso8601-duration';
 import {getHash} from '../utils/getHash';
 import {getIP} from '../utils/getIP';
 import {getFormattedTime} from '../utils/getFormattedTime';
@@ -272,6 +271,34 @@ async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promi
     }
 }
 
+async function checkUserActiveWarning(userID: string): Promise<{ pass: boolean; errorMessage: string; }> {
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    const warnings = await db.prepare('all', 
+        `SELECT "reason" 
+        FROM warnings 
+        WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1
+        ORDER BY "issueTime" DESC 
+        LIMIT ?`,
+        [
+            userID,
+            Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR)), 
+            config.maxNumberOfActiveWarnings
+        ],
+    ) as {reason: string}[]
+
+    if (warnings?.length >= config.maxNumberOfActiveWarnings) {
+        const defaultMessage = 'Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?';
+
+        return {
+            pass: false, 
+            errorMessage: warnings[0]?.reason?.length > 0 ? warnings[0].reason : defaultMessage
+        };
+    }
+
+    return {pass: true, errorMessage: ''};
+}
+
 function proxySubmission(req: Request) {
     fetch(config.proxySubmission + '/api/skipSegments?userID=' + req.query.userID + '&videoID=' + req.query.videoID, {
             method: 'POST',
@@ -319,26 +346,18 @@ export async function postSkipSegments(req: Request, res: Response) {
     }
 
     if (invalidFields.length !== 0) {
-      // invalid request
-      const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
-      res.status(400).send(`No valid ${fields} field(s) provided`);
-      return;
+        // invalid request
+        const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
+        res.status(400).send(`No valid ${fields} field(s) provided`);
+        return;
     }
 
     //hash the userID
     userID = getHash(userID);
 
-    //hash the ip 5000 times so no one can get it from the database
-    const hashedIP = getHash(getIP(req) + config.globalSalt);
-
-    const MILLISECONDS_IN_HOUR = 3600000;
-    const now = Date.now();
-    const warningsCount = (await db.prepare('get', `SELECT count(*) as count FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
-        [userID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
-    )).count;
-
-    if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
+    const warningResult: {pass: boolean, errorMessage: string} = await checkUserActiveWarning(userID);
+    if (!warningResult.pass) {
+        return res.status(403).send(warningResult.errorMessage);
     }
 
     let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => {
@@ -350,9 +369,15 @@ export async function postSkipSegments(req: Request, res: Response) {
 
     const decreaseVotes = 0;
 
-    const previousSubmissions = await db.prepare('all', `SELECT "videoDuration", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 
-                    AND "shadowHidden" = 0 AND "votes" >= 0 AND "videoDuration" != 0`, [videoID, service]) as 
-                        {videoDuration: VideoDuration, UUID: SegmentUUID}[];
+    const previousSubmissions = await db.prepare('all', 
+        `SELECT "videoDuration", "UUID" 
+        FROM "sponsorTimes" 
+        WHERE "videoID" = ? AND "service" = ? AND 
+            "hidden" = 0 AND "shadowHidden" = 0 AND 
+            "votes" >= 0 AND "videoDuration" != 0`,
+        [videoID, service]
+    ) as {videoDuration: VideoDuration, UUID: SegmentUUID}[];
+
     // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
     const videoDurationChanged = (videoDuration: number) => videoDuration != 0 && previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
 
@@ -452,37 +477,16 @@ export async function postSkipSegments(req: Request, res: Response) {
     const UUIDs = [];
     const newSegments = [];
 
+    //hash the ip 5000 times so no one can get it from the database
+    const hashedIP = getHash(getIP(req) + config.globalSalt);
+
     try {
         //get current time
         const timeSubmitted = Date.now();
 
         const yesterday = timeSubmitted - 86400000;
 
-        // Disable IP ratelimiting for now
-        if (false) {
-            //check to see if this ip has submitted too many sponsors today
-            const rateLimitCheckRow = await privateDB.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
 
-            if (rateLimitCheckRow.count >= 10) {
-                //too many sponsors for the same video from the same ip address
-                res.sendStatus(429);
-
-                return;
-            }
-        }
-
-        // Disable max submissions for now
-        if (false) {
-            //check to see if the user has already submitted sponsors for this video
-            const duplicateCheckRow = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
-
-            if (duplicateCheckRow.count >= 16) {
-                //too many sponsors for the same video from the same user
-                res.sendStatus(429);
-
-                return;
-            }
-        }
 
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare('get', `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
