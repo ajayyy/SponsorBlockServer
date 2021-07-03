@@ -104,6 +104,7 @@
 | issueTime | INTEGER | not null |
 | issuerUserID | TEXT | not null |
 | enabled | INTEGER | not null |
+| reason | TEXT | not null, default '' |
 
 | index | field |
 | -- | :--: |

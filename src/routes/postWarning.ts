@@ -7,10 +7,11 @@ import { HashedUserID, UserID } from '../types/user.model';
 
 export async function postWarning(req: Request, res: Response) {
     // Collect user input data
-    let issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
-    let userID: UserID = req.body.userID;
-    let issueTime = new Date().getTime();
-    let enabled: boolean = req.body.enabled ?? true;
+    const issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
+    const userID: UserID = req.body.userID;
+    const issueTime = new Date().getTime();
+    const enabled: boolean = req.body.enabled ?? true;
+    const reason: string = req.body.reason ?? ''; 
 
     // Ensure user is a VIP
     if (!await isUserVIP(issuerUserID)) {
@@ -25,7 +26,11 @@ export async function postWarning(req: Request, res: Response) {
         let previousWarning = await db.prepare('get', 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
 
         if (!previousWarning) {
-            await db.prepare('run', 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES (?, ?, ?, 1)', [userID, issueTime, issuerUserID]);
+            await db.prepare(
+                'run', 
+                'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, 1, ?)',
+                [userID, issueTime, issuerUserID, reason]
+            );
             resultStatus = "issued to";
         } else {
             res.status(409).send();
