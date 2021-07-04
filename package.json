@@ -8,7 +8,9 @@
     "dev": "nodemon",
     "dev:bash": "nodemon -x 'npm test ; npm start'",
     "start": "ts-node src/index.ts",
-    "tsc": "tsc -p tsconfig.json"
+    "tsc": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "author": "Ajay Ramachandran",
   "license": "MIT",
@@ -37,6 +39,9 @@
     "@types/pg": "^7.14.10",
     "@types/redis": "^2.8.28",
     "@types/request": "^2.48.5",
+    "@typescript-eslint/eslint-plugin": "^4.28.1",
+    "@typescript-eslint/parser": "^4.28.1",
+    "eslint": "^7.30.0",
     "mocha": "^8.4.0",
     "nodemon": "^2.0.2",
     "sinon": "^9.2.0",
