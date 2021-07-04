@@ -33,6 +33,7 @@ import {postClearCache} from './routes/postClearCache';
 import { addUnlistedVideo } from './routes/addUnlistedVideo';
 import {postPurgeAllSegments} from './routes/postPurgeAllSegments';
 import {getUserID} from './routes/getUserID';
+import {getLockCategories} from './routes/getLockCategories';
 import ExpressPromiseRouter from 'express-promise-router';
 
 export function createServer(callback: () => void) {
@@ -154,6 +155,9 @@ function setupRoutes(router: Router) {
     
     // get userID from username
     router.get('/api/userID', getUserID);
+
+    // get lock categores from userID
+    router.get('/api/lockCategories', getLockCategories);
 
     if (config.postgres) {
         router.get('/database', (req, res) => dumpDatabase(req, res, true));
