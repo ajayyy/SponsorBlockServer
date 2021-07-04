@@ -14,7 +14,7 @@ describe('getIsUserVIP', () => {
             if (res.status !== 200) done("non 200: " + res.status);
             else done(); // pass
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(() => done("couldn't call endpoint"));
     });
 
 
@@ -24,7 +24,7 @@ describe('getIsUserVIP', () => {
             if (res.status !== 400) done("non 400: " + res.status);
             else done(); // pass
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(() => done("couldn't call endpoint"));
     });
 
     it('Should say a VIP is a VIP', (done: Done) => {
@@ -37,7 +37,7 @@ describe('getIsUserVIP', () => {
                 else done("Result was non-vip when should have been vip");
             }
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(() => done("couldn't call endpoint"));
     });
 
     it('Should say a normal user is not a VIP', (done: Done) => {
@@ -50,6 +50,6 @@ describe('getIsUserVIP', () => {
                 else done("Result was vip when should have been non-vip");
             }
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(() => done("couldn't call endpoint"));
     });
 });

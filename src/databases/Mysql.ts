@@ -1,19 +1,20 @@
 import {Logger} from '../utils/logger';
 import {IDatabase, QueryType} from './IDatabase';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import MysqlInterface from 'sync-mysql';
 
 export class Mysql implements IDatabase {
     private connection: any;
 
-    constructor(private config: any) {
+    constructor(private config: unknown) {
     }
 
     async init(): Promise<void> {
         this.connection = new MysqlInterface(this.config);
     }
 
-    prepare(type: QueryType, query: string, params?: any[]) {
+    prepare(type: QueryType, query: string, params?: any[]): Promise<any[]> {
         Logger.debug(`prepare (mysql): type: ${type}, query: ${query}, params: ${params}`);
         const queryResult = this.connection.query(query, params);
 

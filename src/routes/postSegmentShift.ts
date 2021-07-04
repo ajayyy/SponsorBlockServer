@@ -58,10 +58,9 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
         || !startTime
         || !endTime
     ) {
-        res.status(400).json({
+        return res.status(400).json({
             message: 'Bad Format',
         });
-        return;
     }
 
     // Check if user is VIP
@@ -69,10 +68,9 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
     const userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {
-        res.status(403).json({
+        return res.status(403).json({
             message: 'Must be a VIP to perform this action.',
         });
-        return;
     }
 
     try {
@@ -92,11 +90,11 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
                     await db.prepare('run', 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2 WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
                     break;
             }
-        };
+        }
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 
-    res.sendStatus(200);
+    return res.sendStatus(200);
 }

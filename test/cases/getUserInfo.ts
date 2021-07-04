@@ -30,7 +30,7 @@ describe('getUserInfo', () => {
             if (res.status !== 200) done('non 200 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get a 400 (No userID parameter)', (done: Done) => {
@@ -39,7 +39,7 @@ describe('getUserInfo', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get user info', (done: Done) => {
@@ -70,7 +70,7 @@ describe('getUserInfo', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should get warning data', (done: Done) => {
@@ -79,12 +79,12 @@ describe('getUserInfo', () => {
             if (res.status !== 200) {
                 done('non 200 (' + res.status + ')');
             } else {
-                const data = await res.json();;
+                const data = await res.json();
                 if (data.warnings !== 1) done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
                 else done(); // pass
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should get warning data with public ID', (done: Done) => {
@@ -98,7 +98,7 @@ describe('getUserInfo', () => {
                 else done();
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should get multiple warnings', (done: Done) => {
@@ -112,7 +112,7 @@ describe('getUserInfo', () => {
                 else done(); // pass
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should not get warnings if none', (done: Done) => {
@@ -126,7 +126,7 @@ describe('getUserInfo', () => {
                 else done(); // pass
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should done(userID for userName (No userName set)', (done: Done) => {
@@ -142,7 +142,7 @@ describe('getUserInfo', () => {
                 done(); // pass
             }
         })
-        .catch(err => ('couldn\'t call endpoint'));
+        .catch(() => ('couldn\'t call endpoint'));
     });
 
     it('Should return null segment if none', (done: Done) => {
@@ -156,20 +156,20 @@ describe('getUserInfo', () => {
                 else done(); // pass
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return zeroes if userid does not exist', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_null')
         .then(async res => {
             const data = await res.json();
-            for (var value in data) {
+            for (const value in data) {
                 if (data[value] === null && value !== "lastSegmentID")  {
                     done(`returned null for ${value}`)
                 }
             }
             done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 });

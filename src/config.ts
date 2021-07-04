@@ -1,6 +1,6 @@
 import fs from 'fs';
 import {SBSConfig} from "./types/config.model";
-import packageJson from "../package.json"
+import packageJson from "../package.json";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_POSTGRES ? 'ci.json'
@@ -83,7 +83,7 @@ addDefaults(config, {
 // Add defaults
 function addDefaults(config: SBSConfig, defaults: SBSConfig) {
     for (const key in defaults) {
-        if (!config.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(config, key)) {
             // @ts-ignore
             config[key] = defaults[key];
         }

@@ -23,7 +23,7 @@ const styleHeader = `<style>
     table tbody tr:nth-child(odd) {
         background: #efefef;
     }
-</style>`
+</style>`;
 
 const licenseHeader = `<p>The API and database follow <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="nofollow">CC BY-NC-SA 4.0</a> unless you have explicit permission.</p>
 <p><a href="https://gist.github.com/ajayyy/4b27dfc66e33941a45aeaadccb51de71">Attribution Template</a></p>
@@ -38,13 +38,13 @@ const tableNames = tables.map(table => table.name);
 interface TableDumpList {
     fileName: string;
     tableName: string;
-};
+}
 let latestDumpFiles: TableDumpList[] = [];
 
 interface TableFile {
     file: string,
     timestamp: number
-};
+}
 
 if (tables.length === 0) {
     Logger.warn('[dumpDatabase] No tables configured');
@@ -55,7 +55,7 @@ let updateQueued = false;
 let updateRunning = false;
 
 function removeOutdatedDumps(exportPath: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         // Get list of table names
         // Create array for each table
         const tableFiles: Record<string, TableFile[]> = tableNames.reduce((obj: any, tableName) => {
@@ -81,7 +81,7 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
                 });
             });
 
-            for (let tableName in tableFiles) {
+            for (const tableName in tableFiles) {
                 const files = tableFiles[tableName].sort((a, b) => b.timestamp - a.timestamp);
                 for (let i = 2; i < files.length; i++) {
                     // remove old file
@@ -90,13 +90,12 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
                     });
                 }
             }
-
             resolve();
         });
     });
 }
 
-export default async function dumpDatabase(req: Request, res: Response, showPage: boolean) {
+export default async function dumpDatabase(req: Request, res: Response, showPage: boolean): Promise<void> {
     if (!config?.dumpDatabase?.enabled) {
         res.status(404).send("Database dump is disabled");
         return;
@@ -108,7 +107,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
 
     updateQueueTime();
 
-    res.status(200)
+    res.status(200);
     
     if (showPage) {
         res.send(`${styleHeader}
@@ -153,7 +152,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
                     size: item.fileSize,
                 };
             }),
-        })
+        });
     }
 
     await queueDump();
@@ -182,7 +181,7 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
     if (file) {
         res.redirect("/download/" + file.fileName);
     } else {
-        res.status(404).send();
+        res.sendStatus(404);
     }
 
     await queueDump();

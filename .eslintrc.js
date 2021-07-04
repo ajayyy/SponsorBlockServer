@@ -17,6 +17,8 @@ module.exports = {
   rules: {
       // TODO: Remove warn rules when not needed anymore
       "no-self-assign": "off",
+      "semi": "warn",
       "@typescript-eslint/no-empty-interface": "off",
+      "@typescript-eslint/no-explicit-any": "off"
   },
 };

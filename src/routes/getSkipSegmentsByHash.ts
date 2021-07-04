@@ -3,11 +3,10 @@ import {getSegmentsByHash} from './getSkipSegments';
 import {Request, Response} from 'express';
 import { Category, SegmentUUID, Service, VideoIDHash } from '../types/segments.model';
 
-export async function getSkipSegmentsByHash(req: Request, res: Response) {
+export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
     if (!hashPrefixTester(req.params.prefix)) {
-        res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
-        return;
+        return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
 
@@ -61,6 +60,5 @@ export async function getSkipSegmentsByHash(req: Request, res: Response) {
         hash: data.hash,
         segments: data.segments,
     }));
-
-    res.status(output.length === 0 ? 404 : 200).json(output);
+    return res.status(output.length === 0 ? 404 : 200).json(output);
 }

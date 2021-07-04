@@ -3,7 +3,7 @@ import {db} from '../databases/databases';
 import {config} from '../config';
 import {Request, Response} from 'express';
 
-export async function addUserAsVIP(req: Request, res: Response) {
+export async function addUserAsVIP(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as string;
     let adminUserIDInput = req.query.adminUserID as string;
 
@@ -13,8 +13,7 @@ export async function addUserAsVIP(req: Request, res: Response) {
 
     if (userID == undefined || adminUserIDInput == undefined) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //hash the userID
@@ -22,8 +21,7 @@ export async function addUserAsVIP(req: Request, res: Response) {
 
     if (adminUserIDInput !== config.adminUserID) {
         //not authorized
-        res.sendStatus(403);
-        return;
+        return res.sendStatus(403);
     }
 
     //check to see if this user is already a vip
@@ -37,5 +35,5 @@ export async function addUserAsVIP(req: Request, res: Response) {
         await db.prepare('run', 'DELETE FROM "vipUsers" WHERE "userID" = ?', [userID]);
     }
 
-    res.sendStatus(200);
+    return res.sendStatus(200);
 }

@@ -5,7 +5,7 @@ import {db} from '../databases/databases';
 import { Category, VideoID } from '../types/segments.model';
 import { UserID } from '../types/user.model';
 
-export async function deleteLockCategoriesEndpoint(req: Request, res: Response) {
+export async function deleteLockCategoriesEndpoint(req: Request, res: Response): Promise<Response> {
     // Collect user input data
     const videoID = req.body.videoID as VideoID;
     const userID = req.body.userID as UserID;
@@ -18,10 +18,9 @@ export async function deleteLockCategoriesEndpoint(req: Request, res: Response) 
         || !Array.isArray(categories)
         || categories.length === 0
     ) {
-        res.status(400).json({
+        return res.status(400).json({
             message: 'Bad Format',
         });
-        return;
     }
 
     // Check if user is VIP
@@ -29,15 +28,14 @@ export async function deleteLockCategoriesEndpoint(req: Request, res: Response) 
     const userIsVIP = await isUserVIP(hashedUserID);
 
     if (!userIsVIP) {
-        res.status(403).json({
+        return res.status(403).json({
             message: 'Must be a VIP to mark videos.',
         });
-        return;
     }
 
     await deleteLockCategories(videoID, categories);  
 
-    res.status(200).json({message: 'Removed lock categories entrys for video ' + videoID});
+    return res.status(200).json({message: 'Removed lock categories entrys for video ' + videoID});
 }
 
 /**

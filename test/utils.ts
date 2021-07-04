@@ -1,6 +1,6 @@
 import {config} from '../src/config';
 
-export function getbaseURL() {
+export function getbaseURL(): string {
     return "http://localhost:" + config.port;
 }
 

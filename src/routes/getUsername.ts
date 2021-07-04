@@ -3,35 +3,32 @@ import {getHash} from '../utils/getHash';
 import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
 
-export async function getUsername(req: Request, res: Response) {
+export async function getUsername(req: Request, res: Response): Promise<Response> {
     let userID = req.query.userID as string;
 
     if (userID == undefined) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //hash the userID
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
 
         if (row !== undefined) {
-            res.send({
+            return res.send({
                 userName: row.userName,
             });
         } else {
             //no username yet, just send back the userID
-            res.send({
+            return res.send({
                 userName: userID,
             });
         }
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
-
-        return;
+        return res.sendStatus(500);
     }
 }

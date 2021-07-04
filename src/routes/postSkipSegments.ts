@@ -10,9 +10,7 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
-import redis from '../utils/redis';
-import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../utils/queryCacher';
@@ -175,9 +173,6 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
         const segments = submission.segments;
         let nbString = "";
         for (let i = 0; i < segments.length; i++) {
-            const startTime = parseFloat(segments[i].segment[0]);
-            const endTime = parseFloat(segments[i].segment[1]);
-
             if (duration == 0) {
                 // Allow submission if the duration is 0 (bug in youtube api)
                 return false;
@@ -201,8 +196,8 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
 
         //add segments they are trying to add in this submission
         for (let i = 0; i < segments.length; i++) {
-            let startTime = parseFloat(segments[i].segment[0]);
-            let endTime = parseFloat(segments[i].segment[1]);
+            const startTime = parseFloat(segments[i].segment[0]);
+            const endTime = parseFloat(segments[i].segment[1]);
             allSegmentTimes.push([startTime, endTime]);
         }
 
@@ -285,7 +280,7 @@ async function checkUserActiveWarning(userID: string): Promise<{ pass: boolean; 
             Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR)), 
             config.maxNumberOfActiveWarnings
         ],
-    ) as {reason: string}[]
+    ) as {reason: string}[];
 
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
         const defaultMessage = 'Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?';
@@ -307,12 +302,12 @@ function proxySubmission(req: Request) {
         .then(async res => {
             Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
         })
-        .catch(err => {
+        .catch(() => {
             Logger.error("Proxy Submission: Failed to make call");
         });
 }
 
-export async function postSkipSegments(req: Request, res: Response) {
+export async function postSkipSegments(req: Request, res: Response): Promise<Response> {
     if (config.proxySubmission) {
         proxySubmission(req);
     }
@@ -346,10 +341,9 @@ export async function postSkipSegments(req: Request, res: Response) {
     }
 
     if (invalidFields.length !== 0) {
-        // invalid request
-        const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
-        res.status(400).send(`No valid ${fields} field(s) provided`);
-        return;
+      // invalid request
+      const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
+      return res.status(400).send(`No valid ${fields} field(s) provided`);
     }
 
     //hash the userID
@@ -360,9 +354,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         return res.status(403).send(warningResult.errorMessage);
     }
 
-    let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => {
-        return list.category;
-    });
+    let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => list.category );
 
     //check if this user is on the vip list
     const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [userID])).userCount > 0;
@@ -407,54 +399,48 @@ export async function postSkipSegments(req: Request, res: Response) {
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
             //invalid request
-            res.status(400).send("One of your segments are invalid");
-            return;
+            return res.status(400).send("One of your segments are invalid");
         }
 
         if (!config.categoryList.includes(segments[i].category)) {
-            res.status(400).send("Category doesn't exist.");
-            return;
+            return res.status(400).send("Category doesn't exist.");
         }
 
         // Reject segment if it's in the locked categories list
         if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
             Logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
-            res.status(403).send(
+            return res.status(403).send(
                 "New submissions are not allowed for the following category: '"
                 + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
                 + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                 "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")
                 + "If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app",
             );
-            return;
         }
 
 
-        let startTime = parseFloat(segments[i].segment[0]);
-        let endTime = parseFloat(segments[i].segment[1]);
+        const startTime = parseFloat(segments[i].segment[0]);
+        const endTime = parseFloat(segments[i].segment[1]);
 
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
                 || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime) 
                 || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
             //invalid request
-            res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
-            return;
+            return res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
         }
 
         if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
             // Too short
-            res.status(400).send("Sponsors must be longer than 1 second long");
-            return;
+            return res.status(400).send("Sponsors must be longer than 1 second long");
         }
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
             and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
         if (duplicateCheck2Row.count > 0) {
-            res.sendStatus(409);
-            return;
+            return res.sendStatus(409);
         }
     }
 
@@ -469,8 +455,7 @@ export async function postSkipSegments(req: Request, res: Response) {
             //decreaseVotes = -2; //Disable for now
         } else if (autoModerateResult) {
             //Normal automod behavior
-            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
-            return;
+            return res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
         }
     }
     // Will be filled when submitting
@@ -487,28 +472,26 @@ export async function postSkipSegments(req: Request, res: Response) {
         const yesterday = timeSubmitted - 86400000;
 
         // Disable IP ratelimiting for now
+        // eslint-disable-next-line no-constant-condition
         if (false) {
             //check to see if this ip has submitted too many sponsors today
             const rateLimitCheckRow = await privateDB.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
 
             if (rateLimitCheckRow.count >= 10) {
                 //too many sponsors for the same video from the same ip address
-                res.sendStatus(429);
-
-                return;
+                return res.sendStatus(429);
             }
         }
 
         // Disable max submissions for now
+        // eslint-disable-next-line no-constant-condition
         if (false) {
             //check to see if the user has already submitted sponsors for this video
             const duplicateCheckRow = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
 
             if (duplicateCheckRow.count >= 16) {
                 //too many sponsors for the same video from the same user
-                res.sendStatus(429);
-
-                return;
+                return res.sendStatus(429);
             }
         }
 
@@ -522,7 +505,7 @@ export async function postSkipSegments(req: Request, res: Response) {
             shadowBanned = 1;
         }
 
-        let startingVotes = 0 + decreaseVotes;
+        const startingVotes = 0 + decreaseVotes;
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
@@ -553,11 +536,9 @@ export async function postSkipSegments(req: Request, res: Response) {
                 });
             } catch (err) {
                 //a DB change probably occurred
-                res.sendStatus(500);
                 Logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
-
-                return;
+                return res.sendStatus(500);
             }
 
             UUIDs.push(UUID);
@@ -569,17 +550,13 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
     } catch (err) {
         Logger.error(err);
-
-        res.sendStatus(500);
-
-        return;
+        return res.sendStatus(500);
     }
-
-    res.json(newSegments);
 
     for (let i = 0; i < segments.length; i++) {
         sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service);
     }
+    return res.json(newSegments);
 }
 
 // Takes an array of arrays: 
