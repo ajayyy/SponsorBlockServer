@@ -69,8 +69,7 @@ export async function getTopUsers(req: Request, res: Response): Promise<Response
 
     if (sortType == undefined) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //setup which sort type to use

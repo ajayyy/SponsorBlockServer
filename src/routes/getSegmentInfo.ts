@@ -57,19 +57,19 @@ async function handleGetSegmentInfo(req: Request, res: Response): Promise<DBSegm
     return DBSegments;
 }
 
-async function endpoint(req: Request, res: Response): Promise<void> {
+async function endpoint(req: Request, res: Response): Promise<Response> {
     try {
         const DBSegments = await handleGetSegmentInfo(req, res);
 
         // If false, res.send has already been called
         if (DBSegments) {
             //send result
-            res.send(DBSegments);
+            return res.send(DBSegments);
         }
     } catch (err) {
         if (err instanceof SyntaxError) { // catch JSON.parse error
-            res.status(400).send("UUIDs parameter does not match format requirements.");
-        } else res.status(500).send();
+            return res.status(400).send("UUIDs parameter does not match format requirements.");
+        } else return res.sendStatus(500);
     }
 }
 

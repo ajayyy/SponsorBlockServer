@@ -3,13 +3,12 @@ import {Request, Response} from 'express';
 import {getHash} from '../utils/getHash';
 import {Logger} from '../utils/logger';
 
-export async function getViewsForUser(req: Request, res: Response): Promise<void> {
+export async function getViewsForUser(req: Request, res: Response): Promise<Response> {
     let userID = req.query.userID as string;
 
     if (userID == undefined) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //hash the userID
@@ -20,15 +19,14 @@ export async function getViewsForUser(req: Request, res: Response): Promise<void
 
         //increase the view count by one
         if (row.viewCount != null) {
-            res.send({
+            return res.send({
                 viewCount: row.viewCount,
             });
         } else {
-            res.sendStatus(404);
+            return res.sendStatus(404);
         }
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
-        return;
+        return res.sendStatus(500);
     }
 }

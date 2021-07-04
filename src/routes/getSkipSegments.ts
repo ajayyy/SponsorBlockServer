@@ -291,26 +291,25 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
 
     if (segments.length === 0) {
         res.sendStatus(404);
-
         return false;
     }
 
     return segments;
 }
 
-async function endpoint(req: Request, res: Response): Promise<void> {
+async function endpoint(req: Request, res: Response): Promise<Response> {
     try {
         const segments = await handleGetSegments(req, res);
 
         // If false, res.send has already been called
         if (segments) {
             //send result
-            res.send(segments);
+            return res.send(segments);
         }
     } catch (err) {
         if (err instanceof SyntaxError) {
-            res.status(400).send("Categories parameter does not match format requirements.");
-        } else res.status(500).send();
+            return res.status(400).send("Categories parameter does not match format requirements.");
+        } else return res.sendStatus(500);
     }
 }
 

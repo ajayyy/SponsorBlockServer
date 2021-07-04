@@ -5,7 +5,7 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {getHash} from '../utils/getHash';
 import { HashedUserID, UserID } from '../types/user.model';
 
-export async function postWarning(req: Request, res: Response): Promise<void> {
+export async function postWarning(req: Request, res: Response): Promise<Response> {
     // Collect user input data
     const issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
     const userID: UserID = req.body.userID;
@@ -16,8 +16,7 @@ export async function postWarning(req: Request, res: Response): Promise<void> {
     // Ensure user is a VIP
     if (!await isUserVIP(issuerUserID)) {
         Logger.warn("Permission violation: User " + issuerUserID + " attempted to warn user " + userID + ".");
-        res.status(403).json({"message": "Not a VIP"});
-        return;
+        return res.status(403).json({"message": "Not a VIP"});
     }
 
     let resultStatus = "";
@@ -33,15 +32,14 @@ export async function postWarning(req: Request, res: Response): Promise<void> {
             );
             resultStatus = "issued to";
         } else {
-            res.status(409).send();
-            return;
+            return res.sendStatus(409);
         }
     } else {
         await db.prepare('run', 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ?', [userID]);
         resultStatus = "removed from";
     }
 
-    res.status(200).json({
+    return res.status(200).json({
         message: "Warning " + resultStatus + " user '" + userID + "'.",
     });
 }

@@ -6,7 +6,7 @@ import { Category, Service, VideoID, VideoIDHash } from '../types/segments.model
 import { UserID } from '../types/user.model';
 import { QueryCacher } from '../utils/queryCacher';
 
-export async function shadowBanUser(req: Request, res: Response): Promise<void> {
+export async function shadowBanUser(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as string;
     const hashedIP = req.query.hashedIP as string;
     let adminUserIDInput = req.query.adminUserID as string;
@@ -23,8 +23,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<void> 
 
     if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined)) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //hash the userID
@@ -33,8 +32,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<void> 
     const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [adminUserIDInput])).userCount > 0;
     if (!isVIP) {
         //not authorized
-        res.sendStatus(403);
-        return;
+        return res.sendStatus(403);
     }
 
     if (userID) {
@@ -114,6 +112,5 @@ export async function shadowBanUser(req: Request, res: Response): Promise<void> 
             // }
         }*/
     }
-
-    res.sendStatus(200);
+    return res.sendStatus(200);
 }

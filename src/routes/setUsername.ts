@@ -4,14 +4,14 @@ import {db, privateDB} from '../databases/databases';
 import {getHash} from '../utils/getHash';
 import {Request, Response} from 'express';
 
-async function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<void>  {
+async function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
     return privateDB.prepare('run',
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedByAdmin", "updatedAt") VALUES(?, ?, ?, ?, ?)`,
         [userID, newUserName, oldUserName, + updatedByAdmin, new Date().getTime()]
     );
 }
 
-export async function setUsername(req: Request, res: Response): Promise<void> {
+export async function setUsername(req: Request, res: Response): Promise<Response> {
     let userID = req.query.userID as string;
     let userName = req.query.username as string;
 
@@ -19,14 +19,12 @@ export async function setUsername(req: Request, res: Response): Promise<void> {
 
     if (userID == undefined || userName == undefined || userID === "undefined" || userName.length > 64) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     if (userName.includes("discord")) {
         // Don't allow
-        res.sendStatus(200);
-        return;
+        return res.sendStatus(200);
     }
     
     // remove unicode control characters from username (example: \n, \r, \t etc.)
@@ -40,8 +38,7 @@ export async function setUsername(req: Request, res: Response): Promise<void> {
 
         if (adminUserIDInput != config.adminUserID) {
             //they aren't the admin
-            res.sendStatus(403);
-            return;
+            return res.sendStatus(403);
         }
     } else {
         //hash the userID
@@ -51,14 +48,12 @@ export async function setUsername(req: Request, res: Response): Promise<void> {
     try {
         const row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
         if (adminUserIDInput === undefined && row.count > 0) {
-            res.sendStatus(200);
-            return;
+            return res.sendStatus(200);
         }
     }
     catch (error) {
         Logger.error(error);
-        res.sendStatus(500);
-        return;
+        return res.sendStatus(500);
     }
 
     try {
@@ -78,10 +73,9 @@ export async function setUsername(req: Request, res: Response): Promise<void> {
 
         await logUserNameChange(userID, userName, oldUserName, adminUserIDInput !== undefined);
 
-        res.sendStatus(200);
+        return res.sendStatus(200);
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
-        return;
+        return res.sendStatus(500);
     }
 }

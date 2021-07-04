@@ -279,7 +279,7 @@ function proxySubmission(req: Request) {
         });
 }
 
-export async function postSkipSegments(req: Request, res: Response): Promise<void> {
+export async function postSkipSegments(req: Request, res: Response): Promise<Response> {
     if (config.proxySubmission) {
         proxySubmission(req);
     }
@@ -315,8 +315,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
     if (invalidFields.length !== 0) {
       // invalid request
       const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
-      res.status(400).send(`No valid ${fields} field(s) provided`);
-      return;
+      return res.status(400).send(`No valid ${fields} field(s) provided`);
     }
 
     //hash the userID
@@ -332,13 +331,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
     )).count;
 
     if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
-        return;
+        return res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
     }
 
-    let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => {
-        return list.category;
-    });
+    let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => list.category );
 
     //check if this user is on the vip list
     const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [userID])).userCount > 0;
@@ -377,27 +373,24 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
             //invalid request
-            res.status(400).send("One of your segments are invalid");
-            return;
+            return res.status(400).send("One of your segments are invalid");
         }
 
         if (!config.categoryList.includes(segments[i].category)) {
-            res.status(400).send("Category doesn't exist.");
-            return;
+            return res.status(400).send("Category doesn't exist.");
         }
 
         // Reject segment if it's in the locked categories list
         if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
             Logger.warn("Caught a no-segment submission. userID: '" + userID + "', videoID: '" + videoID + "', category: '" + segments[i].category + "'");
-            res.status(403).send(
+            return res.status(403).send(
                 "New submissions are not allowed for the following category: '"
                 + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
                 + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                 "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")
                 + "If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app",
             );
-            return;
         }
 
 
@@ -409,22 +402,19 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
                 || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime) 
                 || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
             //invalid request
-            res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
-            return;
+            return res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
         }
 
         if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
             // Too short
-            res.status(400).send("Sponsors must be longer than 1 second long");
-            return;
+            return res.status(400).send("Sponsors must be longer than 1 second long");
         }
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
             and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
         if (duplicateCheck2Row.count > 0) {
-            res.sendStatus(409);
-            return;
+            return res.sendStatus(409);
         }
     }
 
@@ -439,8 +429,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
             //decreaseVotes = -2; //Disable for now
         } else if (autoModerateResult) {
             //Normal automod behavior
-            res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
-            return;
+            return res.status(403).send("Request rejected by auto moderator: " + autoModerateResult + " If this is an issue, send a message on Discord.");
         }
     }
     // Will be filled when submitting
@@ -461,8 +450,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
 
             if (rateLimitCheckRow.count >= 10) {
                 //too many sponsors for the same video from the same ip address
-                res.sendStatus(429);
-                return;
+                return res.sendStatus(429);
             }
         }
 
@@ -474,8 +462,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
 
             if (duplicateCheckRow.count >= 16) {
                 //too many sponsors for the same video from the same user
-                res.sendStatus(429);
-                return;
+                return res.sendStatus(429);
             }
         }
 
@@ -520,10 +507,9 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
                 });
             } catch (err) {
                 //a DB change probably occurred
-                res.sendStatus(500);
                 Logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
-                return;
+                return res.sendStatus(500);
             }
 
             UUIDs.push(UUID);
@@ -535,15 +521,13 @@ export async function postSkipSegments(req: Request, res: Response): Promise<voi
         }
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
-        return;
+        return res.sendStatus(500);
     }
-
-    res.json(newSegments);
 
     for (let i = 0; i < segments.length; i++) {
         sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service);
     }
+    return res.json(newSegments);
 }
 
 // Takes an array of arrays: 

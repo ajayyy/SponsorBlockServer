@@ -181,7 +181,7 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
     if (file) {
         res.redirect("/download/" + file.fileName);
     } else {
-        res.status(404).send();
+        res.sendStatus(404);
     }
 
     await queueDump();

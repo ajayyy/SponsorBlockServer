@@ -88,19 +88,18 @@ async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUI
     }
 }
 
-export async function getUserInfo(req: Request, res: Response): Promise<void> {
+export async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
     const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
 
     if (hashedUserID == undefined) {
         //invalid request
-        res.status(400).send('Parameters are not valid');
-        return;
+        return res.status(400).send('Parameters are not valid');
     }
 
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     if (segmentsSummary) {
-        res.send({
+        return res.send({
             userID: hashedUserID,
             userName: await dbGetUsername(hashedUserID),
             minutesSaved: segmentsSummary.minutesSaved,
@@ -114,6 +113,6 @@ export async function getUserInfo(req: Request, res: Response): Promise<void> {
             lastSegmentID: await dbGetLastSegmentForUser(hashedUserID),
         });
     } else {
-        res.status(400).send();
+        return res.sendStatus(400);
     }
 }

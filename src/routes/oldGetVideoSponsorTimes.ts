@@ -1,7 +1,7 @@
 import {handleGetSegments} from './getSkipSegments';
 import {Request, Response} from 'express';
 
-export async function oldGetVideoSponsorTimes(req: Request, res: Response): Promise<void> {
+export async function oldGetVideoSponsorTimes(req: Request, res: Response): Promise<Response> {
     const segments = await handleGetSegments(req, res);
 
     if (segments) {
@@ -14,7 +14,7 @@ export async function oldGetVideoSponsorTimes(req: Request, res: Response): Prom
             UUIDs.push(segment.UUID);
         }
 
-        res.send({
+        return res.send({
             sponsorTimes,
             UUIDs,
         });
