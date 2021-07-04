@@ -23,9 +23,11 @@ describe('postSkipSegments', () => {
         const warnUser01Hash = getHash("warn-user01");
         const warnUser02Hash = getHash("warn-user02");
         const warnUser03Hash = getHash("warn-user03");
+        const warnUser04Hash = getHash("warn-user04");
         const reason01 = 'Reason01';
         const reason02 = '';
         const reason03 = 'Reason03';
+        const reason04 = '';
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
 
@@ -42,6 +44,10 @@ describe('postSkipSegments', () => {
         db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 1000), warnVip01Hash, 0, reason03]);
         db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 2000), warnVip01Hash, 1, reason03]);
         db.prepare("run", insertWarningQuery, [warnUser03Hash, (now - 3601000), warnVip01Hash, 1, reason03]);
+        db.prepare("run", insertWarningQuery, [warnUser04Hash, now, warnVip01Hash, 0, reason04]);
+        db.prepare("run", insertWarningQuery, [warnUser04Hash, (now - 1000), warnVip01Hash, 0, reason04]);
+        db.prepare("run", insertWarningQuery, [warnUser04Hash, (now - 2000), warnVip01Hash, 1, reason04]);
+        db.prepare("run", insertWarningQuery, [warnUser04Hash, (now - 3601000), warnVip01Hash, 1, reason04]);
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         db.prepare("run", insertVipUserQuery, [getHash("VIPUserSubmission")]);
@@ -604,7 +610,7 @@ describe('postSkipSegments', () => {
         .catch(err => done("Couldn't call endpoint"));
     });
 
-    it('Should be rejected if user has to many active warnings', (done: Done) => {
+    it('Should be rejected with custom message if user has to many active warnings', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
             method: 'POST',
@@ -699,6 +705,37 @@ describe('postSkipSegments', () => {
             else done(true);
         })
         .catch(err => done(true));
+    });
+
+    it('Should be rejected with default message if user has to many active warnings', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "warn-user01",
+                videoID: "dQw4w9WgXcF",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 403) {
+                const errorMessage = await res.text();
+                if (errorMessage !== '') {
+                    done(); // success
+                } else {
+                    done("Status code was 403 but message was: " + errorMessage);
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
     });
 
     it('Should return 400 for missing params (JSON method) 1', (done: Done) => {
