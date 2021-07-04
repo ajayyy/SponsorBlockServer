@@ -12,7 +12,7 @@ export class Sqlite implements IDatabase {
     {
     }
 
-    async prepare(type: QueryType, query: string, params: any[] = []) {
+    async prepare(type: QueryType, query: string, params: any[] = []): Promise<any[]> {
         // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
         const preparedQuery = this.db.prepare(query);
 
@@ -30,7 +30,7 @@ export class Sqlite implements IDatabase {
         }
     }
 
-    async init() {
+    async init(): Promise<void> {
         // Make dirs if required
         if (!fs.existsSync(path.join(this.config.dbPath, "../"))) {
             fs.mkdirSync(path.join(this.config.dbPath, "../"));
@@ -61,7 +61,7 @@ export class Sqlite implements IDatabase {
         this.db.exec("pragma mmap_size= 500000000;");
     }
 
-    attachDatabase(database: string, attachAs: string) {
+    attachDatabase(database: string, attachAs: string): void {
         this.db.prepare(`ATTACH ? as ${attachAs}`).run(database);
     }
 
@@ -83,7 +83,7 @@ export class Sqlite implements IDatabase {
     }
 
     private static processUpgradeQuery(query: string): string {
-        let result = query.replace(/^.*--!sqlite-ignore/gm, "");
+        const result = query.replace(/^.*--!sqlite-ignore/gm, "");
 
         return result;
     }

@@ -20,7 +20,7 @@ async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: numb
 }
 
 async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string, expectdHidden: number) {
-    let seg = await db.prepare('get', `SELECT "hidden", "UUID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoId]);
+    const seg = await db.prepare('get', `SELECT "hidden", "UUID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoId]);
     for (let i = 0, len = seg.length; i < len; i++) {
         if (seg.hidden !== expectdHidden) {
             return `${seg.UUID} hidden expected to be ${expectdHidden} but found ${seg.hidden}`;

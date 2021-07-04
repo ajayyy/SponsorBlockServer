@@ -34,7 +34,7 @@ async function getUsernameInfo(userID: string): Promise<{ userName: string, lock
     return row;
 }
 
-async function addLogUserNameChange(userID: string, newUserName: string, oldUserName: string = '') {
+async function addLogUserNameChange(userID: string, newUserName: string, oldUserName = '') {
     privateDB.prepare('run',
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedAt", "updatedByAdmin") VALUES(?, ?, ?, ?, ?)`,
         [getHash(userID), newUserName, oldUserName, new Date().getTime(), + true]
@@ -90,7 +90,7 @@ describe('setUsername', () => {
             if (usernameInfo.locked == "1") done(`Username was locked when it shouldn't have been`);
             done();
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should return 200', (done: Done) => {
@@ -103,7 +103,7 @@ describe('setUsername', () => {
                 testUserNameChangelog(user01PrivateUserID, decodeURIComponent('Changed%20Username'), username01, false, done);
             }
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should return 400 for missing param "userID"', (done: Done) => {
@@ -114,7 +114,7 @@ describe('setUsername', () => {
             if (res.status !== 400) done(`Status code was ${res.status}`);
             else done(); // pass
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should return 400 for missing param "username"', (done: Done) => {
@@ -125,7 +125,7 @@ describe('setUsername', () => {
             if (res.status !== 400) done(`Status code was ${res.status}`);
             else done(); // pass
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should return 400 for "username" longer then 64 characters', (done: Done) => {
@@ -137,7 +137,7 @@ describe('setUsername', () => {
             if (res.status !== 400) done(`Status code was ${res.status}`);
             else  done(); // pass
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should not change username if it contains "discord"', (done: Done) => {
@@ -155,7 +155,7 @@ describe('setUsername', () => {
                 else done();
             }
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should be able to change username', (done: Done) => {
@@ -163,13 +163,13 @@ describe('setUsername', () => {
         fetch(`${getbaseURL()}/api/setUsername?userID=${user03PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: 'POST',
         })
-        .then(async res => {
+        .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user03PrivateUserID));
             if (usernameInfo.userName !== newUsername) done(`Username did not change`);
             if (usernameInfo.locked == "1") done(`Username was locked when it shouldn't have been`);
             testUserNameChangelog(user03PrivateUserID, newUsername, username03, false, done);
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should not be able to change locked username', (done: Done) => {
@@ -177,13 +177,13 @@ describe('setUsername', () => {
         fetch(`${getbaseURL()}/api/setUsername?userID=${user04PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: 'POST',
         })
-        .then(async res => {
+        .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user04PrivateUserID));
             if (usernameInfo.userName === newUsername) done(`Username '${username04}' got changed to '${usernameInfo}'`);
             if (usernameInfo.locked == "0") done(`Username was unlocked when it shouldn't have been`);
             else done();
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Should filter out unicode control characters', (done: Done) => {
@@ -191,12 +191,12 @@ describe('setUsername', () => {
         fetch(`${getbaseURL()}/api/setUsername?userID=${user05PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: 'POST',
         })
-        .then(async res => {
+        .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user05PrivateUserID));
             if (usernameInfo.userName === newUsername) done(`Username contains unicode control characters`);
             testUserNameChangelog(user05PrivateUserID, wellFormatUserName(newUsername), username05, false, done);
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Incorrect adminUserID should return 403', (done: Done) => {
@@ -208,7 +208,7 @@ describe('setUsername', () => {
             if (res.status !== 403) done(`Status code was ${res.status}`);
             else done();
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Admin should be able to change username', (done: Done) => {
@@ -216,13 +216,13 @@ describe('setUsername', () => {
         fetch(`${getbaseURL()}/api/setUsername?adminUserID=${adminPrivateUserID}&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
             method: 'POST',
         })
-        .then(async res => {
+        .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
             if (usernameInfo.userName !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
             if (usernameInfo.locked == "0") done(`Username was not locked`);
             else testUserNameChangelog(user06PrivateUserID, newUsername, username06, true, done);
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 
     it('Admin should be able to change locked username', (done: Done) => {
@@ -230,12 +230,12 @@ describe('setUsername', () => {
         fetch(`${getbaseURL()}/api/setUsername?adminUserID=${adminPrivateUserID}&userID=${getHash(user07PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
             method: 'POST',
         })
-        .then(async res => {
+        .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
             if (usernameInfo.userName !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
             if (usernameInfo.locked == "0") done(`Username was unlocked when it shouldn't have been`);
             else testUserNameChangelog(user07PrivateUserID, newUsername, username07, true, done);
         })
-        .catch(err => done(`couldn't call endpoint`));
+        .catch(() => done(`couldn't call endpoint`));
     });
 });

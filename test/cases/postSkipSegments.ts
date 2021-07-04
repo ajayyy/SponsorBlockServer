@@ -249,7 +249,7 @@ describe('postSkipSegments', () => {
                 done("non 403 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to submit a single time under a different service (JSON method)', (done: Done) => {
@@ -512,7 +512,7 @@ describe('postSkipSegments', () => {
                 done("non 200 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if segment starts and ends at the same time', (done: Done) => {
@@ -527,7 +527,7 @@ describe('postSkipSegments', () => {
                 done("non 400 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be accepted if highlight segment starts and ends at the same time', (done: Done) => {
@@ -542,7 +542,7 @@ describe('postSkipSegments', () => {
                 done("non 200 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if highlight segment doesn\'t start and end at the same time', (done: Done) => {
@@ -557,7 +557,7 @@ describe('postSkipSegments', () => {
                 done("non 400 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if a sponsor is less than 1 second', (done: Done) => {
@@ -572,7 +572,7 @@ describe('postSkipSegments', () => {
                 done("non 403 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if over 80% of the video', (done: Done) => {
@@ -585,7 +585,7 @@ describe('postSkipSegments', () => {
                 done("non 403 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it("Should be rejected if NB's predicted probability is <70%.", (done: Done) => {
@@ -598,7 +598,7 @@ describe('postSkipSegments', () => {
                 done("non 200 status code: " + res.status + " (" + body + ")");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be rejected if user has to many active warnings', (done: Done) => {
@@ -690,7 +690,7 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(err => done(true));
+        .catch(() => done(true));
     });
 
     it('Should return 400 for missing params (JSON method) 1', (done: Done) => {
@@ -715,7 +715,7 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(err => done(true));
+        .catch(() => done(true));
     });
     it('Should return 400 for missing params (JSON method) 2', (done: Done) => {
         fetch(getbaseURL()
@@ -733,7 +733,7 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(err => done(true));
+        .catch(() => done(true));
     });
     it('Should return 400 for missing params (JSON method) 3', (done: Done) => {
         fetch(getbaseURL()
@@ -758,7 +758,7 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(err => done(true));
+        .catch(() => done(true));
     });
     it('Should return 400 for missing params (JSON method) 4', (done: Done) => {
         fetch(getbaseURL()
@@ -782,7 +782,7 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(err => done(true));
+        .catch(() => done(true));
     });
     it('Should return 400 for missing params (JSON method) 5', (done: Done) => {
         fetch(getbaseURL()
@@ -800,6 +800,6 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(err => done(true));
+        .catch(() => done(true));
     });
 });

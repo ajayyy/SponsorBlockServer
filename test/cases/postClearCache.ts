@@ -6,7 +6,7 @@ import {getHash} from '../../src/utils/getHash';
 describe('postClearCache', () => {
     before(async () => {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES ('` + getHash("clearing-vip") + "')");
-        let startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
+        const startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES';
         await db.prepare("run", startOfQuery + "('clear-test', 0, 1, 2, 'clear-uuid', 'testman', 0, 50, 'sponsor', 0, '" + getHash('clear-test', 1) + "')");
     });
 

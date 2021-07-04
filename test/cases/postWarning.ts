@@ -9,7 +9,7 @@ describe('postWarning', () => {
     });
 
     it('Should be able to create warning if vip (exp 200)', (done: Done) => {
-        let json = {
+        const json = {
             issuerUserID: 'warning-vip',
             userID: 'warning-0',
             reason: 'warning-reason-0'
@@ -24,7 +24,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
                 if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID) && row?.reason === json.reason) {
                     done();
                 } else {
@@ -40,7 +40,7 @@ describe('postWarning', () => {
     });
 
     it('Should be not be able to create a duplicate warning if vip', (done: Done) => {
-        let json = {
+        const json = {
             issuerUserID: 'warning-vip',
             userID: 'warning-0',
         };
@@ -55,7 +55,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 409) {
-                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
                 if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
                     done();
                 } else {
@@ -71,7 +71,7 @@ describe('postWarning', () => {
     });
 
     it('Should be able to remove warning if vip', (done: Done) => {
-        let json = {
+        const json = {
             issuerUserID: 'warning-vip',
             userID: 'warning-0',
             enabled: false
@@ -87,7 +87,7 @@ describe('postWarning', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
                 if (row?.enabled == 0) {
                     done();
                 } else {
@@ -103,7 +103,7 @@ describe('postWarning', () => {
     });
 
     it('Should not be able to create warning if not vip (exp 403)', (done: Done) => {
-        let json = {
+        const json = {
             issuerUserID: 'warning-not-vip',
             userID: 'warning-1',
         };

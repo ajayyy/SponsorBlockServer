@@ -1,7 +1,6 @@
 import {config} from '../config';
 import {Logger} from '../utils/logger';
 import fetch from 'node-fetch';
-import AbortController from "abort-controller";
 
 function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
@@ -27,15 +26,15 @@ function getVoteAuthor(submissionCount: number, isVIP: boolean, isOwnSubmission:
     return "";
 }
 
-function dispatchEvent(scope: string, data: any): void {
-    let webhooks = config.webhooks;
+function dispatchEvent(scope: string, data: Record<string, unknown>): void {
+    const webhooks = config.webhooks;
     if (webhooks === undefined || webhooks.length === 0) return;
     Logger.debug("Dispatching webhooks");
 
     for (const webhook of webhooks) {
-        let webhookURL = webhook.url;
-        let authKey = webhook.key;
-        let scopes = webhook.scopes || [];
+        const webhookURL = webhook.url;
+        const authKey = webhook.key;
+        const scopes = webhook.scopes || [];
         if (!scopes.includes(scope.toLowerCase())) return;
 
         fetch(webhookURL, {

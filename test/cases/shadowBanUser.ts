@@ -40,7 +40,7 @@ describe('shadowBanUser', () => {
                 }
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to unban user without unhiding submissions', (done: Done) => {
@@ -60,7 +60,7 @@ describe('shadowBanUser', () => {
                 }
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to ban user and hide submissions from only some categories', (done: Done) => {
@@ -80,7 +80,7 @@ describe('shadowBanUser', () => {
                 }
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to unban user and unhide submissions', (done: Done) => {
@@ -100,7 +100,7 @@ describe('shadowBanUser', () => {
                 }
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to unban user and unhide some submissions', (done: Done) => {
@@ -120,7 +120,7 @@ describe('shadowBanUser', () => {
                 }
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
 });

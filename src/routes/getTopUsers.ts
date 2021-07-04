@@ -7,7 +7,7 @@ const MILLISECONDS_IN_MINUTE = 60000;
 const getTopUsersWithCache = createMemoryCache(generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
-async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boolean = false) {
+async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = false) {
     const userNames = [];
     const viewCounts = [];
     const totalSubmissions = [];
@@ -63,7 +63,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled: boole
     };
 }
 
-export async function getTopUsers(req: Request, res: Response) {
+export async function getTopUsers(req: Request, res: Response): Promise<Response> {
     const sortType = parseInt(req.query.sortType as string);
     const categoryStatsEnabled = req.query.categoryStats;
 
@@ -89,5 +89,5 @@ export async function getTopUsers(req: Request, res: Response) {
     const stats = await getTopUsersWithCache(sortBy, categoryStatsEnabled);
 
     //send this result
-    res.send(stats);
+    return res.send(stats);
 }

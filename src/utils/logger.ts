@@ -86,4 +86,4 @@ class Logger {
 const loggerInstance = new Logger();
 export {
     loggerInstance as Logger
-}
+};

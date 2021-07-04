@@ -4,11 +4,11 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {db} from '../databases/databases';
 import {Request, Response} from 'express';
 
-export async function postLockCategories(req: Request, res: Response) {
+export async function postLockCategories(req: Request, res: Response): Promise<string[]> {
     // Collect user input data
-    let videoID = req.body.videoID;
+    const videoID = req.body.videoID;
     let userID = req.body.userID;
-    let categories = req.body.categories;
+    const categories = req.body.categories;
 
     // Check input data is valid
     if (!videoID
@@ -25,7 +25,7 @@ export async function postLockCategories(req: Request, res: Response) {
 
     // Check if user is VIP
     userID = getHash(userID);
-    let userIsVIP = await isUserVIP(userID);
+    const userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {
         res.status(403).json({
@@ -67,7 +67,7 @@ export async function postLockCategories(req: Request, res: Response) {
                 message: "Internal Server Error: Could not write marker to the database.",
             });
         }
-    };
+    }
 
     res.status(200).json({
         submitted: categoriesToMark,

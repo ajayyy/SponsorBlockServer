@@ -20,7 +20,7 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
     const hashedUserID: HashedUserID = getHash(userID);
 
     try {
-        let vipState = await isUserVIP(hashedUserID);
+        const vipState = await isUserVIP(hashedUserID);
         if (!vipState) {
             res.status(403).json({
                 message: 'Must be a VIP to perform this action.',

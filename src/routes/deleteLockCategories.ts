@@ -5,7 +5,7 @@ import {db} from '../databases/databases';
 import { Category, VideoID } from '../types/segments.model';
 import { UserID } from '../types/user.model';
 
-export async function deleteLockCategoriesEndpoint(req: Request, res: Response) {
+export async function deleteLockCategoriesEndpoint(req: Request, res: Response): Promise<void> {
     // Collect user input data
     const videoID = req.body.videoID as VideoID;
     const userID = req.body.userID as UserID;

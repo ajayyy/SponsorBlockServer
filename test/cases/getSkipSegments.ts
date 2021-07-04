@@ -35,7 +35,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to get a time by category for a different service 1', (done: Done) => {
@@ -52,7 +52,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to get a time by category 2', (done: Done) => {
@@ -69,7 +69,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be able to get a time by categories array', (done: Done) => {
@@ -86,7 +86,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be able to get a time by categories array 2', (done: Done) => {
@@ -103,7 +103,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should return 404 if all submissions are hidden', (done: Done) => {
@@ -112,7 +112,7 @@ describe('getSkipSegments', () => {
             if (res.status !== 404) done("non 404 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be able to get multiple times by category', (done: Done) => {
@@ -171,7 +171,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be possible to send unexpected query parameters', (done: Done) => {
@@ -189,7 +189,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Low voted submissions should be hidden', (done: Done) => {
@@ -207,7 +207,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should return 404 if no segment found', (done: Done) => {
@@ -216,7 +216,7 @@ describe('getSkipSegments', () => {
             if (res.status !== 404) done("non 404 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return 400 if bad categories argument', (done: Done) => {
@@ -225,7 +225,7 @@ describe('getSkipSegments', () => {
             if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able send a comma in a query param', (done: Done) => {
@@ -243,7 +243,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should always get locked segment', (done: Done) => {
@@ -260,7 +260,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be able to get multiple categories with repeating parameters', (done: Done) => {
@@ -290,7 +290,7 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be able to get, categories param overriding repeating category', (done: Done) => {
@@ -307,6 +307,6 @@ describe('getSkipSegments', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 });

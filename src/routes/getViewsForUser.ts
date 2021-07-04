@@ -3,7 +3,7 @@ import {Request, Response} from 'express';
 import {getHash} from '../utils/getHash';
 import {Logger} from '../utils/logger';
 
-export async function getViewsForUser(req: Request, res: Response) {
+export async function getViewsForUser(req: Request, res: Response): Promise<void> {
     let userID = req.query.userID as string;
 
     if (userID == undefined) {
@@ -16,7 +16,7 @@ export async function getViewsForUser(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
 
         //increase the view count by one
         if (row.viewCount != null) {
@@ -29,7 +29,6 @@ export async function getViewsForUser(req: Request, res: Response) {
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);
-
         return;
     }
 }

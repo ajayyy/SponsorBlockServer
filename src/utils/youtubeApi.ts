@@ -17,10 +17,10 @@ export class YouTubeAPI {
 
                 if (data) {
                     Logger.debug("YouTube API: cache used for video information: " + videoID);
-                    return { err: null, data: JSON.parse(data) }
+                    return { err: null, data: JSON.parse(data) };
                 }
             } catch (err) {
-                return { err }
+                return { err };
             }
         }
 
@@ -32,7 +32,7 @@ export class YouTubeAPI {
             if (result.ok) {
                 const data = await result.json();
                 if (data.error) {
-                    Logger.warn("NewLeaf API Error for " + videoID + ": " + data.error)
+                    Logger.warn("NewLeaf API Error for " + videoID + ": " + data.error);
                     return { err: data.error, data: null };
                 }
 
@@ -45,7 +45,7 @@ export class YouTubeAPI {
                 return { err: result.statusText, data: null };
             }
         } catch (err) {
-            return {err, data: null}
+            return {err, data: null};
         }       
     }
 }

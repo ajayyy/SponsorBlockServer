@@ -23,11 +23,10 @@ describe('getUserID', () => {
     it('Should be able to get a 200', (done: Done) => {
         fetch(getbaseURL() + '/api/userID?username=fuzzy+user+01')
         .then(async res => {
-            const text = await res.text()
             if (res.status !== 200) done('non 200 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get a 400 (No username parameter)', (done: Done) => {
@@ -36,17 +35,16 @@ describe('getUserID', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get a 200 (username is public id)', (done: Done) => {
         fetch(getbaseURL() + '/api/userID?username='+getHash("getuserid_user_06"))
         .then(async res => {
-            const text = await res.text()
             if (res.status !== 200) done('non 200 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get a 400 (username longer than 64 chars)', (done: Done) => {
@@ -55,7 +53,7 @@ describe('getUserID', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should be able to get single username', (done: Done) => {
@@ -76,7 +74,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get multiple fuzzy user info from start', (done: Done) => {
@@ -101,7 +99,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get multiple fuzzy user info from middle', (done: Done) => {
@@ -130,7 +128,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get with public ID', (done: Done) => {
@@ -152,7 +150,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get with fuzzy public ID', (done: Done) => {
@@ -174,7 +172,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get repeating username', (done: Done) => {
@@ -199,7 +197,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get repeating fuzzy username', (done: Done) => {
@@ -224,7 +222,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should avoid ReDOS with _', (done: Done) => {
@@ -245,7 +243,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should avoid ReDOS with %', (done: Done) => {
@@ -266,7 +264,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 404 if escaped backslashes present', (done: Done) => {
@@ -275,7 +273,7 @@ describe('getUserID', () => {
             if (res.status !== 404) done('non 404 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 404 if backslashes present', (done: Done) => {
@@ -284,7 +282,7 @@ describe('getUserID', () => {
             if (res.status !== 404) done('non 404 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return user if just backslashes', (done: Done) => {
@@ -305,7 +303,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should not allow usernames more than 64 characters', (done: Done) => {
@@ -314,7 +312,7 @@ describe('getUserID', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should not allow usernames less than 3 characters', (done: Done) => {
@@ -323,7 +321,7 @@ describe('getUserID', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should allow exact match', (done: Done) => {
@@ -344,7 +342,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get repeating username with exact username', (done: Done) => {
@@ -369,7 +367,7 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should not get exact unless explicitly set to true', (done: Done) => {
@@ -398,6 +396,6 @@ describe('getUserID', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 });

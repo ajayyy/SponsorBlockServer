@@ -60,7 +60,7 @@ if (config.mysql) {
         enableWalCheckpointNumber: false
     });
 }
-async function initDb() {
+async function initDb(): Promise<void> {
     await db.init();
     await privateDB.init();
 
@@ -74,4 +74,4 @@ export {
     db,
     privateDB,
     initDb,
-}
+};

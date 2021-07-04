@@ -13,14 +13,14 @@ let apiUsersCache = 0;
 
 let lastUserCountCheck = 0;
 
-export async function getTotalStats(req: Request, res: Response) {
+export async function getTotalStats(req: Request, res: Response): Promise<void> {
     const userCountQuery = `(SELECT COUNT(*) FROM (SELECT DISTINCT "userID" from "sponsorTimes") t) "userCount",`;
 
-    let row = await db.prepare('get', `SELECT ${req.query.countContributingUsers ? userCountQuery : ""} COUNT(*) as "totalSubmissions",
+    const row = await db.prepare('get', `SELECT ${req.query.countContributingUsers ? userCountQuery : ""} COUNT(*) as "totalSubmissions",
         SUM("views") as "viewCount", SUM(("endTime" - "startTime") / 60 * "views") as "minutesSaved" FROM "sponsorTimes" WHERE "shadowHidden" != 1 AND "votes" >= 0`, []);
 
     if (row !== undefined) {
-        let extensionUsers = chromeUsersCache + firefoxUsersCache;
+        const extensionUsers = chromeUsersCache + firefoxUsersCache;
 
         //send this result
         res.send({
@@ -33,7 +33,7 @@ export async function getTotalStats(req: Request, res: Response) {
         });
 
         // Check if the cache should be updated (every ~14 hours)
-        let now = Date.now();
+        const now = Date.now();
         if (now - lastUserCountCheck > 5000000) {
             lastUserCountCheck = now;
 
@@ -79,7 +79,7 @@ function updateExtensionUsers() {
         })
         .catch(() => Logger.debug("Failing to connect to " + chromeExtensionUrl));
     })
-    .catch(err => {
+    .catch(() => {
         Logger.debug("Failing to connect to " + mozillaAddonsUrl);
     });
 }

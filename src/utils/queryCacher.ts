@@ -22,7 +22,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     return data;
 }
 
-function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }) {
+function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }): void {
     if (videoInfo) {
         redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
         redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
@@ -33,4 +33,4 @@ function clearVideoCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHa
 export const QueryCacher = {
     get,
     clearVideoCache
-}
+};

@@ -3,7 +3,7 @@ import {db} from '../databases/databases';
 import {config} from '../config';
 import {Request, Response} from 'express';
 
-export async function addUserAsVIP(req: Request, res: Response) {
+export async function addUserAsVIP(req: Request, res: Response): Promise<void> {
     const userID = req.query.userID as string;
     let adminUserIDInput = req.query.adminUserID as string;
 

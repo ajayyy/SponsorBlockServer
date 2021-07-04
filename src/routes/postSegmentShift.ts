@@ -92,7 +92,7 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
                     await db.prepare('run', 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2 WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
                     break;
             }
-        };
+        }
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);

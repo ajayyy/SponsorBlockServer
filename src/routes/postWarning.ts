@@ -5,7 +5,7 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {getHash} from '../utils/getHash';
 import { HashedUserID, UserID } from '../types/user.model';
 
-export async function postWarning(req: Request, res: Response) {
+export async function postWarning(req: Request, res: Response): Promise<void> {
     // Collect user input data
     const issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
     const userID: UserID = req.body.userID;
@@ -23,7 +23,7 @@ export async function postWarning(req: Request, res: Response) {
     let resultStatus = "";
 
     if (enabled) {
-        let previousWarning = await db.prepare('get', 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
+        const previousWarning = await db.prepare('get', 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
 
         if (!previousWarning) {
             await db.prepare(

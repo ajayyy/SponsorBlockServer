@@ -4,16 +4,13 @@ import {db, privateDB} from '../databases/databases';
 import {getMaxResThumbnail, YouTubeAPI} from '../utils/youtubeApi';
 import {getSubmissionUUID} from '../utils/getSubmissionUUID';
 import fetch from 'node-fetch';
-import isoDurations, { end } from 'iso8601-duration';
 import {getHash} from '../utils/getHash';
 import {getIP} from '../utils/getIP';
 import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
-import redis from '../utils/redis';
-import { Category, CategoryActionType, IncomingSegment, Segment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../utils/queryCacher';
@@ -176,9 +173,6 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
         const segments = submission.segments;
         let nbString = "";
         for (let i = 0; i < segments.length; i++) {
-            const startTime = parseFloat(segments[i].segment[0]);
-            const endTime = parseFloat(segments[i].segment[1]);
-
             if (duration == 0) {
                 // Allow submission if the duration is 0 (bug in youtube api)
                 return false;
@@ -202,8 +196,8 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
 
         //add segments they are trying to add in this submission
         for (let i = 0; i < segments.length; i++) {
-            let startTime = parseFloat(segments[i].segment[0]);
-            let endTime = parseFloat(segments[i].segment[1]);
+            const startTime = parseFloat(segments[i].segment[0]);
+            const endTime = parseFloat(segments[i].segment[1]);
             allSegmentTimes.push([startTime, endTime]);
         }
 
@@ -280,12 +274,12 @@ function proxySubmission(req: Request) {
         .then(async res => {
             Logger.debug('Proxy Submission: ' + res.status + ' (' + (await res.text()) + ')');
         })
-        .catch(err => {
+        .catch(() => {
             Logger.error("Proxy Submission: Failed to make call");
         });
 }
 
-export async function postSkipSegments(req: Request, res: Response) {
+export async function postSkipSegments(req: Request, res: Response): Promise<void> {
     if (config.proxySubmission) {
         proxySubmission(req);
     }
@@ -338,7 +332,8 @@ export async function postSkipSegments(req: Request, res: Response) {
     )).count;
 
     if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
+        res.status(403).send('Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
+        return;
     }
 
     let lockedCategoryList = (await db.prepare('all', 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => {
@@ -406,8 +401,8 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
 
 
-        let startTime = parseFloat(segments[i].segment[0]);
-        let endTime = parseFloat(segments[i].segment[1]);
+        const startTime = parseFloat(segments[i].segment[0]);
+        const endTime = parseFloat(segments[i].segment[1]);
 
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
@@ -459,6 +454,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         const yesterday = timeSubmitted - 86400000;
 
         // Disable IP ratelimiting for now
+        // eslint-disable-next-line no-constant-condition
         if (false) {
             //check to see if this ip has submitted too many sponsors today
             const rateLimitCheckRow = await privateDB.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
@@ -466,12 +462,12 @@ export async function postSkipSegments(req: Request, res: Response) {
             if (rateLimitCheckRow.count >= 10) {
                 //too many sponsors for the same video from the same ip address
                 res.sendStatus(429);
-
                 return;
             }
         }
 
         // Disable max submissions for now
+        // eslint-disable-next-line no-constant-condition
         if (false) {
             //check to see if the user has already submitted sponsors for this video
             const duplicateCheckRow = await db.prepare('get', `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
@@ -479,7 +475,6 @@ export async function postSkipSegments(req: Request, res: Response) {
             if (duplicateCheckRow.count >= 16) {
                 //too many sponsors for the same video from the same user
                 res.sendStatus(429);
-
                 return;
             }
         }
@@ -494,7 +489,7 @@ export async function postSkipSegments(req: Request, res: Response) {
             shadowBanned = 1;
         }
 
-        let startingVotes = 0 + decreaseVotes;
+        const startingVotes = 0 + decreaseVotes;
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
@@ -528,7 +523,6 @@ export async function postSkipSegments(req: Request, res: Response) {
                 res.sendStatus(500);
                 Logger.error("Error when putting sponsorTime in the DB: " + videoID + ", " + segmentInfo.segment[0] + ", " +
                     segmentInfo.segment[1] + ", " + userID + ", " + segmentInfo.category + ". " + err);
-
                 return;
             }
 
@@ -541,9 +535,7 @@ export async function postSkipSegments(req: Request, res: Response) {
         }
     } catch (err) {
         Logger.error(err);
-
         res.sendStatus(500);
-
         return;
     }
 

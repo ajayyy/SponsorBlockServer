@@ -24,13 +24,13 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should update the database version when starting the application', async () => {
-        let version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
+        const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
         if (version > 1) return;
         else return 'Version isn\'t greater than 1. Version is ' + version;
     });
 
     it('Should be able to submit categories not in video (http response)', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'no-segments-video-id',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -43,7 +43,7 @@ describe('lockCategoriesRecords', () => {
             ],
         };
 
-        let expected = {
+        const expected = {
             submitted: [
                 'outro',
                 'shilling',
@@ -66,7 +66,6 @@ describe('lockCategoriesRecords', () => {
                     done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
                 }
             } else {
-                const body = await res.text();
                 done("Status code was " + res.status);
             }
         })
@@ -74,7 +73,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should be able to submit categories not in video (sql check)', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'no-segments-video-id-1',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -96,14 +95,13 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
                 if (result.length !== 4) {
                     done("Expected 4 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
-                const body = await res.text();
                 done("Status code was " + res.status);
             }
         })
@@ -111,7 +109,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should be able to submit categories with _ in the category', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'underscore',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -128,14 +126,13 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
                 if (result.length !== 1) {
                     done("Expected 1 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
-                const body = await res.text();
                 done("Status code was " + res.status);
             }
         })
@@ -143,7 +140,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should be able to submit categories with upper and lower case in the category', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'bothCases',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -160,14 +157,13 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
                 if (result.length !== 1) {
                     done("Expected 1 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
-                const body = await res.text();
                 done("Status code was " + res.status);
             }
         })
@@ -175,7 +171,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should not be able to submit categories with $ in the category', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'specialChar',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -192,14 +188,13 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
                 if (result.length !== 0) {
                     done("Expected 0 entrys in db, got " + result.length);
                 } else {
                     done();
                 }
             } else {
-                const body = await res.text();
                 done("Status code was " + res.status);
             }
         })
@@ -225,7 +220,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should return 400 for no categories', (done: Done) => {
-        let json: any = {
+        const json: any = {
             videoID: 'test',
             userID: 'test',
             categories: [],
@@ -249,7 +244,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should return 400 for no userID', (done: Done) => {
-        let json: any = {
+        const json: any = {
             videoID: 'test',
             userID: null,
             categories: ['sponsor'],
@@ -273,7 +268,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should return 400 for no videoID', (done: Done) => {
-        let json: any = {
+        const json: any = {
             videoID: null,
             userID: 'test',
             categories: ['sponsor'],
@@ -297,7 +292,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should return 400 object categories', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'test',
             userID: 'test',
             categories: {},
@@ -321,7 +316,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should return 400 bad format categories', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'test',
             userID: 'test',
             categories: 'sponsor',
@@ -345,7 +340,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should return 403 if user is not VIP', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'test',
             userID: 'test',
             categories: [
@@ -371,7 +366,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should be able to delete a lockCategories record', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'delete-record',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -388,7 +383,7 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record']);
                 if (result.length === 0) {
                     done();
                 } else {
@@ -402,7 +397,7 @@ describe('lockCategoriesRecords', () => {
     });
 
     it('Should be able to delete one lockCategories record without removing another', (done: Done) => {
-        let json = {
+        const json = {
             videoID: 'delete-record-1',
             userID: 'VIPUser-lockCategories',
             categories: [
@@ -419,7 +414,7 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                let result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record-1']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record-1']);
                 if (result.length === 1) {
                     done();
                 } else {

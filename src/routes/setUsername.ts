@@ -11,7 +11,7 @@ async function logUserNameChange(userID: string, newUserName: string, oldUserNam
     );
 }
 
-export async function setUsername(req: Request, res: Response) {
+export async function setUsername(req: Request, res: Response): Promise<void> {
     let userID = req.query.userID as string;
     let userName = req.query.username as string;
 
@@ -31,6 +31,7 @@ export async function setUsername(req: Request, res: Response) {
     
     // remove unicode control characters from username (example: \n, \r, \t etc.)
     // source: https://en.wikipedia.org/wiki/Control_character#In_Unicode
+    // eslint-disable-next-line no-control-regex
     userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 
     if (adminUserIDInput != undefined) {
@@ -81,7 +82,6 @@ export async function setUsername(req: Request, res: Response) {
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);
-
         return;
     }
 }

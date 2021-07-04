@@ -252,7 +252,7 @@ export function getUserID(req: Request): UserID {
     return req.query.userID as UserID;
 }
 
-export async function voteOnSponsorTime(req: Request, res: Response) {
+export async function voteOnSponsorTime(req: Request, res: Response): Promise<void> {
     const UUID = req.query.UUID as SegmentUUID;
     const paramUserID = getUserID(req);
     let type = req.query.type !== undefined ? parseInt(req.query.type as string) : undefined;
@@ -269,13 +269,13 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     const userID = getHash(paramUserID + UUID);
 
     // To force a non 200, change this early
-    let finalResponse: FinalResponse = {
+    const finalResponse: FinalResponse = {
         blockVote: false,
         finalStatus: 200,
         finalMessage: null,
         webhookType: VoteWebhookType.Normal,
         webhookMessage: null
-    }
+    };
 
     //x-forwarded-for if this server is behind a proxy
     const ip = getIP(req);
@@ -292,7 +292,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     // disallow vote types 10/11
     if (type === 10 || type === 11) {
         // no longer allow type 10/11 alternative votes
-        res.sendStatus(400)
+        res.sendStatus(400);
         return;
     }
     
@@ -305,8 +305,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
         if (await isSegmentLocked() || await isVideoLocked()) {
             finalResponse.blockVote = true;
-            finalResponse.webhookType = VoteWebhookType.Rejected
-            finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct"
+            finalResponse.webhookType = VoteWebhookType.Rejected;
+            finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct";
         }
     }
 
@@ -337,7 +337,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     )).count;
 
     if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send('Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
+        res.status(403).send('Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?');
+        return;
     }
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;

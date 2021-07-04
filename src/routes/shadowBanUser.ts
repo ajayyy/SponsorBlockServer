@@ -6,7 +6,7 @@ import { Category, Service, VideoID, VideoIDHash } from '../types/segments.model
 import { UserID } from '../types/user.model';
 import { QueryCacher } from '../utils/queryCacher';
 
-export async function shadowBanUser(req: Request, res: Response) {
+export async function shadowBanUser(req: Request, res: Response): Promise<void> {
     const userID = req.query.userID as string;
     const hashedIP = req.query.hashedIP as string;
     let adminUserIDInput = req.query.adminUserID as string;
@@ -66,10 +66,10 @@ export async function shadowBanUser(req: Request, res: Response) {
 
             //find all previous submissions and unhide them
             if (unHideOldSubmissions) {
-                let segmentsToIgnore = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st
+                const segmentsToIgnore = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st
                                 JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category WHERE "st"."userID" = ?`
                                     , [userID])).map((item: {UUID: string}) => item.UUID);
-                let allSegments = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
+                const allSegments = (await db.prepare('all', `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
                                         .map((item: {UUID: string}) => item.UUID);
 
                 await Promise.all(allSegments.filter((item: {uuid: string}) => {

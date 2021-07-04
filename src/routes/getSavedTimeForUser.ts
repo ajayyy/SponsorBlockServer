@@ -6,7 +6,7 @@ import { Logger } from '../utils/logger';
 
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
-export async function getSavedTimeForUser(req: Request, res: Response) {
+export async function getSavedTimeForUser(req: Request, res: Response): Promise<void> {
     let userID = req.query.userID as string;
 
     if (userID == undefined) {
@@ -19,7 +19,7 @@ export async function getSavedTimeForUser(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare("get", 'SELECT SUM(((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views") as "minutesSaved" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -1 AND "shadowHidden" != 1 ', [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, userID]);
+        const row = await db.prepare("get", 'SELECT SUM(((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views") as "minutesSaved" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -1 AND "shadowHidden" != 1 ', [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, userID]);
 
         if (row.minutesSaved != null) {
             res.send({

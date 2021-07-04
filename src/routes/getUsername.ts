@@ -3,7 +3,7 @@ import {getHash} from '../utils/getHash';
 import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
 
-export async function getUsername(req: Request, res: Response) {
+export async function getUsername(req: Request, res: Response): Promise<void> {
     let userID = req.query.userID as string;
 
     if (userID == undefined) {
@@ -16,7 +16,7 @@ export async function getUsername(req: Request, res: Response) {
     userID = getHash(userID);
 
     try {
-        let row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
 
         if (row !== undefined) {
             res.send({
@@ -31,7 +31,6 @@ export async function getUsername(req: Request, res: Response) {
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);
-
         return;
     }
 }

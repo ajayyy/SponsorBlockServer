@@ -1,4 +1,3 @@
-import { time } from 'console';
 import {Request, Response} from 'express';
 import { db } from '../databases/databases';
 import { Logger } from '../utils/logger';
@@ -10,7 +9,7 @@ import { Logger } from '../utils/logger';
  * https://support.google.com/youtube/answer/9230970
  */
 
-export function addUnlistedVideo(req: Request, res: Response) {
+export function addUnlistedVideo(req: Request, res: Response): void {
     const videoID = req.body.videoID;
     const year = req.body.year || 0;
     const views = req.body.views || 0;
@@ -27,7 +26,6 @@ export function addUnlistedVideo(req: Request, res: Response) {
     } catch (err) {
         Logger.error(err);
         res.sendStatus(500);
-
         return;
     }
 

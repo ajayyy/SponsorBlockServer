@@ -17,7 +17,7 @@ export async function getIsUserVIP(req: Request, res: Response): Promise<void> {
     const hashedUserID: HashedUserID = getHash(userID);
 
     try {
-        let vipState = await isUserVIP(hashedUserID);
+        const vipState = await isUserVIP(hashedUserID);
         res.status(200).json({
             hashedUserID: hashedUserID,
             vip: vipState,
