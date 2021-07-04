@@ -553,4 +553,23 @@ describe('voteOnSponsorTime', () => {
         })
         .catch(err => done(err));
     });
+
+    it('Should not be able to vote with type 10', (done: Done) => {
+        fetch(getbaseURL() + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=10")
+        .then(res => {
+            if (res.status !== 400) done('non 400 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => done('couldn\'t call endpoint'));
+    });
+
+    it('Should not be able to vote with type 11', (done: Done) => {
+        fetch(getbaseURL() + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=11")
+        .then(res => {
+            if (res.status !== 400) done('non 400 (' + res.status + ')');
+            else done(); // pass
+        })
+        .catch(err => done('couldn\'t call endpoint'));
+    });
+
 });

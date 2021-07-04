@@ -289,6 +289,13 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     //check if user voting on own submission
     const isOwnSubmission = (await db.prepare("get", `SELECT "UUID" as "submissionCount" FROM "sponsorTimes" where "userID" = ? AND "UUID" = ?`, [nonAnonUserID, UUID])) !== undefined;
 
+    // disallow vote types 10/11
+    if (type === 10 || type === 11) {
+        // no longer allow type 10/11 alternative votes
+        res.sendStatus(400)
+        return;
+    }
+    
     // If not upvote
     if (!isVIP && type !== 1) {
         const isSegmentLocked = async () => !!(await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked; 
@@ -343,10 +350,10 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
         let incrementAmount = 0;
         let oldIncrementAmount = 0;
 
-        if (type == 1 || type == 11) {
+        if (type == 1) {
             //upvote
             incrementAmount = 1;
-        } else if (type == 0 || type == 10) {
+        } else if (type == 0) {
             //downvote
             incrementAmount = -1;
         } else if (type == 20) {
@@ -358,10 +365,10 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             return;
         }
         if (votesRow != undefined) {
-            if (votesRow.type === 1 || type === 11) {
+            if (votesRow.type === 1) {
                 //upvote
                 oldIncrementAmount = 1;
-            } else if (votesRow.type === 0 || type === 10) {
+            } else if (votesRow.type === 0) {
                 //downvote
                 oldIncrementAmount = -1;
             } else if (votesRow.type === 2) {

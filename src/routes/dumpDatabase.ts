@@ -197,24 +197,29 @@ async function queueDump(): Promise<void> {
         const startTime = Date.now();
         updateRunning = true;
 
-        await removeOutdatedDumps(appExportPath);
+        try {
+            await removeOutdatedDumps(appExportPath);
         
-        const dumpFiles = [];
+            const dumpFiles = [];
+    
+            for (const table of tables) {
+                const fileName = `${table.name}_${startTime}.csv`;
+                const file = `${postgresExportPath}/${fileName}`;
+                await db.prepare('run', `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
+                        TO '${file}' WITH (FORMAT CSV, HEADER true);`);
+                dumpFiles.push({
+                    fileName,
+                    tableName: table.name,
+                });
+            }
+            latestDumpFiles = [...dumpFiles];
 
-        for (const table of tables) {
-            const fileName = `${table.name}_${startTime}.csv`;
-            const file = `${postgresExportPath}/${fileName}`;
-            await db.prepare('run', `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
-                    TO '${file}' WITH (FORMAT CSV, HEADER true);`);
-            dumpFiles.push({
-                fileName,
-                tableName: table.name,
-            });
+            lastUpdate = startTime;
+        } catch(e) {
+            Logger.error(e);
+        } finally {
+            updateQueued = false;
+            updateRunning = false;
         }
-        latestDumpFiles = [...dumpFiles];
-
-        updateQueued = false;
-        updateRunning = false;
-        lastUpdate = startTime;
     }
 }
