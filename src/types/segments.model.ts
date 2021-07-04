@@ -10,6 +10,11 @@ export type VideoIDHash = VideoID & HashedValue;
 export type IPAddress = string & { __ipAddressBrand: unknown };
 export type HashedIP = IPAddress & HashedValue;
 
+export enum ActionType {
+    Skip = "skip",
+    Mute = "mute",
+}
+
 // Uncomment as needed
 export enum Service {
     YouTube = 'YouTube',
@@ -23,6 +28,7 @@ export enum Service {
 
 export interface IncomingSegment { 
     category: Category; 
+    actionType: ActionType;
     segment: string[]; 
 }
 

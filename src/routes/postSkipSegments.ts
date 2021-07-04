@@ -10,7 +10,7 @@ import {getFormattedTime} from '../utils/getFormattedTime';
 import {isUserTrustworthy} from '../utils/isUserTrustworthy';
 import {dispatchEvent} from '../utils/webhookUtils';
 import {Request, Response} from 'express';
-import { Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
+import { ActionType, Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from '../types/segments.model';
 import { deleteLockCategories } from './deleteLockCategories';
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../utils/queryCacher';
@@ -315,7 +315,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const videoID = req.query.videoID || req.body.videoID;
     let userID = req.query.userID || req.body.userID;
     let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
-    if (!Object.values(Service).some((val) => val == service)) {
+    if (!Object.values(Service).some((val) => val === service)) {
         service = Service.YouTube;
     }
     let videoDuration: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
@@ -325,9 +325,16 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // Use query instead
         segments = [{
             segment: [req.query.startTime as string, req.query.endTime as string],
-            category: req.query.category as Category
+            category: req.query.category as Category,
+            actionType: (req.query.actionType as ActionType) ?? ActionType.Skip
         }];
     }
+    // Add default action type
+    segments.forEach((segment) => {
+        if (!Object.values(ActionType).some((val) => val === segment.actionType)){
+            segment.actionType = ActionType.Skip;
+        } 
+    });
 
     const invalidFields = [];
     if (typeof videoID !== 'string') {
@@ -518,9 +525,9 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare('run', `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, service, videoDuration, reputation, shadowBanned, hashedVideoID,
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanned, hashedVideoID,
                     ],
                 );
 
