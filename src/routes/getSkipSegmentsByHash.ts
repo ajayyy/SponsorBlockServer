@@ -16,8 +16,10 @@ export async function getSkipSegmentsByHash(req: Request, res: Response) {
         categories = req.query.categories
             ? JSON.parse(req.query.categories as string)
             : req.query.category
-                ? [req.query.category]
-                : ["sponsor"];
+                ? Array.isArray(req.query.category)
+                    ? req.query.category
+                    : [req.query.category]
+                : ['sponsor'];
         if (!Array.isArray(categories)) {
             return res.status(400).send("Categories parameter does not match format requirements.");
         }

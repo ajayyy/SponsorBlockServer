@@ -224,6 +224,37 @@ describe('getSegmentsByHash', () => {
         .catch(err => done('(post) ' + err));
     });
 
+    it('Should be able to get multiple categories with repeating parameters', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments/fdaff4?&category=sponsor&category=intro")
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 1) done("expected 1 video, got " + body.length);
+
+                const data = body[0].segments;
+                if (data.length === 2) {
+                    let success = true;
+                    for (const segment of data) {
+                        if ((segment.segment[0] !== 1 || segment.segment[1] !== 10
+                            || segment.category !== "sponsor" || segment.UUID !== "getSegmentsByHash-0-0") &&
+                            (segment.segment[0] !== 20 || segment.segment[1] !== 30
+                                || segment.category !== "intro" || segment.UUID !== "getSegmentsByHash-0-1")) {
+                            success = false;
+                            break;
+                        }
+                    }
+
+                    if (success) done();
+                    else done("Received incorrect body: " + JSON.stringify(body));
+                } else {
+                    done("Received incorrect body: " + JSON.stringify(body));
+                }
+            }
+        })
+        .catch(err => ("Couldn't call endpoint"));
+    });
+
     it('Should be able to get specific segments with requiredSegments', (done: Done) => {
         fetch(getbaseURL() + '/api/skipSegments/d518?requiredSegments=["requiredSegmentVid-2","requiredSegmentVid-3"]')
         .then(async res => {
