@@ -21,6 +21,10 @@ describe('getSegmentsByHash', () => {
         await db.prepare("run", query, ['onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'YouTube', 1, 0, 'f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3']);
         await db.prepare("run", query, ['highlightVid', 60, 60, 2, 'highlightVid-1', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
         await db.prepare("run", query, ['highlightVid', 70, 70, 2, 'highlightVid-2', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid', 60, 70, 2, 'requiredSegmentVid-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        await db.prepare("run", query, ['requiredSegmentVid', 60, 70, -2, 'requiredSegmentVid-2', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        await db.prepare("run", query, ['requiredSegmentVid', 80, 90, -2, 'requiredSegmentVid-3', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        await db.prepare("run", query, ['requiredSegmentVid', 80, 90, 2, 'requiredSegmentVid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -218,5 +222,37 @@ describe('getSegmentsByHash', () => {
             }
         })
         .catch(err => done('(post) ' + err));
+    });
+
+    it('Should be able to get specific segments with requiredSegments', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/d518?requiredSegments=["requiredSegmentVid-2","requiredSegmentVid-3"]')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 1) done("expected 1 video, got " + body.length);
+                else if (body[0].segments.length !== 2) done("expected 2 segments for video, got " + body[0].segments.length);
+                else if (body[0].segments[0].UUID !== 'requiredSegmentVid-2' 
+                        || body[0].segments[1].UUID !== 'requiredSegmentVid-3') done("Did not recieve the correct segments\n" + JSON.stringify(body, null, 2));
+                else done();
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get specific segments with repeating requiredSegment', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/d518?requiredSegment=requiredSegmentVid-2&requiredSegment=requiredSegmentVid-3')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 1) done("expected 1 video, got " + body.length);
+                else if (body[0].segments.length !== 2) done("expected 2 segments for video, got " + body[0].segments.length);
+                else if (body[0].segments[0].UUID !== 'requiredSegmentVid-2' 
+                        || body[0].segments[1].UUID !== 'requiredSegmentVid-3') done("Did not recieve the correct segments\n" + JSON.stringify(body, null, 2));
+                else done();
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 });
