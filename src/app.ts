@@ -1,4 +1,4 @@
-import express, {Express, Request, RequestHandler, Response} from 'express';
+import express, {Request, RequestHandler, Response, Router} from 'express';
 import {config} from './config';
 import {oldSubmitSponsorTimes} from './routes/oldSubmitSponsorTimes';
 import {oldGetVideoSponsorTimes} from './routes/oldGetVideoSponsorTimes';
@@ -33,16 +33,20 @@ import {postClearCache} from './routes/postClearCache';
 import { addUnlistedVideo } from './routes/addUnlistedVideo';
 import {postPurgeAllSegments} from './routes/postPurgeAllSegments';
 import {getUserID} from './routes/getUserID';
+import ExpressPromiseRouter from 'express-promise-router';
 
 export function createServer(callback: () => void) {
     // Create a service (the app object is just a callback).
     const app = express();
 
+    const router = ExpressPromiseRouter()
+    app.use(router)
+
     //setup CORS correctly
-    app.use(corsMiddleware);
-    app.use(loggerMiddleware);
-    app.use("/api/", apiCspMiddleware);
-    app.use(express.json());
+    router.use(corsMiddleware);
+    router.use(loggerMiddleware);
+    router.use("/api/", apiCspMiddleware);
+    router.use(express.json());
 
     if (config.userCounterURL) app.use(userCounter);
 
@@ -52,12 +56,12 @@ export function createServer(callback: () => void) {
     // Set production mode
     app.set('env', config.mode || 'production');
 
-    setupRoutes(app);
+    setupRoutes(router);
 
     return app.listen(config.port, callback);
 }
 
-function setupRoutes(app: Express) {
+function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
@@ -67,96 +71,96 @@ function setupRoutes(app: Express) {
     }
 
     //add the get function
-    app.get('/api/getVideoSponsorTimes', oldGetVideoSponsorTimes);
+    router.get('/api/getVideoSponsorTimes', oldGetVideoSponsorTimes);
 
     //add the oldpost function
-    app.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
-    app.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+    router.get('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
+    router.post('/api/postVideoSponsorTimes', oldSubmitSponsorTimes);
 
     //add the skip segments functions
-    app.get('/api/skipSegments', getSkipSegments);
-    app.post('/api/skipSegments', postSkipSegments);
+    router.get('/api/skipSegments', getSkipSegments);
+    router.post('/api/skipSegments', postSkipSegments);
 
     // add the privacy protecting skip segments functions
-    app.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
+    router.get('/api/skipSegments/:prefix', getSkipSegmentsByHash);
 
     //voting endpoint
-    app.get('/api/voteOnSponsorTime', ...voteEndpoints);
-    app.post('/api/voteOnSponsorTime', ...voteEndpoints);
+    router.get('/api/voteOnSponsorTime', ...voteEndpoints);
+    router.post('/api/voteOnSponsorTime', ...voteEndpoints);
 
     //Endpoint when a submission is skipped
-    app.get('/api/viewedVideoSponsorTime', ...viewEndpoints);
-    app.post('/api/viewedVideoSponsorTime', ...viewEndpoints);
+    router.get('/api/viewedVideoSponsorTime', ...viewEndpoints);
+    router.post('/api/viewedVideoSponsorTime', ...viewEndpoints);
 
     //To set your username for the stats view
-    app.post('/api/setUsername', setUsername);
+    router.post('/api/setUsername', setUsername);
 
     //get what username this user has
-    app.get('/api/getUsername', getUsername);
+    router.get('/api/getUsername', getUsername);
 
     //Endpoint used to hide a certain user's data
-    app.post('/api/shadowBanUser', shadowBanUser);
+    router.post('/api/shadowBanUser', shadowBanUser);
 
     //Endpoint used to make a user a VIP user with special privileges
-    app.post('/api/addUserAsVIP', addUserAsVIP);
+    router.post('/api/addUserAsVIP', addUserAsVIP);
 
     //Gets all the views added up for one userID
     //Useful to see how much one user has contributed
-    app.get('/api/getViewsForUser', getViewsForUser);
+    router.get('/api/getViewsForUser', getViewsForUser);
 
     //Gets all the saved time added up (views * sponsor length) for one userID
     //Useful to see how much one user has contributed
     //In minutes
-    app.get('/api/getSavedTimeForUser', getSavedTimeForUser);
+    router.get('/api/getSavedTimeForUser', getSavedTimeForUser);
 
-    app.get('/api/getTopUsers', getTopUsers);
+    router.get('/api/getTopUsers', getTopUsers);
 
     //send out totals
     //send the total submissions, total views and total minutes saved
-    app.get('/api/getTotalStats', getTotalStats);
+    router.get('/api/getTotalStats', getTotalStats);
 
-    app.get('/api/getUserInfo', getUserInfo);
-    app.get('/api/userInfo', getUserInfo);
+    router.get('/api/getUserInfo', getUserInfo);
+    router.get('/api/userInfo', getUserInfo);
 
     //send out a formatted time saved total
-    app.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
+    router.get('/api/getDaysSavedFormatted', getDaysSavedFormatted);
 
     //submit video to lock categories
-    app.post('/api/noSegments', postLockCategories);
-    app.post('/api/lockCategories', postLockCategories);
+    router.post('/api/noSegments', postLockCategories);
+    router.post('/api/lockCategories', postLockCategories);
 
-    app.delete('/api/noSegments', deleteLockCategoriesEndpoint);
-    app.delete('/api/lockCategories', deleteLockCategoriesEndpoint);
+    router.delete('/api/noSegments', deleteLockCategoriesEndpoint);
+    router.delete('/api/lockCategories', deleteLockCategoriesEndpoint);
 
     //get if user is a vip
-    app.get('/api/isUserVIP', getIsUserVIP);
+    router.get('/api/isUserVIP', getIsUserVIP);
 
     //sent user a warning
-    app.post('/api/warnUser', postWarning);
+    router.post('/api/warnUser', postWarning);
 
     //get if user is a vip
-    app.post('/api/segmentShift', postSegmentShift);
+    router.post('/api/segmentShift', postSegmentShift);
 
     //get segment info
-    app.get('/api/segmentInfo', getSegmentInfo);
+    router.get('/api/segmentInfo', getSegmentInfo);
 
     //clear cache as VIP
-    app.post('/api/clearCache', postClearCache);
+    router.post('/api/clearCache', postClearCache);
 
     //purge all segments for VIP
-    app.post('/api/purgeAllSegments', postPurgeAllSegments);
+    router.post('/api/purgeAllSegments', postPurgeAllSegments);
 
-    app.post('/api/unlistedVideo', addUnlistedVideo);
+    router.post('/api/unlistedVideo', addUnlistedVideo);
     
     // get userID from username
-    app.get('/api/userID', getUserID);
+    router.get('/api/userID', getUserID);
 
     if (config.postgres) {
-        app.get('/database', (req, res) => dumpDatabase(req, res, true));
-        app.get('/database.json', (req, res) => dumpDatabase(req, res, false));
-        app.get('/database/*', redirectLink)
+        router.get('/database', (req, res) => dumpDatabase(req, res, true));
+        router.get('/database.json', (req, res) => dumpDatabase(req, res, false));
+        router.get('/database/*', redirectLink)
     } else {
-        app.get('/database.db', function (req: Request, res: Response) {
+        router.get('/database.db', function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", {root: "./"});
         });
     }
