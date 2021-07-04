@@ -1,7 +1,7 @@
 import {hashPrefixTester} from '../utils/hashPrefixTester';
 import {getSegmentsByHash} from './getSkipSegments';
 import {Request, Response} from 'express';
-import { Category, Service, VideoIDHash } from '../types/segments.model';
+import { Category, SegmentUUID, Service, VideoIDHash } from '../types/segments.model';
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -15,14 +15,31 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
         categories = req.query.categories
             ? JSON.parse(req.query.categories as string)
             : req.query.category
-                ? [req.query.category]
-                : ["sponsor"];
+                ? Array.isArray(req.query.category)
+                    ? req.query.category
+                    : [req.query.category]
+                : ['sponsor'];
         if (!Array.isArray(categories)) {
             return res.status(400).send("Categories parameter does not match format requirements.");
         }
-    }
-    catch(error) {
+    } catch(error) {
         return res.status(400).send("Bad parameter: categories (invalid JSON)");
+    }
+
+    let requiredSegments: SegmentUUID[] = [];
+    try {
+        requiredSegments = req.query.requiredSegments
+        ? JSON.parse(req.query.requiredSegments as string)
+        : req.query.requiredSegment
+            ? Array.isArray(req.query.requiredSegment)
+                ? req.query.requiredSegment
+                : [req.query.requiredSegment]
+            : [];
+        if (!Array.isArray(requiredSegments)) {
+            return res.status(400).send("requiredSegments parameter does not match format requirements.");
+        }
+    } catch(error) {
+        return res.status(400).send("Bad parameter: requiredSegments (invalid JSON)");
     }
 
     let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
@@ -34,7 +51,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     categories = categories.filter((item: any) => typeof item === "string");
 
     // Get all video id's that match hash prefix
-    const segments = await getSegmentsByHash(req, hashPrefix, categories, service);
+    const segments = await getSegmentsByHash(req, hashPrefix, categories, requiredSegments, service);
 
     if (!segments) return res.status(404).json([]);
 

@@ -46,6 +46,7 @@ export interface DBSegment {
     userID: UserID;
     votes: number;
     locked: boolean;
+    required: boolean; // Requested specifically from the client
     shadowHidden: Visibility;
     videoID: VideoID;
     videoDuration: VideoDuration;
@@ -57,6 +58,7 @@ export interface OverlappingSegmentGroup {
     segments: DBSegment[],
     votes: number;
     locked: boolean; // Contains a locked segment
+    required: boolean; // Requested specifically from the client
     reputation: number;
 }
 

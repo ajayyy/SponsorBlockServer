@@ -17,6 +17,10 @@ describe('getSkipSegments', () => {
         await db.prepare("run", query, ['locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'YouTube', 230, 0, 0, getHash('locked', 1)]);
         await db.prepare("run", query, ['locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'YouTube', 190, 0, 0, getHash('locked', 1)]);
         await db.prepare("run", query, ['onlyHiddenSegments', 20, 34, 100000, 0, 'onlyHiddenSegments', 'testman', 0, 50, 'sponsor', 'YouTube', 190, 1, 0, getHash('onlyHiddenSegments', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 60, 70, 2, 0, 'requiredSegmentVid-raw-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 60, 70, -2, 0, 'requiredSegmentVid-raw-2', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 80, 90, -2, 0, 'requiredSegmentVid-raw-3', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 80, 90, 2, 0, 'requiredSegmentVid-raw-4', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
         return;
     });
 
@@ -308,5 +312,35 @@ describe('getSkipSegments', () => {
             }
         })
         .catch(() => ("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get specific segments with requiredSegments', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments?videoID=requiredSegmentVid-raw&requiredSegments=["requiredSegmentVid-raw-2","requiredSegmentVid-raw-3"]')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 segments, got " + body.length);
+                else if (body[0].UUID !== 'requiredSegmentVid-raw-2' 
+                        || body[1].UUID !== 'requiredSegmentVid-raw-3') done("Did not recieve the correct segments\n" + JSON.stringify(body, null, 2));
+                else done();
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get specific segments with repeating requiredSegment', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments?videoID=requiredSegmentVid-raw&requiredSegment=requiredSegmentVid-raw-2&requiredSegment=requiredSegmentVid-raw-3')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 segments, got " + body.length);
+                else if (body[0].UUID !== 'requiredSegmentVid-raw-2' 
+                        || body[1].UUID !== 'requiredSegmentVid-raw-3') done("Did not recieve the correct segments\n" + JSON.stringify(body, null, 2));
+                else done();
+            }
+        })
+        .catch(err => done("Couldn't call endpoint"));
     });
 });
