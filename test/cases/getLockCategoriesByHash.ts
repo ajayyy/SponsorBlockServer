@@ -19,6 +19,7 @@ describe('getLockCategoriesByHash', () => {
 
         await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-1', 'outro', 'b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35']);
         await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-2', 'intro', 'b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-2', 'preview', 'b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450']);
     });
 
     it('Database should be greater or equal to version 18', async () => {
@@ -27,19 +28,23 @@ describe('getLockCategoriesByHash', () => {
         else return 'Version isn\'t greater than 18. Version is ' + version;
     });
 
-    it('Should be able to get multiple locks', (done: Done) => {
+    it('Should be able to get multiple locks in one object', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories/67a65')
         .then(async res => {
             if (res.status !== 200) {
                 done("non 200");
             } else {
                 const data = await res.json();
-                if (data.length !== 2) {
-                    done(`Returned incorrect number of locks "${data.length}"`);
-                } else if (data[0].category !== "sponsor") {
-                    done(`Returned incorrect category "${data[0].category}"`);
-                } else if (data[1].category !== "interaction") {
-                    done(`Returned incorrect category "${data[1].category}"`);
+                if (data.length !== 1) {
+                    done(`Returned incorrect number of videos "${data.length}"`);
+                } else if (data[0].videoID !== "getLockHash-1") {
+                    done(`Returned incorrect videoID "${data[0].videoID}"`);
+                } else if (data[0].hash !== getHash("getLockHash-1", 1)) {
+                    done(`Returned incorrect hash "${data[0].hash}"`);
+                } else if (data[0].categories[0] !== "sponsor") {
+                    done(`Returned incorrect category "${data[0].categories[0]}"`);
+                } else if (data[0].categories[1] !== "interaction") {
+                    done(`Returned incorrect category "${data[0].categories[1]}"`);
                 } else {
                     done(); // pass
                 }
@@ -48,7 +53,7 @@ describe('getLockCategoriesByHash', () => {
         .catch(() => ("couldn't call endpoint"));
     });
 
-    it('Should be able to get single locks', (done: Done) => {
+    it('Should be able to get single lock', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories/dff09')
         .then(async res => {
             if (res.status !== 200) {
@@ -56,9 +61,15 @@ describe('getLockCategoriesByHash', () => {
             } else {
                 const data = await res.json();
                 if (data.length !== 1) {
-                    done('Returned incorrect number of locks "' + data.length + '"');
-                } else if (data[0].category !== "preview") {
-                    done(`Returned incorrect category "${data[0].category}"`);
+                    done('Returned incorrect number of videos "' + data.length + '"');
+                } else if (data[0].videoID !== "getLockHash-2") {
+                    done(`Returned incorrect videoID "${data[0].videoID}"`);
+                } else if (data[0].hash !== getHash("getLockHash-2", 1)) {
+                    done(`Returned incorrect hashedVideoID hash "${data[0].hash}"`);
+                } else if (data[0].categories.length !== 1) {
+                    done(`Returned incorrect number of categories "${data[0].categories.length}"`);
+                } else if (data[0].categories[0] !== "preview") {
+                    done(`Returned incorrect category "${data[0].categories[0]}"`);
                 } else {
                     done(); // pass
                 }
@@ -75,9 +86,15 @@ describe('getLockCategoriesByHash', () => {
             } else {
                 const data = await res.json();
                 if (data.length !== 1) {
-                    done('Returned incorrect number of locks "' + data.length + '"');
-                } else if (data[0].category !== "nonmusic") {
-                    done(`Returned incorrect category "${data[0].category}"`);
+                    done('Returned incorrect number of videos "' + data.length + '"');
+                } else if (data[0].videoID !== "getLockHash-3") {
+                    done(`Returned incorrect videoID "${data[0].videoID}"`);
+                } else if (data[0].hash !== getHash("getLockHash-3", 1)) {
+                    done(`Returned incorrect hashedVideoID hash "${data[0].hash}"`);
+                } else if (data[0].categories.length !== 1) {
+                    done(`Returned incorrect number of categories "${data[0].categories.length}"`);
+                } else if (data[0].categories[0] !== "nonmusic") {
+                    done(`Returned incorrect category "${data[0].categories[0]}"`);
                 } else {
                     done(); // pass
                 }
@@ -86,7 +103,7 @@ describe('getLockCategoriesByHash', () => {
         .catch(() => ("couldn't call endpoint"));
     });
 
-    it('Should be able to get multiple by similar hash', (done: Done) => {
+    it('Should be able to get multiple by similar hash with multiple categories', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories/b05a')
         .then(async res => {
             if (res.status !== 200) {
@@ -95,9 +112,23 @@ describe('getLockCategoriesByHash', () => {
                 const data = await res.json();
                 if (data.length !== 2) {
                     done(`Returned incorrect number of locks "${data.length}"`);
-                } else if (data[0].category !== "outro") {
+                } else if (data[0].videoID !== "fakehash-1") {
+                    done(`Returned incorrect videoID "${data[0].videoID}"`);
+                } else if (data[1].videoID !== "fakehash-2") {
+                    done(`Returned incorrect videoID "${data[1].videoID}"`);
+                } else if (data[0].hash !== "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35") {
+                    done(`Returned incorrect hashedVideoID hash "${data[0].hash}"`);
+                } else if (data[1].hash !== "b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450") {
+                    done(`Returned incorrect hashedVideoID hash "${data[1].hash}"`);
+                } else if (data[0].categories.length !== 1) {
+                    done(`Returned incorrect number of categories "${data[0].categories.length}"`);
+                } else if (data[1].categories.length !== 2) {
+                    done(`Returned incorrect number of categories "${data[1].categories.length}"`);
+                } else if (data[0].categories[0] !== "outro") {
                     done(`Returned incorrect category "${data[0].category}"`);
-                } else if (data[1].category !== "intro") {
+                } else if (data[1].categories[0] !== "intro") {
+                    done(`Returned incorrect category "${data[1].category}"`);
+                } else if (data[1].categories[1] !== "preview") {
                     done(`Returned incorrect category "${data[1].category}"`);
                 } else {
                     done(); // pass

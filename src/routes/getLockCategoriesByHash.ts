@@ -3,7 +3,38 @@ import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
 import {hashPrefixTester} from '../utils/hashPrefixTester';
 import { Category, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from '../types/user.model';
+
+interface byHashLockResult {
+    videoID: VideoID,
+    hash: VideoIDHash,
+    categories: Category[]
+}
+
+interface DBLock {
+    videoID: VideoID,
+    hash: VideoIDHash,
+    category: Category
+}
+
+const mergeLocks = (source: DBLock[]) => {
+    const dest: byHashLockResult[] = [];
+    for (const obj of source) {
+        // videoID already exists
+        const destMatch = dest.find(s => s.videoID === obj.videoID);
+        if (destMatch) {
+            // push to categories
+            destMatch.categories.push(obj.category);
+        } else {
+            dest.push({
+                videoID: obj.videoID,
+                hash: obj.hash,
+                categories: [obj.category]
+            });
+        }
+    }
+    return dest;
+};
+
 
 export async function getLockCategoriesByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -14,12 +45,10 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
 
     try {
         // Get existing lock categories markers
-        const lockCategoryList = await db.prepare('all', 'SELECT * from "lockCategories" where "hashedVideoID" LIKE ? ORDER BY videoID', [hashPrefix + '%']) as {videoID: VideoID, userID: UserID,category: Category}[];
-        if (lockCategoryList.length === 0 || !lockCategoryList[0]) {
-            return res.sendStatus(404);
-        } else {
-            return res.send(lockCategoryList);
-        }
+        const lockedRows = await db.prepare('all', 'SELECT "videoID", "hashedVideoID" as "hash", "category" from "lockCategories" where "hashedVideoID" LIKE ?', [hashPrefix + '%']) as DBLock[];
+        if (lockedRows.length === 0 || !lockedRows[0]) return res.sendStatus(404);
+        // merge all locks
+        return res.send(mergeLocks(lockedRows));
     } catch (err) {
         Logger.error(err);
         return res.sendStatus(500);

@@ -2,7 +2,6 @@ import {db} from '../databases/databases';
 import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
 import { Category, VideoID } from "../types/segments.model";
-import { UserID } from '../types/user.model';
 
 export async function getLockCategories(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
@@ -14,12 +13,13 @@ export async function getLockCategories(req: Request, res: Response): Promise<Re
 
     try {
         // Get existing lock categories markers
-        const lockCategoryList = await db.prepare('all', 'SELECT "category", "userID" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, userID: UserID}[];
-        if (lockCategoryList.length === 0 || !lockCategoryList[0]) {
-            return res.sendStatus(404);
-        } else {
-            return res.send(lockCategoryList);
-        }
+        const lockedCategories = await db.prepare('all', 'SELECT "category" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category}[];
+        if (lockedCategories.length === 0 || !lockedCategories[0]) return res.sendStatus(404);
+        // map to array in JS becaues of SQL incompatibilities
+        const categories = Object.values(lockedCategories).map((entry) => entry.category);
+        return res.send({
+            categories
+        });
     } catch (err) {
         Logger.error(err);
         return res.sendStatus(500);

@@ -31,12 +31,12 @@ describe('getLockCategories', () => {
                 done("non 200");
             } else {
                 const data = await res.json();
-                if (data.length !== 2) {
-                    done(`Returned incorrect number of locks "${data.length}"`);
-                } else if (data[0].category !== "sponsor") {
-                    done(`Returned incorrect category "${data[0].category}"`);
-                } else if (data[1].category !== "interaction") {
-                    done(`Returned incorrect category "${data[1].category}"`);
+                if (data.categories.length !== 2) {
+                    done(`Returned incorrect number of locks "${data.categories.length}"`);
+                } else if (data.categories[0] !== "sponsor") {
+                    done(`Returned incorrect category "${data.categories[0]}"`);
+                } else if (data.categories[1] !== "interaction") {
+                    done(`Returned incorrect category "${data.categories[1]}"`);
                 } else {
                     done(); // pass
                 }
@@ -52,10 +52,10 @@ describe('getLockCategories', () => {
                 done("non 200");
             } else {
                 const data = await res.json();
-                if (data.length !== 1) {
-                    done('Returned incorrect number of locks "' + data.length + '"');
-                } else if (data[0].category !== "preview") {
-                    done(`Returned incorrect category "${data[0].category}"`);
+                if (data.categories.length !== 1) {
+                    done('Returned incorrect number of locks "' + data.categories.length + '"');
+                } else if (data.categories[0] !== "preview") {
+                    done(`Returned incorrect category "${data.categories[0].category}"`);
                 } else {
                     done(); // pass
                 }
