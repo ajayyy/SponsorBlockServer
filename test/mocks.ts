@@ -1,5 +1,6 @@
 import express from 'express';
 import {config} from '../src/config';
+import { Server } from 'http';
 
 const app = express();
 
@@ -46,6 +47,6 @@ app.post('/CustomWebhook', (req, res) => {
     res.sendStatus(200);
 });
 
-export function createMockServer(callback: () => void) {
+export function createMockServer(callback: () => void): Server {
     return app.listen(config.mockPort, callback);
 }

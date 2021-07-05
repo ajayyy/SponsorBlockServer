@@ -252,7 +252,7 @@ describe('getSegmentsByHash', () => {
                 }
             }
         })
-        .catch(err => ("Couldn't call endpoint"));
+        .catch(() => ("Couldn't call endpoint"));
     });
 
     it('Should be able to get specific segments with requiredSegments', (done: Done) => {
@@ -268,7 +268,7 @@ describe('getSegmentsByHash', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get specific segments with repeating requiredSegment', (done: Done) => {
@@ -284,6 +284,6 @@ describe('getSegmentsByHash', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 });

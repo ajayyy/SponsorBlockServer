@@ -165,7 +165,7 @@ describe('getUserInfo', () => {
             const data = await res.json();
             for (const value in data) {
                 if (data[value] === null && value !== "lastSegmentID")  {
-                    done(`returned null for ${value}`)
+                    done(`returned null for ${value}`);
                 }
             }
             done(); // pass

@@ -326,7 +326,7 @@ describe('getSkipSegments', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get specific segments with repeating requiredSegment', (done: Done) => {
@@ -341,6 +341,6 @@ describe('getSkipSegments', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 });

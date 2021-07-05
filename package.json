@@ -9,8 +9,8 @@
     "dev:bash": "nodemon -x 'npm test ; npm start'",
     "start": "ts-node src/index.ts",
     "tsc": "tsc -p tsconfig.json",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix"
   },
   "author": "Ajay Ramachandran",
   "license": "MIT",

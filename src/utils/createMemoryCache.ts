@@ -1,4 +1,4 @@
-export function createMemoryCache(memoryFn: (...args: any[]) => void, cacheTimeMs: number) {
+export function createMemoryCache(memoryFn: (...args: any[]) => void, cacheTimeMs: number): any {
     if (isNaN(cacheTimeMs)) cacheTimeMs = 0;
 
     // holds the promise results
@@ -22,8 +22,8 @@ export function createMemoryCache(memoryFn: (...args: any[]) => void, cacheTimeM
                 }
             }
             // create new promise
-            const promise = new Promise(async (resolve) => {
-                resolve((await memoryFn(...args)));
+            const promise = new Promise((resolve) => {
+                resolve(memoryFn(...args));
             });
             // store promise reference until fulfilled
             promiseMemory.set(cacheKey, promise);
