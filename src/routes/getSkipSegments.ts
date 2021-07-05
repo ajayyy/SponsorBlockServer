@@ -3,7 +3,7 @@ import { config } from '../config';
 import { db, privateDB } from '../databases/databases';
 import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
 import { SBRecord } from '../types/lib.model';
-import { Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
+import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getCategoryActionType } from '../utils/categoryInfo';
 import { getHash } from '../utils/getHash';
 import { getIP } from '../utils/getIP';
@@ -12,7 +12,7 @@ import { QueryCacher } from '../utils/queryCacher';
 import { getReputation } from '../utils/reputation';
 
 
-async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
+async function prepareCategorySegments(req: Request, videoID: VideoID, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1 && !segment.required) {
             return false; //too untrustworthy, just ignore it
@@ -41,16 +41,18 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
-    const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? 32 : 1;
+    const maxSegments = getCategoryActionType(segments[0]?.category) === CategoryActionType.Skippable ? 32 : 1;
     return (await chooseSegments(filteredSegments, maxSegments)).map((chosenSegment) => ({
-        category,
+        category: chosenSegment.category,
+        actionType: chosenSegment.actionType,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
         UUID: chosenSegment.UUID,
         videoDuration: chosenSegment.videoDuration
     }));
 }
 
-async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
+async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[], 
+        actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Segment[] = [];
 
@@ -58,19 +60,20 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
         categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
         if (categories.length === 0) return null;
 
-        const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await getSegmentsFromDBByVideoID(videoID, service))
-            .filter((segment: DBSegment) => categories.includes(segment?.category))
+        const segmentsByType: SBRecord<string, DBSegment[]> = (await getSegmentsFromDBByVideoID(videoID, service))
+            .filter((segment: DBSegment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType))
             .reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
                 if (requiredSegments.includes(segment.UUID)) segment.required = true;
 
-                acc[segment.category] = acc[segment.category] || [];
-                acc[segment.category].push(segment);
+                acc[segment.category + segment.actionType] ??= [];
+                acc[segment.category + segment.actionType].push(segment);
 
                 return acc;
             }, {});
 
-        for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
-            segments.push(...(await prepareCategorySegments(req, videoID, category as Category, categorySegments, cache)));
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        for (const [_key, typeSegments] of Object.entries(segmentsByType)) {
+            segments.push(...(await prepareCategorySegments(req, videoID, typeSegments, cache)));
         }
 
         return segments;
@@ -82,28 +85,28 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
     }
 }
 
-async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
+async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[], 
+        actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
-        type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerCategory: SBRecord<Category, DBSegment[]>}>;
+        type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerType: SBRecord<string, DBSegment[]>}>;
 
         categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
         if (categories.length === 0) return null;
 
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await getSegmentsFromDBByHash(hashedVideoIDPrefix, service))
-            .filter((segment: DBSegment) => categories.includes(segment?.category))
+            .filter((segment: DBSegment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType))
             .reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
                     hash: segment.hashedVideoID,
-                    segmentPerCategory: {},
+                    segmentPerType: {}
                 };
                 if (requiredSegments.includes(segment.UUID)) segment.required = true;
 
-                const videoCategories = acc[segment.videoID].segmentPerCategory;
-                videoCategories[segment.category] = videoCategories[segment.category] || [];
-                videoCategories[segment.category].push(segment);
+                acc[segment.videoID].segmentPerType[segment.category + segment.actionType] ??= [];
+                acc[segment.videoID].segmentPerType[segment.category + segment.actionType].push(segment);
 
                 return acc;
             }, {});
@@ -114,8 +117,9 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                 segments: [],
             };
 
-            for (const [category, segmentPerCategory] of Object.entries(videoData.segmentPerCategory)) {
-                segments[videoID].segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, segmentPerCategory, cache)));
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            for (const [_key, segmentPerType] of Object.entries(videoData.segmentPerType)) {
+                segments[videoID].segments.push(...(await prepareCategorySegments(req, videoID as VideoID, segmentPerType, cache)));
             }
         }
 
@@ -132,7 +136,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
     const fetchFromDB = () => db
         .prepare(
             'all',
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "videoDuration", "reputation", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [hashedVideoIDPrefix + '%', service]
         ) as Promise<DBSegment[]>;
@@ -148,7 +152,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     const fetchFromDB = () => db
         .prepare(
             'all',
-            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "videoDuration", "reputation", "shadowHidden" FROM "sponsorTimes" 
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [videoID, service]
         ) as Promise<DBSegment[]>;
@@ -275,7 +279,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
     const videoID = req.query.videoID as VideoID;
     // Default to sponsor
     // If using params instead of JSON, only one category can be pulled
-    const categories = req.query.categories
+    const categories: Category[] = req.query.categories
         ? JSON.parse(req.query.categories as string)
         : req.query.category
             ? Array.isArray(req.query.category)
@@ -284,6 +288,18 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
             : ['sponsor'];
     if (!Array.isArray(categories)) {
         res.status(400).send("Categories parameter does not match format requirements.");
+        return false;
+    }
+
+    const actionTypes: ActionType[] = req.query.actionTypes
+        ? JSON.parse(req.query.actionTypes as string)
+        : req.query.actionType
+            ? Array.isArray(req.query.actionType)
+                ? req.query.actionType
+                : [req.query.actionType]
+            : [ActionType.Skip];
+    if (!Array.isArray(actionTypes)) {
+        res.status(400).send("actionTypes parameter does not match format requirements.");
         return false;
     }
 
@@ -304,7 +320,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         service = Service.YouTube;
     }
 
-    const segments = await getSegmentsByVideoID(req, videoID, categories, requiredSegments, service);
+    const segments = await getSegmentsByVideoID(req, videoID, categories, actionTypes, requiredSegments, service);
 
     if (segments === null || segments === undefined) {
         res.sendStatus(500);

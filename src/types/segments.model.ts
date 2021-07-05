@@ -34,6 +34,7 @@ export interface IncomingSegment {
 
 export interface Segment { 
     category: Category; 
+    actionType: ActionType;
     segment: number[]; 
     UUID: SegmentUUID;
     videoDuration: VideoDuration;
@@ -46,6 +47,7 @@ export enum Visibility {
 
 export interface DBSegment { 
     category: Category; 
+    actionType: ActionType;
     startTime: number;
     endTime: number;
     UUID: SegmentUUID;

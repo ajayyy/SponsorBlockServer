@@ -1,7 +1,7 @@
 import {hashPrefixTester} from '../utils/hashPrefixTester';
 import {getSegmentsByHash} from './getSkipSegments';
 import {Request, Response} from 'express';
-import { Category, SegmentUUID, Service, VideoIDHash } from '../types/segments.model';
+import { ActionType, Category, SegmentUUID, Service, VideoIDHash } from '../types/segments.model';
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -24,6 +24,22 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
         }
     } catch(error) {
         return res.status(400).send("Bad parameter: categories (invalid JSON)");
+    }
+
+    let actionTypes: ActionType[] = [];
+    try {
+        actionTypes = req.query.actionTypes
+            ? JSON.parse(req.query.actionTypes as string)
+            : req.query.actionType
+                ? Array.isArray(req.query.actionType)
+                    ? req.query.actionType
+                    : [req.query.actionType]
+                : [ActionType.Skip];
+        if (!Array.isArray(actionTypes)) {
+            return res.status(400).send("actionTypes parameter does not match format requirements.");
+        }
+    } catch(error) {
+        return res.status(400).send("Bad parameter: actionTypes (invalid JSON)");
     }
 
     let requiredSegments: SegmentUUID[] = [];
@@ -51,7 +67,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     categories = categories.filter((item: any) => typeof item === "string");
 
     // Get all video id's that match hash prefix
-    const segments = await getSegmentsByHash(req, hashPrefix, categories, requiredSegments, service);
+    const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, requiredSegments, service);
 
     if (!segments) return res.status(404).json([]);
 
