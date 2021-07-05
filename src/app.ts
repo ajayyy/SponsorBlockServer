@@ -36,13 +36,14 @@ import {getUserID} from './routes/getUserID';
 import {getLockCategories} from './routes/getLockCategories';
 import {getLockCategoriesByHash} from './routes/getLockCategoriesByHash';
 import ExpressPromiseRouter from 'express-promise-router';
+import { Server } from 'http';
 
-export function createServer(callback: () => void) {
+export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
     const app = express();
 
-    const router = ExpressPromiseRouter()
-    app.use(router)
+    const router = ExpressPromiseRouter();
+    app.use(router);
 
     //setup CORS correctly
     router.use(corsMiddleware);
@@ -166,7 +167,7 @@ function setupRoutes(router: Router) {
     if (config.postgres) {
         router.get('/database', (req, res) => dumpDatabase(req, res, true));
         router.get('/database.json', (req, res) => dumpDatabase(req, res, false));
-        router.get('/database/*', redirectLink)
+        router.get('/database/*', redirectLink);
     } else {
         router.get('/database.db', function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", {root: "./"});

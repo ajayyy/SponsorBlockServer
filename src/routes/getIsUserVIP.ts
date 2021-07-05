@@ -4,28 +4,25 @@ import {isUserVIP} from '../utils/isUserVIP';
 import {Request, Response} from 'express';
 import { HashedUserID, UserID } from '../types/user.model';
 
-export async function getIsUserVIP(req: Request, res: Response): Promise<void> {
+export async function getIsUserVIP(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
 
     if (userID == undefined) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //hash the userID
     const hashedUserID: HashedUserID = getHash(userID);
 
     try {
-        let vipState = await isUserVIP(hashedUserID);
-        res.status(200).json({
+        const vipState = await isUserVIP(hashedUserID);
+        return res.status(200).json({
             hashedUserID: hashedUserID,
             vip: vipState,
         });
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
-
-        return;
+        return res.sendStatus(500);
     }
 }

@@ -1,4 +1,3 @@
-import { time } from 'console';
 import {Request, Response} from 'express';
 import { db } from '../databases/databases';
 import { Logger } from '../utils/logger';
@@ -10,15 +9,14 @@ import { Logger } from '../utils/logger';
  * https://support.google.com/youtube/answer/9230970
  */
 
-export function addUnlistedVideo(req: Request, res: Response) {
+export function addUnlistedVideo(req: Request, res: Response): Response {
     const videoID = req.body.videoID;
     const year = req.body.year || 0;
     const views = req.body.views || 0;
     const channelID = req.body.channelID || "Unknown";
 
     if (videoID === undefined || typeof(videoID) !== "string" || videoID.length !== 11) {
-        res.status(400).send("Invalid parameters");
-        return;
+        return res.status(400).send("Invalid parameters");
     }
 
     try {
@@ -26,10 +24,8 @@ export function addUnlistedVideo(req: Request, res: Response) {
         db.prepare('run', `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted") values (?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted]);
     } catch (err) {
         Logger.error(err);
-        res.sendStatus(500);
-
-        return;
+        return res.sendStatus(500);
     }
 
-    res.sendStatus(200);
+    return res.sendStatus(200);
 }

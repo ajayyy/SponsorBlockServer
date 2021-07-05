@@ -161,31 +161,27 @@ async function sendWebhooks(voteData: VoteData) {
 }
 
 async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, isOwnSubmission: boolean, category: Category
-            , hashedIP: HashedIP, finalResponse: FinalResponse, res: Response) {
+            , hashedIP: HashedIP, finalResponse: FinalResponse, res: Response): Promise<Response> {
     // Check if they've already made a vote
     const usersLastVoteInfo = await privateDB.prepare('get', `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID]);
 
     if (usersLastVoteInfo?.category === category) {
         // Double vote, ignore
-        res.sendStatus(finalResponse.finalStatus);
-        return;
+        return res.sendStatus(finalResponse.finalStatus);
     }
 
     const videoInfo = (await db.prepare('get', `SELECT "category", "videoID", "hashedVideoID", "service", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`,
                              [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID};
     if (!videoInfo) {
         // Submission doesn't exist
-        res.status(400).send("Submission doesn't exist.");
-        return;
+        return res.status(400).send("Submission doesn't exist.");
     }
 
     if (!config.categoryList.includes(category)) {
-        res.status(400).send("Category doesn't exist.");
-        return;
+        return res.status(400).send("Category doesn't exist.");
     }
     if (getCategoryActionType(category) !== CategoryActionType.Skippable) {
-        res.status(400).send("Cannot vote for this category");
-        return;
+        return res.status(400).send("Cannot vote for this category");
     }
 
     const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category]);
@@ -245,14 +241,14 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
     QueryCacher.clearVideoCache(videoInfo);
 
-    res.sendStatus(finalResponse.finalStatus);
+    return res.sendStatus(finalResponse.finalStatus);
 }
 
 export function getUserID(req: Request): UserID {
     return req.query.userID as UserID;
 }
 
-export async function voteOnSponsorTime(req: Request, res: Response) {
+export async function voteOnSponsorTime(req: Request, res: Response): Promise<Response> {
     const UUID = req.query.UUID as SegmentUUID;
     const paramUserID = getUserID(req);
     let type = req.query.type !== undefined ? parseInt(req.query.type as string) : undefined;
@@ -260,8 +256,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
     if (UUID === undefined || paramUserID === undefined || (type === undefined && category === undefined)) {
         //invalid request
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
     }
 
     //hash the userID
@@ -269,13 +264,13 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     const userID = getHash(paramUserID + UUID);
 
     // To force a non 200, change this early
-    let finalResponse: FinalResponse = {
+    const finalResponse: FinalResponse = {
         blockVote: false,
         finalStatus: 200,
         finalMessage: null,
         webhookType: VoteWebhookType.Normal,
         webhookMessage: null
-    }
+    };
 
     //x-forwarded-for if this server is behind a proxy
     const ip = getIP(req);
@@ -292,8 +287,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
     // disallow vote types 10/11
     if (type === 10 || type === 11) {
         // no longer allow type 10/11 alternative votes
-        res.sendStatus(400)
-        return;
+        return res.sendStatus(400);
     }
     
     // If not upvote
@@ -305,8 +299,8 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
         if (await isSegmentLocked() || await isVideoLocked()) {
             finalResponse.blockVote = true;
-            finalResponse.webhookType = VoteWebhookType.Rejected
-            finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct"
+            finalResponse.webhookType = VoteWebhookType.Rejected;
+            finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct";
         }
     }
 
@@ -320,12 +314,10 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
         if (voteInfo && voteInfo.votes <= -2) {
             if (type == 1) {
-                res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
-                return;
+                return res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
             } else if (type == 0) {
                 // Already downvoted enough, ignore
-                res.status(200).send();
-                return;
+                return res.sendStatus(200);
             }
         }
     }
@@ -361,8 +353,7 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
             incrementAmount = 0;
         } else {
             //unrecongnised type of vote
-            res.sendStatus(400);
-            return;
+            return res.sendStatus(400);
         }
         if (votesRow != undefined) {
             if (votesRow.type === 1) {
@@ -444,9 +435,6 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
 
             QueryCacher.clearVideoCache(videoInfo);
         }
-
-        res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
-
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({
                 UUID,
@@ -461,9 +449,9 @@ export async function voteOnSponsorTime(req: Request, res: Response) {
                 finalResponse
             });
         }
+        return res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
     } catch (err) {
         Logger.error(err);
-
-        res.status(500).json({error: 'Internal error creating segment vote'});
+        return res.status(500).json({error: 'Internal error creating segment vote'});
     }
 }

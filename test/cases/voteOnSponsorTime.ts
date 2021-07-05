@@ -67,7 +67,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID&UUID=vote-uuid-0&type=1")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-0"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-0"]);
                 if (row.votes === 3) {
                     done();
                 } else {
@@ -85,7 +85,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-2&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
                 if (row.votes < 10) {
                     done();
                 } else {
@@ -103,7 +103,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID3&UUID=vote-uuid-2&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
                 if (row.votes === 9) {
                     done();
                 } else {
@@ -121,7 +121,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID4&UUID=vote-uuid-1.6&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.6"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.6"]);
                 if (row.votes === 10) {
                     done();
                 } else {
@@ -139,7 +139,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1&type=1")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1"]);
                 if (row.votes === 2) {
                     done();
                 } else {
@@ -157,7 +157,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1.5&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.5"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.5"]);
                 if (row.votes === 10) {
                     done();
                 } else {
@@ -175,7 +175,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-3&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-3"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-3"]);
                 if (row.votes <= -2) {
                     done();
                 } else {
@@ -193,7 +193,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=own-submission-id&UUID=own-submission-uuid&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["own-submission-uuid"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["own-submission-uuid"]);
                 if (row.votes <= -2) {
                     done();
                 } else {
@@ -211,7 +211,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=not-own-submission-uuid&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["not-own-submission-uuid"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["not-own-submission-uuid"]);
                 if (row.votes === 499) {
                     done();
                 } else {
@@ -229,8 +229,8 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=intro")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
-                let categoryRows = await db.prepare('all', `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
+                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
+                const categoryRows = await db.prepare('all', `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
                 if (row.category === "sponsor" && categoryRows.length === 2 
                         && categoryRows[0]?.votes === 1 && categoryRows[0]?.category === "intro"
                             && categoryRows[1]?.votes === 1 && categoryRows[1]?.category === "sponsor") {
@@ -250,7 +250,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=fakecategory")
         .then(async res => {
             if (res.status === 400) {
-                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
+                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
                 if (row.category === "sponsor") {
                     done();
                 } else {
@@ -268,7 +268,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=highlight")
         .then(async res => {
             if (res.status === 400) {
-                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
+                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
                 if (row.category === "sponsor") {
                     done();
                 } else {
@@ -286,8 +286,8 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=outro")
         .then(async res => {
             if (res.status === 200) {
-                let submissionRow = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
-                let categoryRows = await db.prepare('all', `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
+                const submissionRow = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
+                const categoryRows = await db.prepare('all', `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
                 let introVotes = 0;
                 let outroVotes = 0;
                 let sponsorVotes = 0;
@@ -315,8 +315,8 @@ describe('voteOnSponsorTime', () => {
         const vote = (inputCat: string, assertCat: string, callback: Done) => {
             fetch(getbaseURL()
                 + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category-change&category=" + inputCat)
-            .then(async res => {
-                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category-change"]);
+            .then(async () => {
+                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category-change"]);
                 if (row.category === assertCat) {
                     callback();
                 } else {
@@ -336,8 +336,8 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&category=outro")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
-                let row2 = await db.prepare('get', `SELECT votes FROM "categoryVotes" WHERE "UUID" = ? and category = ?`, ["vote-uuid-5", "outro"]);
+                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+                const row2 = await db.prepare('get', `SELECT votes FROM "categoryVotes" WHERE "UUID" = ? and category = ?`, ["vote-uuid-5", "outro"]);
                 if (row.category === "outro" && row2.votes === 500) {
                     done();
                 } else {
@@ -355,7 +355,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=testman&UUID=vote-uuid-5_1&category=outro")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
                 if (row.category === "outro") {
                     done();
                 } else {
@@ -385,7 +385,7 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=1")
         .then(async res => {
-            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
             if (res.status === 403 && row.votes === -3) {
                 done();
             } else {
@@ -399,7 +399,7 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=0")
         .then(async res => {
-            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
             if (res.status === 200 && row.votes === -3) {
                 done();
             } else {
@@ -414,7 +414,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&type=1")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
                 if (row.votes > -3) {
                     done();
                 } else {
@@ -444,7 +444,7 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=0")
         .then(async res => {
-            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
             if (res.status === 200 && row.votes === 2) {
                 done();
             } else {
@@ -458,7 +458,7 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=1")
         .then(async res => {
-            let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
             if (res.status === 200 && row.votes === 3) {
                 done();
             } else {
@@ -472,7 +472,7 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&category=outro")
         .then(async res => {
-            let row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
+            const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
             if (res.status === 200 && row.category === "sponsor") {
                 done();
             } else {
@@ -487,7 +487,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=1")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
+                const row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
                 if (row?.locked) {
                     done();
                 } else {
@@ -505,7 +505,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=0")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
+                const row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
                 if (!row?.locked) {
                     done();
                 } else {
@@ -523,7 +523,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-hidden-uuid-1&type=1")
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-hidden-uuid-1"]);
+                const row = await db.prepare('get', `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-hidden-uuid-1"]);
                 if (!row?.hidden) {
                     done();
                 } else {
@@ -541,7 +541,7 @@ describe('voteOnSponsorTime', () => {
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-2&type=20") 
         .then(async res => {
             if (res.status === 200) {
-                let row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
+                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
                 if (row.votes === 10) {
                     done();
                 } else {
@@ -560,7 +560,7 @@ describe('voteOnSponsorTime', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
     it('Should not be able to vote with type 11', (done: Done) => {
@@ -569,7 +569,7 @@ describe('voteOnSponsorTime', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => done('couldn\'t call endpoint'));
+        .catch(() => done('couldn\'t call endpoint'));
     });
 
 });

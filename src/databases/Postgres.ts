@@ -17,7 +17,7 @@ types.setTypeParser(20, function(val) {
 export class Postgres implements IDatabase {
     private pool: Pool;
 
-    constructor(private config: any) {}
+    constructor(private config: Record<string, any>) {}
 
     async init(): Promise<void> {
         this.pool = new Pool(this.config.postgres);
@@ -43,7 +43,7 @@ export class Postgres implements IDatabase {
         }
     }
 
-    async prepare(type: QueryType, query: string, params?: any[]) {
+    async prepare(type: QueryType, query: string, params?: any[]): Promise<any[]> {
         // Convert query to use numbered parameters
         let count = 1;
         for (let char = 0; char < query.length; char++) {
@@ -64,7 +64,7 @@ export class Postgres implements IDatabase {
                 return value;
             }
             case 'all': {
-                let values = queryResult.rows;
+                const values = queryResult.rows;
                 Logger.debug(`result (postgres): ${values}`);
                 return values;
             }

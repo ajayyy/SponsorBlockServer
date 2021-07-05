@@ -20,7 +20,7 @@ const oldID =           `${'0'.repeat(8)}-${'0000-'.repeat(3)}${'0'.repeat(12)}`
 
 describe('getSegmentInfo', () => {
     before(async () => {
-        let insertQuery = `INSERT INTO 
+        const insertQuery = `INSERT INTO 
             "sponsorTimes"("videoID", "startTime", "endTime", "votes", "locked",
             "UUID", "userID", "timeSubmitted", "views", "category", "service",
             "videoDuration", "hidden", "shadowHidden", "hashedVideoID") 
@@ -53,7 +53,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive downvoted segment', (done: Done) => {
@@ -69,7 +69,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive locked up segment', (done: Done) => {
@@ -85,7 +85,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive infinite vote segment', (done: Done) => {
@@ -101,7 +101,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive shadowhidden segment', (done: Done) => {
@@ -117,7 +117,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive locked down segment', (done: Done) => {
@@ -133,7 +133,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive hidden segment', (done: Done) => {
@@ -149,7 +149,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive segment with old ID', (done: Done) => {
@@ -165,7 +165,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive single segment in array', (done: Done) => {
@@ -181,7 +181,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be able to retreive multiple segments in array', (done: Done) => {
@@ -199,7 +199,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should be possible to send unexpected query parameters', (done: Done) => {
@@ -215,7 +215,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should return 400 if array passed to UUID', (done: Done) => {
@@ -224,7 +224,7 @@ describe('getSegmentInfo', () => {
             if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return 400 if bad array passed to UUIDs', (done: Done) => {
@@ -233,7 +233,7 @@ describe('getSegmentInfo', () => {
             if (res.status !== 400) done("non 404 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return 400 if bad UUID passed', (done: Done) => {
@@ -242,7 +242,7 @@ describe('getSegmentInfo', () => {
             if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return 400 if bad UUIDs passed in array', (done: Done) => {
@@ -251,7 +251,7 @@ describe('getSegmentInfo', () => {
             if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return good UUID when mixed with bad UUIDs', (done: Done) => {
@@ -267,7 +267,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should cut off array at 10', function(done: Done) {
@@ -286,7 +286,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should not duplicate reponses', (done: Done) => {
@@ -302,7 +302,7 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should return 400 if UUID not found', (done: Done) => {
@@ -311,7 +311,7 @@ describe('getSegmentInfo', () => {
             if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to retreive multiple segments with multiple parameters', (done: Done) => {
@@ -329,11 +329,11 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 
     it('Should not parse repeated UUID if UUIDs present', (done: Done) => {
-        fetch(getbaseURL() + `/api/segmentInfo?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=[\"${upvotedID}\"]`)
+        fetch(getbaseURL() + `/api/segmentInfo?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=["${upvotedID}"]`)
         .then(async res => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
@@ -346,6 +346,6 @@ describe('getSegmentInfo', () => {
                 }
             }
         })
-        .catch(err => "Couldn't call endpoint");
+        .catch(() => "Couldn't call endpoint");
     });
 });

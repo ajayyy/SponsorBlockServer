@@ -33,7 +33,7 @@ describe('getSegmentsByHash', () => {
             if (res.status !== 200) done("non 200 status code, was " + res.status);
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should return 404 if no segments are found even if a video for the given hash is known', (done: Done) => {
@@ -46,7 +46,7 @@ describe('getSegmentsByHash', () => {
                 else done("Response had videos");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get an empty array if no videos', (done: Done) => {
@@ -59,7 +59,7 @@ describe('getSegmentsByHash', () => {
                 else done("non empty array returned");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get an empty array if only hidden videos', (done: Done) => {
@@ -72,7 +72,7 @@ describe('getSegmentsByHash', () => {
                 else done("non empty array returned");
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 prefix too short', (done: Done) => {
@@ -81,11 +81,11 @@ describe('getSegmentsByHash', () => {
             if (res.status !== 400) done("non 400 status code, was " + res.status);
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 prefix too long', (done: Done) => {
-        let prefix = new Array(50).join('1');
+        const prefix = new Array(50).join('1');
         if (prefix.length <= 32) { // default value, config can change this
             done('failed to generate a long enough string for the test ' + prefix.length);
             return;
@@ -95,7 +95,7 @@ describe('getSegmentsByHash', () => {
             if (res.status !== 400) done("non 400 status code, was " + res.status);
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should not return 400 prefix in range', (done: Done) => {
@@ -104,7 +104,7 @@ describe('getSegmentsByHash', () => {
             if (res.status === 400) done("prefix length 5 gave 400 " + res.status);
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should return 404 for no hash', (done: Done) => {
@@ -113,7 +113,7 @@ describe('getSegmentsByHash', () => {
             if (res.status !== 404) done("expected 404, got " + res.status);
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should return 400 for bad format categories', (done: Done) => {
@@ -122,7 +122,7 @@ describe('getSegmentsByHash', () => {
             if (res.status !== 400) done("expected 400 got " + res.status);
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get multiple videos', (done: Done) => {
@@ -137,7 +137,7 @@ describe('getSegmentsByHash', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get 200 for no categories (default sponsor)', (done: Done) => {
@@ -155,7 +155,7 @@ describe('getSegmentsByHash', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to get 200 for no categories (default sponsor) for a non YouTube service', (done: Done) => {
@@ -170,7 +170,7 @@ describe('getSegmentsByHash', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should only return one segment when fetching highlight segments', (done: Done) => {
@@ -184,11 +184,11 @@ describe('getSegmentsByHash', () => {
                 else done();
             }
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should be able to post a segment and get it using endpoint', (done: Done) => {
-        let testID = 'abc123goodVideo';
+        const testID = 'abc123goodVideo';
         fetch(getbaseURL() + "/api/postVideoSponsorTimes", {
             method: 'POST',
             headers: {
@@ -216,7 +216,7 @@ describe('getSegmentsByHash', () => {
                         else done();
                     }
                 })
-                .catch(err => done("(get) Couldn't call endpoint"));
+                .catch(() => done("(get) Couldn't call endpoint"));
             } else {
                 done("(post) non 200 status code, was " + res.status);
             }

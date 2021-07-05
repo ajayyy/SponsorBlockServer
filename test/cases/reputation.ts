@@ -18,7 +18,7 @@ describe('reputation', () => {
         this.timeout(5000); // this preparation takes longer then usual
         const videoID = "reputation-videoID";
 
-        let sponsorTimesInsertQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+        const sponsorTimesInsertQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, 'reputation-0-uuid-0', getHash(userIDLowSubmissions), 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash(videoID, 1)]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, 'reputation-0-uuid-1', getHash(userIDLowSubmissions), 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash(videoID, 1)]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 100, 0, 'reputation-0-uuid-2', getHash(userIDLowSubmissions), 1606240000000, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash(videoID, 1)]);

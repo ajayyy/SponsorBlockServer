@@ -16,7 +16,7 @@ describe('getVideoSponsorTime (Old get method)', () => {
             if (res.status !== 200) done("non 200 (" + res.status + ")");
             else done(); // pass
         })
-        .catch(err => done("Couldn't call endpoint"));
+        .catch(() => done("Couldn't call endpoint"));
     });
 
     it('Should return 404 if no segment found', (done: Done) => {
@@ -25,7 +25,7 @@ describe('getVideoSponsorTime (Old get method)', () => {
             if (res.status !== 404) done("non 404 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(() => done("couldn't call endpoint"));
     });
 
 
@@ -35,7 +35,7 @@ describe('getVideoSponsorTime (Old get method)', () => {
             if (res.status !== 200) done("non 200");
             else done(); // pass
         })
-        .catch(err => done("couldn't callendpoint"));
+        .catch(() => done("couldn't callendpoint"));
     });
 
     it('Should be able send a comma in a query param', (done: Done) => {
@@ -46,7 +46,7 @@ describe('getVideoSponsorTime (Old get method)', () => {
             else if (JSON.parse(body).UUIDs[0] === 'uuid-1') done(); // pass
             else done("couldn't parse response");
         })
-        .catch(err => done("couln't call endpoint"));
+        .catch(() => done("couln't call endpoint"));
     });
 
     it('Should be able to get the correct time', (done: Done) => {
@@ -65,6 +65,6 @@ describe('getVideoSponsorTime (Old get method)', () => {
             }
 
         })
-        .catch(err => done("couldn't call endpoint"));
+        .catch(() => done("couldn't call endpoint"));
     });
 });

@@ -12,12 +12,12 @@ interface RedisSB {
 
 let exportObject: RedisSB = {
     get: (key, callback?) => callback(null, undefined),
-    getAsync: (key) => 
+    getAsync: () => 
         new Promise((resolve) => resolve({err: null, reply: undefined})),
     set: (key, value, callback) => callback(null, undefined),
-    setAsync: (key, value) => 
+    setAsync: () => 
         new Promise((resolve) => resolve({err: null, reply: undefined})),
-    delAsync: (...keys) => 
+    delAsync: () => 
         new Promise((resolve) => resolve(null)),
 };
 

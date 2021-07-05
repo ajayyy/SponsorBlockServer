@@ -10,22 +10,22 @@ if (config.diskCache) {
     DiskCache = {
         // constructor(rootPath, options): {};
 
-        init() {},
+        init(): void { return; },
 
-        reset() {},
+        reset(): void { return; },
 
-        has(key) { return false; },
+        has(key: string): boolean { return false; },
 
-        get(key, opts) { return null; },
+        get(key: string, opts): string { return null; },
 
         // Returns size
-        set(key, dataOrSteam) { return new Promise((resolve) => 0); },
+        set(key: string, dataOrSteam): Promise<number> { return new Promise(() => 0); },
 
-        del(key) {},
+        del(key: string): void { return; },
 
-        size() { return 0; },
+        size(): number { return 0; },
 
-        prune() {},
+        prune(): void {return; },
     };
 }
 

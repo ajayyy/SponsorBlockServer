@@ -7,9 +7,9 @@ import { QueryCacher } from '../utils/queryCacher';
 import { isUserVIP } from '../utils/isUserVIP';
 import { VideoIDHash } from "../types/segments.model";
 
-export async function postClearCache(req: Request, res: Response) {
+export async function postClearCache(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
-    let userID = req.query.userID as UserID;
+    const userID = req.query.userID as UserID;
     const service = req.query.service as Service ?? Service.YouTube;
 
     const invalidFields = [];
@@ -23,8 +23,7 @@ export async function postClearCache(req: Request, res: Response) {
     if (invalidFields.length !== 0) {
       // invalid request
       const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ', ' : '') + c, '');
-      res.status(400).send(`No valid ${fields} field(s) provided`);
-      return false;
+      return res.status(400).send(`No valid ${fields} field(s) provided`);
     }
 
     // hash the userID as early as possible
@@ -35,8 +34,7 @@ export async function postClearCache(req: Request, res: Response) {
     // Ensure user is a VIP
     if (!(await isUserVIP(hashedUserID))){
         Logger.warn("Permission violation: User " + hashedUserID + " attempted to clear cache for video " + videoID + ".");
-        res.status(403).json({"message": "Not a VIP"});
-        return false;
+        return res.status(403).json({"message": "Not a VIP"});
     }
 
     try {
@@ -45,11 +43,10 @@ export async function postClearCache(req: Request, res: Response) {
             hashedVideoID,
             service
         });
-        res.status(200).json({
+        return res.status(200).json({
             message: "Cache cleared on video " + videoID
         });
     } catch(err) {
-        res.status(500).send()
-        return false;
+        return res.sendStatus(500);
     }
 }

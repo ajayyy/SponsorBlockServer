@@ -1,7 +1,7 @@
 import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model";
 
 export class YouTubeApiMock {
-    static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
+    static async listVideos(videoID: string): Promise<APIVideoInfo> {
         const obj = {
             id: videoID
         };
