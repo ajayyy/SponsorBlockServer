@@ -4,7 +4,7 @@ import {Request, Response} from 'express';
 import {hashPrefixTester} from '../utils/hashPrefixTester';
 import { Category, VideoID, VideoIDHash } from "../types/segments.model";
 
-interface byHashLockResult {
+interface LockResultByHash {
     videoID: VideoID,
     hash: VideoIDHash,
     categories: Category[]
@@ -17,7 +17,7 @@ interface DBLock {
 }
 
 const mergeLocks = (source: DBLock[]) => {
-    const dest: byHashLockResult[] = [];
+    const dest: LockResultByHash[] = [];
     for (const obj of source) {
         // videoID already exists
         const destMatch = dest.find(s => s.videoID === obj.videoID);
