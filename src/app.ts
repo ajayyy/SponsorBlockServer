@@ -34,6 +34,7 @@ import { addUnlistedVideo } from './routes/addUnlistedVideo';
 import {postPurgeAllSegments} from './routes/postPurgeAllSegments';
 import {getUserID} from './routes/getUserID';
 import {getLockCategories} from './routes/getLockCategories';
+import {getLockCategoriesByHash} from './routes/getLockCategoriesByHash';
 import ExpressPromiseRouter from 'express-promise-router';
 
 export function createServer(callback: () => void) {
@@ -158,6 +159,9 @@ function setupRoutes(router: Router) {
 
     // get lock categores from userID
     router.get('/api/lockCategories', getLockCategories);
+
+    // get privacy protecting lock categories functions
+    router.get('/api/lockCategories/:prefix', getLockCategoriesByHash);
 
     if (config.postgres) {
         router.get('/database', (req, res) => dumpDatabase(req, res, true));

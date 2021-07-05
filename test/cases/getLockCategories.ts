@@ -4,14 +4,14 @@ import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
 
 
-describe('lockCategoriesRecords', () => {
+describe('getLockCategories', () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-getLockCategories")]);
  
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'intro']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'interaction']);
  
         await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-2', 'preview']);
  
@@ -35,7 +35,7 @@ describe('lockCategoriesRecords', () => {
                     done(`Returned incorrect number of locks "${data.length}"`);
                 } else if (data[0].category !== "sponsor") {
                     done(`Returned incorrect category "${data[0].category}"`);
-                } else if (data[1].category !== "intro") {
+                } else if (data[1].category !== "interaction") {
                     done(`Returned incorrect category "${data[1].category}"`);
                 } else {
                     done(); // pass

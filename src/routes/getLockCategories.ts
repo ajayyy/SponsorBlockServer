@@ -1,8 +1,7 @@
 import {db} from '../databases/databases';
-import {getHash} from '../utils/getHash';
 import {Logger} from '../utils/logger';
 import {Request, Response} from 'express';
-import { Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
+import { Category, VideoID } from "../types/segments.model";
 import { UserID } from '../types/user.model';
 
 export async function getLockCategories(req: Request, res: Response) {
