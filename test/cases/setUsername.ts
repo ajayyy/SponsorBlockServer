@@ -46,6 +46,7 @@ async function getLastLogUserNameChange(userID: string) {
 }
 
 function wellFormatUserName(userName: string) {
+    // eslint-disable-next-line no-control-regex
     return userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 }
 
