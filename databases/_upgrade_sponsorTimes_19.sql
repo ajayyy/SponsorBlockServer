@@ -1,7 +1,7 @@
 BEGIN TRANSACTION;
 
 /* Add actionType field */
-CREATE TABLE "sqlb_temp_table_18" (
+CREATE TABLE "sqlb_temp_table_19" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
 	"endTime"	REAL NOT NULL,
@@ -22,11 +22,11 @@ CREATE TABLE "sqlb_temp_table_18" (
 	"hashedVideoID" TEXT NOT NULL default ''
 );
 
-INSERT INTO sqlb_temp_table_18 SELECT "videoID","startTime","endTime","votes","locked","incorrectVotes","UUID","userID","timeSubmitted","views","category",'skip',"service","videoDuration","hidden","reputation","shadowHidden","hashedVideoID" FROM "sponsorTimes";
+INSERT INTO sqlb_temp_table_19 SELECT "videoID","startTime","endTime","votes","locked","incorrectVotes","UUID","userID","timeSubmitted","views","category",'skip',"service","videoDuration","hidden","reputation","shadowHidden","hashedVideoID" FROM "sponsorTimes";
 
 DROP TABLE "sponsorTimes";
-ALTER TABLE sqlb_temp_table_18 RENAME TO "sponsorTimes";
+ALTER TABLE sqlb_temp_table_19 RENAME TO "sponsorTimes";
 
-UPDATE "config" SET value = 18 WHERE key = 'version';
+UPDATE "config" SET value = 19 WHERE key = 'version';
 
 COMMIT;
