@@ -3,6 +3,7 @@ import * as redis from 'redis';
 import { CacheOptions } from "@ajayyy/lru-diskcache";
 
 export interface SBSConfig {
+    [index: string]: any
     port: number;
     mockPort?: number;
     globalSalt: string;
