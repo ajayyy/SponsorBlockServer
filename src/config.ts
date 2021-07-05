@@ -84,7 +84,6 @@ addDefaults(config, {
 function addDefaults(config: SBSConfig, defaults: SBSConfig) {
     for (const key in defaults) {
         if (!Object.prototype.hasOwnProperty.call(config, key)) {
-            // @ts-ignore
             config[key] = defaults[key];
         }
     }

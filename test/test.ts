@@ -18,15 +18,15 @@ async function init() {
     }));
 
     // delete old test database
-    if (fs.existsSync(config.db)) fs.unlinkSync(config.db)
+    if (fs.existsSync(config.db)) fs.unlinkSync(config.db);
     if (fs.existsSync(config.privateDB)) fs.unlinkSync(config.privateDB);
 
     await initDb();
 
     const dbMode = config.mysql ? 'mysql'
         : config.postgres ? 'postgres'
-        : 'sqlite'
-    Logger.info('Database Mode: ' + dbMode)
+        : 'sqlite';
+    Logger.info('Database Mode: ' + dbMode);
 
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
