@@ -14,11 +14,11 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
 
     try {
         // Get existing lock categories markers
-        let lockCategoryList = await db.prepare('all', 'SELECT * from "lockCategories" where "hashedVideoID" LIKE ? ORDER BY videoID', [hashPrefix + '%']) as {videoID: VideoID, userID: UserID,category: Category}[]
+        const lockCategoryList = await db.prepare('all', 'SELECT * from "lockCategories" where "hashedVideoID" LIKE ? ORDER BY videoID', [hashPrefix + '%']) as {videoID: VideoID, userID: UserID,category: Category}[];
         if (lockCategoryList.length === 0 || !lockCategoryList[0]) {
             return res.sendStatus(404);
         } else {
-            return res.send(lockCategoryList)
+            return res.send(lockCategoryList);
         }
     } catch (err) {
         Logger.error(err);

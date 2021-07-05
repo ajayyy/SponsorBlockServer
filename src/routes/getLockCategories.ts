@@ -4,7 +4,7 @@ import {Request, Response} from 'express';
 import { Category, VideoID } from "../types/segments.model";
 import { UserID } from '../types/user.model';
 
-export async function getLockCategories(req: Request, res: Response) {
+export async function getLockCategories(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
 
     if (videoID == undefined) {
@@ -14,11 +14,11 @@ export async function getLockCategories(req: Request, res: Response) {
 
     try {
         // Get existing lock categories markers
-        let lockCategoryList = await db.prepare('all', 'SELECT "category", "userID" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, userID: UserID}[]
+        const lockCategoryList = await db.prepare('all', 'SELECT "category", "userID" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, userID: UserID}[];
         if (lockCategoryList.length === 0 || !lockCategoryList[0]) {
             return res.sendStatus(404);
         } else {
-            return res.send(lockCategoryList)
+            return res.send(lockCategoryList);
         }
     } catch (err) {
         Logger.error(err);

@@ -22,7 +22,7 @@ describe('getLockCategoriesByHash', () => {
     });
 
     it('Database should be greater or equal to version 18', async () => {
-        let version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
+        const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
         if (version >= 18) return;
         else return 'Version isn\'t greater than 18. Version is ' + version;
     });
@@ -45,7 +45,7 @@ describe('getLockCategoriesByHash', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get single locks', (done: Done) => {
@@ -64,7 +64,7 @@ describe('getLockCategoriesByHash', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
     
     it('Should be able to get by half full hash', (done: Done) => {
@@ -83,7 +83,7 @@ describe('getLockCategoriesByHash', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get multiple by similar hash', (done: Done) => {
@@ -104,7 +104,7 @@ describe('getLockCategoriesByHash', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 404 once hash prefix varies', (done: Done) => {
@@ -113,7 +113,7 @@ describe('getLockCategoriesByHash', () => {
             if (res.status !== 404) done('non 404 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 404 if no lock exists', (done: Done) => {
@@ -122,7 +122,7 @@ describe('getLockCategoriesByHash', () => {
             if (res.status !== 404) done('non 404 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 400 if no videoID specified', (done: Done) => {
@@ -131,7 +131,7 @@ describe('getLockCategoriesByHash', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 400 if full hash sent', (done: Done) => {
@@ -140,6 +140,6 @@ describe('getLockCategoriesByHash', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 });

@@ -19,7 +19,7 @@ describe('getLockCategories', () => {
     });
 
     it('Should update the database version when starting the application', async () => {
-        let version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
+        const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
         if (version > 1) return;
         else return 'Version isn\'t greater than 1. Version is ' + version;
     });
@@ -42,7 +42,7 @@ describe('getLockCategories', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('Should be able to get single locks', (done: Done) => {
@@ -61,7 +61,7 @@ describe('getLockCategories', () => {
                 }
             }
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 404 if no lock exists', (done: Done) => {
@@ -70,7 +70,7 @@ describe('getLockCategories', () => {
             if (res.status !== 404) done('non 404 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 
     it('should return 400 if no videoID specified', (done: Done) => {
@@ -79,6 +79,6 @@ describe('getLockCategories', () => {
             if (res.status !== 400) done('non 400 (' + res.status + ')');
             else done(); // pass
         })
-        .catch(err => ("couldn't call endpoint"));
+        .catch(() => ("couldn't call endpoint"));
     });
 });
