@@ -1,4 +1,4 @@
-# SponsorTimesDB  
+# SponsorTimesDB
 
 [vipUsers](#vipUsers)  
 [sponsorTimes](#sponsorTimes)  
@@ -28,17 +28,17 @@
 | startTime | REAL | not null |
 | endTime | REAL | not null |
 | votes | INTEGER | not null |
-| locked | INTEGER | not nul, default '0' |
+| locked | INTEGER | not null, default '0' |
 | incorrectVotes | INTEGER | not null, default 1 |
 | UUID | TEXT | not null, unique |
 | userID | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
 | views | INTEGER | not null |
 | category | TEXT | not null, default 'sponsor' |
-| service | TEXT | not nul, default 'Youtube' |
-| videoDuration | INTEGER | not nul, default '0' |
-| hidden | INTEGER | not nul, default '0' |
-| reputation | REAL | not nul, default '0' |
+| service | TEXT | not null, default 'Youtube' |
+| videoDuration | INTEGER | not null, default '0' |
+| hidden | INTEGER | not null, default '0' |
+| reputation | REAL | not null, default '0' |
 | shadowHidden | INTEGER | not null |
 | hashedVideoID | TEXT | not null, default '', sha256 |
 
@@ -91,6 +91,7 @@
 | videoID | TEXT | not null |
 | userID | TEXT | not null |
 | category | TEXT | not null |
+| hashedVideoID | TEXT | not null, default '' |
 
 | index | field |
 | -- | :--: |

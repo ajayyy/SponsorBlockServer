@@ -536,4 +536,42 @@ describe('lockCategoriesRecords', () => {
         })
         .catch(err => done(err));
     });
+
+    it('should be able to get existing category lock', (done: Done) => {
+        const expected = {
+            categories: [
+                'sponsor',
+                'intro',
+                'outro',
+                'shilling'
+            ],
+        };
+
+        fetch(getbaseURL() + "/api/lockCategories?videoID=" + "no-segments-video-id")
+        .then(async res => {
+            if (res.status === 200) {
+                const data = await res.json();
+                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                    done();
+                } else {
+                    done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to get hashedVideoID from lock', (done: Done) => {
+        const hashedVideoID = getHash('no-segments-video-id', 1);
+        db.prepare('get', 'SELECT "hashedVideoID" FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id'])
+        .then(result => {
+            if (result !== hashedVideoID) {
+                done();
+            } else {
+                done("Got unexpected video hash " + result);
+            }
+        });
+    });
 });
