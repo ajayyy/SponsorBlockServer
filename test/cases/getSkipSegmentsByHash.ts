@@ -12,19 +12,20 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe('getSegmentsByHash', () => {
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "service", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
-        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
-        await db.prepare("run", query, ['getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
-        await db.prepare("run", query, ['getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'fdaffnoMatchHash']);
-        await db.prepare("run", query, ['getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, '3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b']);
-        await db.prepare("run", query, ['onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'YouTube', 1, 0, 'f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3']);
-        await db.prepare("run", query, ['highlightVid', 60, 60, 2, 'highlightVid-1', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
-        await db.prepare("run", query, ['highlightVid', 70, 70, 2, 'highlightVid-2', 'testman', 0, 50, 'highlight', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
-        await db.prepare("run", query, ['requiredSegmentVid', 60, 70, 2, 'requiredSegmentVid-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
-        await db.prepare("run", query, ['requiredSegmentVid', 60, 70, -2, 'requiredSegmentVid-2', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
-        await db.prepare("run", query, ['requiredSegmentVid', 80, 90, -2, 'requiredSegmentVid-3', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
-        await db.prepare("run", query, ['requiredSegmentVid', 80, 90, 2, 'requiredSegmentVid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'skip', 'PeerTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'skip', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-0', 40, 50, 2, 'getSegmentsByHash-0-2', 'testman', 0, 50, 'sponsor', 'mute', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'fdaffnoMatchHash']);
+        await db.prepare("run", query, ['getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, '3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b']);
+        await db.prepare("run", query, ['onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 1, 0, 'f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3']);
+        await db.prepare("run", query, ['highlightVid', 60, 60, 2, 'highlightVid-1', 'testman', 0, 50, 'highlight', 'skip', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
+        await db.prepare("run", query, ['highlightVid', 70, 70, 2, 'highlightVid-2', 'testman', 0, 50, 'highlight', 'skip', 'YouTube', 0, 0, getHash('highlightVid', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid', 60, 70, 2, 'requiredSegmentVid-1', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        await db.prepare("run", query, ['requiredSegmentVid', 60, 70, -2, 'requiredSegmentVid-2', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        await db.prepare("run", query, ['requiredSegmentVid', 80, 90, -2, 'requiredSegmentVid-3', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
+        await db.prepare("run", query, ['requiredSegmentVid', 80, 90, 2, 'requiredSegmentVid-4', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'd51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61']);
     });
 
     it('Should be able to get a 200', (done: Done) => {
@@ -151,6 +152,62 @@ describe('getSegmentsByHash', () => {
                 else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
                 else if (body[0].segments[0].category !== 'sponsor' 
                         || body[0].segments[0].UUID !== 'getSegmentsByHash-0-0' 
+                        || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
+                else done();
+            }
+        })
+        .catch(() => done("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get 200 for no categories (default sponsor) with action type', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/fdaf?actionType=skip')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 videos, got " + body.length);
+                else if (body[0].segments.length !== 1) done("expected 1 segments for first video, got " + body[0].segments.length);
+                else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
+                else if (body[0].segments[0].category !== 'sponsor' 
+                        || body[0].segments[0].UUID !== 'getSegmentsByHash-0-0' 
+                        || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
+                else done();
+            }
+        })
+        .catch(() => done("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get 200 for no categories (default sponsor) with multiple action types', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/fdaf?actionType=skip&actionType=mute')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 videos, got " + body.length);
+                else if (body[0].segments.length !== 2) done("expected 2 segments for first video, got " + body[0].segments.length);
+                else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
+                else if (body[0].segments[0].category !== 'sponsor' 
+                        || body[0].segments[0].UUID !== 'getSegmentsByHash-0-0' 
+                        || body[0].segments[1].UUID !== 'getSegmentsByHash-0-2' 
+                        || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
+                else done();
+            }
+        })
+        .catch(() => done("Couldn't call endpoint"));
+    });
+
+    it('Should be able to get 200 for no categories (default sponsor) with multiple action types (JSON array)', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments/fdaf?actionTypes=["skip","mute"]')
+        .then(async res => {
+            if (res.status !== 200) done("non 200 status code, was " + res.status);
+            else {
+                const body = await res.json();
+                if (body.length !== 2) done("expected 2 videos, got " + body.length);
+                else if (body[0].segments.length !== 2) done("expected 2 segments for first video, got " + body[0].segments.length);
+                else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
+                else if (body[0].segments[0].category !== 'sponsor' 
+                        || body[0].segments[0].UUID !== 'getSegmentsByHash-0-0' 
+                        || body[0].segments[1].UUID !== 'getSegmentsByHash-0-2' 
                         || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
                 else done();
             }
@@ -287,3 +344,4 @@ describe('getSegmentsByHash', () => {
         .catch(() => done("Couldn't call endpoint"));
     });
 });
+
