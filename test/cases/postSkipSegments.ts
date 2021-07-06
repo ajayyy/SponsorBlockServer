@@ -14,16 +14,16 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 describe('postSkipSegments', () => {
     before(() => {
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 0, 1000, 0, '80percent-uuid-0', getHash("test"), 0, 0, 'interaction', 0, '80percent_video']);
-        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 1001, 1005, 0, '80percent-uuid-1', getHash("test"), 0, 0, 'interaction', 0, '80percent_video']);
-        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 0, 5000, -2, '80percent-uuid-2', getHash("test"), 0, 0, 'interaction', 0, '80percent_video']);
+        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 0, 1000, 0, '80percent-uuid-0', getHash("testtesttesttesttesttesttesttesttest"), 0, 0, 'interaction', 0, '80percent_video']);
+        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 1001, 1005, 0, '80percent-uuid-1', getHash("testtesttesttesttesttesttesttesttest"), 0, 0, 'interaction', 0, '80percent_video']);
+        db.prepare("run", insertSponsorTimeQuery, ['80percent_video', 0, 5000, -2, '80percent-uuid-2', getHash("testtesttesttesttesttesttesttesttest"), 0, 0, 'interaction', 0, '80percent_video']);
 
         const now = Date.now();
-        const warnVip01Hash = getHash("warn-vip01");
-        const warnUser01Hash = getHash("warn-user01");
-        const warnUser02Hash = getHash("warn-user02");
-        const warnUser03Hash = getHash("warn-user03");
-        const warnUser04Hash = getHash("warn-user04");
+        const warnVip01Hash = getHash("warn-vip01-qwertyuiopasdfghjklzxcvbnm");
+        const warnUser01Hash = getHash("warn-user01-qwertyuiopasdfghjklzxcvbnm");
+        const warnUser02Hash = getHash("warn-user02-qwertyuiopasdfghjklzxcvbnm");
+        const warnUser03Hash = getHash("warn-user03-qwertyuiopasdfghjklzxcvbnm");
+        const warnUser04Hash = getHash("warn-user04-qwertyuiopasdfghjklzxcvbnm");
         const reason01 = 'Reason01';
         const reason02 = '';
         const reason03 = 'Reason03';
@@ -50,12 +50,12 @@ describe('postSkipSegments', () => {
         db.prepare("run", insertWarningQuery, [warnUser04Hash, (now - 3601000), warnVip01Hash, 1, reason04]);
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        db.prepare("run", insertVipUserQuery, [getHash("VIPUserSubmission")]);
+        db.prepare("run", insertVipUserQuery, [getHash("VIPUserSubmissionVIPUserSubmissionVIPUserSubmission")]);
     });
 
     it('Should be able to submit a single time (Params method)', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=test&category=sponsor", {
+            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcR&startTime=2&endTime=10&userID=testtesttesttesttesttesttesttesttest&category=sponsor", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcF",
                 segments: [{
                     segment: [0, 10],
@@ -115,7 +115,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcV",
                 segments: [{
                     segment: [0, 10],
@@ -147,7 +147,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXZX",
                 videoDuration: 100,
                 segments: [{
@@ -179,7 +179,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXZH",
                 videoDuration: 4980.20,
                 segments: [{
@@ -211,7 +211,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "noDuration",
                 videoDuration: 100,
                 segments: [{
@@ -247,7 +247,7 @@ describe('postSkipSegments', () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    userID: "test",
+                    userID: "testtesttesttesttesttesttesttesttest",
                     videoID: "noDuration",
                     videoDuration: 100,
                     segments: [{
@@ -280,7 +280,7 @@ describe('postSkipSegments', () => {
 
     it('Should still not be allowed if youtube thinks duration is 0', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testing", {
+            + "/api/postVideoSponsorTimes?videoID=noDuration&startTime=30&endTime=10000&userID=testtesttesttesttesttesttesttesttesting", {
                 method: 'POST',
         })
         .then(async res => {
@@ -301,7 +301,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcG",
                 service: "PeerTube",
                 segments: [{
@@ -333,7 +333,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "VIPUserSubmission",
+                userID: "VIPUserSubmissionVIPUserSubmissionVIPUserSubmission",
                 videoID: "vipuserIDSubmission",
                 segments: [{
                     segment: [0, 10],
@@ -364,7 +364,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                    userID: "test",
+                    userID: "testtesttesttesttesttesttesttesttest",
                     videoID: "dQw4w9WgXcQ",
                     segments: [{
                         segment: [3, 10],
@@ -405,7 +405,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                    userID: "test",
+                    userID: "testtesttesttesttesttesttesttesttest",
                     videoID: "L_jWHffIx5E",
                     segments: [{
                         segment: [3, 3000],
@@ -454,7 +454,7 @@ describe('postSkipSegments', () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    userID: "test",
+                    userID: "testtesttesttesttesttesttesttesttest",
                     videoID: "n9rIGdXnSJc",
                     segments: [{
                         segment: [0, 2000],
@@ -505,7 +505,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "80percent_video",
                 segments: [{
                     segment: [2000, 4000],
@@ -543,7 +543,7 @@ describe('postSkipSegments', () => {
 
     it('Should be accepted if a non-sponsor is less than 1 second', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=intro", {
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting&category=intro", {
             method: 'POST',
         })
         .then(async res => {
@@ -558,7 +558,7 @@ describe('postSkipSegments', () => {
 
     it('Should be rejected if segment starts and ends at the same time', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=90&endTime=90&userID=testing&category=intro", {
+            + "/api/skipSegments?videoID=qqwerty&startTime=90&endTime=90&userID=testtesttesttesttesttesttesttesttesting&category=intro", {
             method: 'POST',
         })
         .then(async res => {
@@ -573,7 +573,7 @@ describe('postSkipSegments', () => {
 
     it('Should be accepted if highlight segment starts and ends at the same time', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30&userID=testing&category=highlight", {
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30&userID=testtesttesttesttesttesttesttesttesting&category=highlight", {
             method: 'POST',
         })
         .then(async res => {
@@ -588,7 +588,7 @@ describe('postSkipSegments', () => {
 
     it('Should be rejected if highlight segment doesn\'t start and end at the same time', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing&category=highlight", {
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting&category=highlight", {
             method: 'POST',
         })
         .then(async res => {
@@ -603,7 +603,7 @@ describe('postSkipSegments', () => {
 
     it('Should be rejected if a sponsor is less than 1 second', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testing", {
+            + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting", {
             method: 'POST',
         })
         .then(async res => {
@@ -618,7 +618,7 @@ describe('postSkipSegments', () => {
 
     it('Should be rejected if over 80% of the video', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testing")
+            + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testtesttesttesttesttesttesttesttesting")
         .then(async res => {
             if (res.status === 403) done(); // pass
             else {
@@ -631,7 +631,7 @@ describe('postSkipSegments', () => {
 
     it("Should be rejected if NB's predicted probability is <70%.", (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testing")
+            + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testtesttesttesttesttesttesttesttesting")
         .then(async res => {
             if (res.status === 200) done(); // pass
             else {
@@ -650,7 +650,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "warn-user01",
+                userID: "warn-user01-qwertyuiopasdfghjklzxcvbnm",
                 videoID: "dQw4w9WgXcF",
                 segments: [{
                     segment: [0, 10],
@@ -681,7 +681,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                    userID: "warn-user02",
+                    userID: "warn-user02-qwertyuiopasdfghjklzxcvbnm",
                     videoID: "dQw4w9WgXcF",
                     segments: [{
                         segment: [50, 60],
@@ -708,7 +708,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                    userID: "warn-user03",
+                    userID: "warn-user03-qwertyuiopasdfghjklzxcvbnm",
                     videoID: "dQw4w9WgXcF",
                     segments: [{
                         segment: [53, 60],
@@ -729,7 +729,7 @@ describe('postSkipSegments', () => {
 
     it('Should return 400 for missing params (Params method)', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?startTime=9&endTime=10&userID=test", {
+            + "/api/postVideoSponsorTimes?startTime=9&endTime=10&userID=testtesttesttesttesttesttesttesttest", {
                 method: 'POST',
         })
         .then(async res => {
@@ -747,7 +747,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "warn-user01",
+                userID: "warn-user01-qwertyuiopasdfghjklzxcvbnm",
                 videoID: "dQw4w9WgXcF",
                 segments: [{
                     segment: [0, 10],
@@ -778,7 +778,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 segments: [{
                     segment: [9, 10],
                     category: "sponsor",
@@ -802,7 +802,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcQ",
             }),
         })
@@ -820,7 +820,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcQ",
                 segments: [{
                     segment: [0],
@@ -845,7 +845,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcQ",
                 segments: [{
                     segment: [9, 10],
@@ -869,7 +869,7 @@ describe('postSkipSegments', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "testtesttesttesttesttesttesttesttest",
                 videoID: "dQw4w9WgXcQ",
             }),
         })

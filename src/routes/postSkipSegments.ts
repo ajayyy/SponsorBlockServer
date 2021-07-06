@@ -340,7 +340,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     if (typeof videoID !== 'string') {
       invalidFields.push('videoID');
     }
-    if (typeof userID !== 'string') {
+    if (typeof userID !== 'string' || userID.length < 30) {
       invalidFields.push('userID');
     }
     if (!Array.isArray(segments) || segments.length < 1) {

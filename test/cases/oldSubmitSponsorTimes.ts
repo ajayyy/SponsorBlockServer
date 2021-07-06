@@ -6,7 +6,7 @@ import {db} from '../../src/databases/databases';
 describe('postVideoSponsorTime (Old submission method)', () => {
     it('Should be able to submit a time (GET)', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcQ&startTime=1&endTime=10&userID=test")
+            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcQ&startTime=1&endTime=10&userID=testtesttesttesttesttesttesttesttest")
         .then(async res => {
             if (res.status === 200) {
                 const row = await db.prepare('get', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcQ"]);
@@ -24,7 +24,7 @@ describe('postVideoSponsorTime (Old submission method)', () => {
 
     it('Should be able to submit a time (POST)', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcE&startTime=1&endTime=11&userID=test", {
+            + "/api/postVideoSponsorTimes?videoID=dQw4w9WgXcE&startTime=1&endTime=11&userID=testtesttesttesttesttesttesttesttest", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -47,7 +47,7 @@ describe('postVideoSponsorTime (Old submission method)', () => {
 
     it('Should return 400 for missing params', (done: Done) => {
         fetch(getbaseURL()
-            + "/api/postVideoSponsorTimes?startTime=1&endTime=10&userID=test")
+            + "/api/postVideoSponsorTimes?startTime=1&endTime=10&userID=testtesttesttesttesttesttesttesttest")
         .then(async res => {
             if (res.status === 400) done();
             else done("Status code was: " + res.status);
