@@ -3,6 +3,7 @@ import {getHash} from '../utils/getHash';
 import {isUserVIP} from '../utils/isUserVIP';
 import {db} from '../databases/databases';
 import {Request, Response} from 'express';
+import { VideoIDHash } from "../types/segments.model";
 
 export async function postLockCategories(req: Request, res: Response): Promise<string[]> {
     // Collect user input data
@@ -56,10 +57,13 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
         return categoriesToMark.indexOf(category) === index;
     });
 
+    // calculate hash of videoID
+    const hashedVideoID: VideoIDHash = getHash(videoID, 1);
+
     // create database entry
     for (const category of categoriesToMark) {
         try {
-            await db.prepare('run', `INSERT INTO "lockCategories" ("videoID", "userID", "category") VALUES(?, ?, ?)`, [videoID, userID, category]);
+            await db.prepare('run', `INSERT INTO "lockCategories" ("videoID", "userID", "category", "hashedVideoID") VALUES(?, ?, ?, ?)`, [videoID, userID, category, hashedVideoID]);
         } catch (err) {
             Logger.error("Error submitting 'lockCategories' marker for category '" + category + "' for video '" + videoID + "'");
             Logger.error(err);
