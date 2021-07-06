@@ -71,7 +71,6 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
                 return acc;
             }, {});
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
             segments.push(...(await prepareCategorySegments(req, videoID, category as Category, categorySegments, cache)));
         }
@@ -117,7 +116,6 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                 segments: [],
             };
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             for (const [category, segmentPerCategory] of Object.entries(videoData.segmentPerCategory)) {
                 segments[videoID].segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, segmentPerCategory, cache)));
             }
