@@ -4,6 +4,10 @@ import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
 import {LockCategory} from '../../src/types/segments.model';
 
+const deepEquals = (a,b) => {
+    a.forEach((e) => { if (!b.includes(e)) return false; });
+    return true;
+};
 
 describe('lockCategoriesRecords', () => {
     before(async () => {
@@ -61,7 +65,7 @@ describe('lockCategoriesRecords', () => {
         .then(async res => {
             if (res.status === 200) {
                 const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                if (deepEquals(data, expected)) {
                     done();
                 } else {
                     done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
@@ -154,7 +158,7 @@ describe('lockCategoriesRecords', () => {
         .then(async res => {
             if (res.status === 200) {
                 const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                if (deepEquals(data, expected)) {
                     done();
                 } else {
                     done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
@@ -666,7 +670,7 @@ describe('lockCategoriesRecords', () => {
         .then(async res => {
             if (res.status === 200) {
                 const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                if (deepEquals(data, expected)) {
                     done();
                 } else {
                     done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
