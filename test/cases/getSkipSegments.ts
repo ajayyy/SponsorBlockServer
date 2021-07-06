@@ -5,22 +5,23 @@ import {getHash} from '../../src/utils/getHash';
 
 describe('getSkipSegments', () => {
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ['testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
-        await db.prepare("run", query, ['testtesttest2', 1, 11, 2, 0, '1-uuid-0-1', 'testman', 0, 50, 'sponsor', 'PeerTube', 120, 0, 0, getHash('testtesttest2', 1)]);
-        await db.prepare("run", query, ['testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 'YouTube', 101, 0, 0, getHash('testtesttest', 1)]);
-        await db.prepare("run", query, ['testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 'YouTube', 140, 0, 0, getHash('testtesttest,test', 1)]);
-        await db.prepare("run", query, ['test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'YouTube', 200, 0, 0, getHash('test3', 1)]);
-        await db.prepare("run", query, ['test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 'YouTube', 300, 0, 0, getHash('test3', 1)]);
-        await db.prepare("run", query, ['multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 'YouTube', 400, 0, 0, getHash('multiple', 1)]);
-        await db.prepare("run", query, ['multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'YouTube', 500, 0, 0, getHash('multiple', 1)]);
-        await db.prepare("run", query, ['locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'YouTube', 230, 0, 0, getHash('locked', 1)]);
-        await db.prepare("run", query, ['locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'YouTube', 190, 0, 0, getHash('locked', 1)]);
-        await db.prepare("run", query, ['onlyHiddenSegments', 20, 34, 100000, 0, 'onlyHiddenSegments', 'testman', 0, 50, 'sponsor', 'YouTube', 190, 1, 0, getHash('onlyHiddenSegments', 1)]);
-        await db.prepare("run", query, ['requiredSegmentVid-raw', 60, 70, 2, 0, 'requiredSegmentVid-raw-1', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
-        await db.prepare("run", query, ['requiredSegmentVid-raw', 60, 70, -2, 0, 'requiredSegmentVid-raw-2', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
-        await db.prepare("run", query, ['requiredSegmentVid-raw', 80, 90, -2, 0, 'requiredSegmentVid-raw-3', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
-        await db.prepare("run", query, ['requiredSegmentVid-raw', 80, 90, 2, 0, 'requiredSegmentVid-raw-4', 'testman', 0, 50, 'sponsor', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ['testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
+        await db.prepare("run", query, ['testtesttest', 1, 11, 2, 0, '1-uuid-0-0-1', 'testman', 0, 50, 'sponsor', 'mute', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
+        await db.prepare("run", query, ['testtesttest2', 1, 11, 2, 0, '1-uuid-0-1', 'testman', 0, 50, 'sponsor', 'skip', 'PeerTube', 120, 0, 0, getHash('testtesttest2', 1)]);
+        await db.prepare("run", query, ['testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 'skip', 'YouTube', 101, 0, 0, getHash('testtesttest', 1)]);
+        await db.prepare("run", query, ['testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 140, 0, 0, getHash('testtesttest,test', 1)]);
+        await db.prepare("run", query, ['test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 200, 0, 0, getHash('test3', 1)]);
+        await db.prepare("run", query, ['test3', 7, 22, -3, 0, '1-uuid-5', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 300, 0, 0, getHash('test3', 1)]);
+        await db.prepare("run", query, ['multiple', 1, 11, 2, 0, '1-uuid-6', 'testman', 0, 50, 'intro', 'skip', 'YouTube', 400, 0, 0, getHash('multiple', 1)]);
+        await db.prepare("run", query, ['multiple', 20, 33, 2, 0, '1-uuid-7', 'testman', 0, 50, 'intro', 'skip', 'YouTube', 500, 0, 0, getHash('multiple', 1)]);
+        await db.prepare("run", query, ['locked', 20, 33, 2, 1, '1-uuid-locked-8', 'testman', 0, 50, 'intro', 'skip', 'YouTube', 230, 0, 0, getHash('locked', 1)]);
+        await db.prepare("run", query, ['locked', 20, 34, 100000, 0, '1-uuid-9', 'testman', 0, 50, 'intro', 'skip', 'YouTube', 190, 0, 0, getHash('locked', 1)]);
+        await db.prepare("run", query, ['onlyHiddenSegments', 20, 34, 100000, 0, 'onlyHiddenSegments', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 190, 1, 0, getHash('onlyHiddenSegments', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 60, 70, 2, 0, 'requiredSegmentVid-raw-1', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 60, 70, -2, 0, 'requiredSegmentVid-raw-2', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 80, 90, -2, 0, 'requiredSegmentVid-raw-3', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
+        await db.prepare("run", query, ['requiredSegmentVid-raw', 80, 90, 2, 0, 'requiredSegmentVid-raw-4', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 0, getHash('requiredSegmentVid-raw', 1)]);
         return;
     });
 
@@ -33,6 +34,59 @@ describe('getSkipSegments', () => {
                 const data = await res.json();
                 if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" && data[0].videoDuration === 100) {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(() => "Couldn't call endpoint");
+    });
+
+    it('Should be able to get a time by category and action type', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=sponsor&actionType=mute")
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
+                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0-0-1" && data[0].videoDuration === 100) {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(() => "Couldn't call endpoint");
+    });
+
+    it('Should be able to get a time by category and multiple action types', (done: Done) => {
+        fetch(getbaseURL() + "/api/skipSegments?videoID=testtesttest&category=sponsor&actionType=mute&actionType=skip")
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 2 && data[0].segment[0] === 1 && data[0].segment[1] === 11
+                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" 
+                    && data[1].UUID === "1-uuid-0-0-1" && data[0].videoDuration === 100) {
+                    done();
+                } else {
+                    done("Received incorrect body: " + (await res.text()));
+                }
+            }
+        })
+        .catch(() => "Couldn't call endpoint");
+    });
+
+    it('Should be able to get a time by category and multiple action types (JSON array)', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments?videoID=testtesttest&category=sponsor&actionTypes=["mute","skip"]')
+        .then(async res => {
+            if (res.status !== 200) done("Status code was: " + res.status);
+            else {
+                const data = await res.json();
+                if (data.length === 2 && data[0].segment[0] === 1 && data[0].segment[1] === 11
+                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" 
+                    && data[1].UUID === "1-uuid-0-0-1" && data[0].videoDuration === 100) {
                     done();
                 } else {
                     done("Received incorrect body: " + (await res.text()));
