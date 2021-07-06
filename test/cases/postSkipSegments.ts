@@ -107,6 +107,38 @@ describe('postSkipSegments', () => {
         .catch(err => done(err));
     });
 
+    it('Should be able to submit a single time with an action type (JSON method)', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/postVideoSponsorTimes", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userID: "test",
+                videoID: "dQw4w9WgXcV",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                    actionType: "mute"
+                }],
+            }),
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcV"]);
+                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.actionType === "mute") {
+                    done();
+                } else {
+                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
     it('Should be able to submit a single time with a duration from the YouTube API (JSON method)', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes", {
