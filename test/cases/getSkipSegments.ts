@@ -7,8 +7,8 @@ describe('getSkipSegments', () => {
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ['testtesttest', 1, 11, 2, 0, '1-uuid-0', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
-        await db.prepare("run", query, ['testtesttest', 1, 11, 2, 0, '1-uuid-0-0-1', 'testman', 0, 50, 'sponsor', 'mute', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
         await db.prepare("run", query, ['testtesttest2', 1, 11, 2, 0, '1-uuid-0-1', 'testman', 0, 50, 'sponsor', 'skip', 'PeerTube', 120, 0, 0, getHash('testtesttest2', 1)]);
+        await db.prepare("run", query, ['testtesttest', 12, 14, 2, 0, '1-uuid-0-2', 'testman', 0, 50, 'sponsor', 'mute', 'YouTube', 100, 0, 0, getHash('testtesttest', 1)]);
         await db.prepare("run", query, ['testtesttest', 20, 33, 2, 0, '1-uuid-2', 'testman', 0, 50, 'intro', 'skip', 'YouTube', 101, 0, 0, getHash('testtesttest', 1)]);
         await db.prepare("run", query, ['testtesttest,test', 1, 11, 2, 0, '1-uuid-1', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 140, 0, 0, getHash('testtesttest,test', 1)]);
         await db.prepare("run", query, ['test3', 1, 11, 2, 0, '1-uuid-4', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 200, 0, 0, getHash('test3', 1)]);
@@ -49,8 +49,8 @@ describe('getSkipSegments', () => {
             if (res.status !== 200) done("Status code was: " + res.status);
             else {
                 const data = await res.json();
-                if (data.length === 1 && data[0].segment[0] === 1 && data[0].segment[1] === 11
-                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0-0-1" && data[0].videoDuration === 100) {
+                if (data.length === 1 && data[0].segment[0] === 12 && data[0].segment[1] === 14
+                    && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0-2" && data[0].videoDuration === 100) {
                     done();
                 } else {
                     done("Received incorrect body: " + (await res.text()));
@@ -68,7 +68,7 @@ describe('getSkipSegments', () => {
                 const data = await res.json();
                 if (data.length === 2 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" 
-                    && data[1].UUID === "1-uuid-0-0-1" && data[0].videoDuration === 100) {
+                    && data[1].UUID === "1-uuid-0-2" && data[0].videoDuration === 100) {
                     done();
                 } else {
                     done("Received incorrect body: " + (await res.text()));
@@ -86,7 +86,7 @@ describe('getSkipSegments', () => {
                 const data = await res.json();
                 if (data.length === 2 && data[0].segment[0] === 1 && data[0].segment[1] === 11
                     && data[0].category === "sponsor" && data[0].UUID === "1-uuid-0" 
-                    && data[1].UUID === "1-uuid-0-0-1" && data[0].videoDuration === 100) {
+                    && data[1].UUID === "1-uuid-0-2" && data[0].videoDuration === 100) {
                     done();
                 } else {
                     done("Received incorrect body: " + (await res.text()));

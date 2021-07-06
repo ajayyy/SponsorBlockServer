@@ -14,9 +14,9 @@ describe('getSegmentsByHash', () => {
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
-        await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-0-1', 'testman', 0, 50, 'sponsor', 'mute', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
         await db.prepare("run", query, ['getSegmentsByHash-0', 1, 10, 2, 'getSegmentsByHash-0-0-1', 'testman', 0, 50, 'sponsor', 'skip', 'PeerTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
         await db.prepare("run", query, ['getSegmentsByHash-0', 20, 30, 2, 'getSegmentsByHash-0-1', 'testman', 100, 150, 'intro', 'skip', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
+        await db.prepare("run", query, ['getSegmentsByHash-0', 40, 50, 2, 'getSegmentsByHash-0-2', 'testman', 0, 50, 'sponsor', 'mute', 'YouTube', 0, 0, 'fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910']);
         await db.prepare("run", query, ['getSegmentsByHash-noMatchHash', 40, 50, 2, 'getSegmentsByHash-noMatchHash', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, 'fdaffnoMatchHash']);
         await db.prepare("run", query, ['getSegmentsByHash-1', 60, 70, 2, 'getSegmentsByHash-1', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 0, 0, '3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b']);
         await db.prepare("run", query, ['onlyHidden', 60, 70, 2, 'onlyHidden', 'testman', 0, 50, 'sponsor', 'skip', 'YouTube', 1, 0, 'f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3']);
@@ -188,7 +188,7 @@ describe('getSegmentsByHash', () => {
                 else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
                 else if (body[0].segments[0].category !== 'sponsor' 
                         || body[0].segments[0].UUID !== 'getSegmentsByHash-0-0' 
-                        || body[0].segments[1].UUID !== 'getSegmentsByHash-0-0-0-1' 
+                        || body[0].segments[1].UUID !== 'getSegmentsByHash-0-2' 
                         || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
                 else done();
             }
@@ -207,7 +207,7 @@ describe('getSegmentsByHash', () => {
                 else if (body[1].segments.length !== 1) done("expected 1 segments for second video, got " + body[1].segments.length);
                 else if (body[0].segments[0].category !== 'sponsor' 
                         || body[0].segments[0].UUID !== 'getSegmentsByHash-0-0' 
-                        || body[0].segments[1].UUID !== 'getSegmentsByHash-0-0-0-1' 
+                        || body[0].segments[1].UUID !== 'getSegmentsByHash-0-2' 
                         || body[1].segments[0].category !== 'sponsor') done("both segments are not sponsor");
                 else done();
             }
