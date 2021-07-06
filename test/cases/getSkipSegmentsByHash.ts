@@ -252,7 +252,7 @@ describe('getSegmentsByHash', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "test",
+                userID: "test-qwertyuiopasdfghjklzxcvbnm",
                 videoID: testID,
                 segments: [{
                     segment: [13, 17],

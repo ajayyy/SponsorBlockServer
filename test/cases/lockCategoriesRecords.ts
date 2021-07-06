@@ -440,7 +440,7 @@ describe('lockCategoriesRecords', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "testman42",
+                userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
                 videoID: "lockCategoryVideo",
                 segments: [{
                     segment: [20, 40],
@@ -465,7 +465,7 @@ describe('lockCategoriesRecords', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                    userID: "testman42",
+                    userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
                     videoID: "lockCategoryVideo",
                     segments: [{
                         segment: [20, 40],
@@ -494,7 +494,7 @@ describe('lockCategoriesRecords', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userID: "testman42",
+                userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
                 videoID: "lockCategoryVideo",
                 segments: [{
                     segment: [20, 40],
@@ -519,7 +519,7 @@ describe('lockCategoriesRecords', () => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                    userID: "testman42",
+                    userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
                     videoID: "normalVideo",
                     segments: [{
                         segment: [20, 40],
