@@ -13,11 +13,17 @@ export async function getLockCategories(req: Request, res: Response): Promise<Re
 
     try {
         // Get existing lock categories markers
-        const lockedCategories = await db.prepare('all', 'SELECT "category" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category}[];
-        if (lockedCategories.length === 0 || !lockedCategories[0]) return res.sendStatus(404);
+        const row = await db.prepare('all', 'SELECT "category", "reason" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, reason: string}[];
         // map to array in JS becaues of SQL incompatibilities
-        const categories = Object.values(lockedCategories).map((entry) => entry.category);
+        const categories = row.map(item => item.category);
+        if (categories.length === 0 || !categories[0]) return res.sendStatus(404);
+        // Get existing lock categories markers
+        const reasons = row.map(item => item.reason);
+        let longReason = "";
+        // set longReason if current length is longer 
+        reasons.forEach((e) => { if (e.length > longReason.length) longReason = e; });
         return res.send({
+            reason: longReason,
             categories
         });
     } catch (err) {

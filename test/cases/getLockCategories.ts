@@ -9,19 +9,19 @@ describe('getLockCategories', () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-getLockCategories")]);
  
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'interaction']);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'sponsor', '1-short']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'interaction', '2-longer-reason']);
  
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-2', 'preview']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-2', 'preview', '2-reason']);
  
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-3', 'nonmusic']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-3', 'nonmusic', '3-reason']);
     });
 
     it('Should update the database version when starting the application', async () => {
         const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
-        if (version > 1) return;
-        else return 'Version isn\'t greater than 1. Version is ' + version;
+        if (version > 20) return;
+        else return 'Version isn\'t greater than 20. Version is ' + version;
     });
 
     it('Should be able to get multiple locks', (done: Done) => {
@@ -37,6 +37,8 @@ describe('getLockCategories', () => {
                     done(`Returned incorrect category "${data.categories[0]}"`);
                 } else if (data.categories[1] !== "interaction") {
                     done(`Returned incorrect category "${data.categories[1]}"`);
+                } else if (data.reason !== "1-longer-reason") {
+                    done(`Returned incorrect reason "${data.reason}"`);
                 } else {
                     done(); // pass
                 }
@@ -56,6 +58,8 @@ describe('getLockCategories', () => {
                     done('Returned incorrect number of locks "' + data.categories.length + '"');
                 } else if (data.categories[0] !== "preview") {
                     done(`Returned incorrect category "${data.categories[0].category}"`);
+                } else if (data.reason !== "2-reason") {
+                    done(`Returned incorrect reason "${data.reason}"`);
                 } else {
                     done(); // pass
                 }

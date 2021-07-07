@@ -7,13 +7,15 @@ import { Category, VideoID, VideoIDHash } from "../types/segments.model";
 interface LockResultByHash {
     videoID: VideoID,
     hash: VideoIDHash,
+    reason: string,
     categories: Category[]
 }
 
 interface DBLock {
     videoID: VideoID,
     hash: VideoIDHash,
-    category: Category
+    category: Category,
+    reason: string,
 }
 
 const mergeLocks = (source: DBLock[]) => {
@@ -22,12 +24,15 @@ const mergeLocks = (source: DBLock[]) => {
         // videoID already exists
         const destMatch = dest.find(s => s.videoID === obj.videoID);
         if (destMatch) {
+            // override longer reason
+            if (destMatch.reason.length > obj.reason.length) destMatch.reason = obj.reason;
             // push to categories
             destMatch.categories.push(obj.category);
         } else {
             dest.push({
                 videoID: obj.videoID,
                 hash: obj.hash,
+                reason: obj.reason,
                 categories: [obj.category]
             });
         }
@@ -45,7 +50,7 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
 
     try {
         // Get existing lock categories markers
-        const lockedRows = await db.prepare('all', 'SELECT "videoID", "hashedVideoID" as "hash", "category" from "lockCategories" where "hashedVideoID" LIKE ?', [hashPrefix + '%']) as DBLock[];
+        const lockedRows = await db.prepare('all', 'SELECT "videoID", "hashedVideoID" as "hash", "category", "reason" from "lockCategories" where "hashedVideoID" LIKE ?', [hashPrefix + '%']) as DBLock[];
         if (lockedRows.length === 0 || !lockedRows[0]) return res.sendStatus(404);
         // merge all locks
         return res.send(mergeLocks(lockedRows));
