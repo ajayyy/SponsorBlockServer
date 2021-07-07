@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
-
+import assert from 'assert';
 
 describe('lockCategoriesRecords', () => {
     before(async () => {
@@ -42,14 +42,12 @@ describe('lockCategoriesRecords', () => {
                 'intro',
             ],
         };
-
         const expected = {
             submitted: [
                 'outro',
                 'shilling',
             ],
         };
-
         fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
@@ -58,16 +56,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json)
         })
         .then(async res => {
-            if (res.status === 200) {
-                const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
-                    done();
-                } else {
-                    done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.deepStrictEqual(data, expected);
+            done();
         })
         .catch(err => done(err));
     });
@@ -85,7 +77,6 @@ describe('lockCategoriesRecords', () => {
                 'intro',
             ],
         };
-
         fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
@@ -94,16 +85,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json)
         })
         .then(async res => {
-            if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
-                if (result.length !== 4) {
-                    done("Expected 4 entrys in db, got " + result.length);
-                } else {
-                    done();
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
+            assert.strictEqual(result.length, 4);
+            done();
         })
         .catch(err => done(err));
     });
@@ -116,7 +101,6 @@ describe('lockCategoriesRecords', () => {
                 'word_word',
             ],
         };
-
         fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
@@ -125,16 +109,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
-                if (result.length !== 1) {
-                    done("Expected 1 entrys in db, got " + result.length);
-                } else {
-                    done();
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['underscore']);
+            assert.strictEqual(result.length, 1);
+            done();
         })
         .catch(err => done(err));
     });
@@ -147,7 +125,6 @@ describe('lockCategoriesRecords', () => {
                 'wordWord',
             ],
         };
-
         fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
@@ -156,16 +133,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
-                if (result.length !== 1) {
-                    done("Expected 1 entrys in db, got " + result.length);
-                } else {
-                    done();
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['bothCases']);
+            assert.strictEqual(result.length, 1);
+            done();
         })
         .catch(err => done(err));
     });
@@ -187,16 +158,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
-                if (result.length !== 0) {
-                    done("Expected 0 entrys in db, got " + result.length);
-                } else {
-                    done();
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['specialChar']);
+            assert.strictEqual(result.length, 0);
+            done();
         })
         .catch(err => done(err));
     });
@@ -209,12 +174,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify({}),
         })
-        .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -225,7 +187,6 @@ describe('lockCategoriesRecords', () => {
             userID: 'test',
             categories: [],
         };
-
         fetch(getbaseURL() + "/api/lockCategories", {
             method: 'POST',
             headers: {
@@ -233,12 +194,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -257,12 +215,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -281,12 +236,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -305,12 +257,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -329,12 +278,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -355,12 +301,9 @@ describe('lockCategoriesRecords', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 403) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -382,16 +325,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record']);
-                if (result.length === 0) {
-                    done();
-                } else {
-                    done("Didn't delete record");
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record']);
+            assert.strictEqual(result.length, 0);
+            done();
         })
         .catch(err => done(err));
     });
@@ -413,16 +350,10 @@ describe('lockCategoriesRecords', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record-1']);
-                if (result.length === 1) {
-                    done();
-                } else {
-                    done("Didn't delete record");
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['delete-record-1']);
+            assert.strictEqual(result.length, 1);
+            done();
         })
         .catch(err => done(err));
     });
@@ -449,11 +380,8 @@ describe('lockCategoriesRecords', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 403) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -477,11 +405,8 @@ describe('lockCategoriesRecords', () => {
                 },),
         })
         .then(async res => {
-            if (res.status === 403) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -503,11 +428,8 @@ describe('lockCategoriesRecords', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            done();
         })
         .catch(err => done(err));
     });
@@ -528,11 +450,8 @@ describe('lockCategoriesRecords', () => {
                 }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                done();
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            done();
         })
         .catch(err => done(err));
     });
@@ -549,29 +468,11 @@ describe('lockCategoriesRecords', () => {
 
         fetch(getbaseURL() + "/api/lockCategories?videoID=" + "no-segments-video-id")
         .then(async res => {
-            if (res.status === 200) {
-                const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
-                    done();
-                } else {
-                    done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.deepStrictEqual(data, expected);
+            done();
         })
         .catch(err => done(err));
-    });
-
-    it('Should be able to get hashedVideoID from lock', (done: Done) => {
-        const hashedVideoID = getHash('no-segments-video-id', 1);
-        db.prepare('get', 'SELECT "hashedVideoID" FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id'])
-        .then(result => {
-            if (result !== hashedVideoID) {
-                done();
-            } else {
-                done("Got unexpected video hash " + result);
-            }
-        });
     });
 });

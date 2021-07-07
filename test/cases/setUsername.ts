@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import { Done, getbaseURL } from '../utils';
 import { db, privateDB } from '../../src/databases/databases';
 import { getHash } from '../../src/utils/getHash';
+import assert from 'assert';
 
 const adminPrivateUserID = 'testUserId';
 const user00PrivateUserID = 'setUsername_00';
@@ -51,21 +52,10 @@ function wellFormatUserName(userName: string) {
 }
 
 async function testUserNameChangelog(userID: string, newUserName: string, oldUserName: string, byAdmin: boolean, done: Done) {
-
     const log = await getLastLogUserNameChange(userID);
-
-    if (newUserName !== log.newUserName) {
-        return done(`UserID '${userID}' incorrect log on newUserName: ${newUserName} !== ${log.newUserName}`);
-    }
-
-    if (oldUserName !== log.oldUserName) {
-        return done(`UserID '${userID}' incorrect log on oldUserName: ${oldUserName} !== ${log.oldUserName}`);
-    }
-
-    if (byAdmin !== Boolean(log.updatedByAdmin)) {
-        return done(`UserID '${userID}' incorrect log on updatedByAdmin: ${byAdmin} !== ${log.updatedByAdmin}`);
-    }
-
+    assert.strictEqual(newUserName, log.newUserName);
+    assert.strictEqual(oldUserName, log.oldUserName);
+    assert.strictEqual(byAdmin, Boolean(log.updatedByAdmin));
     return done();
 }
 
@@ -86,9 +76,9 @@ describe('setUsername', () => {
         })
         .then(async res => {
             const usernameInfo = await getUsernameInfo(getHash(user00PrivateUserID));
-            if (res.status !== 200) done(`Status code was ${res.status}`);
-            if (usernameInfo.userName !== username00) done(`Username did not change. Currently is ${usernameInfo.userName}`);
-            if (usernameInfo.locked == "1") done(`Username was locked when it shouldn't have been`);
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(usernameInfo.userName, username00);
+            assert.notStrictEqual(usernameInfo.locked, 1, "username should not be locked");
             done();
         })
         .catch(() => done(`couldn't call endpoint`));
@@ -99,10 +89,8 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            if (res.status !== 200) done(`Status code was ${res.status}`);
-            else {
-                testUserNameChangelog(user01PrivateUserID, decodeURIComponent('Changed%20Username'), username01, false, done);
-            }
+            assert.strictEqual(res.status, 200);
+            testUserNameChangelog(user01PrivateUserID, decodeURIComponent('Changed%20Username'), username01, false, done);
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -112,8 +100,8 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(res => {
-            if (res.status !== 400) done(`Status code was ${res.status}`);
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -123,8 +111,8 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(res => {
-            if (res.status !== 400) done(`Status code was ${res.status}`);
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -135,8 +123,8 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(res => {
-            if (res.status !== 400) done(`Status code was ${res.status}`);
-            else  done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -147,14 +135,10 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            if (res.status !== 200) done(`Status code was ${res.status}`);
-            else {
-                const userNameInfo = await getUsernameInfo(getHash(user02PrivateUserID));
-                if (userNameInfo.userName === newUsername) {
-                    done(`Username '${username02}' got changed to '${newUsername}'`);
-                }
-                else done();
-            }
+            assert.strictEqual(res.status, 200);
+            const userNameInfo = await getUsernameInfo(getHash(user02PrivateUserID));
+            assert.notStrictEqual(userNameInfo.userName, newUsername);
+            done();
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -166,8 +150,8 @@ describe('setUsername', () => {
         })
         .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user03PrivateUserID));
-            if (usernameInfo.userName !== newUsername) done(`Username did not change`);
-            if (usernameInfo.locked == "1") done(`Username was locked when it shouldn't have been`);
+            assert.strictEqual(usernameInfo.userName, newUsername, "Username should change");
+            assert.notStrictEqual(usernameInfo.locked, 1, "Username should not be locked");
             testUserNameChangelog(user03PrivateUserID, newUsername, username03, false, done);
         })
         .catch(() => done(`couldn't call endpoint`));
@@ -180,9 +164,9 @@ describe('setUsername', () => {
         })
         .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user04PrivateUserID));
-            if (usernameInfo.userName === newUsername) done(`Username '${username04}' got changed to '${usernameInfo}'`);
-            if (usernameInfo.locked == "0") done(`Username was unlocked when it shouldn't have been`);
-            else done();
+            assert.notStrictEqual(usernameInfo.userName, newUsername, "Username should not be changed");
+            assert.strictEqual(usernameInfo.locked, 1, "username should be locked");
+            done();
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -194,7 +178,7 @@ describe('setUsername', () => {
         })
         .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user05PrivateUserID));
-            if (usernameInfo.userName === newUsername) done(`Username contains unicode control characters`);
+            assert.notStrictEqual(usernameInfo.userName, newUsername, "Username should not contain control characters");
             testUserNameChangelog(user05PrivateUserID, wellFormatUserName(newUsername), username05, false, done);
         })
         .catch(() => done(`couldn't call endpoint`));
@@ -206,8 +190,8 @@ describe('setUsername', () => {
             method: 'POST',
         })
         .then(async res => {
-            if (res.status !== 403) done(`Status code was ${res.status}`);
-            else done();
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -219,9 +203,9 @@ describe('setUsername', () => {
         })
         .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
-            if (usernameInfo.userName !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
-            if (usernameInfo.locked == "0") done(`Username was not locked`);
-            else testUserNameChangelog(user06PrivateUserID, newUsername, username06, true, done);
+            assert.strictEqual(usernameInfo.userName, newUsername, "username should be changed");
+            assert.strictEqual(usernameInfo.locked, 1, "Username should be locked");
+            testUserNameChangelog(user06PrivateUserID, newUsername, username06, true, done);
         })
         .catch(() => done(`couldn't call endpoint`));
     });
@@ -233,9 +217,9 @@ describe('setUsername', () => {
         })
         .then(async () => {
             const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
-            if (usernameInfo.userName !== newUsername) done(`Failed to change username from '${username06}' to '${newUsername}'`);
-            if (usernameInfo.locked == "0") done(`Username was unlocked when it shouldn't have been`);
-            else testUserNameChangelog(user07PrivateUserID, newUsername, username07, true, done);
+            assert.strictEqual(usernameInfo.userName, newUsername, "Username should be changed");
+            assert.strictEqual(usernameInfo.locked, 1, "Username should be locked");
+            testUserNameChangelog(user07PrivateUserID, newUsername, username07, true, done);
         })
         .catch(() => done(`couldn't call endpoint`));
     });

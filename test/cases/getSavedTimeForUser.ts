@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 describe('getSavedTimeForUser', () => {
     before(async () => {
@@ -13,10 +14,16 @@ describe('getSavedTimeForUser', () => {
 
     it('Should be able to get a 200', (done: Done) => {
         fetch(getbaseURL() + "/api/getSavedTimeForUser?userID=testman")
-        .then(res => {
-            if (res.status !== 200) done("non 200");
-            else done(); // pass
+        .then(async res => {
+            const data = await res.json();
+            // (end-start)*minute * views
+            const savedMinutes = ((11-1)/60) * 50;
+            const expected = {
+                timeSaved: savedMinutes
+            };
+            assert.deepStrictEqual(data, expected);
+            done();
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch((err) => done(err));
     });
 });
