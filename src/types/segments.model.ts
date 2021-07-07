@@ -93,3 +93,10 @@ export enum CategoryActionType {
     Skippable,
     POI
 }
+
+export interface LockCategory {
+    category: Category,
+    reason: string,
+    videoID: VideoID,
+    userID: UserID
+}

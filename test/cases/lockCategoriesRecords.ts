@@ -2,25 +2,30 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
+import {LockCategory} from '../../src/types/segments.model';
 
+const deepEquals = (a: string[],b: string[]) => {
+    a.forEach((e) => { if (!b.includes(e)) return false; });
+    return true;
+};
 
 describe('lockCategoriesRecords', () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-lockCategories")]);
- 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'intro']);
- 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'intro']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'lockCategoryVideo', 'sponsor']);
- 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record', 'sponsor']);
- 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'intro']);
+
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'sponsor', 'reason-1']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'intro', 'reason-1']);
+
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'sponsor', 'reason-2']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'intro', 'reason-2']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'lockCategoryVideo', 'sponsor', 'reason-3']);
+
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record', 'sponsor', 'reason-4']);
+
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'sponsor', 'reason-5']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'intro', 'reason-5']);
     });
 
     it('Should update the database version when starting the application', async () => {
@@ -60,7 +65,7 @@ describe('lockCategoriesRecords', () => {
         .then(async res => {
             if (res.status === 200) {
                 const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                if (deepEquals(data.submitted, expected.submitted)) {
                     done();
                 } else {
                     done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
@@ -95,11 +100,125 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             if (res.status === 200) {
-                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']) as LockCategory[];
                 if (result.length !== 4) {
                     done("Expected 4 entrys in db, got " + result.length);
                 } else {
+                    const oldRecordNotChangeReason = result.filter(item => {
+                        return item.reason === 'reason-2' && ['sponsor', 'intro'].includes(item.category);
+                    });
+
+                    const newRecordWithEmptyReason = result.filter(item => {
+                        return item.reason === '' && ['outro', 'shilling'].includes(item.category);
+                    });
+
+                    if (newRecordWithEmptyReason.length !== 2 || oldRecordNotChangeReason.length !== 2) {
+                        done(`Incorrect reason update with oldRecordNotChangeReason=${oldRecordNotChangeReason} instead of 2 or  newRecordWithEmptyReason=${newRecordWithEmptyReason} instead of 2`);
+                    } else {
+                        done();
+                    }
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit categories not in video with reason (http response)', (done: Done) => {
+        const json = {
+            videoID: 'no-segments-video-id',
+            userID: 'VIPUser-lockCategories',
+            categories: [
+                'outro',
+                'shilling',
+                'shilling',
+                'shil ling',
+                '',
+                'intro',
+            ],
+            reason: 'new reason'
+        };
+
+        const expected = {
+            submitted: [
+                'outro',
+                'shilling',
+                'intro'
+            ],
+        };
+
+        fetch(getbaseURL() + "/api/lockCategories", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json)
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const data = await res.json();
+                if (deepEquals(data.submitted, expected.submitted)) {
                     done();
+                } else {
+                    done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
+                }
+            } else {
+                done("Status code was " + res.status);
+            }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit categories not in video with reason (sql check)', (done: Done) => {
+        const json = {
+            videoID: 'no-segments-video-id-1',
+            userID: 'VIPUser-lockCategories',
+            categories: [
+                'outro',
+                'shilling',
+                'shilling',
+                'shil ling',
+                '',
+                'intro',
+            ],
+            reason: 'new reason'
+        };
+
+        const expectedWithNewReason = [
+            'outro',
+            'shilling',
+            'intro'
+        ];
+
+        fetch(getbaseURL() + "/api/lockCategories", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json)
+        })
+        .then(async res => {
+            if (res.status === 200) {
+                const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']) as LockCategory[];
+                if (result.length !== 4) {
+                    done("Expected 4 entrys in db, got " + result.length);
+                } else {
+                    const newRecordWithNewReason = result.filter(item => {
+                        return expectedWithNewReason.includes(item.category) && item.reason === 'new reason';
+                    });
+
+                    const oldRecordNotChangeReason = result.filter(item => {
+                        return item.reason === 'reason-2';
+                    });
+
+                    if (newRecordWithNewReason.length !== 3) {
+                        done("Expected 3 entrys in db with new reason, got " + newRecordWithNewReason.length);
+                    } else if (oldRecordNotChangeReason.length !== 1) {
+                        done("Expected 1 entrys in db with old reason, got " + oldRecordNotChangeReason.length);
+                    } else {
+                        done();
+                    }
                 }
             } else {
                 done("Status code was " + res.status);
@@ -551,7 +670,7 @@ describe('lockCategoriesRecords', () => {
         .then(async res => {
             if (res.status === 200) {
                 const data = await res.json();
-                if (JSON.stringify(data) === JSON.stringify(expected)) {
+                if (deepEquals(data.categories, expected.categories)) {
                     done();
                 } else {
                     done("Incorrect response: expected " + JSON.stringify(expected) + " got " + JSON.stringify(data));
