@@ -519,7 +519,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            const UUID = getSubmissionUUID(videoID, segmentInfo.category, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]));
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]));
             const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;
