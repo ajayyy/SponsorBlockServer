@@ -275,6 +275,10 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
  */
 async function handleGetSegments(req: Request, res: Response): Promise<Segment[] | false> {
     const videoID = req.query.videoID as VideoID;
+    if (!videoID) {
+        res.status(400).send("videoID not specified");
+        return false;
+    }
     // Default to sponsor
     // If using params instead of JSON, only one category can be pulled
     const categories: Category[] = req.query.categories
