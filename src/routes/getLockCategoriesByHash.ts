@@ -25,7 +25,7 @@ const mergeLocks = (source: DBLock[]) => {
         const destMatch = dest.find(s => s.videoID === obj.videoID);
         if (destMatch) {
             // override longer reason
-            if (destMatch.reason.length > obj.reason.length) destMatch.reason = obj.reason;
+            if (obj.reason.length > destMatch.reason.length) destMatch.reason = obj.reason;
             // push to categories
             destMatch.categories.push(obj.category);
         } else {

@@ -11,7 +11,7 @@ describe('getLockCategories', () => {
  
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'sponsor', '1-short']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'interaction', '2-longer-reason']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-1', 'interaction', '1-longer-reason']);
  
         await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLock-2', 'preview', '2-reason']);
  
