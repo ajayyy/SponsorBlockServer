@@ -92,6 +92,7 @@
 | userID | TEXT | not null |
 | category | TEXT | not null |
 | hashedVideoID | TEXT | not null, default '' |
+| reason | TEXT | not null, default '' |
 
 | index | field |
 | -- | :--: |

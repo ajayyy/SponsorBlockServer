@@ -10,6 +10,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     const videoID = req.body.videoID;
     let userID = req.body.userID;
     const categories = req.body.categories;
+    const reason: string = req.body.reason ?? ''; 
 
     // Check input data is valid
     if (!videoID
@@ -46,15 +47,16 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     }
 
     // get user categories not already submitted that match accepted format
-    let categoriesToMark = categories.filter((category) => {
+    let filteredCategories = categories.filter((category) => {
         return !!category.match(/^[_a-zA-Z]+$/);
-    }).filter((category) => {
-        return noCategoryList.indexOf(category) === -1;
+    });
+    // remove any duplicates
+    filteredCategories = filteredCategories.filter((category, index) => {
+        return filteredCategories.indexOf(category) === index;
     });
 
-    // remove any duplicates
-    categoriesToMark = categoriesToMark.filter((category, index) => {
-        return categoriesToMark.indexOf(category) === index;
+    const categoriesToMark = filteredCategories.filter((category) => {
+        return noCategoryList.indexOf(category) === -1;
     });
 
     // calculate hash of videoID
@@ -63,7 +65,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     // create database entry
     for (const category of categoriesToMark) {
         try {
-            await db.prepare('run', `INSERT INTO "lockCategories" ("videoID", "userID", "category", "hashedVideoID") VALUES(?, ?, ?, ?)`, [videoID, userID, category, hashedVideoID]);
+            await db.prepare('run', `INSERT INTO "lockCategories" ("videoID", "userID", "category", "hashedVideoID", "reason") VALUES(?, ?, ?, ?, ?)`, [videoID, userID, category, hashedVideoID, reason]);
         } catch (err) {
             Logger.error("Error submitting 'lockCategories' marker for category '" + category + "' for video '" + videoID + "'");
             Logger.error(err);
@@ -73,7 +75,29 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
         }
     }
 
+    // update reason for existed categories
+    let overlapCategories = [];
+    if (reason.length !== 0) {
+        overlapCategories = filteredCategories.filter((category) => {
+            return noCategoryList.indexOf(category) !== -1;
+        });
+
+        for (const category of overlapCategories) {
+            try {
+                await db.prepare('run', 
+                    'UPDATE "lockCategories" SET "reason" = ?, "userID" = ? WHERE "videoID" = ? AND "category" = ?',
+                    [reason, userID, videoID, category]);
+            } catch (err) {
+                Logger.error("Error submitting 'lockCategories' marker for category '" + category + "' for video '" + videoID + "'");
+                Logger.error(err);
+                res.status(500).json({
+                    message: "Internal Server Error: Could not write marker to the database.",
+                });
+            }
+        }
+    }
+
     res.status(200).json({
-        submitted: categoriesToMark,
+        submitted: [...categoriesToMark, ...overlapCategories],
     });
 }
