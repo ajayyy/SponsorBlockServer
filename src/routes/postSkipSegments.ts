@@ -16,6 +16,7 @@ import { getCategoryActionType } from '../utils/categoryInfo';
 import { QueryCacher } from '../utils/queryCacher';
 import { getReputation } from '../utils/reputation';
 import { APIVideoData, APIVideoInfo } from '../types/youtubeApi.model';
+import { UserID } from '../types/user.model';
 
 async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: APIVideoData, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
     const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
@@ -164,7 +165,7 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
 //   false for a pass - it was confusing and lead to this bug - any use of this function in
 //   the future could have the same problem.
 async function autoModerateSubmission(apiVideoInfo: APIVideoInfo, 
-            submission: { videoID: any; userID: any; segments: any }) {
+            submission: { videoID: VideoID; userID: UserID; segments: IncomingSegment[] }) {
     if (apiVideoInfo) {
         const {err, data} = apiVideoInfo;
         if (err) return false;
@@ -234,7 +235,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
                     const startTime = parseFloat(segments[i].segment[0]);
                     const endTime = parseFloat(segments[i].segment[1]);
 
-                    const UUID = getSubmissionUUID(submission.videoID, segments[i].category, submission.userID, startTime, endTime);
+                    const UUID = getSubmissionUUID(submission.videoID, segments[i].category, segments[i].actionType, submission.userID, startTime, endTime);
                     // Send to Discord
                     // Note, if this is too spammy. Consider sending all the segments as one Webhook
                     sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
