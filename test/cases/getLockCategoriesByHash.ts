@@ -173,4 +173,22 @@ describe('getLockCategoriesByHash', () => {
         })
         .catch(() => ("couldn't call endpoint"));
     });
+
+    it('should return 400 if hash too short', (done: Done) => {
+        fetch(getbaseURL() + '/api/lockCategories/00')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('should return 400 if no hash specified', (done: Done) => {
+        fetch(getbaseURL() + '/api/lockCategories/')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
 });
