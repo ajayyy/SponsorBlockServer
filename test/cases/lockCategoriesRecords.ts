@@ -3,30 +3,30 @@ import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
 import assert from 'assert';
+import {LockCategory} from '../../src/types/segments.model';
 
 describe('lockCategoriesRecords', () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-lockCategories")]);
- 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'intro']);
- 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'intro']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'lockCategoryVideo', 'sponsor']);
- 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record', 'sponsor']);
- 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'sponsor']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'intro']);
+
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'sponsor', 'reason-1']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id', 'intro', 'reason-1']);
+
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'sponsor', 'reason-2']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'no-segments-video-id-1', 'intro', 'reason-2']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'lockCategoryVideo', 'sponsor', 'reason-3']);
+
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record', 'sponsor', 'reason-4']);
+
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'sponsor', 'reason-5']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), 'delete-record-1', 'intro', 'reason-5']);
     });
 
     it('Should update the database version when starting the application', async () => {
         const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
-        if (version > 1) return;
-        else return 'Version isn\'t greater than 1. Version is ' + version;
+        assert.ok(version > 1);
     });
 
     it('Should be able to submit categories not in video (http response)', (done: Done) => {
@@ -86,8 +86,103 @@ describe('lockCategoriesRecords', () => {
         })
         .then(async res => {
             assert.strictEqual(res.status, 200);
-            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']) as LockCategory[];
             assert.strictEqual(result.length, 4);
+            const oldRecordNotChangeReason = result.filter(item => 
+                item.reason === 'reason-2' && ['sponsor', 'intro'].includes(item.category)
+            );
+
+            const newRecordWithEmptyReason = result.filter(item =>
+                item.reason === '' && ['outro', 'shilling'].includes(item.category)
+            );
+
+            assert.strictEqual(newRecordWithEmptyReason.length, 2);
+            assert.strictEqual(oldRecordNotChangeReason.length, 2);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit categories not in video with reason (http response)', (done: Done) => {
+        const json = {
+            videoID: 'no-segments-video-id',
+            userID: 'VIPUser-lockCategories',
+            categories: [
+                'outro',
+                'shilling',
+                'shilling',
+                'shil ling',
+                '',
+                'intro',
+            ],
+            reason: 'new reason'
+        };
+
+        const expected = {
+            submitted: [
+                'outro',
+                'shilling',
+                'intro'
+            ],
+        };
+
+        fetch(getbaseURL() + "/api/lockCategories", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json)
+        })
+        .then(async res => {
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.deepStrictEqual(data.submitted, expected.submitted);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should be able to submit categories not in video with reason (sql check)', (done: Done) => {
+        const json = {
+            videoID: 'no-segments-video-id-1',
+            userID: 'VIPUser-lockCategories',
+            categories: [
+                'outro',
+                'shilling',
+                'shilling',
+                'shil ling',
+                '',
+                'intro',
+            ],
+            reason: 'new reason'
+        };
+
+        const expectedWithNewReason = [
+            'outro',
+            'shilling',
+            'intro'
+        ];
+
+        fetch(getbaseURL() + "/api/lockCategories", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(json)
+        })
+        .then(async res => {
+            assert.strictEqual(res.status, 200);
+            const result = await db.prepare('all', 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ['no-segments-video-id-1']) as LockCategory[];
+            assert.strictEqual(result.length, 4);
+            const newRecordWithNewReason = result.filter(item => 
+                expectedWithNewReason.includes(item.category) && item.reason === 'new reason'
+            );
+            const oldRecordNotChangeReason = result.filter(item =>
+                item.reason === 'reason-2'
+            );
+
+            assert.strictEqual(newRecordWithNewReason.length, 3);
+            assert.strictEqual(oldRecordNotChangeReason.length, 1);
             done();
         })
         .catch(err => done(err));
