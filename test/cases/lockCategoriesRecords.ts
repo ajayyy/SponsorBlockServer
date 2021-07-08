@@ -5,6 +5,12 @@ import {db} from '../../src/databases/databases';
 import assert from 'assert';
 import {LockCategory} from '../../src/types/segments.model';
 
+const deepStringEqual = (a: string[], b: string[]): boolean => {
+    if (a.length !== b.length) return false;
+    a.forEach((e) => { if (!b.includes(e)) return false; });
+    return true;
+};
+
 describe('lockCategoriesRecords', () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
@@ -565,7 +571,7 @@ describe('lockCategoriesRecords', () => {
         .then(async res => {
             assert.strictEqual(res.status, 200);
             const data = await res.json();
-            assert.deepStrictEqual(data, expected);
+            assert.ok(deepStringEqual(data.categories, expected.categories));
             done();
         })
         .catch(err => done(err));
