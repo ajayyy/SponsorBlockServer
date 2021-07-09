@@ -88,31 +88,81 @@ async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUI
     }
 }
 
+async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<string> {
+    try {
+        const row = await db.prepare('get', `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 ORDER BY "issueTime" DESC LIMIT 1`, [userID]);
+        return row?.reason ?? '';
+    } catch (err) {
+        Logger.error('Couldn\'t get reason for user ' + userID + '. returning blank');
+        return '';
+    }
+}
+
+type cases = Record<string, any>
+
+const executeIfFunction = (f: any) =>
+  typeof f === 'function' ? f() : f;
+
+const objSwitch = (cases: cases) => (defaultCase: string) => (key: string) =>
+    Object.prototype.hasOwnProperty.call(cases, key) ? cases[key] : defaultCase;
+
+const functionSwitch = (cases: cases) => (defaultCase: string) => (key: string) =>
+  executeIfFunction(objSwitch(cases)(defaultCase)(key));
+
+const dbGetValue = async (userID: HashedUserID, property: string): Promise<string|SegmentUUID|number> => {
+    return functionSwitch({
+        userID,
+        userName: dbGetUsername(userID),
+        ignoredSegmentCount: dbGetIgnoredSegmentCount(userID),
+        viewCount: dbGetViewsForUser(userID),
+        ignoredViewCount: dbGetIgnoredViewsForUser(userID),
+        warnings: dbGetWarningsForUser(userID),
+        warningReason: dbGetActiveWarningReasonForUser(userID),
+        reputation: getReputation(userID),
+        vip: isUserVIP(userID),
+        lastSegmentID: dbGetLastSegmentForUser(userID),
+    })("")(property);
+};
+
 export async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
     const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
+    const allProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
+        "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
+        "vip", "lastSegmentID"];
+    let paramValues: string[] = req.query.values
+        ? JSON.parse(req.query.values as string)
+        : req.query.value
+            ? Array.isArray(req.query.value)
+                ? req.query.value
+                : [req.query.value]
+            : allProperties;
+    if (!Array.isArray(paramValues)) {
+        return res.status(400).send("Invalid values JSON");
+    }
+    // filter array to only include from allProperties
+    paramValues = paramValues.filter(param => allProperties.includes(param));
+    if (paramValues.length === 0) {
+        // invalid values
+        return res.status(400).send("No valid values specified");
+    }
 
     if (hashedUserID == undefined) {
         //invalid request
-        return res.status(400).send('Parameters are not valid');
+        return res.status(400).send('Invalid userID or publicUserID parameter');
     }
 
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
+    const responseObj = {} as Record<string, string|SegmentUUID|number>;
     if (segmentsSummary) {
-        return res.send({
-            userID: hashedUserID,
-            userName: await dbGetUsername(hashedUserID),
-            minutesSaved: segmentsSummary.minutesSaved,
-            segmentCount: segmentsSummary.segmentCount,
-            ignoredSegmentCount: await dbGetIgnoredSegmentCount(hashedUserID),
-            viewCount: await dbGetViewsForUser(hashedUserID),
-            ignoredViewCount: await dbGetIgnoredViewsForUser(hashedUserID),
-            warnings: await dbGetWarningsForUser(hashedUserID),
-            reputation: await getReputation(hashedUserID),
-            vip: await isUserVIP(hashedUserID),
-            lastSegmentID: await dbGetLastSegmentForUser(hashedUserID),
-        });
+        for (const property of paramValues) {
+            responseObj[property] = await dbGetValue(hashedUserID, property);
+        }
+        // add minutesSaved and segmentCount after to avoid getting overwritten
+        if (paramValues.includes("minutesSaved")) { responseObj["minutesSaved"] = segmentsSummary.minutesSaved; }
+        if (paramValues.includes("segmentCount")) responseObj["segmentCount"] = segmentsSummary.segmentCount;
+        res.send(responseObj);
     } else {
-        return res.sendStatus(400);
+        return res.sendStatus(404);
     }
 }
