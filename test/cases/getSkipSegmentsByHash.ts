@@ -108,10 +108,10 @@ describe('getSegmentsByHash', () => {
         .catch(() => done("Couldn't call endpoint"));
     });
 
-    it('Should return 404 for no hash', (done: Done) => {
+    it('Should return 400 for no hash', (done: Done) => {
         fetch(getbaseURL() + '/api/skipSegments/?categories=["shilling"]')
         .then(res => {
-            if (res.status !== 404) done("expected 404, got " + res.status);
+            if (res.status !== 400) done("expected 400, got " + res.status);
             else done(); // pass
         })
         .catch(() => done("Couldn't call endpoint"));

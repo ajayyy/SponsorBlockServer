@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 describe('getUserID', () => {
     before(async () => {
@@ -395,6 +396,15 @@ describe('getUserID', () => {
                     done(); // pass
                 }
             }
+        })
+        .catch(() => ("couldn't call endpoint"));
+    });
+
+    it('should return 400 if no username parameter specified', (done: Done) => {
+        fetch(getbaseURL() + '/api/userID')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(() => ("couldn't call endpoint"));
     });

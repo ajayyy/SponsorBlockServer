@@ -3,6 +3,7 @@ import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 import {IDatabase} from '../../src/databases/IDatabase';
+import assert from 'assert';
 
 async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
     const votes = 0,
@@ -76,6 +77,20 @@ describe('postPurgeAllSegments', function () {
         .then(async res => {
             if (res.status !== 200) return done(`Status code was ${res.status}`);
             done(await dbSponsorTimesCompareExpect(db, 'vsegpurge01', 1) || await dbSponsorTimesCompareExpect(db, 'vseg-not-purged01', 0));
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should return 400 if missing body', function (done: Done) {
+        fetch(`${baseURL}${route}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(async res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });

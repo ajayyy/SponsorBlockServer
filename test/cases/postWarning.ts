@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 describe('postWarning', () => {
     before(async () => {
@@ -124,6 +125,21 @@ describe('postWarning', () => {
                 console.log(body);
                 done("Status code was " + res.status);
             }
+        })
+        .catch(err => done(err));
+    });
+
+    it('Should return 400 if missing body', (done: Done) => {
+        fetch(getbaseURL()
+            + "/api/warnUser", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(async res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });

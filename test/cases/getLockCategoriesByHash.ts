@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
-
+import assert from 'assert';
 
 describe('getLockCategoriesByHash', () => {
     before(async () => {
