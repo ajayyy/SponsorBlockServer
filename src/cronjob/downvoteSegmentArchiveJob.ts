@@ -19,7 +19,7 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
       `INSERT INTO "archivedSponsorTimes" 
         SELECT * 
         FROM "sponsorTimes" 
-        WHERE votes < ? AND (? - timeSubmitted) > ?`,
+        WHERE "votes" < ? AND (? - "timeSubmitted") > ?`,
       [
         voteLimit,
         timeNow,
@@ -37,7 +37,7 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
   try {
     await db.prepare(
       'run', 
-      'DELETE FROM "sponsorTimes" WHERE votes < ? AND (? - timeSubmitted) > ?',
+      'DELETE FROM "sponsorTimes" WHERE "votes" < ? AND (? - "timeSubmitted") > ?',
       [
         voteLimit,
         timeNow,

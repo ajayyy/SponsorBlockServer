@@ -40,6 +40,11 @@ describe('downvoteSegmentArchiveJob', () => {
         return;
     });
 
+    it('Should update the database version when starting the application', async () => {
+        const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
+        assert.ok(version >= 21, "version should be greater or equal to 21");
+    });
+
     afterEach(async () => {
         await db.prepare('run', 'DELETE FROM "sponsorTimes"');
         await db.prepare('run', 'DELETE FROM "archivedSponsorTimes"');
@@ -52,7 +57,7 @@ describe('downvoteSegmentArchiveJob', () => {
     const getSegmentsInMainTable = (dayLimit: number, voteLimit: number, now: number): Promise<DBSegment[]> => {
         return db.prepare(
             'all', 
-            'SELECT * FROM "sponsorTimes" WHERE votes < ? AND (? - timeSubmitted) > ?',
+            'SELECT * FROM "sponsorTimes" WHERE "votes" < ? AND (? - "timeSubmitted") > ?',
             [
                 voteLimit,
                 now,
