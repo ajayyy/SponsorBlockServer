@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {getbaseURL, Done} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 describe('getIsUserVIP', () => {
     before((done: Done) => {
@@ -11,20 +12,20 @@ describe('getIsUserVIP', () => {
     it('Should be able to get a 200', (done: Done) => {
         fetch(getbaseURL() + "/api/isUserVIP?userID=supertestman")
         .then(res => {
-            if (res.status !== 200) done("non 200: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 200, "response should be 200");
+            done();
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
 
     it('Should get a 400 if no userID', (done: Done) => {
         fetch(getbaseURL() + "/api/isUserVIP")
         .then(res => {
-            if (res.status !== 400) done("non 400: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 400, "response should be 400");
+            done();
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should say a VIP is a VIP', (done: Done) => {
@@ -33,11 +34,11 @@ describe('getIsUserVIP', () => {
             if (res.status !== 200) done("non 200: " + res.status);
             else {
                 const data = await res.json();
-                if (data.vip === true) done(); // pass
-                else done("Result was non-vip when should have been vip");
+                assert.strictEqual(data.vip, true);
+                done();
             }
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should say a normal user is not a VIP', (done: Done) => {
@@ -46,10 +47,10 @@ describe('getIsUserVIP', () => {
             if (res.status !== 200) done("non 200: " + res.status);
             else {
                 const data = await res.json();
-                if (data.vip === false) done(); // pass
-                else done("Result was vip when should have been non-vip");
+                assert.strictEqual(data.vip, false);
+                done();
             }
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 });

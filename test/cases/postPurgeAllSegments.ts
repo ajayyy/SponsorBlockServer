@@ -58,7 +58,8 @@ describe('postPurgeAllSegments', function () {
             }),
         })
         .then(async res => {
-            done(res.status === 403 ? undefined : res.status);
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -75,7 +76,7 @@ describe('postPurgeAllSegments', function () {
             }),
         })
         .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
+            assert.strictEqual(res.status, 200);
             done(await dbSponsorTimesCompareExpect(db, 'vsegpurge01', 1) || await dbSponsorTimesCompareExpect(db, 'vseg-not-purged01', 0));
         })
         .catch(err => done(err));

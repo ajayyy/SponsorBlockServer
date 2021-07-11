@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
+import assert from 'assert';
 
 
 describe('getLockCategories', () => {
@@ -27,58 +28,51 @@ describe('getLockCategories', () => {
     it('Should be able to get multiple locks', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories?videoID=getLock-1')
         .then(async res => {
-            if (res.status !== 200) {
-                done("non 200");
-            } else {
-                const data = await res.json();
-                if (data.categories.length !== 2) {
-                    done(`Returned incorrect number of locks "${data.categories.length}"`);
-                } else if (data.categories[0] !== "sponsor") {
-                    done(`Returned incorrect category "${data.categories[0]}"`);
-                } else if (data.categories[1] !== "interaction") {
-                    done(`Returned incorrect category "${data.categories[1]}"`);
-                } else {
-                    done(); // pass
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            const expected = {
+                categories: [
+                    "sponsor",
+                    "interaction"
+                ]
+            };
+            assert.deepStrictEqual(data, expected);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be able to get single locks', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories?videoID=getLock-2')
         .then(async res => {
-            if (res.status !== 200) {
-                done("non 200");
-            } else {
-                const data = await res.json();
-                if (data.categories.length !== 1) {
-                    done('Returned incorrect number of locks "' + data.categories.length + '"');
-                } else if (data.categories[0] !== "preview") {
-                    done(`Returned incorrect category "${data.categories[0].category}"`);
-                } else {
-                    done(); // pass
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            const expected = {
+                categories: [
+                    "preview"
+                ]
+            };
+            assert.deepStrictEqual(data, expected);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('should return 404 if no lock exists', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories?videoID=getLock-0')
         .then(res => {
-            if (res.status !== 404) done('non 404 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 404);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('should return 400 if no videoID specified', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories')
         .then(res => {
-            if (res.status !== 400) done('non 400 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 });

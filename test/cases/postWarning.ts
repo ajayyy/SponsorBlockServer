@@ -24,18 +24,12 @@ describe('postWarning', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
-                if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID) && row?.reason === json.reason) {
-                    done();
-                } else {
-                    done("Warning missing from database");
-                }
-            } else {
-                const body = await res.text();
-                console.log(body);
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
+            assert.strictEqual(row.enabled, 1);
+            assert.strictEqual(row.issuerUserID, getHash(json.issuerUserID));
+            assert.strictEqual(row.reason, json.reason);
+            done();
         })
         .catch(err => done(err));
     });
@@ -55,18 +49,11 @@ describe('postWarning', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 409) {
-                const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
-                if (row?.enabled == 1 && row?.issuerUserID == getHash(json.issuerUserID)) {
-                    done();
-                } else {
-                    done("Warning missing from database");
-                }
-            } else {
-                const body = await res.text();
-                console.log(body);
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 409);
+            const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+            assert.strictEqual(row.enabled, 1);
+            assert.strictEqual(row.issuerUserID, getHash(json.issuerUserID));
+            done();
         })
         .catch(err => done(err));
     });
@@ -87,18 +74,10 @@ describe('postWarning', () => {
             body: JSON.stringify(json),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
-                if (row?.enabled == 0) {
-                    done();
-                } else {
-                    done("Warning missing from database");
-                }
-            } else {
-                const body = await res.text();
-                console.log(body);
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+            assert.strictEqual(row.enabled, 0);
+            done();
         })
         .catch(err => done(err));
     });
@@ -117,14 +96,9 @@ describe('postWarning', () => {
             },
             body: JSON.stringify(json),
         })
-        .then(async res => {
-            if (res.status === 403) {
-                done();
-            } else {
-                const body = await res.text();
-                console.log(body);
-                done("Status code was " + res.status);
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });

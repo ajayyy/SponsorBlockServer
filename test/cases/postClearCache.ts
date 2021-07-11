@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 describe('postClearCache', () => {
     before(async () => {
@@ -16,8 +17,8 @@ describe('postClearCache', () => {
             method: 'POST'
         })
         .then(res => {
-            if (res.status === 200) done();
-            else done("Status code was " + res.status);
+            assert.strictEqual(res.status, 200);
+            done();
         })
         .catch(err => done(err));
     });
@@ -28,8 +29,8 @@ describe('postClearCache', () => {
             method: 'POST'
         })
         .then(res => {
-            if (res.status === 200) done();
-            else done("Status code was " + res.status);
+            assert.strictEqual(res.status, 200);
+            done();
         })
         .catch(err => done(err));
     });
@@ -40,8 +41,8 @@ describe('postClearCache', () => {
             method: 'POST'
         })
         .then(async res => {
-            if (res.status !== 403) done('non 403 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -52,8 +53,8 @@ describe('postClearCache', () => {
             method: 'POST'
         })
         .then(async res => {
-            if (res.status !== 400) done('non 400 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -64,8 +65,8 @@ describe('postClearCache', () => {
             method: 'POST'
         })
         .then(async res => {
-            if (res.status !== 400) done('non 400 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
