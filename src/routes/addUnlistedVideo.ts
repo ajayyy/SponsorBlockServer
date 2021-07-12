@@ -1,11 +1,11 @@
-import {Request, Response} from 'express';
-import { db } from '../databases/databases';
-import { Logger } from '../utils/logger';
+import {Request, Response} from "express";
+import { db } from "../databases/databases";
+import { Logger } from "../utils/logger";
 
 /**
  * Optional API method that will be used temporarily to help collect
  * unlisted videos created before 2017
- * 
+ *
  * https://support.google.com/youtube/answer/9230970
  */
 
@@ -21,7 +21,7 @@ export function addUnlistedVideo(req: Request, res: Response): Response {
 
     try {
         const timeSubmitted = Date.now();
-        db.prepare('run', `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted") values (?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted]);
+        db.prepare("run", `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted") values (?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted]);
     } catch (err) {
         Logger.error(err);
         return res.sendStatus(500);

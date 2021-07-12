@@ -1,9 +1,9 @@
-import {IDatabase, QueryType} from './IDatabase';
-import Sqlite3, {Database, Database as SQLiteDatabase} from 'better-sqlite3';
+import {IDatabase, QueryType} from "./IDatabase";
+import Sqlite3, {Database, Database as SQLiteDatabase} from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import {getHash} from '../utils/getHash';
-import {Logger} from '../utils/logger';
+import {getHash} from "../utils/getHash";
+import {Logger} from "../utils/logger";
 
 export class Sqlite implements IDatabase {
     private db: SQLiteDatabase;
@@ -17,16 +17,16 @@ export class Sqlite implements IDatabase {
         const preparedQuery = this.db.prepare(query);
 
         switch (type) {
-            case 'get': {
-                return preparedQuery.get(...params);
-            }
-            case 'all': {
-                return preparedQuery.all(...params);
-            }
-            case 'run': {
-                preparedQuery.run(...params);
-                break;
-            }
+        case "get": {
+            return preparedQuery.get(...params);
+        }
+        case "all": {
+            return preparedQuery.all(...params);
+        }
+        case "run": {
+            preparedQuery.run(...params);
+            break;
+        }
         }
     }
 
@@ -69,17 +69,17 @@ export class Sqlite implements IDatabase {
         const versionCodeInfo = db.prepare("SELECT value FROM config WHERE key = ?").get("version");
         let versionCode = versionCodeInfo ? versionCodeInfo.value : 0;
 
-        let path = schemaFolder + "/_upgrade_" + fileNamePrefix + "_" + (parseInt(versionCode) + 1) + ".sql";
-        Logger.debug('db update: trying ' + path);
+        let path = `${schemaFolder}/_upgrade_${fileNamePrefix}_${(parseInt(versionCode) + 1)}.sql`;
+        Logger.debug(`db update: trying ${path}`);
         while (fs.existsSync(path)) {
-            Logger.debug('db update: updating ' + path);
+            Logger.debug(`db update: updating ${path}`);
             db.exec(this.processUpgradeQuery(fs.readFileSync(path).toString()));
 
             versionCode = db.prepare("SELECT value FROM config WHERE key = ?").get("version").value;
-            path = schemaFolder + "/_upgrade_" + fileNamePrefix + "_" + (parseInt(versionCode) + 1) + ".sql";
-            Logger.debug('db update: trying ' + path);
+            path = `${schemaFolder}/_upgrade_${fileNamePrefix}_${(parseInt(versionCode) + 1)}.sql`;
+            Logger.debug(`db update: trying ${path}`);
         }
-        Logger.debug('db update: no file ' + path);
+        Logger.debug(`db update: no file ${path}`);
     }
 
     private static processUpgradeQuery(query: string): string {

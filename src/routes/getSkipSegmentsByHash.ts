@@ -1,7 +1,7 @@
-import {hashPrefixTester} from '../utils/hashPrefixTester';
-import {getSegmentsByHash} from './getSkipSegments';
-import {Request, Response} from 'express';
-import { ActionType, Category, SegmentUUID, Service, VideoIDHash } from '../types/segments.model';
+import {hashPrefixTester} from "../utils/hashPrefixTester";
+import {getSegmentsByHash} from "./getSkipSegments";
+import {Request, Response} from "express";
+import { ActionType, Category, SegmentUUID, Service, VideoIDHash } from "../types/segments.model";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -18,7 +18,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
                 ? Array.isArray(req.query.category)
                     ? req.query.category
                     : [req.query.category]
-                : ['sponsor'];
+                : ["sponsor"];
         if (!Array.isArray(categories)) {
             return res.status(400).send("Categories parameter does not match format requirements.");
         }
@@ -45,12 +45,12 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     let requiredSegments: SegmentUUID[] = [];
     try {
         requiredSegments = req.query.requiredSegments
-        ? JSON.parse(req.query.requiredSegments as string)
-        : req.query.requiredSegment
-            ? Array.isArray(req.query.requiredSegment)
-                ? req.query.requiredSegment
-                : [req.query.requiredSegment]
-            : [];
+            ? JSON.parse(req.query.requiredSegments as string)
+            : req.query.requiredSegment
+                ? Array.isArray(req.query.requiredSegment)
+                    ? req.query.requiredSegment
+                    : [req.query.requiredSegment]
+                : [];
         if (!Array.isArray(requiredSegments)) {
             return res.status(400).send("requiredSegments parameter does not match format requirements.");
         }
@@ -62,7 +62,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     if (!Object.values(Service).some((val) => val == service)) {
         service = Service.YouTube;
     }
-    
+
     // filter out none string elements, only flat array with strings is valid
     categories = categories.filter((item: any) => typeof item === "string");
 

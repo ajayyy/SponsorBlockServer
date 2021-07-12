@@ -1,10 +1,10 @@
-import {db} from '../databases/databases';
-import {getHash} from '../utils/getHash';
-import {isUserVIP} from '../utils/isUserVIP';
-import {Request, Response} from 'express';
-import {Logger} from '../utils/logger';
-import { HashedUserID, UserID } from '../types/user.model';
-import { getReputation } from '../utils/reputation';
+import {db} from "../databases/databases";
+import {getHash} from "../utils/getHash";
+import {isUserVIP} from "../utils/isUserVIP";
+import {Request, Response} from "express";
+import {Logger} from "../utils/logger";
+import { HashedUserID, UserID } from "../types/user.model";
+import { getReputation } from "../utils/reputation";
 import { SegmentUUID } from "../types/segments.model";
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
@@ -39,7 +39,7 @@ async function dbGetIgnoredSegmentCount(userID: HashedUserID): Promise<number> {
 
 async function dbGetUsername(userID: HashedUserID) {
     try {
-        const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         if (row !== undefined) {
             return row.userName;
         } else {
@@ -53,7 +53,7 @@ async function dbGetUsername(userID: HashedUserID) {
 
 async function dbGetViewsForUser(userID: HashedUserID) {
     try {
-        const row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
+        const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
         return row?.viewCount ?? 0;
     } catch (err) {
         return false;
@@ -62,7 +62,7 @@ async function dbGetViewsForUser(userID: HashedUserID) {
 
 async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
     try {
-        const row = await db.prepare('get', `SELECT SUM("views") as "ignoredViewCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID]);
+        const row = await db.prepare("get", `SELECT SUM("views") as "ignoredViewCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID]);
         return row?.ignoredViewCount ?? 0;
     } catch (err) {
         return false;
@@ -71,17 +71,17 @@ async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
 
 async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
-        const row = await db.prepare('get', `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
+        const row = await db.prepare("get", `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID]);
         return row?.total ?? 0;
     } catch (err) {
-        Logger.error('Couldn\'t get warnings for user ' + userID + '. returning 0');
+        Logger.error(`Couldn't get warnings for user ${userID}. returning 0`);
         return 0;
     }
 }
 
 async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUID> {
     try {
-        const row = await db.prepare('get', `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID]);
+        const row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID]);
         return row?.UUID ?? null;
     } catch (err) {
         return null;
@@ -94,7 +94,7 @@ export async function getUserInfo(req: Request, res: Response): Promise<Response
 
     if (hashedUserID == undefined) {
         //invalid request
-        return res.status(400).send('Parameters are not valid');
+        return res.status(400).send("Parameters are not valid");
     }
 
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);

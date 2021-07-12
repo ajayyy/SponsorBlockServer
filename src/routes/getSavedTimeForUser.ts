@@ -1,8 +1,8 @@
-import {db} from '../databases/databases';
-import {Request, Response} from 'express';
-import {getHash} from '../utils/getHash';
-import {config} from '../config';
-import { Logger } from '../utils/logger';
+import {db} from "../databases/databases";
+import {Request, Response} from "express";
+import {getHash} from "../utils/getHash";
+import {config} from "../config";
+import { Logger } from "../utils/logger";
 
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
@@ -28,7 +28,7 @@ export async function getSavedTimeForUser(req: Request, res: Response): Promise<
             return res.sendStatus(404);
         }
     } catch (err) {
-        Logger.error("getSavedTimeForUser " + err);
+        Logger.error(`getSavedTimeForUser ${err}`);
         return res.sendStatus(500);
     }
 }

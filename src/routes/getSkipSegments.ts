@@ -1,15 +1,15 @@
-import { Request, Response } from 'express';
-import { config } from '../config';
-import { db, privateDB } from '../databases/databases';
-import { skipSegmentsHashKey, skipSegmentsKey } from '../utils/redisKeys';
-import { SBRecord } from '../types/lib.model';
+import { Request, Response } from "express";
+import { config } from "../config";
+import { db, privateDB } from "../databases/databases";
+import { skipSegmentsHashKey, skipSegmentsKey } from "../utils/redisKeys";
+import { SBRecord } from "../types/lib.model";
 import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
-import { getCategoryActionType } from '../utils/categoryInfo';
-import { getHash } from '../utils/getHash';
-import { getIP } from '../utils/getIP';
-import { Logger } from '../utils/logger';
-import { QueryCacher } from '../utils/queryCacher';
-import { getReputation } from '../utils/reputation';
+import { getCategoryActionType } from "../utils/categoryInfo";
+import { getHash } from "../utils/getHash";
+import { getIP } from "../utils/getIP";
+import { Logger } from "../utils/logger";
+import { QueryCacher } from "../utils/queryCacher";
+import { getReputation } from "../utils/reputation";
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[],cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
@@ -25,7 +25,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
         }
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID] = await privateDB.prepare('all', 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ?', [videoID]) as { hashedIP: HashedIP }[];
+            cache.shadowHiddenSegmentIPs[videoID] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ?', [videoID]) as { hashedIP: HashedIP }[];
         }
 
         //if this isn't their ip, don't send it to them
@@ -38,7 +38,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
             return shadowHiddenSegment.hashedIP === cache.userHashedIP;
         });
     }));
-    
+
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
     const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? 32 : 1;
@@ -51,8 +51,8 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
     }));
 }
 
-async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[], 
-        actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
+async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[],
+    actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: Segment[] = [];
 
@@ -84,8 +84,8 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
     }
 }
 
-async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[], 
-        actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
+async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[],
+    actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
     const segments: SBRecord<VideoID, VideoData> = {};
 
@@ -133,10 +133,10 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
 async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<DBSegment[]> {
     const fetchFromDB = () => db
         .prepare(
-            'all',
+            "all",
             `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
-            [hashedVideoIDPrefix + '%', service]
+            [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
 
     if (hashedVideoIDPrefix.length === 4) {
@@ -149,7 +149,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
 async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise<DBSegment[]> {
     const fetchFromDB = () => db
         .prepare(
-            'all',
+            "all",
             `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [videoID, service]
@@ -283,7 +283,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
             ? Array.isArray(req.query.category)
                 ? req.query.category
                 : [req.query.category]
-            : ['sponsor'];
+            : ["sponsor"];
     if (!Array.isArray(categories)) {
         res.status(400).send("Categories parameter does not match format requirements.");
         return false;
@@ -312,7 +312,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         res.status(400).send("requiredSegments parameter does not match format requirements.");
         return false;
     }
-    
+
     let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
     if (!Object.values(Service).some((val) => val == service)) {
         service = Service.YouTube;

@@ -17,8 +17,8 @@ export enum ActionType {
 
 // Uncomment as needed
 export enum Service {
-    YouTube = 'YouTube',
-    PeerTube = 'PeerTube',
+    YouTube = "YouTube",
+    PeerTube = "PeerTube",
     // Twitch = 'Twitch',
     // Nebula = 'Nebula',
     // RSS = 'RSS',
@@ -26,16 +26,16 @@ export enum Service {
     // Lbry = 'Lbry'
 }
 
-export interface IncomingSegment { 
-    category: Category; 
+export interface IncomingSegment {
+    category: Category;
     actionType: ActionType;
-    segment: string[]; 
+    segment: string[];
 }
 
-export interface Segment { 
-    category: Category; 
+export interface Segment {
+    category: Category;
     actionType: ActionType;
-    segment: number[]; 
+    segment: number[];
     UUID: SegmentUUID;
     videoDuration: VideoDuration;
 }
@@ -45,8 +45,8 @@ export enum Visibility {
     HIDDEN = 1
 }
 
-export interface DBSegment { 
-    category: Category; 
+export interface DBSegment {
+    category: Category;
     actionType: ActionType;
     startTime: number;
     endTime: number;

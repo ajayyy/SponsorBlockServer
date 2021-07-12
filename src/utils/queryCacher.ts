@@ -9,7 +9,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     if (!err && reply) {
         try {
-            Logger.debug("Got data from redis: " + reply);
+            Logger.debug(`Got data from redis: ${reply}`);
             return JSON.parse(reply);
         } catch (e) {
             // If all else, continue on to fetching from the database
