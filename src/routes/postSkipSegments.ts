@@ -126,7 +126,7 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
         body: JSON.stringify({
             "embeds": [{
                 "title": ytData.items[0].snippet.title,
-                "url": "https://www.youtube.com/watch?v=" + videoID + "&t=" + (parseFloat(startTime.toFixed(0)) - 2),
+                "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseFloat(startTime.toFixed(0)) - 2)}`,
                 "description": "**Submission ID:** " + UUID +
                     "\n**Timestamp:** " + getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
                     "\n**Predicted Probability:** " + probability +

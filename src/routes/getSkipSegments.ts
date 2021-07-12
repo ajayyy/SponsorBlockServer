@@ -355,4 +355,3 @@ export {
     endpoint,
     handleGetSegments
 };
-

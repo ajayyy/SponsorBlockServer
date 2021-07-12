@@ -129,7 +129,7 @@ async function sendWebhooks(voteData: VoteData) {
                             "color": 10813440,
                             "author": {
                                 "name": voteData.finalResponse?.webhookMessage ??
-                                        voteData.finalResponse?.finalMessage ?? 
+                                        voteData.finalResponse?.finalMessage ??
                                         getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
                             },
                             "thumbnail": {

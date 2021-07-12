@@ -32,4 +32,3 @@ export class Mysql implements IDatabase {
     }
 
 }
-

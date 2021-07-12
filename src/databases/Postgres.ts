@@ -131,4 +131,3 @@ export class Postgres implements IDatabase {
         return result;
     }
 }
-
