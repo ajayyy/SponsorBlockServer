@@ -4,7 +4,6 @@ import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
 import assert from 'assert';
 
-
 describe('getLockCategoriesByHash', () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
@@ -138,6 +137,24 @@ describe('getLockCategoriesByHash', () => {
 
     it('should return 400 if full hash sent', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories/b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('should return 400 if hash too short', (done: Done) => {
+        fetch(getbaseURL() + '/api/lockCategories/00')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('should return 400 if no hash specified', (done: Done) => {
+        fetch(getbaseURL() + '/api/lockCategories/')
         .then(res => {
             assert.strictEqual(res.status, 400);
             done();

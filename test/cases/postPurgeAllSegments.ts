@@ -81,4 +81,18 @@ describe('postPurgeAllSegments', function () {
         })
         .catch(err => done(err));
     });
+
+    it('Should return 400 if missing body', function (done: Done) {
+        fetch(`${baseURL}${route}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(async res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
 });
