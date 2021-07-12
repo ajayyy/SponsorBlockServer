@@ -20,11 +20,11 @@ export class YouTubeApiMock {
                     lengthSeconds: 0,
                     videoThumbnails: [
                         {
-                           quality: "maxres",
-                           url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                           second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                           width: 1280,
-                           height: 720
+                            quality: "maxres",
+                            url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                            second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                            width: 1280,
+                            height: 720
                         },
                     ]
                 } as APIVideoData
@@ -37,11 +37,11 @@ export class YouTubeApiMock {
                     lengthSeconds: 4980,
                     videoThumbnails: [
                         {
-                           quality: "maxres",
-                           url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                           second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
-                           width: 1280,
-                           height: 720
+                            quality: "maxres",
+                            url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                            second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                            width: 1280,
+                            height: 720
                         },
                     ]
                 } as APIVideoData

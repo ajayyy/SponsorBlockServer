@@ -1,17 +1,17 @@
-import Mocha from 'mocha';
-import fs from 'fs';
-import path from 'path';
-import {config} from '../src/config';
-import {createServer} from '../src/app';
-import {createMockServer} from './mocks';
-import {Logger} from '../src/utils/logger';
-import {initDb} from '../src/databases/databases';
-import {ImportMock} from 'ts-mock-imports';
-import * as rateLimitMiddlewareModule from '../src/middleware/requestRateLimit';
-import rateLimit from 'express-rate-limit';
+import Mocha from "mocha";
+import fs from "fs";
+import path from "path";
+import {config} from "../src/config";
+import {createServer} from "../src/app";
+import {createMockServer} from "./mocks";
+import {Logger} from "../src/utils/logger";
+import {initDb} from "../src/databases/databases";
+import {ImportMock} from "ts-mock-imports";
+import * as rateLimitMiddlewareModule from "../src/middleware/requestRateLimit";
+import rateLimit from "express-rate-limit";
 
 async function init() {
-    ImportMock.mockFunction(rateLimitMiddlewareModule, 'rateLimitMiddleware', rateLimit({
+    ImportMock.mockFunction(rateLimitMiddlewareModule, "rateLimitMiddleware", rateLimit({
         skip: () => true
     }));
 
@@ -21,21 +21,21 @@ async function init() {
 
     await initDb();
 
-    const dbMode = config.mysql ? 'mysql'
-        : config.postgres ? 'postgres'
-        : 'sqlite';
-    Logger.info('Database Mode: ' + dbMode);
+    const dbMode = config.mysql ? "mysql"
+        : config.postgres ? "postgres"
+            : "sqlite";
+    Logger.info(`Database Mode: ${dbMode}`);
 
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
 
-    const testDir = './test/cases';
+    const testDir = "./test/cases";
 
     // Add each .ts file to the mocha instance
     fs.readdirSync(testDir)
-        .filter((file) => 
+        .filter((file) =>
             // Only keep the .ts files
-            file.substr(-3) === '.ts'
+            file.substr(-3) === ".ts"
         )
         .forEach(function(file) {
             mocha.addFile(

@@ -1,7 +1,7 @@
-import {config} from '../src/config';
+import {config} from "../src/config";
 
 export function getbaseURL(): string {
-    return "http://localhost:" + config.port;
+    return `http://localhost:${config.port}`;
 }
 
 /**
