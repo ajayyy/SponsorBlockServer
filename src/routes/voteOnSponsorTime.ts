@@ -117,15 +117,15 @@ async function sendWebhooks(voteData: VoteData) {
                         "embeds": [{
                             "title": data?.title,
                             "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}`,
-                            "description": "**" + voteData.row.votes + " Votes Prior | " +
-                                (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount) + " Votes Now | " + voteData.row.views
-                                + " Views**\n\n**Submission ID:** " + voteData.UUID
-                                + "\n**Category:** " + submissionInfoRow.category
-                                + "\n\n**Submitted by:** " + submissionInfoRow.userName + "\n " + submissionInfoRow.userID
-                                + "\n\n**Total User Submissions:** " + submissionInfoRow.count
-                                + "\n**Ignored User Submissions:** " + submissionInfoRow.disregarded
-                                + "\n\n**Timestamp:** " +
-                                getFormattedTime(submissionInfoRow.startTime) + " to " + getFormattedTime(submissionInfoRow.endTime),
+                            "description": `**${voteData.row.votes} Votes Prior | \
+                                ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
+                                Views**\n\n**Submission ID:** ${voteData.UUID}\
+                                \n**Category:** ${submissionInfoRow.category}\
+                                \n\n**Submitted by:** ${submissionInfoRow.userName}\n${submissionInfoRow.userID}\
+                                \n\n**Total User Submissions:** ${submissionInfoRow.count}\
+                                \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}\
+                                \n\n**Timestamp:** \
+                                ${getFormattedTime(submissionInfoRow.startTime)} to ${getFormattedTime(submissionInfoRow.endTime)}`,
                             "color": 10813440,
                             "author": {
                                 "name": voteData.finalResponse?.webhookMessage ??

@@ -71,10 +71,10 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
                 "embeds": [{
                     "title": data?.title,
                     "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}`,
-                    "description": "Submission ID: " + UUID +
-                        "\n\nTimestamp: " +
-                        getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
-                        "\n\nCategory: " + segmentInfo.category,
+                    "description": `Submission ID: ${UUID}\
+                        \n\nTimestamp: \
+                        ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
+                        \n\nCategory: ${segmentInfo.category}`,
                     "color": 10813440,
                     "author": {
                         "name": userID,
@@ -127,13 +127,13 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
             "embeds": [{
                 "title": ytData.items[0].snippet.title,
                 "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseFloat(startTime.toFixed(0)) - 2)}`,
-                "description": "**Submission ID:** " + UUID +
-                    "\n**Timestamp:** " + getFormattedTime(startTime) + " to " + getFormattedTime(endTime) +
-                    "\n**Predicted Probability:** " + probability +
-                    "\n**Category:** " + category +
-                    "\n**Submitted by:** " + submittedBy +
-                    "\n**Total User Submissions:** " + submissionInfoRow.count +
-                    "\n**Ignored User Submissions:** " + submissionInfoRow.disregarded,
+                "description": `**Submission ID:** ${UUID}\
+                    \n**Timestamp:** ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
+                    \n**Predicted Probability:** ${probability}\
+                    \n**Category:** ${category}\
+                    \n**Submitted by:** ${submittedBy}\
+                    \n**Total User Submissions:** ${submissionInfoRow.count}\
+                    \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}`,
                 "color": 10813440,
                 "thumbnail": {
                     "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
@@ -419,11 +419,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             // TODO: Do something about the fradulent submission
             Logger.warn(`Caught a no-segment submission. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}'`);
             return res.status(403).send(
-                "New submissions are not allowed for the following category: '"
-                + segments[i].category + "'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n "
-                + (segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
-                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")
-                + "If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app",
+                `New submissions are not allowed for the following category: \
+                '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
+                ${(segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. "+
+                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")}\
+                If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app`,
             );
         }
 

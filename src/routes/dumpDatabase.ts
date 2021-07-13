@@ -127,13 +127,13 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
                     </tr>
                 </thead>
                 <tbody>
-                ${latestDumpFiles.map((item:any) => {
-                    return `
-                    <tr>
-                        <td>${item.tableName}</td>
-                        <td><a href="/database/${item.tableName}.csv">${item.tableName}.csv</a></td>
-                    </tr>
-                    `;
+    ${latestDumpFiles.map((item:any) => {
+        return `
+        <tr>
+            <td>${item.tableName}</td>
+            <td><a href="/database/${item.tableName}.csv">${item.tableName}.csv</a></td>
+        </tr>
+        `;
     }).join("")}
         ${latestDumpFiles.length === 0 ? '<tr><td colspan="2">Please wait: Generating files</td></tr>' : ""}
         </tbody>
