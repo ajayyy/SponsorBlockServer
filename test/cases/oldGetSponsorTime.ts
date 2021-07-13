@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 describe('getVideoSponsorTime (Old get method)', () => {
     before(async () => {
@@ -13,27 +14,27 @@ describe('getVideoSponsorTime (Old get method)', () => {
     it('Should be able to get a time', (done: Done) => {
         fetch(getbaseURL() + "/api/getVideoSponsorTimes?videoID=old-testtesttest")
         .then(res => {
-            if (res.status !== 200) done("non 200 (" + res.status + ")");
-            else done(); // pass
+            assert.strictEqual(res.status, 200);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return 404 if no segment found', (done: Done) => {
         fetch(getbaseURL() + "/api/getVideoSponsorTimes?videoID=notarealvideo")
         .then(res => {
-            if (res.status !== 404) done("non 404 respone code: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 404);
+            done();
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
 
     it('Should be possible to send unexpected query parameters', (done: Done) => {
         fetch(getbaseURL() + "/api/getVideoSponsorTimes?videoID=old-testtesttest&fakeparam=hello")
         .then(res => {
-            if (res.status !== 200) done("non 200");
-            else done(); // pass
+            assert.strictEqual(res.status, 200);
+            done();
         })
         .catch(() => done("couldn't callendpoint"));
     });
@@ -41,30 +42,24 @@ describe('getVideoSponsorTime (Old get method)', () => {
     it('Should be able send a comma in a query param', (done: Done) => {
         fetch(getbaseURL() + "/api/getVideoSponsorTimes?videoID=old-testtesttest,test")
         .then(async res => {
-            const body = await res.text();
-            if (res.status !== 200) done("non 200 response: " + res.status);
-            else if (JSON.parse(body).UUIDs[0] === 'uuid-1') done(); // pass
-            else done("couldn't parse response");
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.UUIDs[0], "uuid-1");
+            done();
         })
-        .catch(() => done("couln't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be able to get the correct time', (done: Done) => {
         fetch(getbaseURL() + "/api/getVideoSponsorTimes?videoID=old-testtesttest")
         .then(async res => {
-            if (res.status !== 200) done("non 200");
-            else {
-                const parsedBody = await res.json();
-                if (parsedBody.sponsorTimes[0][0] === 1
-                    && parsedBody.sponsorTimes[0][1] === 11
-                    && parsedBody.UUIDs[0] === 'uuid-0') {
-                    done(); // pass
-                } else {
-                    done("Wrong data was returned + " + JSON.stringify(parsedBody));
-                }
-            }
-
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.sponsorTimes[0][0], 1);
+            assert.strictEqual(data.sponsorTimes[0][1], 11);
+            assert.strictEqual(data.UUIDs[0], 'uuid-0');
+            done();
         })
-        .catch(() => done("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 });

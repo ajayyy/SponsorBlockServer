@@ -10,6 +10,7 @@
 [shadowBannedUsers](#shadowBannedUsers)  
 [unlistedVideos](#unlistedVideos)  
 [config](#config)  
+[archivedSponsorTimes](#archivedSponsorTimes)
 
 ### vipUsers
 | Name | Type | |
@@ -35,6 +36,7 @@
 | timeSubmitted | INTEGER | not null |
 | views | INTEGER | not null |
 | category | TEXT | not null, default 'sponsor' |
+| actionType | TEXT | not null, default 'skip' |
 | service | TEXT | not null, default 'Youtube' |
 | videoDuration | INTEGER | not null, default '0' |
 | hidden | INTEGER | not null, default '0' |
@@ -140,7 +142,28 @@
 | key | TEXT | not null, unique |
 | value | TEXT | not null |
 
+### archivedSponsorTimes
 
+| Name | Type | |
+| -- | :--: | -- |
+| videoID | TEXT | not null |
+| startTime | REAL | not null |
+| endTime | REAL | not null |
+| votes | INTEGER | not null |
+| locked | INTEGER | not null, default '0' |
+| incorrectVotes | INTEGER | not null, default 1 |
+| UUID | TEXT | not null, unique |
+| userID | TEXT | not null |
+| timeSubmitted | INTEGER | not null |
+| views | INTEGER | not null |
+| category | TEXT | not null, default 'sponsor' |
+| actionType | TEXT | not null, default 'skip' |
+| service | TEXT | not null, default 'Youtube' |
+| videoDuration | INTEGER | not null, default '0' |
+| hidden | INTEGER | not null, default '0' |
+| reputation | REAL | not null, default '0' |
+| shadowHidden | INTEGER | not null |
+| hashedVideoID | TEXT | not null, default '', sha256 |
 
 # Private 
 

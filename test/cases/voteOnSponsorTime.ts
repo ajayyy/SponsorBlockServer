@@ -6,6 +6,7 @@ import {getHash} from '../../src/utils/getHash';
 import {ImportMock} from 'ts-mock-imports';
 import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
 import {YouTubeApiMock} from '../youtubeMock';
+import assert from 'assert';
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
 const sinonStub = mockManager.mock('listVideos');
@@ -66,16 +67,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=vote-uuid-0&type=1")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-0"]);
-                if (row.votes === 3) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from 2 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-0"]);
+            assert.strictEqual(row.votes, 3);
+            done();
         })
         .catch(err => done(err));
     });
@@ -84,16 +79,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-2&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
-                if (row.votes < 10) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from 10 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
+            assert.ok(row.votes < 10);
+            done();
         })
         .catch(err => done(err));
     });
@@ -102,16 +91,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID3&UUID=vote-uuid-2&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
-                if (row.votes === 9) {
-                    done();
-                } else {
-                    done("Vote did not fail. Submission went from 9 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
+            assert.strictEqual(row.votes, 9);
+            done();
         })
         .catch(err => done(err));
     });
@@ -120,16 +103,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID4&UUID=vote-uuid-1.6&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.6"]);
-                if (row.votes === 10) {
-                    done();
-                } else {
-                    done("Vote did not fail. Submission went from 10 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.6"]);
+            assert.strictEqual(row.votes, 10);
+            done();
         })
         .catch(err => done(err));
     });
@@ -138,16 +115,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1&type=1")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1"]);
-                if (row.votes === 2) {
-                    done();
-                } else {
-                    done("Vote did not fail. Submission went from 2 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1"]);
+            assert.strictEqual(row.votes, 2);
+            done();
         })
         .catch(err => done(err));
     });
@@ -156,16 +127,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=hasNotSubmittedID&UUID=vote-uuid-1.5&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.5"]);
-                if (row.votes === 10) {
-                    done();
-                } else {
-                    done("Vote did not fail. Submission went from 10 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-1.5"]);
+            assert.strictEqual(row.votes, 10);
+            done();
         })
         .catch(err => done(err));
     });
@@ -174,16 +139,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-3&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-3"]);
-                if (row.votes <= -2) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from 100 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-3"]);
+            assert.ok(row.votes <= -2);
+            done();
         })
         .catch(err => done(err));
     });
@@ -192,16 +151,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=own-submission-id&UUID=own-submission-uuid&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["own-submission-uuid"]);
-                if (row.votes <= -2) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from 500 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["own-submission-uuid"]);
+            assert.ok(row.votes <= -2);
+            done();
         })
         .catch(err => done(err));
     });
@@ -210,16 +163,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=not-own-submission-uuid&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["not-own-submission-uuid"]);
-                if (row.votes === 499) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from 500 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["not-own-submission-uuid"]);
+            assert.strictEqual(row.votes, 499);
+            done();
         })
         .catch(err => done(err));
     });
@@ -228,19 +175,16 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-4&category=intro")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
-                const categoryRows = await db.prepare('all', `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
-                if (row.category === "sponsor" && categoryRows.length === 2 
-                        && categoryRows[0]?.votes === 1 && categoryRows[0]?.category === "intro"
-                            && categoryRows[1]?.votes === 1 && categoryRows[1]?.category === "sponsor") {
-                    done();
-                } else {
-                    done("Submission changed to " + row.category + " instead of staying as sponsor. Vote was applied as " + categoryRows[0]?.category + " with " + categoryRows[0]?.votes + " votes and there were " + categoryRows.length + " rows.");
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
+            const categoryRows = await db.prepare('all', `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, ["vote-uuid-4"]);
+            assert.strictEqual(row.category, "sponsor");
+            assert.strictEqual(categoryRows.length, 2);
+            assert.strictEqual(categoryRows[0].votes, 1);
+            assert.strictEqual(categoryRows[0].category, "intro");
+            assert.strictEqual(categoryRows[1].votes, 1);
+            assert.strictEqual(categoryRows[1].category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -249,16 +193,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=fakecategory")
         .then(async res => {
-            if (res.status === 400) {
-                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
-                if (row.category === "sponsor") {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from sponsor to " + row.category);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 400);
+            const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
+            assert.strictEqual(row.category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -267,16 +205,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category&category=highlight")
         .then(async res => {
-            if (res.status === 400) {
-                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
-                if (row.category === "sponsor") {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from sponsor to " + row.category);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 400);
+            const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category"]);
+            assert.strictEqual(row.category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -296,13 +228,12 @@ describe('voteOnSponsorTime', () => {
                     if (row?.category === "outro") outroVotes += row?.votes;
                     if (row?.category === "sponsor") sponsorVotes += row?.votes;
                 }
-                if (submissionRow.category === "sponsor" && categoryRows.length === 3 
-                        && introVotes === 0 && outroVotes === 1 && sponsorVotes === 1) {
-                    done();
-                } else {
-                    done("Submission changed to " + submissionRow.category + " instead of staying as sponsor. There were " 
-                            + introVotes + " intro votes, " + outroVotes + " outro votes and " + sponsorVotes + " sponsor votes.");
-                }
+                assert.strictEqual(submissionRow.category, "sponsor");
+                assert.strictEqual(categoryRows.length, 3);
+                assert.strictEqual(introVotes, 0);
+                assert.strictEqual(outroVotes, 1);
+                assert.strictEqual(sponsorVotes, 1);
+                done();
             } else {
                 done("Status code was " + res.status);
             }
@@ -317,11 +248,8 @@ describe('voteOnSponsorTime', () => {
                 + "/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category-change&category=" + inputCat)
             .then(async () => {
                 const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category-change"]);
-                if (row.category === assertCat) {
-                    callback();
-                } else {
-                    done("Vote did not succeed. Submission went from sponsor to " + row.category);
-                }
+                assert.strictEqual(row.category, assertCat);
+                callback();
             })
             .catch(err => done(err));
         };
@@ -335,17 +263,12 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&category=outro")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
-                const row2 = await db.prepare('get', `SELECT votes FROM "categoryVotes" WHERE "UUID" = ? and category = ?`, ["vote-uuid-5", "outro"]);
-                if (row.category === "outro" && row2.votes === 500) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from intro to " + row.category + ". Category votes are " + row2.votes + " and should be 500.");
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            const row2 = await db.prepare('get', `SELECT votes FROM "categoryVotes" WHERE "UUID" = ? and category = ?`, ["vote-uuid-5", "outro"]);
+            assert.strictEqual(row.category, "outro");
+            assert.strictEqual(row2.votes, 500);
+            done();
         })
         .catch(err => done(err));
     });
@@ -354,16 +277,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=testman&UUID=vote-uuid-5_1&category=outro")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
-                if (row.category === "outro") {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from intro to " + row.category + ".");
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            assert.strictEqual(row.category, "outro");
+            done();
         })
         .catch(err => done(err));
     });
@@ -372,11 +289,8 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID3&UUID=invalid-uuid&category=intro")
         .then(async res => {
-            if (res.status === 400) {
-                done();
-            } else {
-                done("Status code was " + res.status + " instead of 400.");
-            }
+            assert.strictEqual(res.status, 400);
+            done();
         })
         .catch(err => done(err));
     });
@@ -385,12 +299,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=1")
         .then(async res => {
+            assert.strictEqual(res.status, 403);
             const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
-            if (res.status === 403 && row.votes === -3) {
-                done();
-            } else {
-                done("Status code was " + res.status + ", row is " + JSON.stringify(row));
-            }
+            assert.strictEqual(row.votes, -3);
+            done();
         })
         .catch(err => done(err));
     });
@@ -399,12 +311,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-5&type=0")
         .then(async res => {
+            assert.strictEqual(res.status, 200);
             const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
-            if (res.status === 200 && row.votes === -3) {
-                done();
-            } else {
-                done("Status code was " + res.status + ", row is " + JSON.stringify(row));
-            }
+            assert.strictEqual(row.votes, -3);
+            done();
         })
         .catch(err => done(err));
     });
@@ -413,16 +323,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=vote-uuid-5&type=1")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
-                if (row.votes > -3) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Votes raised from -3 to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-5"]);
+            assert.ok(row.votes > -3);
+            done();
         })
         .catch(err => done(err));
     });
@@ -431,11 +335,8 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=warn-voteuser01&UUID=warnvote-uuid-0&type=1")
         .then(async res => {
-            if (res.status === 403) {
-                done(); // success
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -444,12 +345,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=0")
         .then(async res => {
+            assert.strictEqual(res.status, 200);
             const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 200 && row.votes === 2) {
-                done();
-            } else {
-                done("Status code was " + res.status + " instead of 200, row was " + JSON.stringify(row));
-            }
+            assert.strictEqual(row.votes, 2);
+            done();
         })
         .catch(err => done(err));
     });
@@ -458,12 +357,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&type=1")
         .then(async res => {
+            assert.strictEqual(res.status, 200);
             const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 200 && row.votes === 3) {
-                done();
-            } else {
-                done("Status code was " + res.status + " instead of 403, row was " + JSON.stringify(row));
-            }
+            assert.strictEqual(row.votes, 3);
+            done();
         })
         .catch(err => done(err));
     });
@@ -472,12 +369,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID&UUID=no-sponsor-segments-uuid-0&category=outro")
         .then(async res => {
+            assert.strictEqual(res.status, 200);
             const row = await db.prepare('get', `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["no-sponsor-segments-uuid-0"]);
-            if (res.status === 200 && row.category === "sponsor") {
-                done();
-            } else {
-                done("Status code was " + res.status + " instead of 200, row was " + JSON.stringify(row));
-            }
+            assert.strictEqual(row.category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -486,16 +381,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=1")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
-                if (row?.locked) {
-                    done();
-                } else {
-                    done("Segment not locked");
-                }
-            } else {
-                done("Status code was " + res.status + " instead of 200");
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
+            assert.ok(row.locked);
+            done();
         })
         .catch(err => done(err));
     });
@@ -504,16 +393,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=0")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
-                if (!row?.locked) {
-                    done();
-                } else {
-                    done("Segment not locked");
-                }
-            } else {
-                done("Status code was " + res.status + " instead of 200");
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
+            assert.ok(!row.locked);
+            done();
         })
         .catch(err => done(err));
     });
@@ -522,16 +405,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-hidden-uuid-1&type=1")
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-hidden-uuid-1"]);
-                if (!row?.hidden) {
-                    done();
-                } else {
-                    done("Segment not unhidden");
-                }
-            } else {
-                done("Status code was " + res.status + " instead of 200");
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-hidden-uuid-1"]);
+            assert.ok(!row?.hidden);
+            done();
         })
         .catch(err => done(err));
     });
@@ -540,16 +417,10 @@ describe('voteOnSponsorTime', () => {
         fetch(getbaseURL()
             + "/api/voteOnSponsorTime?userID=randomID2&UUID=vote-uuid-2&type=20") 
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
-                if (row.votes === 10) {
-                    done();
-                } else {
-                    done("Vote did not succeed. Submission went from 10 votes to " + row.votes);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, ["vote-uuid-2"]);
+            assert.strictEqual(row.votes, 10);
+            done();
         })
         .catch(err => done(err));
     });
@@ -557,19 +428,18 @@ describe('voteOnSponsorTime', () => {
     it('Should not be able to vote with type 10', (done: Done) => {
         fetch(getbaseURL() + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=10")
         .then(res => {
-            if (res.status !== 400) done('non 400 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done('couldn\'t call endpoint'));
+        .catch(err => done(err));
     });
 
     it('Should not be able to vote with type 11', (done: Done) => {
         fetch(getbaseURL() + "/api/voteOnSponsorTime?userID=VIPUser&UUID=segment-locking-uuid-1&type=11")
         .then(res => {
-            if (res.status !== 400) done('non 400 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done('couldn\'t call endpoint'));
+        .catch(err => done(err));
     });
-
 });

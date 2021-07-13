@@ -3,6 +3,7 @@ import {Done, getbaseURL} from '../utils';
 import {db} from '../../src/databases/databases';
 import {getHash} from '../../src/utils/getHash';
 import {IDatabase} from '../../src/databases/IDatabase';
+import assert from 'assert';
 
 async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
     const votes = 0,
@@ -22,25 +23,18 @@ async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: n
     await db.prepare('run', `UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ? WHERE "UUID" = ?`, [startTime, endTime, UUID]);
 }
 
-async function dbSponsorTimesCompareExpect(db: IDatabase, expect: any) {
+async function dbSponsorTimesCompareExpect(db: IDatabase, expect: any): Promise<void> {
     for (let i = 0, len = expect.length; i < len; i++) {
         const expectSeg = expect[i];
         const seg = await db.prepare('get', `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "UUID" = ?`, [expectSeg.UUID]);
         if ('removed' in expect) {
-            if (expect.removed === true && seg.votes === -2) {
-                return;
-            } else {
-                return `${expectSeg.UUID} doesnt got removed`;
-            }
-        }
-        if (seg.startTime !== expectSeg.startTime) {
-            return `${expectSeg.UUID} startTime is incorrect. seg.startTime is ${seg.startTime} expected ${expectSeg.startTime}`;
-        }
-        if (seg.endTime !== expectSeg.endTime) {
-            return `${expectSeg.UUID} endTime is incorrect. seg.endTime is ${seg.endTime} expected ${expectSeg.endTime}`;
+            assert.ok(expect.removed);
+            assert.strictEqual(seg.votes, -2);
+            assert.deepStrictEqual(seg, expectSeg);
+            assert.strictEqual(seg.startTime, expectSeg.startTime);
+            assert.strictEqual(seg.endTime, expectSeg.endTime);
         }
     }
-    return;
 }
 
 describe('segmentShift', function () {
@@ -79,7 +73,8 @@ describe('segmentShift', function () {
             }),
         })
         .then(async res => {
-            done(res.status === 403 ? undefined : res.status);
+            assert.strictEqual(res.status, 403);
+            done();
         })
         .catch(err => done(err));
     });
@@ -98,7 +93,7 @@ describe('segmentShift', function () {
             }),
         })
         .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
+            assert.strictEqual(res.status, 200);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -140,7 +135,7 @@ describe('segmentShift', function () {
             }),
         })
         .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
+            assert.strictEqual(res.status, 200);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -182,7 +177,7 @@ describe('segmentShift', function () {
             }),
         })
         .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
+            assert.strictEqual(res.status, 200);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -224,7 +219,7 @@ describe('segmentShift', function () {
             }),
         })
         .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
+            assert.strictEqual(res.status, 200);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',
@@ -266,7 +261,7 @@ describe('segmentShift', function () {
             }),
         })
         .then(async res => {
-            if (res.status !== 200) return done(`Status code was ${res.status}`);
+            assert.strictEqual(res.status, 200);
             const expect = [
                 {
                     UUID: 'vsegshifttest01uuid01',

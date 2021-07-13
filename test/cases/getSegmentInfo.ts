@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {db} from '../../src/databases/databases';
 import {Done, getbaseURL} from '../utils';
 import {getHash} from '../../src/utils/getHash';
+import assert from 'assert';
 
 const ENOENTID =        "0".repeat(64);
 const upvotedID =       "a"+"0".repeat(63);
@@ -43,231 +44,188 @@ describe('getSegmentInfo', () => {
     it('Should be able to retreive upvoted segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${upvotedID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "upvoted" && data[0].votes === 2) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive downvoted segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${downvotedID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "downvoted" && data[0].votes === -2) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "downvoted");
+            assert.strictEqual(data[0].votes, -2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive locked up segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${lockedupID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "locked-up" && data[0].locked === 1 && data[0].votes === 2) {
-                    done();
-                } else {
-                    done ("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "locked-up");
+            assert.strictEqual(data[0].locked, 1);
+            assert.strictEqual(data[0].votes, 2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive infinite vote segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${infvotesID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "infvotes" && data[0].votes === 100000) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "infvotes");
+            assert.strictEqual(data[0].votes, 100000);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive shadowhidden segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${shadowhiddenID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "shadowhidden" && data[0].shadowHidden === 1) {
-                    done();
-                } else {
-                    done ("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "shadowhidden");
+            assert.strictEqual(data[0].shadowHidden, 1);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive locked down segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${lockeddownID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "locked-down" && data[0].votes === -2 && data[0].locked === 1) {
-                    done();
-                } else {
-                    done ("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "locked-down");
+            assert.strictEqual(data[0].votes, -2);
+            assert.strictEqual(data[0].locked, 1);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive hidden segment', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${hiddenID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "hidden" && data[0].hidden === 1) {
-                    done();
-                } else {
-                    done ("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "hidden");
+            assert.strictEqual(data[0].hidden, 1);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive segment with old ID', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${oldID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "oldID" && data[0].votes === 1) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "oldID");
+            assert.strictEqual(data[0].votes, 1);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive single segment in array', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=["${upvotedID}"]`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 1 && data[0].videoID === "upvoted" && data[0].votes === 2) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.length, 1);
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive multiple segments in array', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=["${upvotedID}", "${downvotedID}"]`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 2 &&
-                    (data[0].videoID === "upvoted" && data[0].votes === 2) &&
-                    (data[1].videoID === "downvoted" && data[1].votes === -2)) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.length, 2);
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            assert.strictEqual(data[1].videoID, "downvoted");
+            assert.strictEqual(data[1].votes, -2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should be possible to send unexpected query parameters', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${upvotedID}&fakeparam=hello&category=sponsor`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data[0].videoID === "upvoted" && data[0].votes === 2) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should return 400 if array passed to UUID', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=["${upvotedID}", "${downvotedID}"]`)
         .then(res => {
-            if (res.status !== 400) done("non 400 respone code: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return 400 if bad array passed to UUIDs', (done: Done) => {
         fetch(getbaseURL() + "/api/segmentInfo?UUIDs=[not-quoted,not-quoted]")
         .then(res => {
-            if (res.status !== 400) done("non 404 respone code: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return 400 if bad UUID passed', (done: Done) => {
         fetch(getbaseURL() + "/api/segmentInfo?UUID=notarealuuid")
         .then(res => {
-            if (res.status !== 400) done("non 400 respone code: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return 400 if bad UUIDs passed in array', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=["notarealuuid", "anotherfakeuuid"]`)
         .then(res => {
-            if (res.status !== 400) done("non 400 respone code: " + res.status);
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return good UUID when mixed with bad UUIDs', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=["${upvotedID}", "anotherfakeuuid"]`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 1 && data[0].videoID === "upvoted" && data[0].votes === 2) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.length, 1);
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should cut off array at 10', function(done: Done) {
@@ -275,34 +233,31 @@ describe('getSegmentInfo', () => {
         const filledIDArray = `["${upvotedID}", "${downvotedID}", "${lockedupID}", "${shadowhiddenID}", "${lockeddownID}", "${hiddenID}", "${fillerID1}", "${fillerID2}", "${fillerID3}", "${fillerID4}", "${fillerID5}"]`;
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=${filledIDArray}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                // last segment should be fillerID4
-                if (data.length === 10 && data[0].videoID === "upvoted" && data[0].votes === 2 && data[9].videoID === "filler" && data[9].UUID === fillerID4) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.length, 10);
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            assert.strictEqual(data[9].videoID, "filler");
+            assert.strictEqual(data[9].UUID, fillerID4);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should not duplicate reponses', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUIDs=["${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${downvotedID}"]`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 2 && data[0].videoID === "upvoted" && data[0].votes === 2 && data[1].videoID === "downvoted" && data[1].votes === -2) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.length, 2);
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            assert.strictEqual(data[1].videoID, "downvoted");
+            assert.strictEqual(data[1].votes, -2);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return 400 if UUID not found', (done: Done) => {
@@ -311,41 +266,33 @@ describe('getSegmentInfo', () => {
             if (res.status !== 400) done("non 400 respone code: " + res.status);
             else done(); // pass
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be able to retreive multiple segments with multiple parameters', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${upvotedID}&UUID=${downvotedID}`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 2 &&
-                    (data[0].videoID === "upvoted" && data[0].votes === 2) &&
-                    (data[1].videoID === "downvoted" && data[1].votes === -2)) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.length, 2);
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[1].videoID, "downvoted");
+            assert.strictEqual(data[0].votes, 2);
+            assert.strictEqual(data[1].votes, -2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 
     it('Should not parse repeated UUID if UUIDs present', (done: Done) => {
         fetch(getbaseURL() + `/api/segmentInfo?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=["${upvotedID}"]`)
         .then(async res => {
-            if (res.status !== 200) done("Status code was: " + res.status);
-            else {
-                const data = await res.json();
-                if (data.length === 1 &&
-                    (data[0].videoID === "upvoted" && data[0].votes === 2)) {
-                    done();
-                } else {
-                    done("Received incorrect body: " + (await res.text()));
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data[0].videoID, "upvoted");
+            assert.strictEqual(data[0].votes, 2);
+            done();
         })
-        .catch(() => "Couldn't call endpoint");
+        .catch(err => done(err));
     });
 });

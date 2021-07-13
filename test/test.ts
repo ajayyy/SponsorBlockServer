@@ -12,9 +12,7 @@ import rateLimit from 'express-rate-limit';
 
 async function init() {
     ImportMock.mockFunction(rateLimitMiddlewareModule, 'rateLimitMiddleware', rateLimit({
-        skip: () => {
-            return true;
-        }
+        skip: () => true
     }));
 
     // delete old test database
@@ -35,10 +33,10 @@ async function init() {
 
     // Add each .ts file to the mocha instance
     fs.readdirSync(testDir)
-        .filter(function(file) {
+        .filter((file) => 
             // Only keep the .ts files
-            return file.substr(-3) === '.ts';
-        })
+            file.substr(-3) === '.ts'
+        )
         .forEach(function(file) {
             mocha.addFile(
                 path.join(testDir, file)

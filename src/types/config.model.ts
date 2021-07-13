@@ -44,6 +44,7 @@ export interface SBSConfig {
     postgres?: PoolConfig;
     dumpDatabase?: DumpDatabase;
     diskCache: CacheOptions;
+    crons: CronJobOptions;
 }
 
 export interface WebhookConfig {
@@ -80,4 +81,18 @@ export interface DumpDatabase {
 export interface DumpDatabaseTable {
     name: string;
     order?: string;
+}
+
+export interface CronJobDefault {
+    schedule: string;
+}
+
+export interface CronJobOptions {
+    enabled: boolean;
+    downvoteSegmentArchive: CronJobDefault & DownvoteSegmentArchiveCron;
+}
+
+export interface DownvoteSegmentArchiveCron {
+    voteThreshold: number;
+    timeThresholdInDays: number;
 }
