@@ -6,6 +6,8 @@ import {getHash} from "../utils/getHash";
 import { HashedUserID, UserID } from "../types/user.model";
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
+    // exit early if no body passed in
+    if (!req.body.userID && !req.body.issuerUserID) return res.status(400).json({"message": "Missing parameters"});
     // Collect user input data
     const issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
     const userID: UserID = req.body.userID;

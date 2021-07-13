@@ -340,4 +340,13 @@ describe("getSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it('Should get 400 if no videoID passed in', (done: Done) => {
+        fetch(getbaseURL() + '/api/skipSegments')
+        .then(async res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
 });

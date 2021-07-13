@@ -7,13 +7,15 @@ import { Category, VideoID, VideoIDHash } from "../types/segments.model";
 interface LockResultByHash {
     videoID: VideoID,
     hash: VideoIDHash,
+    reason: string,
     categories: Category[]
 }
 
 interface DBLock {
     videoID: VideoID,
     hash: VideoIDHash,
-    category: Category
+    category: Category,
+    reason: string,
 }
 
 const mergeLocks = (source: DBLock[]) => {
@@ -22,12 +24,15 @@ const mergeLocks = (source: DBLock[]) => {
         // videoID already exists
         const destMatch = dest.find(s => s.videoID === obj.videoID);
         if (destMatch) {
+            // override longer reason
+            if (obj.reason.length > destMatch.reason.length) destMatch.reason = obj.reason;
             // push to categories
             destMatch.categories.push(obj.category);
         } else {
             dest.push({
                 videoID: obj.videoID,
                 hash: obj.hash,
+                reason: obj.reason,
                 categories: [obj.category]
             });
         }

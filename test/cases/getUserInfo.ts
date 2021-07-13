@@ -79,7 +79,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data with public ID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?publicUserID=${  getHash("getuserinfo_warning_0")}`)
+        fetch(`${getbaseURL()}/api/userInfo?publicUserID=${getHash("getuserinfo_warning_0")}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

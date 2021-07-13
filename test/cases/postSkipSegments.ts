@@ -610,7 +610,7 @@ describe("postSkipSegments", () => {
                     done(); // success
                 } else {
                     const body = await res.text();
-                    done(`Status code was ${  res.status  } ${  body}`);
+                    done(`Status code was ${res.status} ${body}`);
                 }
             })
             .catch(err => done(err));
@@ -636,7 +636,7 @@ describe("postSkipSegments", () => {
                     done(); // success
                 } else {
                     const body = await res.text();
-                    done(`Status code was ${  res.status  } ${  body}`);
+                    done(`Status code was ${res.status} ${body}`);
                 }
             })
             .catch(err => done(err));

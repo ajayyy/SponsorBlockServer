@@ -11,7 +11,7 @@ const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 
-describe("getSegmentsByHash", () => {
+describe("getSkipSegmentsByHash", () => {
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-0-0", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910"]);
@@ -88,7 +88,7 @@ describe("getSegmentsByHash", () => {
     it("Should return 400 prefix too long", (done: Done) => {
         const prefix = "1".repeat(50);
         assert.ok(prefix.length > 33, "failed to generate long enough string");
-        fetch(`${getbaseURL()}/api/skipSegments/${  prefix  }?categories=["shilling"]`)
+        fetch(`${getbaseURL()}/api/skipSegments/${prefix}?categories=["shilling"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

@@ -114,11 +114,11 @@ describe("reputation", () => {
     });
 
     it("user with high reputation", async () => {
-        assert.strictEqual(await getReputation(getHash(userIDHighRep)), 0.24137931034482757);
+        assert.strictEqual(await getReputation(getHash(userIDHighRep)), 0.19310344827586207);
     });
 
     it("user with high reputation and locked segments", async () => {
-        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), 1.8413793103448277);
+        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), 1.793103448275862);
     });
 
 });

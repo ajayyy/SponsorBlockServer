@@ -235,7 +235,7 @@ describe("voteOnSponsorTime", () => {
                     assert.strictEqual(sponsorVotes, 1);
                     done();
                 } else {
-                    done(`Status code was ${  res.status}`);
+                    done(`Status code was ${res.status}`);
                 }
             })
             .catch(err => done(err));
@@ -245,7 +245,7 @@ describe("voteOnSponsorTime", () => {
     it("Should not be able to change your vote to an invalid category", (done: Done) => {
         const vote = (inputCat: string, assertCat: string, callback: Done) => {
             fetch(`${getbaseURL()
-            }/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category-change&category=${  inputCat}`)
+            }/api/voteOnSponsorTime?userID=randomID2&UUID=incorrect-category-change&category=${inputCat}`)
                 .then(async () => {
                     const row = await db.prepare("get", `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, ["incorrect-category-change"]);
                     assert.strictEqual(row.category, assertCat);

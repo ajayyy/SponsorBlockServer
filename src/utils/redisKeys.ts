@@ -10,9 +10,9 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
     hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 4) as VideoIDHash;
     if (hashedVideoIDPrefix.length !== 4) Logger.warn(`Redis skip segment hash-prefix key is not length 4! ${hashedVideoIDPrefix}`);
 
-    return `segments.v2.${  service  }.${  hashedVideoIDPrefix}`;
+    return `segments.v2.${service}.${hashedVideoIDPrefix}`;
 }
 
 export function reputationKey(userID: UserID): string {
-    return `reputation.user.${  userID}`;
+    return `reputation.user.${userID}`;
 }
