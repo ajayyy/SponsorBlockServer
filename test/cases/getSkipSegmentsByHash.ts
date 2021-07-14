@@ -106,10 +106,10 @@ describe("getSkipSegmentsByHash", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 404 for no hash", (done: Done) => {
+    it("Should return 400 for no hash", (done: Done) => {
         fetch(`${getbaseURL()}/api/skipSegments/?categories=["shilling"]`)
             .then(res => {
-                assert.strictEqual(res.status, 404);
+                assert.strictEqual(res.status, 400);
                 done();
             })
             .catch(err => done(err));
