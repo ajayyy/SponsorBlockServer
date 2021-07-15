@@ -40,7 +40,7 @@ class Logger {
     private _settings = {
         ERROR: true,
         WARN: true,
-        INFO: false,
+        INFO: true,
         DEBUG: false,
     };
 
