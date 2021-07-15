@@ -5,7 +5,7 @@ import { ActionType, Category, SegmentUUID, Service, VideoIDHash } from '../type
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    if (!hashPrefixTester(req.params.prefix)) {
+    if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;

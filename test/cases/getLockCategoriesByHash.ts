@@ -4,29 +4,28 @@ import {getHash} from '../../src/utils/getHash';
 import {db} from '../../src/databases/databases';
 import assert from 'assert';
 
-
 describe('getLockCategoriesByHash', () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-getLockCategories")]);
  
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "hashedVideoID") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-1', 'sponsor', '67a654898fda3a5541774aea345796c7709982bb6018cb08d22a18eeddccc1d0']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-1', 'interaction', '67a654898fda3a5541774aea345796c7709982bb6018cb08d22a18eeddccc1d0']);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason", "hashedVideoID") VALUES (?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-1', 'sponsor', '1-reason-short', '67a654898fda3a5541774aea345796c7709982bb6018cb08d22a18eeddccc1d0']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-1', 'interaction', '1-reason-longer', '67a654898fda3a5541774aea345796c7709982bb6018cb08d22a18eeddccc1d0']);
  
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-2', 'preview', 'dff09120437b4bd594dffae5f3cde3cfc5f6099fb01d0ef4051919b2908d9a50']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-2', 'preview', '2-reason', 'dff09120437b4bd594dffae5f3cde3cfc5f6099fb01d0ef4051919b2908d9a50']);
  
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-3', 'nonmusic', 'bf1b122fd5630e0df8626d00c4a95c58954ad715e5595b0f75a19ac131e28928']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'getLockHash-3', 'nonmusic', '3-reason', 'bf1b122fd5630e0df8626d00c4a95c58954ad715e5595b0f75a19ac131e28928']);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-1', 'outro', 'b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-2', 'intro', 'b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450']);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-2', 'preview', 'b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-1', 'outro', 'fake1-reason', 'b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-2', 'intro', 'fake2-longer-reason', 'b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450']);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), 'fakehash-2', 'preview', 'fake2-short', 'b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450']);
     });
 
-    it('Database should be greater or equal to version 18', async () => {
+    it('Database should be greater or equal to version 20', async () => {
         const version = (await db.prepare('get', 'SELECT key, value FROM config where key = ?', ['version'])).value;
-        if (version >= 18) return;
-        else return 'Version isn\'t greater than 18. Version is ' + version;
+        if (version >= 20) return;
+        else return 'Version isn\'t greater than 20. Version is ' + version;
     });
 
     it('Should be able to get multiple locks in one object', (done: Done) => {
@@ -40,7 +39,8 @@ describe('getLockCategoriesByHash', () => {
                 categories: [
                     "sponsor",
                     "interaction"
-                ]
+                ],
+                reason: "1-reason-longer"
             }];
             assert.deepStrictEqual(data, expected);
             done();
@@ -58,7 +58,8 @@ describe('getLockCategoriesByHash', () => {
                 hash: getHash("getLockHash-2", 1),
                 categories: [
                     "preview"
-                ]
+                ],
+                reason: "2-reason"
             }];
             assert.deepStrictEqual(data, expected);
             done();
@@ -76,7 +77,8 @@ describe('getLockCategoriesByHash', () => {
                 hash: getHash("getLockHash-3", 1),
                 categories: [
                     "nonmusic"
-                ]
+                ],
+                reason: "3-reason"
             }];
             assert.deepStrictEqual(data, expected);
             done();
@@ -94,14 +96,16 @@ describe('getLockCategoriesByHash', () => {
                 hash: "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35",
                 categories: [
                     "outro"
-                ]
+                ],
+                reason: "fake1-reason"
             }, {
                 videoID: "fakehash-2",
                 hash: "b05acd1cd6ec7dffe5ffea64ada91ae7469d6db2ce21c7e30ad7fa62075d450",
                 categories: [
                     "intro",
                     "preview"
-                ]
+                ],
+                reason: "fake2-longer-reason"
             }];
             assert.deepStrictEqual(data, expected);
             done();
@@ -138,6 +142,24 @@ describe('getLockCategoriesByHash', () => {
 
     it('should return 400 if full hash sent', (done: Done) => {
         fetch(getbaseURL() + '/api/lockCategories/b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('should return 400 if hash too short', (done: Done) => {
+        fetch(getbaseURL() + '/api/lockCategories/00')
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
+        })
+        .catch(err => done(err));
+    });
+
+    it('should return 400 if no hash specified', (done: Done) => {
+        fetch(getbaseURL() + '/api/lockCategories/')
         .then(res => {
             assert.strictEqual(res.status, 400);
             done();
