@@ -62,7 +62,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         const locked = adminUserIDInput === undefined ? 0 : 1;
         let oldUserName = '';
 
-        if (row?.userName?.length > 0) {
+        if (row?.userName != undefined) {
             //already exists, update this row
             oldUserName = row.userName;
             await db.prepare('run', `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, userID]);
