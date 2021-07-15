@@ -56,8 +56,12 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
 };
 
 const DownvoteSegmentArchiveJob = new CronJob(
-  jobConfig?.schedule || new Date(1),
+  jobConfig?.schedule || "0 0 * * * 0",
   () => archiveDownvoteSegment(jobConfig?.timeThresholdInDays, jobConfig?.voteThreshold)
 );
+
+if (serverConfig?.crons?.enabled && jobConfig && !jobConfig.schedule) {
+  Logger.error("Invalid cron schedule for downvoteSegmentArchive");
+}
 
 export default DownvoteSegmentArchiveJob;
