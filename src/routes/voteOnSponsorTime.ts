@@ -258,6 +258,10 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
         //invalid request
         return res.sendStatus(400);
     }
+    if (paramUserID.length < 30 && config.mode !== "test") {
+        // Ignore this vote, invalid
+        return res.sendStatus(200);
+    }
 
     //hash the userID
     const nonAnonUserID = getHash(paramUserID);
