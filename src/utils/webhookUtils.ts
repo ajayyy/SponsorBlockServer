@@ -1,6 +1,6 @@
-import {config} from '../config';
-import {Logger} from '../utils/logger';
-import fetch from 'node-fetch';
+import {config} from "../config";
+import {Logger} from "../utils/logger";
+import fetch from "node-fetch";
 
 function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
@@ -38,16 +38,15 @@ function dispatchEvent(scope: string, data: Record<string, unknown>): void {
         if (!scopes.includes(scope.toLowerCase())) return;
 
         fetch(webhookURL, {
-            method: 'POST',
+            method: "POST",
             body: JSON.stringify(data),
             headers: {
                 "Authorization": authKey,
                 "Event-Type": scope, // Maybe change this in the future?
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json"
             }
-        })
-        .catch(err => {
-            Logger.warn('Couldn\'t send webhook to ' + webhook.url);
+        }).catch(err => {
+            Logger.warn(`Couldn't send webhook to ${webhook.url}`);
             Logger.warn(err);
         });
     }

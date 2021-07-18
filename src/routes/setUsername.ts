@@ -1,11 +1,11 @@
-import {config} from '../config';
-import {Logger} from '../utils/logger';
-import {db, privateDB} from '../databases/databases';
-import {getHash} from '../utils/getHash';
-import {Request, Response} from 'express';
+import {config} from "../config";
+import {Logger} from "../utils/logger";
+import {db, privateDB} from "../databases/databases";
+import {getHash} from "../utils/getHash";
+import {Request, Response} from "express";
 
 async function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
-    return privateDB.prepare('run',
+    return privateDB.prepare("run",
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedByAdmin", "updatedAt") VALUES(?, ?, ?, ?, ?)`,
         [userID, newUserName, oldUserName, + updatedByAdmin, new Date().getTime()]
     );
@@ -26,11 +26,11 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         // Don't allow
         return res.sendStatus(200);
     }
-    
+
     // remove unicode control characters from username (example: \n, \r, \t etc.)
     // source: https://en.wikipedia.org/wiki/Control_character#In_Unicode
     // eslint-disable-next-line no-control-regex
-    userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+    userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
     if (adminUserIDInput != undefined) {
         //this is the admin controlling the other users account, don't hash the controling account's ID
@@ -46,7 +46,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     }
 
     try {
-        const row = await db.prepare('get', `SELECT count(*) as count FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
+        const row = await db.prepare("get", `SELECT count(*) as count FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
         if (adminUserIDInput === undefined && row.count > 0) {
             return res.sendStatus(200);
         }
@@ -58,17 +58,17 @@ export async function setUsername(req: Request, res: Response): Promise<Response
 
     try {
         //check if username is already set
-        const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
+        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
         const locked = adminUserIDInput === undefined ? 0 : 1;
-        let oldUserName = '';
+        let oldUserName = "";
 
         if (row?.userName !== undefined) {
             //already exists, update this row
             oldUserName = row.userName;
-            await db.prepare('run', `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, userID]);
+            await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, userID]);
         } else {
             //add to the db
-            await db.prepare('run', `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [userID, userName, locked]);
+            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [userID, userName, locked]);
         }
 
         await logUserNameChange(userID, userName, oldUserName, adminUserIDInput !== undefined);

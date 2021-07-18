@@ -1,6 +1,6 @@
-import { Logger } from '../utils/logger';
-import { IDatabase, QueryType } from './IDatabase';
-import { Client, Pool, types } from 'pg';
+import { Logger } from "../utils/logger";
+import { IDatabase, QueryType } from "./IDatabase";
+import { Client, Pool, types } from "pg";
 
 import fs from "fs";
 
@@ -11,7 +11,7 @@ types.setTypeParser(1700, function(val) {
 
 // return int8 (pg_type oid=20) as int
 types.setTypeParser(20, function(val) {
-  return parseInt(val, 10);
+    return parseInt(val, 10);
 });
 
 export class Postgres implements IDatabase {
@@ -47,8 +47,8 @@ export class Postgres implements IDatabase {
         // Convert query to use numbered parameters
         let count = 1;
         for (let char = 0; char < query.length; char++) {
-            if (query.charAt(char) === '?') {
-                query = query.slice(0, char) + "$" + count + query.slice(char + 1);
+            if (query.charAt(char) === "?") {
+                query = `${query.slice(0, char)}$${count}${query.slice(char + 1)}`;
                 count++;
             }
         }
@@ -58,19 +58,19 @@ export class Postgres implements IDatabase {
         const queryResult = await this.pool.query({text: query, values: params});
 
         switch (type) {
-            case 'get': {
-                const value = queryResult.rows[0];
-                Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
-                return value;
-            }
-            case 'all': {
-                const values = queryResult.rows;
-                Logger.debug(`result (postgres): ${values}`);
-                return values;
-            }
-            case 'run': {
-                break;
-            }
+        case "get": {
+            const value = queryResult.rows[0];
+            Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
+            return value;
+        }
+        case "all": {
+            const values = queryResult.rows;
+            Logger.debug(`result (postgres): ${values}`);
+            return values;
+        }
+        case "run": {
+            break;
+        }
         }
     }
 
@@ -81,7 +81,7 @@ export class Postgres implements IDatabase {
         });
 
         await client.connect();
-        
+
         if ((await client.query(`SELECT * FROM pg_database WHERE datname = '${this.config.postgres.database}'`)).rowCount == 0) {
             await client.query(`CREATE DATABASE "${this.config.postgres.database}"
                                 WITH 
@@ -101,25 +101,25 @@ export class Postgres implements IDatabase {
         const versionCodeInfo = await this.pool.query("SELECT value FROM config WHERE key = 'version'");
         let versionCode = versionCodeInfo.rows[0] ? versionCodeInfo.rows[0].value : 0;
 
-        let path = schemaFolder + "/_upgrade_" + fileNamePrefix + "_" + (parseInt(versionCode) + 1) + ".sql";
-        Logger.debug('db update: trying ' + path);
+        let path = `${schemaFolder}/_upgrade_${fileNamePrefix}_${(parseInt(versionCode) + 1)}.sql`;
+        Logger.debug(`db update: trying ${path}`);
         while (fs.existsSync(path)) {
-            Logger.debug('db update: updating ' + path);
+            Logger.debug(`db update: updating ${path}`);
             await this.pool.query(this.processUpgradeQuery(fs.readFileSync(path).toString()));
 
             versionCode = (await this.pool.query("SELECT value FROM config WHERE key = 'version'"))?.rows[0]?.value;
-            path = schemaFolder + "/_upgrade_" + fileNamePrefix + "_" + (parseInt(versionCode) + 1) + ".sql";
-            Logger.debug('db update: trying ' + path);
+            path = `${schemaFolder}/_upgrade_${fileNamePrefix}_${(parseInt(versionCode) + 1)}.sql`;
+            Logger.debug(`db update: trying ${path}`);
         }
-        Logger.debug('db update: no file ' + path);
+        Logger.debug(`db update: no file ${path}`);
     }
 
     private async applyIndexes(fileNamePrefix: string, schemaFolder: string) {
-        const path = schemaFolder + "/_" + fileNamePrefix + "_indexes.sql";
+        const path = `${schemaFolder}/_${fileNamePrefix}_indexes.sql`;
         if (fs.existsSync(path)) {
             await this.pool.query(fs.readFileSync(path).toString());
         } else {
-            Logger.debug('failed to apply indexes to ' + fileNamePrefix);
+            Logger.debug(`failed to apply indexes to ${fileNamePrefix}`);
         }
     }
 
@@ -131,4 +131,3 @@ export class Postgres implements IDatabase {
         return result;
     }
 }
-

@@ -7,7 +7,7 @@ export function createMemoryCache(memoryFn: (...args: any[]) => void, cacheTimeM
     const promiseMemory = new Map();
     return (...args: any[]) => {
         // create cacheKey by joining arguments as string
-        const cacheKey = args.join('.');
+        const cacheKey = args.join(".");
         // check if promising is already running
         if (promiseMemory.has(cacheKey)) {
             return promiseMemory.get(cacheKey);

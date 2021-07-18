@@ -4,7 +4,7 @@ import { config } from "../config";
 let DiskCache: LRU<string, string>;
 
 if (config.diskCache) {
-    DiskCache = new LRU('./databases/cache', config.diskCache);
+    DiskCache = new LRU("./databases/cache", config.diskCache);
     DiskCache.init();
 } else {
     DiskCache = {

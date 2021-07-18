@@ -1,7 +1,7 @@
-import {db} from '../databases/databases';
-import {Logger} from '../utils/logger';
-import {Request, Response} from 'express';
-import {hashPrefixTester} from '../utils/hashPrefixTester';
+import {db} from "../databases/databases";
+import {Logger} from "../utils/logger";
+import {Request, Response} from "express";
+import {hashPrefixTester} from "../utils/hashPrefixTester";
 import { Category, VideoID, VideoIDHash } from "../types/segments.model";
 
 interface LockResultByHash {
@@ -25,7 +25,7 @@ const mergeLocks = (source: DBLock[]) => {
         const destMatch = dest.find(s => s.videoID === obj.videoID);
         if (destMatch) {
             // override longer reason
-            if (obj.reason.length > destMatch.reason.length) destMatch.reason = obj.reason;
+            if (obj.reason?.length > destMatch.reason?.length) destMatch.reason = obj.reason;
             // push to categories
             destMatch.categories.push(obj.category);
         } else {
@@ -40,7 +40,6 @@ const mergeLocks = (source: DBLock[]) => {
     return dest;
 };
 
-
 export async function getLockCategoriesByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
     if (!hashPrefixTester(req.params.prefix)) {
@@ -50,7 +49,7 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
 
     try {
         // Get existing lock categories markers
-        const lockedRows = await db.prepare('all', 'SELECT "videoID", "hashedVideoID" as "hash", "category", "reason" from "lockCategories" where "hashedVideoID" LIKE ?', [hashPrefix + '%']) as DBLock[];
+        const lockedRows = await db.prepare("all", 'SELECT "videoID", "hashedVideoID" as "hash", "category", "reason" from "lockCategories" where "hashedVideoID" LIKE ?', [`${hashPrefix}%`]) as DBLock[];
         if (lockedRows.length === 0 || !lockedRows[0]) return res.sendStatus(404);
         // merge all locks
         return res.send(mergeLocks(lockedRows));

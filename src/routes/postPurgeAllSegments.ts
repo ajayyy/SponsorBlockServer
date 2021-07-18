@@ -1,10 +1,10 @@
-import {Logger} from '../utils/logger';
-import {getHash} from '../utils/getHash';
-import {isUserVIP} from '../utils/isUserVIP';
-import {Request, Response} from 'express';
-import {HashedUserID, UserID} from '../types/user.model';
+import {Logger} from "../utils/logger";
+import {getHash} from "../utils/getHash";
+import {isUserVIP} from "../utils/isUserVIP";
+import {Request, Response} from "express";
+import {HashedUserID, UserID} from "../types/user.model";
 import {VideoID} from "../types/segments.model";
-import {db} from '../databases/databases';
+import {db} from "../databases/databases";
 
 export async function postPurgeAllSegments(req: Request, res: Response): Promise<Response> {
     const userID = req.body.userID as UserID;
@@ -22,12 +22,12 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
         const vipState = await isUserVIP(hashedUserID);
         if (!vipState) {
             return res.status(403).json({
-                message: 'Must be a VIP to perform this action.',
+                message: "Must be a VIP to perform this action.",
             });
         }
 
-        await db.prepare('run', `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "videoID" = ?`, [videoID]);
-    
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "videoID" = ?`, [videoID]);
+
     } catch (err) {
         Logger.error(err);
         return res.sendStatus(500);
