@@ -19,10 +19,13 @@ describe("getUserInfo", () => {
         await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000007", getHash("getuserinfo_user_02"), 7, 10, "sponsor", 1]);
         await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000008", getHash("getuserinfo_user_02"), 8, 10, "sponsor", 1]);
 
-        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_0"), 10, "getuserinfo_vip", 1]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_1"), 10, "getuserinfo_vip", 1]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_1"), 10, "getuserinfo_vip", 1]);
+        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
+        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_0"), 10, "getuserinfo_vip", 1, "warning0-0"]);
+        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_1"), 20, "getuserinfo_vip", 1, "warning1-0"]);
+        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_1"), 30, "getuserinfo_vip", 1, "warning1-1"]);
+        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_2"), 40, "getuserinfo_vip", 0, "warning2-0"]);
+        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_3"), 50, "getuserinfo_vip", 1, "warning3-0"]);
+        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_3"), 60, "getuserinfo_vip", 0, "warning3-1"]);
     });
 
     it("Should be able to get a 200", (done: Done) => {
@@ -58,7 +61,8 @@ describe("getUserInfo", () => {
                     reputation: -2,
                     lastSegmentID: "uuid000005",
                     vip: false,
-                    warnings: 0
+                    warnings: 0,
+                    warningReason: ""
                 };
                 const data = await res.json();
                 assert.deepStrictEqual(data, expected);
@@ -68,7 +72,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_0`)
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_0&value=warnings`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -79,7 +83,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data with public ID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?publicUserID=${getHash("getuserinfo_warning_0")}`)
+        fetch(`${getbaseURL()}/api/userInfo?publicUserID=${getHash("getuserinfo_warning_0")}&values=["warnings"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -90,7 +94,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get multiple warnings", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_1`)
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_1&value=warnings`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -101,7 +105,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should not get warnings if none", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_2`)
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_2&value=warnings`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -112,7 +116,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should done(userID for userName (No userName set)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_02`)
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_02&value=userName`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -123,7 +127,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return null segment if none", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_null`)
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_null&value=lastSegmentID`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -134,14 +138,69 @@ describe("getUserInfo", () => {
     });
 
     it("Should return zeroes if userid does not exist", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_null`)
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_null&value=lastSegmentID`)
             .then(async res => {
                 const data = await res.json();
                 for (const value in data) {
                     if (data[value] === null && value !== "lastSegmentID")  {
                         done(`returned null for ${value}`);
                     }
+                    done(); // pass
                 }
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get warning reason from from single enabled warning", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_0&values=["warningReason"]`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                assert.strictEqual(data.warningReason, "warning0-0");
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get most recent warning from two enabled warnings", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_1&value=warningReason`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                assert.strictEqual(data.warningReason, "warning1-1");
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not get disabled warning", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_2&values=["warnings","warningReason"]`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                assert.strictEqual(data.warnings, 0);
+                assert.strictEqual(data.warningReason, "");
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not get newer disabled warning", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_3&value=warnings&value=warningReason`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                assert.strictEqual(data.warnings, 1);
+                assert.strictEqual(data.warningReason, "warning3-0");
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get 400 if bad values specified", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_3&value=invalid-value`)
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
                 done(); // pass
             })
             .catch(err => done(err));
