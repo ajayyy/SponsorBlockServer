@@ -6,6 +6,7 @@ import {db} from '../../src/databases/databases';
 import {ImportMock} from 'ts-mock-imports';
 import * as YouTubeAPIModule from '../../src/utils/youtubeApi';
 import {YouTubeApiMock} from '../youtubeMock';
+import assert from 'assert';
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, 'YouTubeAPI');
 const sinonStub = mockManager.mock('listVideos');
@@ -62,16 +63,12 @@ describe('postSkipSegments', () => {
                 },
             })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcR"]);
-                if (row.startTime === 2 && row.endTime === 10 && row.category === "sponsor") {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcR"]);
+            assert.strictEqual(row.startTime, 2);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -93,16 +90,13 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcF"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor") {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcF"]);
+            assert.strictEqual(row.startTime, 0);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 0);
+            assert.strictEqual(row.category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -125,16 +119,14 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcV"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.actionType === "mute") {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcV"]);
+            assert.strictEqual(row.startTime, 0);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 0);
+            assert.strictEqual(row.category, "sponsor");
+            assert.strictEqual(row.actionType, "mute");
+            done();
         })
         .catch(err => done(err));
     });
@@ -157,16 +149,14 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZX"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 4980) {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZX"]);
+            assert.strictEqual(row.startTime, 0);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 0);
+            assert.strictEqual(row.category, "sponsor");
+            assert.strictEqual(row.videoDuration, 4980);
+            done();
         })
         .catch(err => done(err));
     });
@@ -189,16 +179,14 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZH"]);
-                if (row.startTime === 1 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 4980.20) {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZH"]);
+            assert.strictEqual(row.startTime, 1);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 0);
+            assert.strictEqual(row.category, "sponsor");
+            assert.strictEqual(row.videoDuration, 4980.20);
+            done();
         })
         .catch(err => done(err));
     });
@@ -221,16 +209,14 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["noDuration"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.videoDuration === 100) {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["noDuration"]);
+            assert.strictEqual(row.startTime, 0);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 0);
+            assert.strictEqual(row.category, "sponsor");
+            assert.strictEqual(row.videoDuration, 100);
+            done();
         })
         .catch(err => done(err));
     });
@@ -256,23 +242,21 @@ describe('postSkipSegments', () => {
                     }],
                 }),
             });
-
-            if (res.status === 200) {
-                const lockCategoriesRow = await db.prepare('get', `SELECT * from "lockCategories" WHERE videoID = ?`, ["noDuration"]);
-                const videoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
-                    FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, ["noDuration"]);
-                const videoRow = videoRows[0];
-                const hiddenVideoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
-                    FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, ["noDuration"]);
-                if (lockCategoriesRow === undefined && videoRows.length === 1 && hiddenVideoRows.length === 1 && videoRow.startTime === 1 && videoRow.endTime === 10 
-                        && videoRow.locked === 0 && videoRow.category === "sponsor" && videoRow.videoDuration === 100) {
-                    return;
-                } else {
-                    return "Submitted times were not saved. Actual submission: " + JSON.stringify(videoRow);
-                }
-            } else {
-                return "Status code was " + res.status;
-            }
+            assert.strictEqual(res.status, 200);
+            const lockCategoriesRow = await db.prepare('get', `SELECT * from "lockCategories" WHERE videoID = ?`, ["noDuration"]);
+            const videoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
+                FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, ["noDuration"]);
+            const videoRow = videoRows[0];
+            const hiddenVideoRows = await db.prepare('all', `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
+                FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, ["noDuration"]);
+            assert.ok(!lockCategoriesRow);
+            assert.strictEqual(videoRows.length, 1);
+            assert.strictEqual(hiddenVideoRows.length, 1);
+            assert.strictEqual(videoRow.startTime, 1);
+            assert.strictEqual(videoRow.endTime, 10);
+            assert.strictEqual(videoRow.locked, 0);
+            assert.strictEqual(videoRow.category, "sponsor");
+            assert.strictEqual(videoRow.videoDuration, 100);
         } catch (e) {
             return e;
         }
@@ -284,13 +268,10 @@ describe('postSkipSegments', () => {
                 method: 'POST',
         })
         .then(async res => {
-            if (res.status === 403) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 403 status code: " + res.status + " (" + body + ")");
-            }
+            assert.strictEqual(res.status, 403);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be able to submit a single time under a different service (JSON method)', (done: Done) => {
@@ -311,16 +292,14 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "service" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcG"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 0 && row.category === "sponsor" && row.service === "PeerTube") {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category", "service" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcG"]);
+            assert.strictEqual(row.startTime, 0);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 0);
+            assert.strictEqual(row.category, "sponsor");
+            assert.strictEqual(row.service, "PeerTube");
+            done();
         })
         .catch(err => done(err));
     });
@@ -342,16 +321,13 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["vipuserIDSubmission"]);
-                if (row.startTime === 0 && row.endTime === 10 && row.locked === 1 && row.category === "sponsor") {
-                    done();
-                } else {
-                    done("Submitted times were not saved. Actual submission: " + JSON.stringify(row));
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const row = await db.prepare('get', `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["vipuserIDSubmission"]);
+            assert.strictEqual(row.startTime, 0);
+            assert.strictEqual(row.endTime, 10);
+            assert.strictEqual(row.locked, 1);
+            assert.strictEqual(row.category, "sponsor");
+            done();
         })
         .catch(err => done(err));
     });
@@ -365,7 +341,7 @@ describe('postSkipSegments', () => {
             },
             body: JSON.stringify({
                     userID: "testtesttesttesttesttesttesttesttest",
-                    videoID: "dQw4w9WgXcQ",
+                    videoID: "dQw4w9WgXcT",
                     segments: [{
                         segment: [3, 10],
                         category: "sponsor",
@@ -376,23 +352,19 @@ describe('postSkipSegments', () => {
                 }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcR"]);
-                let success = true;
-                if (rows.length === 2) {
-                    for (const row of rows) {
-                        if ((row.startTime !== 3 || row.endTime !== 10 || row.category !== "sponsor") &&
-                            (row.startTime !== 30 || row.endTime !== 60 || row.category !== "intro")) {
-                            success = false;
-                            break;
-                        }
-                    }
-                }
-                if (success) done();
-                else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcT"]);
+            const expected = [{
+                startTime: 3,
+                endTime: 10,
+                category: "sponsor"
+            }, {
+                startTime: 30,
+                endTime: 60,
+                category: "intro"
+            }];
+            assert.deepStrictEqual(rows, expected);
+            done();
         })
         .catch(err => done(err));
     }).timeout(5000);
@@ -423,25 +395,27 @@ describe('postSkipSegments', () => {
                 }),
         })
         .then(async res => {
-            if (res.status === 200) {
-                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["L_jWHffIx5E"]);
-                let success = true;
-                if (rows.length === 4) {
-                    for (const row of rows) {
-                        if ((row.startTime !== 3 || row.endTime !== 3000 || row.category !== "sponsor") &&
-                            (row.startTime !== 3002 || row.endTime !== 3050 || row.category !== "intro") &&
-                            (row.startTime !== 45 || row.endTime !== 100 || row.category !== "interaction") &&
-                            (row.startTime !== 99 || row.endTime !== 170 || row.category !== "sponsor")) {
-                            success = false;
-                            break;
-                        }
-                    }
-                }
-                if (success) done();
-                else done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 200);
+            const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["L_jWHffIx5E"]);
+            const expected = [{
+                startTime: 3,
+                endTime: 3000,
+                category: "sponsor"
+            }, {
+                startTime: 3002,
+                endTime: 3050,
+                category: "intro"
+            }, {
+                startTime: 45,
+                endTime: 100,
+                category: "interaction"
+            }, {
+                startTime: 99,
+                endTime: 170,
+                category: "sponsor"
+            }];
+            assert.deepStrictEqual(rows, expected);
+            done();
         })
         .catch(err => done(err));
     }).timeout(5000);
@@ -472,27 +446,10 @@ describe('postSkipSegments', () => {
                 }),
             })
         .then(async res => {
-            if (res.status === 403) {
-                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["n9rIGdXnSJc"]);
-                let success = true;
-                if (rows.length === 4) {
-                    for (const row of rows) {
-                        if ((row.startTime === 0 || row.endTime === 2000 || row.category === "interaction") ||
-                            (row.startTime === 3000 || row.endTime === 4000 || row.category === "sponsor") ||
-                            (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
-                            (row.startTime === 4050 || row.endTime === 4750 || row.category === "intro")) {
-                            success = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (success) done();
-                else
-                    done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["n9rIGdXnSJc"]);
+            assert.deepStrictEqual(rows, []);
+            done();
         })
         .catch(err => done(err));
     }).timeout(5000);
@@ -520,23 +477,23 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 403) {
-                const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["80percent_video"]);
-                let success = rows.length == 2;
-                for (const row of rows) {
-                    if ((row.startTime === 2000 || row.endTime === 4000 || row.category === "sponsor") ||
-                        (row.startTime === 1500 || row.endTime === 2750 || row.category === "sponsor") ||
-                        (row.startTime === 4050 || row.endTime === 4750 || row.category === "sponsor")) {
-                        success = false;
-                        break;
-                    }
-                }
-                if (success) done();
-                else
-                    done("Submitted times were not saved. Actual submissions: " + JSON.stringify(rows));
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            const expected = [{
+                category: "sponsor",
+                startTime: 2000,
+                endTime: 4000
+            }, {
+                category: "sponsor",
+                startTime: 1500,
+                endTime: 2750
+            }, {
+                category: "sponsor",
+                startTime: 4050,
+                endTime: 4750
+            }];
+            const rows = await db.prepare('all', `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, ["80percent_video"]);
+            assert.notDeepStrictEqual(rows, expected);
+            done();
         })
         .catch(err => done(err));
     }).timeout(5000);
@@ -546,14 +503,11 @@ describe('postSkipSegments', () => {
             + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting&category=intro", {
             method: 'POST',
         })
-        .then(async res => {
-            if (res.status === 200) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 200 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 200);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be rejected if segment starts and ends at the same time', (done: Done) => {
@@ -561,14 +515,11 @@ describe('postSkipSegments', () => {
             + "/api/skipSegments?videoID=qqwerty&startTime=90&endTime=90&userID=testtesttesttesttesttesttesttesttesting&category=intro", {
             method: 'POST',
         })
-        .then(async res => {
-            if (res.status === 400) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 400 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be accepted if highlight segment starts and ends at the same time', (done: Done) => {
@@ -576,14 +527,11 @@ describe('postSkipSegments', () => {
             + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30&userID=testtesttesttesttesttesttesttesttesting&category=highlight", {
             method: 'POST',
         })
-        .then(async res => {
-            if (res.status === 200) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 200 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 200);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be rejected if highlight segment doesn\'t start and end at the same time', (done: Done) => {
@@ -591,14 +539,11 @@ describe('postSkipSegments', () => {
             + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting&category=highlight", {
             method: 'POST',
         })
-        .then(async res => {
-            if (res.status === 400) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 400 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be rejected if a sponsor is less than 1 second', (done: Done) => {
@@ -606,40 +551,31 @@ describe('postSkipSegments', () => {
             + "/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting", {
             method: 'POST',
         })
-        .then(async res => {
-            if (res.status === 400) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 403 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be rejected if over 80% of the video', (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes?videoID=qqwerty&startTime=30&endTime=1000000&userID=testtesttesttesttesttesttesttesttesting")
-        .then(async res => {
-            if (res.status === 403) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 403 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 403);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it("Should be rejected if NB's predicted probability is <70%.", (done: Done) => {
         fetch(getbaseURL()
             + "/api/postVideoSponsorTimes?videoID=LevkAjUE6d4&startTime=40&endTime=60&userID=testtesttesttesttesttesttesttesttesting")
-        .then(async res => {
-            if (res.status === 200) done(); // pass
-            else {
-                const body = await res.text();
-                done("non 200 status code: " + res.status + " (" + body + ")");
-            }
+        .then(res => {
+            assert.strictEqual(res.status, 200);
+            done();
         })
-        .catch(() => done("Couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should be rejected with custom message if user has to many active warnings', (done: Done) => {
@@ -659,16 +595,10 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 403) {
-                const errorMessage = await res.text();
-                if (errorMessage === 'Reason01') {
-                    done(); // success
-                } else {
-                    done("Status code was 403 but message was: " + errorMessage);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            const errorMessage = await res.text();
+            assert.strictEqual(errorMessage, 'Reason01');
+            done();
         })
         .catch(err => done(err));
     });
@@ -736,7 +666,7 @@ describe('postSkipSegments', () => {
             if (res.status === 400) done();
             else done(true);
         })
-        .catch(() => done(true));
+        .catch(err => done(err));
     });
 
     it('Should be rejected with default message if user has to many active warnings', (done: Done) => {
@@ -756,16 +686,10 @@ describe('postSkipSegments', () => {
             }),
         })
         .then(async res => {
-            if (res.status === 403) {
-                const errorMessage = await res.text();
-                if (errorMessage !== '') {
-                    done(); // success
-                } else {
-                    done("Status code was 403 but message was: " + errorMessage);
-                }
-            } else {
-                done("Status code was " + res.status);
-            }
+            assert.strictEqual(res.status, 403);
+            const errorMessage = await res.text();
+            assert.notStrictEqual(errorMessage, '');
+            done();
         })
         .catch(err => done(err));
     });
@@ -788,11 +712,11 @@ describe('postSkipSegments', () => {
                 }],
             }),
         })
-        .then(async res => {
-            if (res.status === 400) done();
-            else done(true);
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done(true));
+        .catch(err => done(err));
     });
     it('Should return 400 for missing params (JSON method) 2', (done: Done) => {
         fetch(getbaseURL()
@@ -806,11 +730,11 @@ describe('postSkipSegments', () => {
                 videoID: "dQw4w9WgXcQ",
             }),
         })
-        .then(async res => {
-            if (res.status === 400) done();
-            else done(true);
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done(true));
+        .catch(err => done(err));
     });
     it('Should return 400 for missing params (JSON method) 3', (done: Done) => {
         fetch(getbaseURL()
@@ -831,11 +755,11 @@ describe('postSkipSegments', () => {
                 }],
             }),
         })
-        .then(async res => {
-            if (res.status === 400) done();
-            else done(true);
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done(true));
+        .catch(err => done(err));
     });
     it('Should return 400 for missing params (JSON method) 4', (done: Done) => {
         fetch(getbaseURL()
@@ -855,11 +779,11 @@ describe('postSkipSegments', () => {
                 }],
             }),
         })
-        .then(async res => {
-            if (res.status === 400) done();
-            else done(true);
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done(true));
+        .catch(err => done(err));
     });
     it('Should return 400 for missing params (JSON method) 5', (done: Done) => {
         fetch(getbaseURL()
@@ -873,10 +797,10 @@ describe('postSkipSegments', () => {
                 videoID: "dQw4w9WgXcQ",
             }),
         })
-        .then(async res => {
-            if (res.status === 400) done();
-            else done(true);
+        .then(res => {
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done(true));
+        .catch(err => done(err));
     });
 });

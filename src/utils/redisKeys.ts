@@ -14,5 +14,5 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
 } 
 
 export function reputationKey(userID: UserID): string {
-    return "reputation.user." + userID;
+    return "reputation.user.v2." + userID;
 }

@@ -31,136 +31,109 @@ describe('getUserInfo', () => {
     it('Should be able to get a 200', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_user_01')
         .then(res => {
-            if (res.status !== 200) done('non 200 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 200);
+            done();
         })
-        .catch(() => done('couldn\'t call endpoint'));
+        .catch(err => done(err));
     });
 
     it('Should be able to get a 400 (No userID parameter)', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo')
         .then(res => {
-            if (res.status !== 400) done('non 400 (' + res.status + ')');
-            else done(); // pass
+            assert.strictEqual(res.status, 400);
+            done();
         })
-        .catch(() => done('couldn\'t call endpoint'));
+        .catch(err => done(err));
     });
 
     it('Should be able to get user info', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_user_01')
         .then(async res => {
-            if (res.status !== 200) {
-                done("non 200");
-            } else {
-                const data = await res.json();
-                if (data.userName !== 'Username user 01') {
-                    done('Returned incorrect userName "' + data.userName + '"');
-                } else if (data.minutesSaved !== 5) {
-                    done('Returned incorrect minutesSaved "' + data.minutesSaved + '"');
-                } else if (data.viewCount !== 30) {
-                    done('Returned incorrect viewCount "' + data.viewCount + '"');
-                } else if (data.ignoredViewCount !== 20) {
-                    done('Returned incorrect ignoredViewCount "' + data.ignoredViewCount + '"');
-                } else if (data.segmentCount !== 3) {
-                    done('Returned incorrect segmentCount "' + data.segmentCount + '"');
-                } else if (data.ignoredSegmentCount !== 2) {
-                    done('Returned incorrect ignoredSegmentCount "' + data.ignoredSegmentCount + '"');
-                } else if (data.reputation !== -2) {
-                    done('Returned incorrect reputation "' + data.reputation + '"');
-                } else if (data.lastSegmentID !== "uuid000005") {
-                    done('Returned incorrect last segment "' + data.lastSegmentID + '"');
-                } else {
-                    done(); // pass
-                }
-            }
+            assert.strictEqual(res.status, 200);
+            const expected = {
+                userName: 'Username user 01',
+                userID: "66e7c974039ffb870a500a33eca3a3989861018909b938c313cf1a8a366800b8",
+                minutesSaved: 5,
+                viewCount: 30,
+                ignoredViewCount: 20,
+                segmentCount: 3,
+                ignoredSegmentCount: 2,
+                reputation: -2,
+                lastSegmentID: "uuid000005",
+                vip: false,
+                warnings: 0
+            };
+            const data = await res.json();
+            assert.deepStrictEqual(data, expected);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should get warning data', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_warning_0&value=warnings')
         .then(async res => {
-            if (res.status !== 200) {
-                done('non 200 (' + res.status + ')');
-            } else {
-                const data = await res.json();
-                if (data.warnings !== 1) done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
-                else done(); // pass
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.warnings, 1);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should get warning data with public ID', (done: Done) => {
         fetch(getbaseURL() + `/api/userInfo?publicUserID=${getHash("getuserinfo_warning_0")}&values=["warnings"]`)
         .then(async res => {
-            if (res.status !== 200) {
-                done('non 200 (' + res.status + ')');
-            } else {
-                const data = await res.json();
-                if (data.warnings !== 1) done('wrong number of warnings: ' + data.warnings + ', not ' + 1);
-                else done();
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.warnings, 1);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should get multiple warnings', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_warning_1&value=warnings')
         .then(async res => {
-            if (res.status !== 200) {
-                done('non 200 (' + res.status + ')');
-            } else {
-                const data = await res.json();
-                if (data.warnings !== 2) done('wrong number of warnings: ' + data.warnings + ', not ' + 2);
-                else done(); // pass
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.warnings, 2);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should not get warnings if none', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_warning_2&value=warnings')
         .then(async res => {
-            if (res.status !== 200) {
-                done('non 200 (' + res.status + ')');
-            } else {
-                const data = await res.json();
-                if (data.warnings !== 0) done('wrong number of warnings: ' + data.warnings + ', not ' + 0);
-                else done(); // pass
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.warnings, 0);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should done(userID for userName (No userName set)', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_user_02&value=userName')
         .then(async res => {
-            if (res.status !== 200) {
-                done('non 200 (' + res.status + ')');
-            } else {
-                const data = await res.json();
-                if (data.userName !== 'c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f') {
-                    done('Did not done(userID for userName');
-                }
-                done(); // pass
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.userName, 'c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f');
+            done();
         })
-        .catch(() => ('couldn\'t call endpoint'));
+        .catch(err => done(err));
     });
 
     it('Should return null segment if none', (done: Done) => {
         fetch(getbaseURL() + '/api/userInfo?userID=getuserinfo_null&value=lastSegmentID')
         .then(async res => {
-            if (res.status !== 200) {
-                done('non 200 (' + res.status + ')');
-            } else {
-                const data = await res.json();
-                if (data.lastSegmentID !== null) done('returned segment ' + data.warnings + ', not ' + null);
-                else done(); // pass
-            }
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.lastSegmentID, null);
+            done();
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should return zeroes if userid does not exist', (done: Done) => {
@@ -174,7 +147,7 @@ describe('getUserInfo', () => {
             }
             done(); // pass
         })
-        .catch(() => ("couldn't call endpoint"));
+        .catch(err => done(err));
     });
 
     it('Should get warning reason from from single enabled warning', (done: Done) => {
