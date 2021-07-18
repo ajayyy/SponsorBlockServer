@@ -61,7 +61,8 @@ describe('getUserInfo', () => {
                 reputation: -2,
                 lastSegmentID: "uuid000005",
                 vip: false,
-                warnings: 0
+                warnings: 0,
+                warningReason: ""
             };
             const data = await res.json();
             assert.deepStrictEqual(data, expected);
