@@ -338,11 +338,13 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     });
 
     const invalidFields = [];
+    const errors = [];
     if (typeof videoID !== "string") {
         invalidFields.push("videoID");
     }
     if (typeof userID !== "string" || userID.length < 30) {
         invalidFields.push("userID");
+        if (userID.length < 30) errors.push(`userID must be at least 30 characters long`);
     }
     if (!Array.isArray(segments) || segments.length < 1) {
         invalidFields.push("segments");
@@ -350,8 +352,9 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
     if (invalidFields.length !== 0) {
         // invalid request
-        const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ", " : "") + c, "");
-        return res.status(400).send(`No valid ${fields} field(s) provided`);
+        const formattedFields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ", " : "") + c, "");
+        const formattedErrors = errors.reduce((p, c, i) => p + (i !== 0 ? ". " : " ") + c, "");
+        return res.status(400).send(`No valid ${formattedFields} field(s) provided.${formattedErrors}`);
     }
 
     //hash the userID

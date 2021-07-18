@@ -256,6 +256,10 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
         //invalid request
         return res.sendStatus(400);
     }
+    if (paramUserID.length < 30 && config.mode !== "test") {
+        // Ignore this vote, invalid
+        return res.sendStatus(200);
+    }
 
     //hash the userID
     const nonAnonUserID = getHash(paramUserID);
@@ -426,7 +430,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Unide and Lock this submission
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0 WHERE "UUID" = ?', [UUID]);
-            } else if (isVIP && incrementAmount < 0 && voteTypeEnum === voteTypes.normal) {
+            } else if (isVIP && incrementAmount <= 0 && voteTypeEnum === voteTypes.normal) {
                 // Unlock if a VIP downvotes it
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
             }
