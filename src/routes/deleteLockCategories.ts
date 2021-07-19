@@ -1,9 +1,9 @@
-import {Request, Response} from 'express';
-import {isUserVIP} from '../utils/isUserVIP';
-import {getHash} from '../utils/getHash';
-import {db} from '../databases/databases';
-import { Category, VideoID } from '../types/segments.model';
-import { UserID } from '../types/user.model';
+import {Request, Response} from "express";
+import {isUserVIP} from "../utils/isUserVIP";
+import {getHash} from "../utils/getHash";
+import {db} from "../databases/databases";
+import { Category, VideoID } from "../types/segments.model";
+import { UserID } from "../types/user.model";
 
 export async function deleteLockCategoriesEndpoint(req: Request, res: Response): Promise<Response> {
     // Collect user input data
@@ -19,7 +19,7 @@ export async function deleteLockCategoriesEndpoint(req: Request, res: Response):
         || categories.length === 0
     ) {
         return res.status(400).json({
-            message: 'Bad Format',
+            message: "Bad Format",
         });
     }
 
@@ -29,18 +29,18 @@ export async function deleteLockCategoriesEndpoint(req: Request, res: Response):
 
     if (!userIsVIP) {
         return res.status(403).json({
-            message: 'Must be a VIP to mark videos.',
+            message: "Must be a VIP to mark videos.",
         });
     }
 
-    await deleteLockCategories(videoID, categories);  
+    await deleteLockCategories(videoID, categories);
 
-    return res.status(200).json({message: 'Removed lock categories entrys for video ' + videoID});
+    return res.status(200).json({message: `Removed lock categories entrys for video ${videoID}`});
 }
 
 /**
- * 
- * @param videoID 
+ *
+ * @param videoID
  * @param categories If null, will remove all
  */
 export async function deleteLockCategories(videoID: VideoID, categories: Category[]): Promise<void> {
@@ -49,6 +49,6 @@ export async function deleteLockCategories(videoID: VideoID, categories: Categor
     });
 
     for (const entry of entries) {
-        await db.prepare('run', 'DELETE FROM "lockCategories" WHERE "videoID" = ? AND "category" = ?', [videoID, entry.category]);
+        await db.prepare("run", 'DELETE FROM "lockCategories" WHERE "videoID" = ? AND "category" = ?', [videoID, entry.category]);
     }
 }

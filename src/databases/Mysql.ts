@@ -1,8 +1,8 @@
-import {Logger} from '../utils/logger';
-import {IDatabase, QueryType} from './IDatabase';
+import {Logger} from "../utils/logger";
+import {IDatabase, QueryType} from "./IDatabase";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import MysqlInterface from 'sync-mysql';
+import MysqlInterface from "sync-mysql";
 
 export class Mysql implements IDatabase {
     private connection: any;
@@ -19,17 +19,16 @@ export class Mysql implements IDatabase {
         const queryResult = this.connection.query(query, params);
 
         switch (type) {
-            case 'get': {
-                return queryResult[0];
-            }
-            case 'all': {
-                return queryResult;
-            }
-            case 'run': {
-                break;
-            }
+        case "get": {
+            return queryResult[0];
+        }
+        case "all": {
+            return queryResult;
+        }
+        case "run": {
+            break;
+        }
         }
     }
 
 }
-

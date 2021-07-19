@@ -1,4 +1,4 @@
-import {config} from '../config';
+import {config} from "../config";
 
 const enum LogLevel {
     ERROR = "ERROR",
@@ -45,10 +45,10 @@ class Logger {
     };
 
     constructor() {
-        if (config.mode === 'development') {
+        if (config.mode === "development") {
             this._settings.INFO = true;
             this._settings.DEBUG = true;
-        } else if (config.mode === 'test') {
+        } else if (config.mode === "test") {
             this._settings.WARN = false;
         }
     }

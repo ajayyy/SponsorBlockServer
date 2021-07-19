@@ -1,8 +1,8 @@
-import {config} from '../config';
-import {Sqlite} from './Sqlite';
-import {Mysql} from './Mysql';
-import {Postgres} from './Postgres';
-import {IDatabase} from './IDatabase';
+import {config} from "../config";
+import {Sqlite} from "./Sqlite";
+import {Mysql} from "./Mysql";
+import {Postgres} from "./Postgres";
+import {IDatabase} from "./IDatabase";
 
 
 let db: IDatabase;
@@ -14,7 +14,7 @@ if (config.mysql) {
     db = new Postgres({
         dbSchemaFileName: config.dbSchema,
         dbSchemaFolder: config.schemaFolder,
-        fileNamePrefix: 'sponsorTimes',
+        fileNamePrefix: "sponsorTimes",
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
@@ -29,7 +29,7 @@ if (config.mysql) {
     privateDB = new Postgres({
         dbSchemaFileName: config.privateDBSchema,
         dbSchemaFolder: config.schemaFolder,
-        fileNamePrefix: 'private',
+        fileNamePrefix: "private",
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
@@ -45,7 +45,7 @@ if (config.mysql) {
         dbPath: config.db,
         dbSchemaFileName: config.dbSchema,
         dbSchemaFolder: config.schemaFolder,
-        fileNamePrefix: 'sponsorTimes',
+        fileNamePrefix: "sponsorTimes",
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         enableWalCheckpointNumber: !config.readOnly && config.mode === "production"
@@ -54,7 +54,7 @@ if (config.mysql) {
         dbPath: config.privateDB,
         dbSchemaFileName: config.privateDBSchema,
         dbSchemaFolder: config.schemaFolder,
-        fileNamePrefix: 'private',
+        fileNamePrefix: "private",
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         enableWalCheckpointNumber: false
@@ -66,7 +66,7 @@ async function initDb(): Promise<void> {
 
     if (db instanceof Sqlite) {
         // Attach private db to main db
-        (db as Sqlite).attachDatabase(config.privateDB, 'privateDB');
+        (db as Sqlite).attachDatabase(config.privateDB, "privateDB");
     }
 }
 

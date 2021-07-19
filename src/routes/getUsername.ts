@@ -1,7 +1,7 @@
-import {db} from '../databases/databases';
-import {getHash} from '../utils/getHash';
-import {Logger} from '../utils/logger';
-import {Request, Response} from 'express';
+import {db} from "../databases/databases";
+import {getHash} from "../utils/getHash";
+import {Logger} from "../utils/logger";
+import {Request, Response} from "express";
 
 export async function getUsername(req: Request, res: Response): Promise<Response> {
     let userID = req.query.userID as string;
@@ -15,7 +15,7 @@ export async function getUsername(req: Request, res: Response): Promise<Response
     userID = getHash(userID);
 
     try {
-        const row = await db.prepare('get', `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
 
         if (row !== undefined) {
             return res.send({

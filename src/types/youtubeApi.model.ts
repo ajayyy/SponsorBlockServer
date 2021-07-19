@@ -10,24 +10,24 @@ export interface APIVideoData {
         "height": number
         }
     ],
-    
+
     "description": string,
     "descriptionHtml": string,
     "published": number,
     "publishedText": string,
-    
+
     "keywords": string[],
     "viewCount": number,
     "likeCount": number,
     "dislikeCount": number,
-    
+
     "paid": boolean,
     "premium": boolean,
     "isFamilyFriendly": boolean,
     "allowedRegions": string[],
     "genre": string,
     "genreUrl": string,
-    
+
     "author": string,
     "authorId": string,
     "authorUrl": string,
@@ -38,7 +38,7 @@ export interface APIVideoData {
         "height": number
         }
     ],
-    
+
     "subCountText": string,
     "lengthSeconds": number,
     "allowRatings": boolean,
@@ -47,7 +47,7 @@ export interface APIVideoData {
     "liveNow": boolean,
     "isUpcoming": boolean,
     "premiereTimestamp"?: number,
-    
+
     "hlsUrl"?: string,
     "adaptiveFormats": [
         {

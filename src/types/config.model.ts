@@ -1,5 +1,5 @@
-import { PoolConfig } from 'pg';
-import * as redis from 'redis';
+import { PoolConfig } from "pg";
+import * as redis from "redis";
 import { CacheOptions } from "@ajayyy/lru-diskcache";
 
 export interface SBSConfig {

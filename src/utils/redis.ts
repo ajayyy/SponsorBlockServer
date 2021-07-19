@@ -1,6 +1,6 @@
-import {config} from '../config';
-import {Logger} from './logger';
-import redis, {Callback} from 'redis';
+import {config} from "../config";
+import {Logger} from "./logger";
+import redis, {Callback} from "redis";
 
 interface RedisSB {
     get(key: string, callback?: Callback<string | null>): void;
@@ -12,17 +12,17 @@ interface RedisSB {
 
 let exportObject: RedisSB = {
     get: (key, callback?) => callback(null, undefined),
-    getAsync: () => 
+    getAsync: () =>
         new Promise((resolve) => resolve({err: null, reply: undefined})),
     set: (key, value, callback) => callback(null, undefined),
-    setAsync: () => 
+    setAsync: () =>
         new Promise((resolve) => resolve({err: null, reply: undefined})),
-    delAsync: () => 
+    delAsync: () =>
         new Promise((resolve) => resolve(null)),
 };
 
 if (config.redis) {
-    Logger.info('Connected to redis');
+    Logger.info("Connected to redis");
     const client = redis.createClient(config.redis);
     exportObject = client;
 

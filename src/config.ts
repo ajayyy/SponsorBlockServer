@@ -1,12 +1,12 @@
-import fs from 'fs';
+import fs from "fs";
 import {SBSConfig} from "./types/config.model";
 import packageJson from "../package.json";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
-const configFile = process.env.TEST_POSTGRES ? 'ci.json'
-    : isTestMode ? 'test.json'
-    : 'config.json';
-export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString('utf8'));
+const configFile = process.env.TEST_POSTGRES ? "ci.json"
+    : isTestMode ? "test.json"
+        : "config.json";
+export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString("utf8"));
 
 addDefaults(config, {
     port: 80,
@@ -54,8 +54,8 @@ addDefaults(config, {
     dumpDatabase: {
         enabled: false,
         minTimeBetweenMs: 60000,
-        appExportPath: './docker/database-export',
-        postgresExportPath: '/opt/exports',
+        appExportPath: "./docker/database-export",
+        postgresExportPath: "/opt/exports",
         tables: [{
             name: "sponsorTimes",
             order: "timeSubmitted"

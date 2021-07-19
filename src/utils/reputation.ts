@@ -17,22 +17,22 @@ export async function getReputation(userID: UserID): Promise<number> {
     const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
     const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
     // 1596240000000 is August 1st 2020, a little after auto upvote was disabled
-    const fetchFromDB = () => db.prepare("get", 
-            `SELECT COUNT(*) AS "totalSubmissions",
-                SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
-                SUM(CASE WHEN "votes" < 0 AND "videoID" NOT IN 
-                    (SELECT b."videoID" FROM "sponsorTimes" as b 
-					 	WHERE b."userID" = ?
-                            AND b."votes" > 0 AND b."category" = "a"."category" AND b."videoID" = "a"."videoID" LIMIT 1)
-					THEN 1 ELSE 0 END) AS "nonSelfDownvotedSubmissions",
-                SUM(CASE WHEN "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "votedSum",
-                SUM(locked) AS "lockedSum",
-                SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
-                SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
-            FROM "sponsorTimes" as "a" WHERE "userID" = ?`, [userID, weekAgo, pastDate, userID]) as Promise<ReputationDBResult>;
+    const fetchFromDB = () => db.prepare("get",
+        `SELECT COUNT(*) AS "totalSubmissions",
+            SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
+            SUM(CASE WHEN "votes" < 0 AND "videoID" NOT IN 
+                (SELECT b."videoID" FROM "sponsorTimes" as b 
+                    WHERE b."userID" = ?
+                        AND b."votes" > 0 AND b."category" = "a"."category" AND b."videoID" = "a"."videoID" LIMIT 1)
+                THEN 1 ELSE 0 END) AS "nonSelfDownvotedSubmissions",
+            SUM(CASE WHEN "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "votedSum",
+            SUM(locked) AS "lockedSum",
+            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
+            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions"
+        FROM "sponsorTimes" as "a" WHERE "userID" = ?`, [userID, weekAgo, pastDate, userID]) as Promise<ReputationDBResult>;
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
-    
+
     // Grace period
     if (result.totalSubmissions < 5) {
         return 0;
@@ -64,7 +64,7 @@ export async function getReputation(userID: UserID): Promise<number> {
 }
 
 function convertRange(value: number, currentMin: number, currentMax: number, targetMin: number, targetMax: number): number {
-    const currentRange = currentMax - currentMin;  
+    const currentRange = currentMax - currentMin;
     const targetRange = targetMax - targetMin;
     return ((value - currentMin) / currentRange) * targetRange + targetMin;
 }

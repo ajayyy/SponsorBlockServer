@@ -1,10 +1,10 @@
-import {db} from '../databases/databases';
-import {Logger} from '../utils/logger';
-import {Request, Response} from 'express';
-import { config } from '../config';
-import util from 'util';
-import fs from 'fs';
-import path from 'path';
+import {db} from "../databases/databases";
+import {Logger} from "../utils/logger";
+import {Request, Response} from "express";
+import { config } from "../config";
+import util from "util";
+import fs from "fs";
+import path from "path";
 const unlink = util.promisify(fs.unlink);
 
 const ONE_MINUTE = 1000 * 60;
@@ -31,8 +31,8 @@ const licenseHeader = `<p>The API and database follow <a href="https://creativec
 
 const tables = config?.dumpDatabase?.tables ?? [];
 const MILLISECONDS_BETWEEN_DUMPS = config?.dumpDatabase?.minTimeBetweenMs ?? ONE_MINUTE;
-const appExportPath = config?.dumpDatabase?.appExportPath ?? './docker/database-export';
-const postgresExportPath = config?.dumpDatabase?.postgresExportPath ?? '/opt/exports';
+const appExportPath = config?.dumpDatabase?.appExportPath ?? "./docker/database-export";
+const postgresExportPath = config?.dumpDatabase?.postgresExportPath ?? "/opt/exports";
 const tableNames = tables.map(table => table.name);
 
 interface TableDumpList {
@@ -47,7 +47,7 @@ interface TableFile {
 }
 
 if (tables.length === 0) {
-    Logger.warn('[dumpDatabase] No tables configured');
+    Logger.warn("[dumpDatabase] No tables configured");
 }
 
 let lastUpdate = 0;
@@ -71,7 +71,7 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
             files.forEach(file => {
                 // we only care about files that start with "<tablename>_" and ends with .csv
                 tableNames.forEach(tableName => {
-                    if (file.startsWith(`${tableName}`) && file.endsWith('.csv')) {
+                    if (file.startsWith(`${tableName}`) && file.endsWith(".csv")) {
                         const filePath = path.join(exportPath, file);
                         tableFiles[tableName].push({
                             file: filePath,
@@ -108,7 +108,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
     updateQueueTime();
 
     res.status(200);
-    
+
     if (showPage) {
         res.send(`${styleHeader}
             <h1>SponsorBlock database dumps</h1>${licenseHeader}
@@ -127,16 +127,16 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
                     </tr>
                 </thead>
                 <tbody>
-                ${latestDumpFiles.map((item:any) => {
-                    return `
-                    <tr>
-                        <td>${item.tableName}</td>
-                        <td><a href="/database/${item.tableName}.csv">${item.tableName}.csv</a></td>
-                    </tr>
-                    `;
-                }).join('')}
-                ${latestDumpFiles.length === 0 ? '<tr><td colspan="2">Please wait: Generating files</td></tr>' : ''}
-                </tbody>
+    ${latestDumpFiles.map((item:any) => {
+        return `
+        <tr>
+            <td>${item.tableName}</td>
+            <td><a href="/database/${item.tableName}.csv">${item.tableName}.csv</a></td>
+        </tr>
+        `;
+    }).join("")}
+        ${latestDumpFiles.length === 0 ? '<tr><td colspan="2">Please wait: Generating files</td></tr>' : ""}
+        </tbody>
             </table>
             <hr/>
             ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
@@ -159,7 +159,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
 }
 
 async function getDbVersion(): Promise<number> {
-    const row = await db.prepare('get', `SELECT "value" FROM "config" WHERE "key" = 'version'`);
+    const row = await db.prepare("get", `SELECT "value" FROM "config" WHERE "key" = 'version'`);
     if (row === undefined) return 0;
     return row.value;
 }
@@ -173,13 +173,13 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
         res.status(404).send("Not supported on this instance");
         return;
     }
-    
+
     const file = latestDumpFiles.find((value) => `/database/${value.tableName}.csv` === req.path);
 
     updateQueueTime();
 
     if (file) {
-        res.redirect("/download/" + file.fileName);
+        res.redirect(`/download/${file.fileName}`);
     } else {
         res.sendStatus(404);
     }
@@ -198,13 +198,13 @@ async function queueDump(): Promise<void> {
 
         try {
             await removeOutdatedDumps(appExportPath);
-        
+
             const dumpFiles = [];
-    
+
             for (const table of tables) {
                 const fileName = `${table.name}_${startTime}.csv`;
                 const file = `${postgresExportPath}/${fileName}`;
-                await db.prepare('run', `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
+                await db.prepare("run", `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
                         TO '${file}' WITH (FORMAT CSV, HEADER true);`);
                 dumpFiles.push({
                     fileName,

@@ -1,16 +1,16 @@
-import {db} from '../databases/databases';
-import {Request, Response} from 'express';
-import {UserID} from '../types/user.model';
+import {db} from "../databases/databases";
+import {Request, Response} from "express";
+import {UserID} from "../types/user.model";
 
 function getFuzzyUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     // escape [_ % \] to avoid ReDOS
-    userName = userName.replace(/\\/g, '\\\\')
-        .replace(/_/g, '\\_')
-        .replace(/%/g, '\\%');
+    userName = userName.replace(/\\/g, "\\\\")
+        .replace(/_/g, "\\_")
+        .replace(/%/g, "\\%");
     userName = `%${userName}%`; // add wildcard to username
     // LIMIT to reduce overhead | ESCAPE to escape LIKE wildcards
     try {
-        return db.prepare('all', `SELECT "userName", "userID" FROM "userNames" WHERE "userName"
+        return db.prepare("all", `SELECT "userName", "userID" FROM "userNames" WHERE "userName"
         LIKE ? ESCAPE '\\' LIMIT 10`, [userName]);
     } catch (err) {
         return null;
@@ -19,7 +19,7 @@ function getFuzzyUserID(userName: string): Promise<{userName: string, userID: Us
 
 function getExactUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     try {
-        return db.prepare('all', `SELECT "userName", "userID" from "userNames" WHERE "userName" = ? LIMIT 10`, [userName]);
+        return db.prepare("all", `SELECT "userName", "userID" from "userNames" WHERE "userName" = ? LIMIT 10`, [userName]);
     } catch (err) {
         return null;
     }
@@ -30,7 +30,7 @@ export async function getUserID(req: Request, res: Response): Promise<Response> 
     const exactSearch = req.query.exact
         ? req.query.exact == "true"
         : false as boolean;
-    
+
     // if not exact and length is 1, also skip
     if (userName == undefined || userName.length > 64 ||
         (!exactSearch && userName.length < 3)) {

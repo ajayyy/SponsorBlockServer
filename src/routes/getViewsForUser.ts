@@ -1,7 +1,7 @@
-import {db} from '../databases/databases';
-import {Request, Response} from 'express';
-import {getHash} from '../utils/getHash';
-import {Logger} from '../utils/logger';
+import {db} from "../databases/databases";
+import {Request, Response} from "express";
+import {getHash} from "../utils/getHash";
+import {Logger} from "../utils/logger";
 
 export async function getViewsForUser(req: Request, res: Response): Promise<Response> {
     let userID = req.query.userID as string;
@@ -15,7 +15,7 @@ export async function getViewsForUser(req: Request, res: Response): Promise<Resp
     userID = getHash(userID);
 
     try {
-        const row = await db.prepare('get', `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
 
         //increase the view count by one
         if (row.viewCount != null) {
