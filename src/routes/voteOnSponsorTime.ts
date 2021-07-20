@@ -432,7 +432,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0 WHERE "UUID" = ?', [UUID]);
 
                 // Reset video duration in case that caused it to be hidden
-                if (videoInfo.hidden) await db.prepare("run", 'UPDATE "sponsorTimes" SET "videoDuration" WHERE "UUID" = ?', [UUID]);
+                if (videoInfo.hidden) await db.prepare("run", 'UPDATE "sponsorTimes" SET "videoDuration" = 0 WHERE "UUID" = ?', [UUID]);
             } else if (isVIP && incrementAmount <= 0 && voteTypeEnum === voteTypes.normal) {
                 // Unlock if a VIP downvotes it
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
