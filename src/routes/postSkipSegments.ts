@@ -383,7 +383,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     ) as {videoDuration: VideoDuration, UUID: SegmentUUID}[];
 
     // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
-    const videoDurationChanged = (videoDuration: number) => videoDuration != 0 && previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
+    const videoDurationChanged = (videoDuration: number) => videoDuration != 0
+            && previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
 
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {

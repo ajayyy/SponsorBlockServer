@@ -10,7 +10,7 @@ import {getIP} from "../utils/getIP";
 import {getHash} from "../utils/getHash";
 import {config} from "../config";
 import { UserID } from "../types/user.model";
-import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash } from "../types/segments.model";
+import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
 import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 
@@ -383,8 +383,8 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
         }
 
         //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        const videoInfo = await db.prepare("get", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as
-                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number, userID: UserID};
+        const videoInfo = await db.prepare("get", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID", "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as
+                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number, userID: UserID, hidden: Visibility};
 
         if (voteTypeEnum === voteTypes.normal) {
             if ((isVIP || isOwnSubmission) && incrementAmount < 0) {
@@ -430,6 +430,9 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Unide and Lock this submission
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0 WHERE "UUID" = ?', [UUID]);
+
+                // Reset video duration in case that caused it to be hidden
+                if (videoInfo.hidden) await db.prepare("run", 'UPDATE "sponsorTimes" SET "videoDuration" WHERE "UUID" = ?', [UUID]);
             } else if (isVIP && incrementAmount <= 0 && voteTypeEnum === voteTypes.normal) {
                 // Unlock if a VIP downvotes it
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
