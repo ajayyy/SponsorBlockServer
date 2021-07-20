@@ -319,7 +319,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     if (!Object.values(Service).some((val) => val === service)) {
         service = Service.YouTube;
     }
-    let videoDuration: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
+    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
+    let videoDuration = videoDurationParam;
 
     let segments = req.body.segments as IncomingSegment[];
     if (segments === undefined) {
@@ -387,15 +388,16 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
         // Don't use cache if we don't know the video duraton, or the client claims that it has changed
-        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDuration || videoDurationChanged(videoDuration));
+        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDurationParam || videoDurationChanged(videoDurationParam));
     }
     const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
-    if (!videoDuration || (apiVideoDuration && Math.abs(videoDuration - apiVideoDuration) > 2)) {
+    if (!videoDurationParam || (apiVideoDuration && Math.abs(videoDurationParam - apiVideoDuration) > 2)) {
         // If api duration is far off, take that one instead (it is only precise to seconds, not millis)
         videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
-    if (videoDurationChanged(videoDuration)) {
+    // Only treat as difference if both the api duration and submitted duration have changed
+    if (videoDurationChanged(videoDuration) && (!videoDurationParam || videoDurationChanged(videoDurationParam))) {
         // Hide all previous submissions
         for (const submission of previousSubmissions) {
             await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
