@@ -10,7 +10,7 @@ export class YouTubeAPI {
             return { err: "Invalid video ID" };
         }
 
-        const cacheKey = `yt.newleaf.video.$[videoID}`;
+        const cacheKey = `yt.newleaf.video.${videoID}`;
         if (!ignoreCache) {
             try {
                 const data = await DiskCache.get(cacheKey);
