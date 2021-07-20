@@ -422,7 +422,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // Reject segment if it's in the locked categories list
         if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
             // TODO: Do something about the fradulent submission
-            Logger.warn(`Caught a no-segment submission. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}'`);
+            Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
             return res.status(403).send(
                 `New submissions are not allowed for the following category: \
                 '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
