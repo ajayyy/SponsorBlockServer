@@ -45,6 +45,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, "no-sponsor-segments-uuid-0", "no-sponsor-segments", 0, 50, "sponsor", 0, 0, getHash("no-sponsor-segments-video", 1)]);
         await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, "no-sponsor-segments-uuid-1", "no-sponsor-segments", 0, 50, "intro", 0, 0, getHash("no-sponsor-segments-video", 1)]);
         await db.prepare("run", insertSponsorTimeQuery, ["segment-locking-video", 1, 11, 2, "segment-locking-uuid-1", "segment-locking-user", 0, 50, "intro", 0, 0, getHash("segment-locking-video", 1)]);
+        await db.prepare("run", insertSponsorTimeQuery, ["segment-hidden-video", 1, 11, 2, "segment-hidden-uuid-1", "segment-hidden-user", 0, 50, "intro", 0, 1, getHash("segment-locking-video", 1)]);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -383,7 +384,7 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
-                assert.ok(row.locked);
+                assert.strictEqual(row.locked, 1);
                 done();
             })
             .catch(err => done(err));
@@ -395,7 +396,7 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-locking-uuid-1"]);
-                assert.ok(!row.locked);
+                assert.strictEqual(row.locked, 0);
                 done();
             })
             .catch(err => done(err));
@@ -407,7 +408,7 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, ["segment-hidden-uuid-1"]);
-                assert.ok(!row?.hidden);
+                assert.strictEqual(row.hidden, 0);
                 done();
             })
             .catch(err => done(err));
