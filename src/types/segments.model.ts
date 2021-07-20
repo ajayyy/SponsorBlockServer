@@ -60,6 +60,7 @@ export interface DBSegment {
     videoDuration: VideoDuration;
     reputation: number;
     hashedVideoID: VideoIDHash;
+    timeSubmitted: number;
 }
 
 export interface OverlappingSegmentGroup {
@@ -85,7 +86,7 @@ export interface VideoData {
 }
 
 export interface SegmentCache {
-    shadowHiddenSegmentIPs: SBRecord<VideoID, {hashedIP: HashedIP}[]>,
+    shadowHiddenSegmentIPs: SBRecord<VideoID, SBRecord<string, {hashedIP: HashedIP}[]>>,
     userHashedIP?: HashedIP
 }
 

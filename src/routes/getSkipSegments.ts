@@ -24,12 +24,14 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
             return true;
         }
 
-        if (cache.shadowHiddenSegmentIPs[videoID] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ?', [videoID]) as { hashedIP: HashedIP }[];
+        if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
+        if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
+            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted  = ?',
+                [videoID, segment.timeSubmitted]) as { hashedIP: HashedIP }[];
         }
 
         //if this isn't their ip, don't send it to them
-        return cache.shadowHiddenSegmentIPs[videoID].some((shadowHiddenSegment) => {
+        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted].some((shadowHiddenSegment) => {
             if (cache.userHashedIP === undefined) {
                 //hash the IP only if it's strictly necessary
                 cache.userHashedIP = getHash((getIP(req) + config.globalSalt) as IPAddress);
@@ -134,7 +136,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID" FROM "sponsorTimes"
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
@@ -150,7 +152,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden" FROM "sponsorTimes" 
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "timeSubmitted" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [videoID, service]
         ) as Promise<DBSegment[]>;
