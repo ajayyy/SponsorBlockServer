@@ -284,11 +284,14 @@ async function checkUserActiveWarning(userID: string): Promise<{ pass: boolean; 
     ) as {reason: string}[];
 
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
-        const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?";
+        const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
+                                + " that are not malicious, and we just want to clarify the rules. "
+                                + "Could you please send a message in Discord or Matrix so we can further help you? "
+                                + `Your userID is ${userID}.`;
 
         return {
             pass: false,
-            errorMessage: warnings[0]?.reason?.length > 0 ? warnings[0].reason : defaultMessage
+            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? ` Warning reason: ${warnings[0].reason}` : "")
         };
     }
 
