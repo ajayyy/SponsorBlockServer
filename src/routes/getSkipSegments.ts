@@ -26,7 +26,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
         if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted  = ?',
+            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted"  = ?',
                 [videoID, segment.timeSubmitted]) as { hashedIP: HashedIP }[];
         }
 
