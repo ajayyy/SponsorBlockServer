@@ -366,6 +366,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
     const warningResult: {pass: boolean, errorMessage: string} = await checkUserActiveWarning(userID);
     if (!warningResult.pass) {
+        Logger.warn(`Caught a submission for for a warned user. userID: '${userID}', videoID: '${videoID}', category: '${segments.reduce<string>((prev, val) => `${prev} ${val.category}`, "")}', times: ${segments.reduce<string>((prev, val) => `${prev} ${val.segment}`, "")}`);
         return res.status(403).send(warningResult.errorMessage);
     }
 
