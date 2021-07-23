@@ -584,7 +584,8 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 403);
                 const errorMessage = await res.text();
-                assert.strictEqual(errorMessage, "Reason01");
+                assert.match(errorMessage, new RegExp(`${getHash("warn-user01-qwertyuiopasdfghjklzxcvbnm")}`));
+                assert.match(errorMessage, /Reason01/);
                 done();
             })
             .catch(err => done(err));
@@ -673,6 +674,7 @@ describe("postSkipSegments", () => {
                 assert.strictEqual(res.status, 403);
                 const errorMessage = await res.text();
                 assert.notStrictEqual(errorMessage, "");
+                assert.match(errorMessage, new RegExp(`${getHash("warn-user01-qwertyuiopasdfghjklzxcvbnm")}`));
                 done();
             })
             .catch(err => done(err));
