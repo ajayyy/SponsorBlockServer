@@ -33,7 +33,9 @@ export async function getReputation(userID: UserID): Promise<number> {
             SUM(CASE WHEN "votes" > 0 
                 AND NOT EXISTS (
                     SELECT * FROM "sponsorTimes" as c 
-                    WHERE c."videoID" = "a"."videoID" AND c."votes" > "a"."votes" LIMIT 1) 
+                    WHERE (c."votes" > "a"."votes" OR  c."locked" > "a"."locked") AND 
+                        c."videoID" = "a"."videoID" AND 
+                        c."category" = "a"."category" LIMIT 1) 
                 AND EXISTS (
                     SELECT * FROM "lockCategories" as l 
                     WHERE l."videoID" = "a"."videoID" AND l."category" = "a"."category" LIMIT 1)
@@ -42,7 +44,7 @@ export async function getReputation(userID: UserID): Promise<number> {
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
 
-    return calculateFromMetrics(result);
+    return calculateReputationFromMetrics(result);
 }
 
 // convert a number from one range to another.
@@ -52,7 +54,7 @@ function convertRange(value: number, currentMin: number, currentMax: number, tar
     return ((value - currentMin) / currentRange) * targetRange + targetMin;
 }
 
-export function calculateFromMetrics(metrics: ReputationDBResult): number {
+export function calculateReputationFromMetrics(metrics: ReputationDBResult): number {
     // Grace period
     if (metrics.totalSubmissions < 5) {
         return 0;

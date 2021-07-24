@@ -2,7 +2,7 @@ import assert from "assert";
 import { db } from "../../src/databases/databases";
 import { UserID } from "../../src/types/user.model";
 import { getHash } from "../../src/utils/getHash";
-import { getReputation, calculateFromMetrics } from "../../src/utils/reputation";
+import { getReputation, calculateReputationFromMetrics } from "../../src/utils/reputation";
 
 const userIDLowSubmissions = "reputation-lowsubmissions" as UserID;
 const userIDHighDownvotes = "reputation-highdownvotes" as UserID;
@@ -130,7 +130,7 @@ describe("reputation", () => {
             mostUpvotedInLockedVideoSum: 0
         };
 
-        assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), calculateFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), calculateReputationFromMetrics(metrics));
     });
 
     it("user with high non self downvote ratio", async () => {
@@ -145,7 +145,7 @@ describe("reputation", () => {
             oldUpvotedSubmissions: 1,
             mostUpvotedInLockedVideoSum: 0
         };
-        assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), calculateFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), calculateReputationFromMetrics(metrics));
     });
 
     it("user with mostly new submissions", async () => {
@@ -161,7 +161,6 @@ describe("reputation", () => {
     });
 
     it("user with high reputation", async () => {
-        // 0.19310344827586207
         const metrics = {
             totalSubmissions: 8,
             downvotedSubmissions: 1,
@@ -172,12 +171,11 @@ describe("reputation", () => {
             oldUpvotedSubmissions: 5,
             mostUpvotedInLockedVideoSum: 0
         };
-
-        assert.strictEqual(await getReputation(getHash(userIDHighRep)), calculateFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighRep)), calculateReputationFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighRep)), 0.19310344827586207);
     });
 
     it("user with high reputation and locked segments", async () => {
-        // 1.793103448275862
         const metrics = {
             totalSubmissions: 8,
             downvotedSubmissions: 1,
@@ -188,11 +186,11 @@ describe("reputation", () => {
             oldUpvotedSubmissions: 5,
             mostUpvotedInLockedVideoSum: 0
         };
-        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), calculateFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), calculateReputationFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), 1.793103448275862);
     });
 
     it("user with most upvoted segments in locked video", async () => {
-        // 6.158620689655172
         const metrics = {
             totalSubmissions: 10,
             downvotedSubmissions: 1,
@@ -203,7 +201,8 @@ describe("reputation", () => {
             oldUpvotedSubmissions: 6,
             mostUpvotedInLockedVideoSum: 2
         };
-        assert.strictEqual(await getReputation(getHash(userIDHaveMostUpvotedInLockedVideo)), calculateFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHaveMostUpvotedInLockedVideo)), calculateReputationFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHaveMostUpvotedInLockedVideo)),  6.158620689655172);
     });
 
 });
