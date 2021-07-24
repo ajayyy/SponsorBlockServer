@@ -314,12 +314,12 @@ describe("getUserID", () => {
             .catch(err => done(err));
     });
 
-    it('should return 400 if no username parameter specified', (done: Done) => {
-        fetch(getbaseURL() + '/api/userID')
-        .then(res => {
-            assert.strictEqual(res.status, 400);
-            done();
-        })
-        .catch(() => ("couldn't call endpoint"));
+    it("should return 400 if no username parameter specified", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userID`)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(() => ("couldn't call endpoint"));
     });
 });
