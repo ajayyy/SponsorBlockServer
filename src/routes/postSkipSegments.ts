@@ -17,6 +17,19 @@ import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import { UserID } from "../types/user.model";
+import { isUserVIP } from "../utils/isUserVIP";
+
+type CheckResult = {
+    pass: boolean,
+    errorMessage: string,
+    errorCode: number
+};
+
+const CHECK_PASS: CheckResult = {
+    pass: true,
+    errorMessage: "",
+    errorCode: 0
+};
 
 async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: APIVideoData, {submissionStart, submissionEnd}: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
     const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
@@ -267,7 +280,7 @@ async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promi
     }
 }
 
-async function checkUserActiveWarning(userID: string): Promise<{ pass: boolean; errorMessage: string; }> {
+async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
     const warnings = await db.prepare("all",
@@ -291,56 +304,15 @@ async function checkUserActiveWarning(userID: string): Promise<{ pass: boolean; 
 
         return {
             pass: false,
-            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? `\n\nWarning reason: ${warnings[0].reason}` : "")
+            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? `\n\nWarning reason: ${warnings[0].reason}` : ""),
+            errorCode: 403
         };
     }
 
-    return {pass: true, errorMessage: ""};
+    return CHECK_PASS;
 }
 
-function proxySubmission(req: Request) {
-    fetch(`${config.proxySubmission}/api/skipSegments?userID=${req.query.userID}&videoID=${req.query.videoID}`, {
-        method: "POST",
-        body: req.body,
-    })
-        .then(async res => {
-            Logger.debug(`Proxy Submission: ${res.status} (${(await res.text())})`);
-        })
-        .catch(() => {
-            Logger.error("Proxy Submission: Failed to make call");
-        });
-}
-
-export async function postSkipSegments(req: Request, res: Response): Promise<Response> {
-    if (config.proxySubmission) {
-        proxySubmission(req);
-    }
-
-    const videoID = req.query.videoID || req.body.videoID;
-    let userID = req.query.userID || req.body.userID;
-    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
-    if (!Object.values(Service).some((val) => val === service)) {
-        service = Service.YouTube;
-    }
-    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
-    let videoDuration = videoDurationParam;
-
-    let segments = req.body.segments as IncomingSegment[];
-    if (segments === undefined) {
-        // Use query instead
-        segments = [{
-            segment: [req.query.startTime as string, req.query.endTime as string],
-            category: req.query.category as Category,
-            actionType: (req.query.actionType as ActionType) ?? ActionType.Skip
-        }];
-    }
-    // Add default action type
-    segments.forEach((segment) => {
-        if (!Object.values(ActionType).some((val) => val === segment.actionType)){
-            segment.actionType = ActionType.Skip;
-        }
-    });
-
+function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): CheckResult {
     const invalidFields = [];
     const errors = [];
     if (typeof videoID !== "string") {
@@ -358,24 +330,98 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // invalid request
         const formattedFields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ", " : "") + c, "");
         const formattedErrors = errors.reduce((p, c, i) => p + (i !== 0 ? ". " : " ") + c, "");
-        return res.status(400).send(`No valid ${formattedFields} field(s) provided.${formattedErrors}`);
+        return {
+            pass: false,
+            errorMessage: `No valid ${formattedFields} field(s) provided.${formattedErrors}`,
+            errorCode: 400
+        };
     }
 
-    //hash the userID
-    userID = getHash(userID);
+    return CHECK_PASS;
+}
 
-    const warningResult: {pass: boolean, errorMessage: string} = await checkUserActiveWarning(userID);
-    if (!warningResult.pass) {
-        Logger.warn(`Caught a submission for for a warned user. userID: '${userID}', videoID: '${videoID}', category: '${segments.reduce<string>((prev, val) => `${prev} ${val.category}`, "")}', times: ${segments.reduce<string>((prev, val) => `${prev} ${val.segment}`, "")}`);
-        return res.status(403).send(warningResult.errorMessage);
+async function checkEachSegmentValid(userID: string, videoID: VideoID
+    , segments: Array<any>, service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+
+    for (let i = 0; i < segments.length; i++) {
+        if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
+            //invalid request
+            return { pass: false, errorMessage: "One of your segments are invalid", errorCode: 400};
+        }
+
+        if (!config.categoryList.includes(segments[i].category)) {
+            return { pass: false, errorMessage: "Category doesn't exist.", errorCode: 400};
+        }
+
+        // Reject segment if it's in the locked categories list
+        if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
+            // TODO: Do something about the fradulent submission
+            Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
+            return { pass: false, errorCode: 403,
+                errorMessage: `New submissions are not allowed for the following category: \
+                '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
+                ${(segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. "+
+                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")}\
+                If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app`
+            };
+        }
+
+        const startTime = parseFloat(segments[i].segment[0]);
+        const endTime = parseFloat(segments[i].segment[1]);
+
+        if (isNaN(startTime) || isNaN(endTime)
+                || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime)
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
+            //invalid request
+            return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400};
+        }
+
+        if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
+            // Too short
+            return { pass: false, errorMessage: "Sponsors must be longer than 1 second long", errorCode: 400};
+        }
+
+        //check if this info has already been submitted before
+        const duplicateCheck2Row = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
+            and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
+        if (duplicateCheck2Row.count > 0) {
+            return { pass: false, errorMessage: "Sponsors has already been submitted before.", errorCode: 409};
+        }
     }
 
+    return CHECK_PASS;
+}
+
+async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, isVIP: boolean, service:string, apiVideoInfo: APIVideoInfo, decreaseVotes: number): Promise<CheckResult & { decreaseVotes: number; } > {
+    // Auto moderator check
+    if (!isVIP && service == Service.YouTube) {
+        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, {userID, videoID, segments});//startTime, endTime, category: segments[i].category});
+        if (autoModerateResult == "Rejected based on NeuralBlock predictions.") {
+            // If NB automod rejects, the submission will start with -2 votes.
+            // Note, if one submission is bad all submissions will be affected.
+            // However, this behavior is consistent with other automod functions
+            // already in place.
+            //decreaseVotes = -2; //Disable for now
+        } else if (autoModerateResult) {
+            //Normal automod behavior
+            return {
+                pass: false,
+                errorCode: 403,
+                errorMessage: `Request rejected by auto moderator: ${autoModerateResult} If this is an issue, send a message on Discord.`,
+                decreaseVotes
+            };
+        }
+    }
+
+    return {
+        ...CHECK_PASS,
+        decreaseVotes
+    };
+}
+
+async function updateDataIfVideoDurationChange(videoID: VideoID, service: string, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
     let lockedCategoryList = (await db.prepare("all", 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => list.category );
-
-    //check if this user is on the vip list
-    const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [userID])).userCount > 0;
-
-    const decreaseVotes = 0;
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
@@ -388,7 +434,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
     // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
     const videoDurationChanged = (videoDuration: number) => videoDuration != 0
-            && previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
+        && previousSubmissions.length > 0 && !previousSubmissions.some((e) => Math.abs(videoDuration - e.videoDuration) < 2);
 
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
@@ -407,75 +453,145 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         for (const submission of previousSubmissions) {
             await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
         }
-
-        // Reset lock categories
         lockedCategoryList = [];
         deleteLockCategories(videoID, null);
     }
 
+    return {
+        videoDuration,
+        apiVideoInfo,
+        lockedCategoryList
+    };
+}
+
+// Disable max submissions for now
+// Disable IP ratelimiting for now
+async function checkRateLimit(userID:string, videoID: VideoID, timeSubmitted: number, hashedIP: string, options: {
+    enableCheckByIP: boolean;
+    enableCheckByUserID: boolean;
+} = {
+    enableCheckByIP: false,
+    enableCheckByUserID: false
+}): Promise<CheckResult> {
+    const yesterday = timeSubmitted - 86400000;
+
+    if (options.enableCheckByIP) {
+        //check to see if this ip has submitted too many sponsors today
+        const rateLimitCheckRow = await privateDB.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
+
+        if (rateLimitCheckRow.count >= 10) {
+            //too many sponsors for the same video from the same ip address
+            return {
+                pass: false,
+                errorCode: 429,
+                errorMessage: "Have submited many sponsors for the same video."
+            };
+        }
+    }
+
+    if (options.enableCheckByUserID) {
+        //check to see if the user has already submitted sponsors for this video
+        const duplicateCheckRow = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
+
+        if (duplicateCheckRow.count >= 16) {
+            //too many sponsors for the same video from the same user
+            return {
+                pass: false,
+                errorCode: 429,
+                errorMessage: "Have submited many sponsors for the same video."
+            };
+        }
+    }
+
+    return CHECK_PASS;
+}
+
+function proxySubmission(req: Request) {
+    fetch(`${config.proxySubmission}/api/skipSegments?userID=${req.query.userID}&videoID=${req.query.videoID}`, {
+        method: "POST",
+        body: req.body,
+    })
+        .then(async res => {
+            Logger.debug(`Proxy Submission: ${res.status} (${(await res.text())})`);
+        })
+        .catch(() => {
+            Logger.error("Proxy Submission: Failed to make call");
+        });
+}
+
+function preprocessInput(req: Request) {
+    const videoID = req.query.videoID || req.body.videoID;
+    const userID = req.query.userID || req.body.userID;
+    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
+    if (!Object.values(Service).some((val) => val === service)) {
+        service = Service.YouTube;
+    }
+    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
+    const videoDuration = videoDurationParam;
+
+    let segments = req.body.segments as IncomingSegment[];
+    if (segments === undefined) {
+        // Use query instead
+        segments = [{
+            segment: [req.query.startTime as string, req.query.endTime as string],
+            category: req.query.category as Category,
+            actionType: (req.query.actionType as ActionType) ?? ActionType.Skip
+        }];
+    }
+    // Add default action type
+    segments.forEach((segment) => {
+        if (!Object.values(ActionType).some((val) => val === segment.actionType)){
+            segment.actionType = ActionType.Skip;
+        }
+    });
+
+    return {videoID, userID, service, videoDuration, videoDurationParam, segments};
+}
+
+export async function postSkipSegments(req: Request, res: Response): Promise<Response> {
+    if (config.proxySubmission) {
+        proxySubmission(req);
+    }
+
+    // eslint-disable-next-line prefer-const
+    let {videoID, userID, service, videoDuration, videoDurationParam, segments} = preprocessInput(req);
+
+    const invalidCheckResult = checkInvalidFields(videoID, userID, segments);
+    if (!invalidCheckResult.pass) {
+        return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
+    }
+
+    //hash the userID
+    userID = getHash(userID);
+
+    const userWarningCheckResult = await checkUserActiveWarning(userID);
+    if (!userWarningCheckResult.pass) {
+        Logger.warn(`Caught a submission for for a warned user. userID: '${userID}', videoID: '${videoID}', category: '${segments.reduce<string>((prev, val) => `${prev} ${val.category}`, "")}', times: ${segments.reduce<string>((prev, val) => `${prev} ${val.segment}`, "")}`);
+        return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
+    }
+
+    //check if this user is on the vip list
+    const isVIP = await isUserVIP(userID);
+
+    const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
+    videoDuration = newData.videoDuration;
+    const { lockedCategoryList, apiVideoInfo } = newData;
+
     // Check if all submissions are correct
-    for (let i = 0; i < segments.length; i++) {
-        if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
-            //invalid request
-            return res.status(400).send("One of your segments are invalid");
-        }
-
-        if (!config.categoryList.includes(segments[i].category)) {
-            return res.status(400).send("Category doesn't exist.");
-        }
-
-        // Reject segment if it's in the locked categories list
-        if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
-            // TODO: Do something about the fradulent submission
-            Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
-            return res.status(403).send(
-                `New submissions are not allowed for the following category: \
-                '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
-                ${(segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. "+
-                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")}\
-                If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app`,
-            );
-        }
-
-
-        const startTime = parseFloat(segments[i].segment[0]);
-        const endTime = parseFloat(segments[i].segment[1]);
-
-        if (isNaN(startTime) || isNaN(endTime)
-                || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime)
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
-            //invalid request
-            return res.status(400).send("One of your segments times are invalid (too short, startTime before endTime, etc.)");
-        }
-
-        if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
-            // Too short
-            return res.status(400).send("Sponsors must be longer than 1 second long");
-        }
-
-        //check if this info has already been submitted before
-        const duplicateCheck2Row = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
-            and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
-        if (duplicateCheck2Row.count > 0) {
-            return res.sendStatus(409);
-        }
+    const segmentCheckResult = await checkEachSegmentValid(userID, videoID, segments, service, isVIP, lockedCategoryList);
+    if (!segmentCheckResult.pass) {
+        return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
-    // Auto moderator check
-    if (!isVIP && service == Service.YouTube) {
-        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, {userID, videoID, segments});//startTime, endTime, category: segments[i].category});
-        if (autoModerateResult == "Rejected based on NeuralBlock predictions.") {
-            // If NB automod rejects, the submission will start with -2 votes.
-            // Note, if one submission is bad all submissions will be affected.
-            // However, this behavior is consistent with other automod functions
-            // already in place.
-            //decreaseVotes = -2; //Disable for now
-        } else if (autoModerateResult) {
-            //Normal automod behavior
-            return res.status(403).send(`Request rejected by auto moderator: ${autoModerateResult} If this is an issue, send a message on Discord.`);
-        }
+    let decreaseVotes = 0;
+    // Auto check by NB
+    const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, isVIP, service, apiVideoInfo, decreaseVotes);
+    if (!autoModerateCheckResult.pass) {
+        return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
+    } else {
+        decreaseVotes = autoModerateCheckResult.decreaseVotes;
     }
+
     // Will be filled when submitting
     const UUIDs = [];
     const newSegments = [];
@@ -487,31 +603,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         //get current time
         const timeSubmitted = Date.now();
 
-        const yesterday = timeSubmitted - 86400000;
-
-        // Disable IP ratelimiting for now
-        // eslint-disable-next-line no-constant-condition
-        if (false) {
-            //check to see if this ip has submitted too many sponsors today
-            const rateLimitCheckRow = await privateDB.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
-
-            if (rateLimitCheckRow.count >= 10) {
-                //too many sponsors for the same video from the same ip address
-                return res.sendStatus(429);
-            }
-        }
-
-        // Disable max submissions for now
-        // eslint-disable-next-line no-constant-condition
-        if (false) {
-            //check to see if the user has already submitted sponsors for this video
-            const duplicateCheckRow = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ?`, [userID, videoID]);
-
-            if (duplicateCheckRow.count >= 16) {
-                //too many sponsors for the same video from the same user
-                return res.sendStatus(429);
-            }
-        }
+        // const rateLimitCheckResult = checkRateLimit(userID, videoID, timeSubmitted, hashedIP);
+        // if (!rateLimitCheckResult.pass) {
+        //     return res.status(rateLimitCheckResult.errorCode).send(rateLimitCheckResult.errorMessage);
+        // }
 
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
