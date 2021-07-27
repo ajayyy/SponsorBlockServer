@@ -299,12 +299,12 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
         const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
                                 + " that are not malicious, and we just want to clarify the rules. "
-                                + "Could you please send a message in Discord or Matrix so we can further help you? "
+                                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app so we can further help you? "
                                 + `Your userID is ${userID}.`;
 
         return {
             pass: false,
-            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? ` Warning reason: ${warnings[0].reason}` : ""),
+            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? `\n\nWarning reason: ${warnings[0].reason}` : ""),
             errorCode: 403
         };
     }
@@ -359,13 +359,12 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
             Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
             return { pass: false, errorCode: 403,
                 errorMessage: `New submissions are not allowed for the following category: \
-                    '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
-                    ${(segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. "+
-                    "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")}\
-                    If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsorblock:ajay.app`
+                '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
+                ${(segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. "+
+                "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")}\
+                If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app`
             };
         }
-
 
         const startTime = parseFloat(segments[i].segment[0]);
         const endTime = parseFloat(segments[i].segment[1]);
