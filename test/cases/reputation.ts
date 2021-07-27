@@ -2,7 +2,7 @@ import assert from "assert";
 import { db } from "../../src/databases/databases";
 import { UserID } from "../../src/types/user.model";
 import { getHash } from "../../src/utils/getHash";
-import { getReputation } from "../../src/utils/reputation";
+import { getReputation, calculateReputationFromMetrics } from "../../src/utils/reputation";
 
 const userIDLowSubmissions = "reputation-lowsubmissions" as UserID;
 const userIDHighDownvotes = "reputation-highdownvotes" as UserID;
@@ -12,11 +12,13 @@ const userIDLowSum = "reputation-lowsum" as UserID;
 const userIDHighRepBeforeManualVote = "reputation-oldhighrep" as UserID;
 const userIDHighRep = "reputation-highrep" as UserID;
 const userIDHighRepAndLocked = "reputation-highlockedrep" as UserID;
+const userIDHaveMostUpvotedInLockedVideo = "reputation-mostupvotedaslocked" as UserID;
 
 describe("reputation", () => {
     before(async function() {
         this.timeout(5000); // this preparation takes longer then usual
         const videoID = "reputation-videoID";
+        const videoID2 = "reputation-videoID-2";
 
         const sponsorTimesInsertQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-0-uuid-0", getHash(userIDLowSubmissions), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
@@ -87,6 +89,28 @@ describe("reputation", () => {
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-6-uuid-5", getHash(userIDHighRepAndLocked), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-6-uuid-6", getHash(userIDHighRepAndLocked), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-6-uuid-7", getHash(userIDHighRepAndLocked), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+
+        //Record has most upvoted
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 5, 0, "reputation-7-uuid-0", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 101, 0, "reputation-7-uuid-1", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "intro", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID2, 1, 11, 5, 0, "reputation-7-uuid-8", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID2, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID2, 1, 11, 0, 0, "reputation-7-uuid-9", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID2, 1)]);
+        // other segments
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-7-uuid-2", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-7-uuid-3", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-7-uuid-4", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-7-uuid-5", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-7-uuid-6", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-7-uuid-7", getHash(userIDHaveMostUpvotedInLockedVideo), 1606240000000, 50, "sponsor", "YouTube", 100, 0, 0, getHash(videoID, 1)]);
+
+        // lock video
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
+        await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-getLockCategories")]);
+
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "hashedVideoID") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), videoID, "sponsor", getHash(videoID, 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), videoID, "intro", getHash(videoID, 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), videoID2, "sponsor", getHash(videoID2, 1)]);
     });
 
     it("user in grace period", async () => {
@@ -94,10 +118,33 @@ describe("reputation", () => {
     });
 
     it("user with high downvote ratio", async () => {
+        const metrics = {
+            totalSubmissions: 8,
+            downvotedSubmissions: 5,
+            nonSelfDownvotedSubmissions: 0,
+            votedSum: -7,
+            lockedSum: 0,
+            semiOldUpvotedSubmissions: 1,
+            oldUpvotedSubmissions: 1,
+            mostUpvotedInLockedVideoSum: 0
+        };
+
+        assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), calculateReputationFromMetrics(metrics));
         assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), -2.125);
     });
 
     it("user with high non self downvote ratio", async () => {
+        const metrics = {
+            totalSubmissions: 8,
+            downvotedSubmissions: 2,
+            nonSelfDownvotedSubmissions: 2,
+            votedSum: -1,
+            lockedSum: 0,
+            semiOldUpvotedSubmissions: 1,
+            oldUpvotedSubmissions: 1,
+            mostUpvotedInLockedVideoSum: 0
+        };
+        assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), calculateReputationFromMetrics(metrics));
         assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), -1.6428571428571428);
     });
 
@@ -114,11 +161,48 @@ describe("reputation", () => {
     });
 
     it("user with high reputation", async () => {
+        const metrics = {
+            totalSubmissions: 8,
+            downvotedSubmissions: 1,
+            nonSelfDownvotedSubmissions: 0,
+            votedSum: 9,
+            lockedSum: 0,
+            semiOldUpvotedSubmissions: 5,
+            oldUpvotedSubmissions: 5,
+            mostUpvotedInLockedVideoSum: 0
+        };
+        assert.strictEqual(await getReputation(getHash(userIDHighRep)), calculateReputationFromMetrics(metrics));
         assert.strictEqual(await getReputation(getHash(userIDHighRep)), 0.19310344827586207);
     });
 
     it("user with high reputation and locked segments", async () => {
+        const metrics = {
+            totalSubmissions: 8,
+            downvotedSubmissions: 1,
+            nonSelfDownvotedSubmissions: 0,
+            votedSum: 9,
+            lockedSum: 4,
+            semiOldUpvotedSubmissions: 5,
+            oldUpvotedSubmissions: 5,
+            mostUpvotedInLockedVideoSum: 0
+        };
+        assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), calculateReputationFromMetrics(metrics));
         assert.strictEqual(await getReputation(getHash(userIDHighRepAndLocked)), 1.793103448275862);
+    });
+
+    it("user with most upvoted segments in locked video", async () => {
+        const metrics = {
+            totalSubmissions: 10,
+            downvotedSubmissions: 1,
+            nonSelfDownvotedSubmissions: 0,
+            votedSum: 116,
+            lockedSum: 0,
+            semiOldUpvotedSubmissions: 6,
+            oldUpvotedSubmissions: 6,
+            mostUpvotedInLockedVideoSum: 2
+        };
+        assert.strictEqual(await getReputation(getHash(userIDHaveMostUpvotedInLockedVideo)), calculateReputationFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHaveMostUpvotedInLockedVideo)),  6.158620689655172);
     });
 
 });
