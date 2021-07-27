@@ -217,7 +217,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit with a new duration, and hide old submissions and remove segment locks", async () => {
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category") 
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category")
             VALUES(?, ?, ?)`, [getHash("VIPUser-lockCategories"), "noDuration", "sponsor"]);
 
         try {
@@ -238,10 +238,10 @@ describe("postSkipSegments", () => {
             });
             assert.strictEqual(res.status, 200);
             const lockCategoriesRow = await db.prepare("get", `SELECT * from "lockCategories" WHERE videoID = ?`, ["noDuration"]);
-            const videoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
+            const videoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration"
                 FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, ["noDuration"]);
             const videoRow = videoRows[0];
-            const hiddenVideoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" 
+            const hiddenVideoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration"
                 FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, ["noDuration"]);
             assert.ok(!lockCategoriesRow);
             assert.strictEqual(videoRows.length, 1);
@@ -789,4 +789,60 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should return 403 and custom reason for submiting in lockedCategory", async () => {
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason")
+            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), "lockedVideo", "sponsor", "Custom Reason"]);
+
+        try {
+            const res = await fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    userID: "testtesttesttesttesttesttesttesttest",
+                    videoID: "lockedVideo",
+                    segments: [{
+                        segment: [1, 10],
+                        category: "sponsor",
+                    }],
+                }),
+            });
+
+            assert.strictEqual(res.status, 403);
+            assert.match(await res.text(), /Lock reason: /);
+            assert.match(await res.text(), /Custom Reason/);
+        } catch (e) {
+            return e;
+        }
+    });
+
+    it("Should return 403 for submiting in lockedCategory", async () => {
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") 
+            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), "lockedVideo1", "intro", ""]);
+
+        try {
+            const res = await fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    userID: "testtesttesttesttesttesttesttesttest",
+                    videoID: "lockedVideo1",
+                    segments: [{
+                        segment: [1, 10],
+                        category: "intro",
+                    }],
+                }),
+            });
+
+            assert.strictEqual(res.status, 403);
+            assert.doesNotMatch(await res.text(), /Lock reason: /);
+            assert.doesNotMatch(await res.text(), /Custom Reason/);
+        } catch (e) {
+            return e;
+        }
+    }).timeout(5000);
 });

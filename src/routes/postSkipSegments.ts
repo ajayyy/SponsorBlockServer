@@ -354,12 +354,14 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
         }
 
         // Reject segment if it's in the locked categories list
-        if (!isVIP && lockedCategoryList.indexOf(segments[i].category) !== -1) {
+        const lockIndex = lockedCategoryList.findIndex(c => segments[i].category === c.category);
+        if (!isVIP && lockIndex !== -1) {
             // TODO: Do something about the fradulent submission
             Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
             return { pass: false, errorCode: 403,
                 errorMessage: `New submissions are not allowed for the following category: \
                 '${segments[i].category}'. A moderator has decided that no new segments are needed and that all current segments of this category are timed perfectly.\n\n\
+                ${lockedCategoryList[lockIndex].reason?.length !== 0 ? `Lock reason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n
                 ${(segments[i].category === "sponsor" ? "Maybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. "+
                 "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n\n" : "")}\
                 If you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app`
@@ -421,7 +423,7 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
 }
 
 async function updateDataIfVideoDurationChange(videoID: VideoID, service: string, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
-    let lockedCategoryList = (await db.prepare("all", 'SELECT category from "lockCategories" where "videoID" = ?', [videoID])).map((list: any) => list.category );
+    let lockedCategoryList = await db.prepare("all", 'SELECT category, reason from "lockCategories" where "videoID" = ?', [videoID]);
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
