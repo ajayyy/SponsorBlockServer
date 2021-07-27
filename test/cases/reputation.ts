@@ -118,7 +118,6 @@ describe("reputation", () => {
     });
 
     it("user with high downvote ratio", async () => {
-        // -2.125
         const metrics = {
             totalSubmissions: 8,
             downvotedSubmissions: 5,
@@ -131,10 +130,10 @@ describe("reputation", () => {
         };
 
         assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), calculateReputationFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighDownvotes)), -2.125);
     });
 
     it("user with high non self downvote ratio", async () => {
-        // -1.6428571428571428
         const metrics = {
             totalSubmissions: 8,
             downvotedSubmissions: 2,
@@ -146,6 +145,7 @@ describe("reputation", () => {
             mostUpvotedInLockedVideoSum: 0
         };
         assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), calculateReputationFromMetrics(metrics));
+        assert.strictEqual(await getReputation(getHash(userIDHighNonSelfDownvotes)), -1.6428571428571428);
     });
 
     it("user with mostly new submissions", async () => {
