@@ -293,7 +293,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     }
 
     // If not upvote
-    if (!isVIP && type !== 1) {
+    if (!isVIP && type != 1) {
         const isSegmentLocked = async () => !!(await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked;
         const isVideoLocked = async () => !!(await db.prepare("get", `SELECT "lockCategories".category from "lockCategories" left join "sponsorTimes"
             on ("lockCategories"."videoID" = "sponsorTimes"."videoID" and "lockCategories".category = "sponsorTimes".category)
