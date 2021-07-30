@@ -326,12 +326,14 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
 
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
-    const warningsCount = (await db.prepare("get", `SELECT count(*) as count FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
+    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
         [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
-    )).count;
+    ));
 
-    if (warningsCount >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send("Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. Could you please send a message in Discord or Matrix so we can further help you?");
+    if (warnings.length >= config.maxNumberOfActiveWarnings) {
+        return res.status(403).send("Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
+                                    "Could you please send a message in Discord or Matrix so we can further help you?" +
+                                    `${(warnings[0]?.reason?.length > 0 ? ` Warning reason: '${warnings[0].reason}'` : "")}`);
     }
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
