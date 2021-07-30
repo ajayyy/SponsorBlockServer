@@ -20,7 +20,7 @@ addDefaults(config, {
     readOnly: false,
     webhooks: [],
     categoryList: ["sponsor", "selfpromo", "interaction", "intro", "outro", "preview", "music_offtopic", "highlight"],
-    maxNumberOfActiveWarnings: 3,
+    maxNumberOfActiveWarnings: 1,
     hoursAfterWarningExpires: 24,
     adminUserID: "",
     discordCompletelyIncorrectReportWebhookURL: null,
