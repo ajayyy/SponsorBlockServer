@@ -550,7 +550,10 @@ function preprocessInput(req: Request) {
         }
     });
 
-    return {videoID, userID, service, videoDuration, videoDurationParam, segments};
+    const userAgentAsArray = req.get("user-agent")?.split("/");
+    const userAgent = userAgentAsArray[0] || "";
+
+    return {videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent};
 }
 
 export async function postSkipSegments(req: Request, res: Response): Promise<Response> {
@@ -559,7 +562,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     // eslint-disable-next-line prefer-const
-    let {videoID, userID, service, videoDuration, videoDurationParam, segments} = preprocessInput(req);
+    let {videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent} = preprocessInput(req);
 
     const invalidCheckResult = checkInvalidFields(videoID, userID, segments);
     if (!invalidCheckResult.pass) {
@@ -636,9 +639,9 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanned, hashedVideoID,
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanned, hashedVideoID, userAgent
                 ],
                 );
 
