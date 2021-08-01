@@ -6,11 +6,7 @@ const isValidSegmentUUID = (str: string): boolean => /^([a-f0-9]{64}|[a-f0-9]{8}
 
 async function getSegmentFromDBByUUID(UUID: SegmentUUID): Promise<DBSegment> {
     try {
-        return await db.prepare("get",
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked",
-                "UUID", "userID", "timeSubmitted", "views", "category",
-                "service", "videoDuration", "hidden", "reputation", "shadowHidden" FROM "sponsorTimes"
-            WHERE "UUID" = ?`, [UUID]);
+        return await db.prepare("get", `SELECT * FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
     } catch (err) {
         return null;
     }
