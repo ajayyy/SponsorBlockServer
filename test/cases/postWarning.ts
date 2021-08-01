@@ -112,4 +112,27 @@ describe("postWarning", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should re-enable disabled warning", (done: Done) => {
+        const json = {
+            issuerUserID: "warning-vip",
+            userID: "warning-0",
+            enabled: true
+        };
+
+        fetch(`${getbaseURL()}/api/warnUser`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(json),
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+                assert.strictEqual(data.enabled, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

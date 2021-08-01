@@ -4,6 +4,22 @@ import {db} from "../databases/databases";
 import {isUserVIP} from "../utils/isUserVIP";
 import {getHash} from "../utils/getHash";
 import { HashedUserID, UserID } from "../types/user.model";
+import { config } from "../config";
+
+type warningEntry = {
+    userID: HashedUserID,
+    issueTime: number,
+    issuerUserID: HashedUserID,
+    enabled: boolean,
+    reason: string
+}
+
+function checkExpiredWarning(warning: warningEntry): boolean {
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    const expiry =  Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR));
+    return warning.issueTime > expiry && !warning.enabled;
+}
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
     // exit early if no body passed in
@@ -24,7 +40,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     let resultStatus = "";
 
     if (enabled) {
-        const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]);
+        const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]) as warningEntry;
 
         if (!previousWarning) {
             await db.prepare(
@@ -33,6 +49,13 @@ export async function postWarning(req: Request, res: Response): Promise<Response
                 [userID, issueTime, issuerUserID, reason]
             );
             resultStatus = "issued to";
+        // check if warning is still within issue time and warning is not enabled
+        } else if (checkExpiredWarning(previousWarning) ) {
+            await db.prepare(
+                "run", 'UPDATE "warnings" SET "enabled" = 1 WHERE "userID" = ? AND "issueTime" = ?',
+                [userID, previousWarning.issueTime]
+            );
+            resultStatus = "re-enabled";
         } else {
             return res.sendStatus(409);
         }
