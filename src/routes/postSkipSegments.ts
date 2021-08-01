@@ -551,7 +551,7 @@ function preprocessInput(req: Request) {
         }
     });
 
-    const userAgent = req.get("user-agent") ?? parseUserAgent(req.get("User-Agent")) ?? "";
+    const userAgent = req.query.userAgent ?? req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
 
     return {videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent};
 }
