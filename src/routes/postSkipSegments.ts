@@ -550,8 +550,8 @@ function preprocessInput(req: Request) {
         }
     });
 
-    const userAgentAsArray = req.get("user-agent")?.split("/");
-    const userAgent = userAgentAsArray[0] || "";
+    const userAgentAsArray = req.get("user-agent");
+    const userAgent = userAgentAsArray || "";
 
     return {videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent};
 }
