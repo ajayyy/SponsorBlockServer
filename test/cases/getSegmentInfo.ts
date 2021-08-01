@@ -18,27 +18,34 @@ const fillerID3 =       `13${"0".repeat(62)}`;
 const fillerID4 =       `14${"0".repeat(62)}`;
 const fillerID5 =       `15${"0".repeat(62)}`;
 const oldID =           `${"0".repeat(8)}-${"0000-".repeat(3)}${"0".repeat(12)}`;
+const userAgents = {
+    vanced: "Vanced/5.0",
+    meabot: "Meabot/5.0",
+    mpv: "mpv_sponsorblock/5.0",
+    nodesb: "node_sponsorblock/0.2.0",
+    blank: ""
+};
 
 describe("getSegmentInfo", () => {
     before(async () => {
         const insertQuery = `INSERT INTO 
             "sponsorTimes"("videoID", "startTime", "endTime", "votes", "locked",
             "UUID", "userID", "timeSubmitted", "views", "category", "service",
-            "videoDuration", "hidden", "shadowHidden", "hashedVideoID") 
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        await db.prepare("run", insertQuery, ["upvoted", 1, 10, 2, 0, upvotedID, "testman", 0, 50, "sponsor", "YouTube", 100, 0, 0, getHash("upvoted", 1)]);
-        await db.prepare("run", insertQuery, ["downvoted", 1, 10, -2, 0, downvotedID, "testman", 0, 50, "sponsor", "YouTube", 120, 0, 0, getHash("downvoted", 1)]);
-        await db.prepare("run", insertQuery, ["locked-up", 1, 10, 2, 1, lockedupID, "testman", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("locked-up", 1)]);
-        await db.prepare("run", insertQuery, ["infvotes", 1, 10, 100000, 0, infvotesID, "testman", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("infvotes", 1)]);
-        await db.prepare("run", insertQuery, ["hidden", 1, 10, 2, 0, hiddenID, "testman", 0, 50, "sponsor", "YouTube", 140, 1, 0, getHash("hidden", 1)]);
-        await db.prepare("run", insertQuery, ["shadowhidden", 1, 10, 2, 0, shadowhiddenID, "testman", 0, 50, "sponsor", "YouTube", 140, 0, 1, getHash("shadowhidden", 1)]);
-        await db.prepare("run", insertQuery, ["locked-down", 1, 10, -2, 1, lockeddownID, "testman", 0, 50, "sponsor", "YouTube", 200, 0, 0, getHash("locked-down", 1)]);
-        await db.prepare("run", insertQuery, ["oldID", 1, 10, 1, 0, oldID, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("oldID", 1)]);
-        await db.prepare("run", insertQuery, ["filler", 1, 2, 1, 0, fillerID1, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1)]);
-        await db.prepare("run", insertQuery, ["filler", 2, 3, 1, 0, fillerID2, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1)]);
-        await db.prepare("run", insertQuery, ["filler", 3, 4, 1, 0, fillerID3, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1)]);
-        await db.prepare("run", insertQuery, ["filler", 4, 5, 1, 0, fillerID4, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1)]);
-        await db.prepare("run", insertQuery, ["filler", 5, 6, 1, 0, fillerID5, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1)]);
+            "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "userAgent") 
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await db.prepare("run", insertQuery, ["upvoted", 1, 10, 2, 0, upvotedID, "testman", 0, 50, "sponsor", "YouTube", 100, 0, 0, getHash("upvoted", 1), userAgents.vanced]);
+        await db.prepare("run", insertQuery, ["downvoted", 1, 10, -2, 0, downvotedID, "testman", 0, 50, "sponsor", "YouTube", 120, 0, 0, getHash("downvoted", 1), userAgents.meabot]);
+        await db.prepare("run", insertQuery, ["locked-up", 1, 10, 2, 1, lockedupID, "testman", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("locked-up", 1), userAgents.mpv]);
+        await db.prepare("run", insertQuery, ["infvotes", 1, 10, 100000, 0, infvotesID, "testman", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("infvotes", 1), userAgents.nodesb]);
+        await db.prepare("run", insertQuery, ["hidden", 1, 10, 2, 0, hiddenID, "testman", 0, 50, "sponsor", "YouTube", 140, 1, 0, getHash("hidden", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["shadowhidden", 1, 10, 2, 0, shadowhiddenID, "testman", 0, 50, "sponsor", "YouTube", 140, 0, 1, getHash("shadowhidden", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["locked-down", 1, 10, -2, 1, lockeddownID, "testman", 0, 50, "sponsor", "YouTube", 200, 0, 0, getHash("locked-down", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["oldID", 1, 10, 1, 0, oldID, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("oldID", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["filler", 1, 2, 1, 0, fillerID1, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["filler", 2, 3, 1, 0, fillerID2, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["filler", 3, 4, 1, 0, fillerID3, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["filler", 4, 5, 1, 0, fillerID4, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
+        await db.prepare("run", insertQuery, ["filler", 5, 6, 1, 0, fillerID5, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
     });
 
     it("Should be able to retreive upvoted segment", (done: Done) => {
@@ -48,6 +55,7 @@ describe("getSegmentInfo", () => {
                 const data = await res.json();
                 assert.strictEqual(data[0].videoID, "upvoted");
                 assert.strictEqual(data[0].votes, 2);
+                assert.strictEqual(data[0].userAgent, userAgents.vanced);
                 done();
             })
             .catch(err => done(err));
@@ -60,6 +68,7 @@ describe("getSegmentInfo", () => {
                 const data = await res.json();
                 assert.strictEqual(data[0].videoID, "downvoted");
                 assert.strictEqual(data[0].votes, -2);
+                assert.strictEqual(data[0].userAgent, userAgents.meabot);
                 done();
             })
             .catch(err => done(err));
@@ -73,6 +82,7 @@ describe("getSegmentInfo", () => {
                 assert.strictEqual(data[0].videoID, "locked-up");
                 assert.strictEqual(data[0].locked, 1);
                 assert.strictEqual(data[0].votes, 2);
+                assert.strictEqual(data[0].userAgent, userAgents.mpv);
                 done();
             })
             .catch(err => done(err));
@@ -85,6 +95,7 @@ describe("getSegmentInfo", () => {
                 const data = await res.json();
                 assert.strictEqual(data[0].videoID, "infvotes");
                 assert.strictEqual(data[0].votes, 100000);
+                assert.strictEqual(data[0].userAgent, userAgents.nodesb);
                 done();
             })
             .catch(err => done(err));
@@ -97,6 +108,7 @@ describe("getSegmentInfo", () => {
                 const data = await res.json();
                 assert.strictEqual(data[0].videoID, "shadowhidden");
                 assert.strictEqual(data[0].shadowHidden, 1);
+                assert.strictEqual(data[0].userAgent, userAgents.blank);
                 done();
             })
             .catch(err => done(err));
