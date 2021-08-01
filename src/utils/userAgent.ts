@@ -5,7 +5,7 @@ export function parseUserAgent(userAgent: string): string {
         return `Vanced/${ua.match(/.android.youtube\/([^\s]+)/)[1]}`;
     }
 
-    if (ua.includes("mpv_sponsorblock/")) {
+    if (ua.includes("mpv_sponsorblock/") || ua.includes("node_sponsorblock/")) {
         return ua;
     }
 
