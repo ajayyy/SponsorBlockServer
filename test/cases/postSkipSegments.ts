@@ -851,7 +851,7 @@ describe("postSkipSegments", () => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "User-Agent": "MeaBot/5.0"
+                "User-Agent": "com.google.android.youtube/5.0"
             },
             body: JSON.stringify({
                 userID: "testtesttesttesttesttesttesttesttest",
@@ -867,34 +867,7 @@ describe("postSkipSegments", () => {
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-1"]);
                 assert.strictEqual(row.startTime, 0);
                 assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.userAgent, "MeaBot/5.0");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to submit with custom user-agent 2", (done: Done) => {
-        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "User-Agent": "MeaBot"
-            },
-            body: JSON.stringify({
-                userID: "testtesttesttesttesttesttesttesttest",
-                videoID: "userAgent-2",
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
-        })
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-2"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.userAgent, "MeaBot");
+                assert.strictEqual(row.userAgent, "Vanced/5.0");
                 done();
             })
             .catch(err => done(err));
@@ -922,6 +895,33 @@ describe("postSkipSegments", () => {
                 assert.strictEqual(row.startTime, 0);
                 assert.strictEqual(row.endTime, 10);
                 assert.strictEqual(row.userAgent, "");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to submit with custom userAgent in body", (done: Done) => {
+        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userID: "testtesttesttesttesttesttesttesttest",
+                videoID: "userAgent-4",
+                segments: [{
+                    segment: [0, 10],
+                    category: "sponsor",
+                }],
+                userAgent: "MeaBot/5.0"
+            }),
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-4"]);
+                assert.strictEqual(row.startTime, 0);
+                assert.strictEqual(row.endTime, 10);
+                assert.strictEqual(row.userAgent, "MeaBot/5.0");
                 done();
             })
             .catch(err => done(err));
