@@ -867,7 +867,7 @@ describe("postSkipSegments", () => {
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-1"]);
                 assert.strictEqual(row.startTime, 0);
                 assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.userAgent, "MeaBot");
+                assert.strictEqual(row.userAgent, "MeaBot/5.0");
                 done();
             })
             .catch(err => done(err));

@@ -18,6 +18,7 @@ import { getReputation } from "../utils/reputation";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import { UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
+import { parseUserAgent } from "../utils/userAgent";
 
 type CheckResult = {
     pass: boolean,
@@ -550,8 +551,7 @@ function preprocessInput(req: Request) {
         }
     });
 
-    const userAgentAsArray = req.get("user-agent");
-    const userAgent = userAgentAsArray || "";
+    const userAgent = req.get("user-agent") ?? parseUserAgent(req.get("User-Agent")) ?? "";
 
     return {videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent};
 }
