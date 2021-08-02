@@ -24,8 +24,9 @@ describe("getLockCategoriesByHash", () => {
 
     it("Database should be greater or equal to version 20", async () => {
         const version = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
-        if (version >= 20) return;
-        else return `Version isn't greater than 20. Version is ${version}`;
+        assert(
+            version >= 20,
+            `Version isn't greater than 20. Version is ${version}`);
     });
 
     it("Should be able to get multiple locks in one object", (done: Done) => {
