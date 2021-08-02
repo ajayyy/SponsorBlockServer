@@ -472,6 +472,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: string
 
 // Disable max submissions for now
 // Disable IP ratelimiting for now
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function checkRateLimit(userID:string, videoID: VideoID, timeSubmitted: number, hashedIP: string, options: {
     enableCheckByIP: boolean;
     enableCheckByUserID: boolean;

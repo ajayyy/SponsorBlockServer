@@ -61,12 +61,12 @@ async function sendWebhooks(voteData: VoteData) {
         let webhookURL: string = null;
         if (voteData.voteTypeEnum === voteTypes.normal) {
             switch (voteData.finalResponse.webhookType) {
-            case VoteWebhookType.Normal:
-                webhookURL = config.discordReportChannelWebhookURL;
-                break;
-            case VoteWebhookType.Rejected:
-                webhookURL = config.discordFailedReportChannelWebhookURL;
-                break;
+                case VoteWebhookType.Normal:
+                    webhookURL = config.discordReportChannelWebhookURL;
+                    break;
+                case VoteWebhookType.Rejected:
+                    webhookURL = config.discordFailedReportChannelWebhookURL;
+                    break;
             }
         } else if (voteData.voteTypeEnum === voteTypes.incorrect) {
             webhookURL = config.discordCompletelyIncorrectReportWebhookURL;

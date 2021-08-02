@@ -17,16 +17,16 @@ export class Sqlite implements IDatabase {
         const preparedQuery = this.db.prepare(query);
 
         switch (type) {
-        case "get": {
-            return preparedQuery.get(...params);
-        }
-        case "all": {
-            return preparedQuery.all(...params);
-        }
-        case "run": {
-            preparedQuery.run(...params);
-            break;
-        }
+            case "get": {
+                return preparedQuery.get(...params);
+            }
+            case "all": {
+                return preparedQuery.all(...params);
+            }
+            case "run": {
+                preparedQuery.run(...params);
+                break;
+            }
         }
     }
 
