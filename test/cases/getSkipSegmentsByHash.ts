@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, objectContain} from "../utils";
 import {getHash} from "../../src/utils/getHash";
 import {ImportMock,} from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -129,9 +129,12 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segments.length, 2);
-                assert.strictEqual(data[1].segments.length, 1);
+
+                assert(objectContain(data, {
+                    length: 2,
+                    0: {segments: {length: 2}},
+                    1: {segments: {length: 1}}
+                }));
                 done();
             })
             .catch(err => done(err));
@@ -142,12 +145,28 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segments.length, 1);
-                assert.strictEqual(data[1].segments.length, 1);
-                assert.strictEqual(data[0].segments[0].category, "sponsor");
-                assert.strictEqual(data[0].segments[0].UUID, "getSegmentsByHash-0-0");
-                assert.strictEqual(data[1].segments[0].category, "sponsor");
+
+                assert(objectContain(data, {
+                    length: 2,
+                    0: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                category: "sponsor",
+                                UUID: "getSegmentsByHash-0-0"
+                            }
+                        }
+                    },
+                    1: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                category: "sponsor"
+                            }
+                        },
+                    }
+                }));
+
                 done();
             })
             .catch(err => done(err));
@@ -158,12 +177,28 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segments.length, 1);
-                assert.strictEqual(data[1].segments.length, 1);
-                assert.strictEqual(data[0].segments[0].category, "sponsor");
-                assert.strictEqual(data[0].segments[0].UUID, "getSegmentsByHash-0-0");
-                assert.strictEqual(data[1].segments[0].category, "sponsor");
+
+                assert(objectContain(data, {
+                    length: 2,
+                    0: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                category: "sponsor",
+                                UUID: "getSegmentsByHash-0-0"
+                            }
+                        }
+                    },
+                    1: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                category: "sponsor"
+                            }
+                        },
+                    }
+                }));
+
                 done();
             })
             .catch(err => done(err));
@@ -174,13 +209,29 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segments.length, 2);
-                assert.strictEqual(data[1].segments.length, 1);
-                assert.strictEqual(data[0].segments[0].category, "sponsor");
-                assert.strictEqual(data[0].segments[0].UUID, "getSegmentsByHash-0-0");
-                assert.strictEqual(data[0].segments[1].UUID, "getSegmentsByHash-0-2");
-                assert.strictEqual(data[1].segments[0].category, "sponsor");
+
+                assert(objectContain(data, {
+                    length: 2,
+                    0: {
+                        segments: {
+                            length: 2,
+                            0: {
+                                category: "sponsor",
+                                UUID: "getSegmentsByHash-0-0" },
+                            1: {
+                                UUID: "getSegmentsByHash-0-2" }
+                        }
+                    },
+                    1: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                category: "sponsor"
+                            }
+                        },
+                    }
+                }));
+
                 done();
             })
             .catch(err => done(err));
@@ -191,13 +242,29 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segments.length, 2);
-                assert.strictEqual(data[1].segments.length, 1);
-                assert.strictEqual(data[0].segments[0].category, "sponsor");
-                assert.strictEqual(data[0].segments[0].UUID, "getSegmentsByHash-0-0");
-                assert.strictEqual(data[0].segments[1].UUID, "getSegmentsByHash-0-2");
-                assert.strictEqual(data[1].segments[0].category, "sponsor");
+
+                assert(objectContain(data, {
+                    length: 2,
+                    0: {
+                        segments: {
+                            length: 2,
+                            0: {
+                                category: "sponsor",
+                                UUID: "getSegmentsByHash-0-0" },
+                            1: {
+                                UUID: "getSegmentsByHash-0-2" }
+                        }
+                    },
+                    1: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                category: "sponsor"
+                            }
+                        },
+                    }
+                }));
+
                 done();
             })
             .catch(err => done(err));
@@ -208,9 +275,19 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments.length, 1);
-                assert.strictEqual(data[0].segments[0].UUID, "getSegmentsByHash-0-0-1");
+
+                assert(objectContain(data, {
+                    length: 1,
+                    0: {
+                        segments: {
+                            length: 1,
+                            0: {
+                                UUID: "getSegmentsByHash-0-0-1"
+                            },
+                        }
+                    }
+                }));
+
                 done();
             })
             .catch(err => done(err));
@@ -221,8 +298,15 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments.length, 1);
+
+                assert(objectContain(data, {
+                    length: 1,
+                    0: {
+                        segments: {
+                            length: 1,
+                        }
+                    }
+                }));
                 done();
             })
             .catch(err => done(err));
@@ -249,9 +333,16 @@ describe("getSkipSegmentsByHash", () => {
                     .then(async res => {
                         assert.strictEqual(res.status, 200);
                         const data = await res.json();
-                        assert.strictEqual(data.length, 1);
-                        assert.strictEqual(data[0].segments.length, 1);
-                        assert.strictEqual(data[0].segments[0].category, "sponsor");
+
+                        assert(objectContain(data, {
+                            length: 1,
+                            0: {
+                                segments: {
+                                    length: 1,
+                                    0: {category: "sponsor"}
+                                }
+                            }
+                        }));
                         done();
                     })
                     .catch(err => done(`(get) ${err}`));
@@ -264,15 +355,27 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments[0].segment[0], 1);
-                assert.strictEqual(data[0].segments[0].segment[1], 10);
-                assert.strictEqual(data[0].segments[0].category, "sponsor");
-                assert.strictEqual(data[0].segments[0].UUID, "getSegmentsByHash-0-0");
-                assert.strictEqual(data[0].segments[1].segment[0], 20);
-                assert.strictEqual(data[0].segments[1].segment[1], 30);
-                assert.strictEqual(data[0].segments[1].category, "intro");
-                assert.strictEqual(data[0].segments[1].UUID, "getSegmentsByHash-0-1");
+
+                assert(objectContain(data, {
+                    length: 1,
+                    0: {
+                        segments: {
+                            length: 2,
+                            0: {
+                                segment:{
+                                    0: 1,
+                                    1: 10},
+                                category: "sponsor",
+                                UUID: "getSegmentsByHash-0-0" },
+                            1: {
+                                segment:{
+                                    0: 20,
+                                    1: 30},
+                                category: "intro",
+                                UUID: "getSegmentsByHash-0-1" }
+                        }
+                    }
+                }));
                 done();
             })
             .catch(err => done(err));
@@ -283,10 +386,17 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments.length, 2);
-                assert.strictEqual(data[0].segments[0].UUID, "requiredSegmentVid-2");
-                assert.strictEqual(data[0].segments[0].UUID, "requiredSegmentVid-2");
+
+                assert(objectContain(data, {
+                    length: 1,
+                    0: {
+                        segments: {
+                            length: 2,
+                            0: {
+                                UUID: "requiredSegmentVid-2" },
+                        }
+                    }
+                }));
                 done();
             })
             .catch(err => done(err));
@@ -297,10 +407,19 @@ describe("getSkipSegmentsByHash", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments.length, 2);
-                assert.strictEqual(data[0].segments[0].UUID, "requiredSegmentVid-2");
-                assert.strictEqual(data[0].segments[1].UUID, "requiredSegmentVid-3");
+
+                assert(objectContain(data, {
+                    length: 1,
+                    0: {
+                        segments: {
+                            length: 2,
+                            0: {
+                                UUID: "requiredSegmentVid-2" },
+                            1: {
+                                UUID: "requiredSegmentVid-3" },
+                        }
+                    }
+                }));
                 done();
             })
             .catch(err => done(err));
