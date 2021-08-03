@@ -284,7 +284,7 @@ async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promi
 async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
-    const warnings = await db.prepare("all",
+    const warnings = (await db.prepare("all",
         `SELECT "reason" 
         FROM warnings 
         WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1
@@ -295,7 +295,7 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
             Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR)),
             config.maxNumberOfActiveWarnings
         ],
-    ) as {reason: string}[];
+    ) as {reason: string}[]).sort((a, b) => (b?.reason?.length ?? 0) - (a?.reason?.length ?? 0));
 
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
         const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
