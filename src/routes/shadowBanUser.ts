@@ -3,8 +3,9 @@ import {getHash} from "../utils/getHash";
 import {Request, Response} from "express";
 import { config } from "../config";
 import { Category, Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import { HashedUserID, UserID } from "../types/user.model";
 import { QueryCacher } from "../utils/queryCacher";
+import { isUserVIP } from "../utils/isUserVIP";
 
 export async function shadowBanUser(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as string;
@@ -29,7 +30,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     //hash the userID
     adminUserIDInput = getHash(adminUserIDInput);
 
-    const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [adminUserIDInput])).userCount > 0;
+    const isVIP = await isUserVIP(adminUserIDInput as HashedUserID);
     if (!isVIP) {
         //not authorized
         return res.sendStatus(403);
