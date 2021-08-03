@@ -288,12 +288,10 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
         `SELECT "reason" 
         FROM warnings 
         WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1
-        ORDER BY "issueTime" DESC 
-        LIMIT ?`,
+        ORDER BY "issueTime" DESC`,
         [
             userID,
-            Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR)),
-            config.maxNumberOfActiveWarnings
+            Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))
         ],
     ) as {reason: string}[]).sort((a, b) => (b?.reason?.length ?? 0) - (a?.reason?.length ?? 0));
 
