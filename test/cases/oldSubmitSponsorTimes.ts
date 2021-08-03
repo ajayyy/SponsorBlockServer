@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {db} from "../../src/databases/databases";
 import assert from "assert";
 
@@ -10,9 +10,12 @@ describe("postVideoSponsorTime (Old submission method)", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcQ"]);
-                assert.strictEqual(row.startTime, 1);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.category, "sponsor");
+                const expected = {
+                    startTime: 1,
+                    endTime: 10,
+                    category: "sponsor"
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -29,9 +32,12 @@ describe("postVideoSponsorTime (Old submission method)", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcE"]);
-                assert.strictEqual(row.startTime, 1);
-                assert.strictEqual(row.endTime, 11);
-                assert.strictEqual(row.category, "sponsor");
+                const expected = {
+                    startTime: 1,
+                    endTime: 11,
+                    category: "sponsor"
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));

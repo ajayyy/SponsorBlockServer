@@ -515,7 +515,7 @@ describe("lockCategoriesRecords", () => {
     });
 
 
-    it("Should  be able to submit a segment to a video with a different no-segment record", (done: Done) => {
+    it("Should be able to submit a segment to a video with a different no-segment record", (done: Done) => {
         fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
             method: "POST",
             headers: {

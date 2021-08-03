@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
 
@@ -53,9 +53,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
-                assert.strictEqual(data[0].userAgent, userAgents.vanced);
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2,
+                    userAgent: userAgents.vanced,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -66,9 +69,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "downvoted");
-                assert.strictEqual(data[0].votes, -2);
-                assert.strictEqual(data[0].userAgent, userAgents.meabot);
+                const expected = [{
+                    videoID: "downvoted",
+                    votes: -2,
+                    userAgent: userAgents.meabot,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -79,10 +85,13 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "locked-up");
-                assert.strictEqual(data[0].locked, 1);
-                assert.strictEqual(data[0].votes, 2);
-                assert.strictEqual(data[0].userAgent, userAgents.mpv);
+                const expected = [{
+                    videoID: "locked-up",
+                    locked: 1,
+                    votes: 2,
+                    userAgent: userAgents.mpv,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -93,9 +102,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "infvotes");
-                assert.strictEqual(data[0].votes, 100000);
-                assert.strictEqual(data[0].userAgent, userAgents.nodesb);
+                const expected = [{
+                    videoID: "infvotes",
+                    votes: 100000,
+                    userAgent: userAgents.nodesb,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -106,9 +118,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "shadowhidden");
-                assert.strictEqual(data[0].shadowHidden, 1);
-                assert.strictEqual(data[0].userAgent, userAgents.blank);
+                const expected = [{
+                    videoID: "shadowhidden",
+                    shadowHidden: 1,
+                    userAgent: userAgents.blank,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -119,9 +134,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "locked-down");
-                assert.strictEqual(data[0].votes, -2);
-                assert.strictEqual(data[0].locked, 1);
+                const expected = [{
+                    videoID: "locked-down",
+                    locked: 1,
+                    votes: -2,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -132,8 +150,11 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "hidden");
-                assert.strictEqual(data[0].hidden, 1);
+                const expected = [{
+                    videoID: "hidden",
+                    hidden: 1,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -144,8 +165,11 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "oldID");
-                assert.strictEqual(data[0].votes, 1);
+                const expected = [{
+                    videoID: "oldID",
+                    votes: 1,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -156,9 +180,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2,
+                }];
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -169,11 +196,15 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2,
+                }, {
+                    videoID: "downvoted",
+                    votes: -2,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
-                assert.strictEqual(data[1].videoID, "downvoted");
-                assert.strictEqual(data[1].votes, -2);
                 done();
             })
             .catch(err => done(err));
@@ -184,8 +215,11 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -232,9 +266,12 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
                 done();
             })
             .catch(err => done(err));
@@ -263,10 +300,6 @@ describe("getSegmentInfo", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
-                assert.strictEqual(data[1].videoID, "downvoted");
-                assert.strictEqual(data[1].votes, -2);
                 done();
             })
             .catch(err => done(err));
@@ -286,11 +319,15 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2,
+                }, {
+                    videoID: "downvoted",
+                    votes: -2,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[1].videoID, "downvoted");
-                assert.strictEqual(data[0].votes, 2);
-                assert.strictEqual(data[1].votes, -2);
                 done();
             })
             .catch(err => done(err));
@@ -301,8 +338,11 @@ describe("getSegmentInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data[0].videoID, "upvoted");
-                assert.strictEqual(data[0].votes, 2);
+                const expected = [{
+                    videoID: "upvoted",
+                    votes: 2
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));

@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
@@ -76,7 +76,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warnings, 1);
+                const expected = {
+                    warnings: 1
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -87,7 +90,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warnings, 1);
+                const expected = {
+                    warnings: 1
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -98,7 +104,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warnings, 2);
+                const expected = {
+                    warnings: 2
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -109,7 +118,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warnings, 0);
+                const expected = {
+                    warnings: 0,
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -120,7 +132,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.userName, "c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f");
+                const expected = {
+                    userName: "c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f"
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -156,7 +171,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warningReason, "warning0-0");
+                const expected = {
+                    warningReason: "warning0-0"
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
             })
             .catch(err => done(err));
@@ -167,7 +185,10 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warningReason, "warning1-1");
+                const expected = {
+                    warningReason: "warning1-1"
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
             })
             .catch(err => done(err));
@@ -178,8 +199,11 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warnings, 0);
-                assert.strictEqual(data.warningReason, "");
+                const expected = {
+                    warnings: 0,
+                    warningReason: ""
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
             })
             .catch(err => done(err));
@@ -190,8 +214,11 @@ describe("getUserInfo", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.warnings, 1);
-                assert.strictEqual(data.warningReason, "warning3-0");
+                const expected = {
+                    warnings: 1,
+                    warningReason: "warning3-0"
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
             })
             .catch(err => done(err));
