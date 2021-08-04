@@ -19,15 +19,15 @@ export class Mysql implements IDatabase {
         const queryResult = this.connection.query(query, params);
 
         switch (type) {
-        case "get": {
-            return queryResult[0];
-        }
-        case "all": {
-            return queryResult;
-        }
-        case "run": {
-            break;
-        }
+            case "get": {
+                return queryResult[0];
+            }
+            case "all": {
+                return queryResult;
+            }
+            case "run": {
+                break;
+            }
         }
     }
 

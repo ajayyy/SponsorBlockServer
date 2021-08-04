@@ -83,12 +83,12 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
         for (const segment of segments) {
             const result = shiftSegment(segment, shift);
             switch (result.action) {
-            case ACTION_UPDATE:
-                await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
-                break;
-            case ACTION_REMOVE:
-                await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2 WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
-                break;
+                case ACTION_UPDATE:
+                    await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
+                    break;
+                case ACTION_REMOVE:
+                    await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2 WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, result.segment.UUID]);
+                    break;
             }
         }
     } catch (err) {
