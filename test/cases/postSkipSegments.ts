@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import {config} from "../../src/config";
 import {getHash} from "../../src/utils/getHash";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {db} from "../../src/databases/databases";
 import {ImportMock} from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -65,9 +65,12 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcR"]);
-                assert.strictEqual(row.startTime, 2);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.category, "sponsor");
+                const expected = {
+                    startTime: 2,
+                    endTime: 10,
+                    category: "sponsor",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -91,10 +94,13 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcF"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 0);
-                assert.strictEqual(row.category, "sponsor");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    locked: 0,
+                    category: "sponsor",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -119,11 +125,13 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcV"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 0);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(row.actionType, "mute");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    category: "sponsor",
+                    actionType: "mute",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -148,11 +156,13 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZX"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 0);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(row.videoDuration, 4980);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    category: "sponsor",
+                    videoDuration: 4980,
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -177,11 +187,14 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXZH"]);
-                assert.strictEqual(row.startTime, 1);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 0);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(row.videoDuration, 4980.20);
+                const expected = {
+                    startTime: 1,
+                    endTime: 10,
+                    locked: 0,
+                    category: "sponsor",
+                    videoDuration: 4980.20,
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -206,11 +219,14 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, ["noDuration"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 0);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(row.videoDuration, 100);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    locked: 0,
+                    category: "sponsor",
+                    videoDuration: 100,
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -240,17 +256,19 @@ describe("postSkipSegments", () => {
             const lockCategoriesRow = await db.prepare("get", `SELECT * from "lockCategories" WHERE videoID = ?`, ["noDuration"]);
             const videoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration"
                 FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, ["noDuration"]);
-            const videoRow = videoRows[0];
             const hiddenVideoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration"
                 FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, ["noDuration"]);
             assert.ok(!lockCategoriesRow);
+            const expected = {
+                startTime: 1,
+                endTime: 10,
+                locked: 0,
+                category: "sponsor",
+                videoDuration: 100,
+            };
+            assert.ok(partialDeepEquals(videoRows[0], expected));
             assert.strictEqual(videoRows.length, 1);
             assert.strictEqual(hiddenVideoRows.length, 1);
-            assert.strictEqual(videoRow.startTime, 1);
-            assert.strictEqual(videoRow.endTime, 10);
-            assert.strictEqual(videoRow.locked, 0);
-            assert.strictEqual(videoRow.category, "sponsor");
-            assert.strictEqual(videoRow.videoDuration, 100);
         } catch (e) {
             return e;
         }
@@ -287,11 +305,14 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "service" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXcG"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 0);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(row.service, "PeerTube");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    locked: 0,
+                    category: "sponsor",
+                    service: "PeerTube",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -315,10 +336,13 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["vipuserIDSubmission"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.locked, 1);
-                assert.strictEqual(row.category, "sponsor");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    locked: 1,
+                    category: "sponsor",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -865,9 +889,12 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-1"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.userAgent, "Vanced/5.0");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    userAgent: "Vanced/5.0",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -892,9 +919,12 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-3"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.userAgent, "");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    userAgent: "",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -919,9 +949,12 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "userAgent" FROM "sponsorTimes" WHERE "videoID" = ?`, ["userAgent-4"]);
-                assert.strictEqual(row.startTime, 0);
-                assert.strictEqual(row.endTime, 10);
-                assert.strictEqual(row.userAgent, "MeaBot/5.0");
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    userAgent: "MeaBot/5.0",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
