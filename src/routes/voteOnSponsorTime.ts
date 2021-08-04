@@ -281,7 +281,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     const hashedIP: HashedIP = getHash((ip + config.globalSalt) as IPAddress);
 
     //check if this user is on the vip list
-    const isVIP = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?`, [nonAnonUserID])).userCount > 0;
+    const isVIP = await isUserVIP(nonAnonUserID);
 
     //check if user voting on own submission
     const isOwnSubmission = (await db.prepare("get", `SELECT "UUID" as "submissionCount" FROM "sponsorTimes" where "userID" = ? AND "UUID" = ?`, [nonAnonUserID, UUID])) !== undefined;
