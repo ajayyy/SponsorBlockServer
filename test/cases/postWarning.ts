@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
@@ -25,9 +25,12 @@ describe("postWarning", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
-                assert.strictEqual(row.enabled, 1);
-                assert.strictEqual(row.issuerUserID, getHash(json.issuerUserID));
-                assert.strictEqual(row.reason, json.reason);
+                const expected = {
+                    enabled: 1,
+                    issuerUserID: getHash(json.issuerUserID),
+                    reason: json.reason,
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -49,8 +52,11 @@ describe("postWarning", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 409);
                 const row = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
-                assert.strictEqual(row.enabled, 1);
-                assert.strictEqual(row.issuerUserID, getHash(json.issuerUserID));
+                const expected = {
+                    enabled: 1,
+                    issuerUserID: getHash(json.issuerUserID),
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -73,7 +79,10 @@ describe("postWarning", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
-                assert.strictEqual(row.enabled, 0);
+                const expected = {
+                    enabled: 0
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));
@@ -130,7 +139,10 @@ describe("postWarning", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
-                assert.strictEqual(data.enabled, 1);
+                const expected = {
+                    enabled: 1
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));

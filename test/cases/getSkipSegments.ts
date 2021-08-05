@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
 
@@ -48,12 +48,14 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [12, 14],
+                    category: "sponsor",
+                    UUID: "1-uuid-0-2",
+                    videoDuration: 100
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 12);
-                assert.strictEqual(data[0].segment[1], 14);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0-2");
-                assert.strictEqual(data[0].videoDuration, 100);
                 done();
             })
             .catch(err => done(err));
@@ -64,13 +66,16 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                    videoDuration: 100
+                }, {
+                    UUID: "1-uuid-0-2"
+                }];
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
-                assert.strictEqual(data[1].UUID, "1-uuid-0-2");
-                assert.strictEqual(data[0].videoDuration, 100);
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -81,13 +86,15 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
-                assert.strictEqual(data[1].UUID, "1-uuid-0-2");
-                assert.strictEqual(data[0].videoDuration, 100);
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                    videoDuration: 100
+                }, {
+                    UUID: "1-uuid-0-2"
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -98,12 +105,14 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0-1",
+                    videoDuration: 120
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0-1");
-                assert.strictEqual(data[0].videoDuration, 120);
                 done();
             })
             .catch(err => done(err));
@@ -114,11 +123,13 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [20, 33],
+                    category: "intro",
+                    UUID: "1-uuid-2"
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 20);
-                assert.strictEqual(data[0].segment[1], 33);
-                assert.strictEqual(data[0].category, "intro");
-                assert.strictEqual(data[0].UUID, "1-uuid-2");
                 done();
             })
             .catch(err => done(err));
@@ -129,12 +140,14 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                    videoDuration: 100
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
-                assert.strictEqual(data[0].videoDuration, 100);
                 done();
             })
             .catch(err => done(err));
@@ -145,12 +158,14 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [20, 33],
+                    category: "intro",
+                    UUID: "1-uuid-2",
+                    videoDuration: 101
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 20);
-                assert.strictEqual(data[0].segment[1], 33);
-                assert.strictEqual(data[0].category, "intro");
-                assert.strictEqual(data[0].UUID, "1-uuid-2");
-                assert.strictEqual(data[0].videoDuration, 101);
                 done();
             })
             .catch(err => done(err));
@@ -171,14 +186,16 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "intro");
-                assert.strictEqual(data[0].UUID, "1-uuid-6");
-                assert.strictEqual(data[1].segment[0], 20);
-                assert.strictEqual(data[1].segment[1], 33);
-                assert.strictEqual(data[1].category, "intro");
-                assert.strictEqual(data[1].UUID, "1-uuid-7");
+                const expected = [{
+                    segment: [1, 11],
+                    category: "intro",
+                    UUID: "1-uuid-6",
+                }, {
+                    segment: [20, 33],
+                    category: "intro",
+                    UUID: "1-uuid-7",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -189,15 +206,17 @@ describe("getSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                }, {
+                    segment: [20, 33],
+                    category: "intro",
+                    UUID: "1-uuid-2",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
-                assert.strictEqual(data[1].segment[0], 20);
-                assert.strictEqual(data[1].segment[1], 33);
-                assert.strictEqual(data[1].category, "intro");
-                assert.strictEqual(data[1].UUID, "1-uuid-2");
                 done();
             })
             .catch(err => done(err));
@@ -209,10 +228,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -224,10 +245,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-4");
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-4",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -257,10 +280,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-1");
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-1",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -272,10 +297,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 20);
-                assert.strictEqual(data[0].segment[1], 33);
-                assert.strictEqual(data[0].category, "intro");
-                assert.strictEqual(data[0].UUID, "1-uuid-locked-8");
+                const expected = [{
+                    segment: [20, 33],
+                    category: "intro",
+                    UUID: "1-uuid-locked-8",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -287,14 +314,16 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
-                assert.strictEqual(data[1].segment[0], 20);
-                assert.strictEqual(data[1].segment[1], 33);
-                assert.strictEqual(data[1].category, "intro");
-                assert.strictEqual(data[1].UUID, "1-uuid-2");
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                }, {
+                    segment: [20, 33],
+                    category: "intro",
+                    UUID: "1-uuid-2",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -306,10 +335,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "1-uuid-0");
+                const expected = [{
+                    segment: [1, 11],
+                    category: "sponsor",
+                    UUID: "1-uuid-0",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -321,8 +352,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].UUID, "requiredSegmentVid-raw-2");
-                assert.strictEqual(data[1].UUID, "requiredSegmentVid-raw-3");
+                const expected = [{
+                    UUID: "requiredSegmentVid-raw-2",
+                }, {
+                    UUID: "requiredSegmentVid-raw-3",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -334,8 +369,12 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].UUID, "requiredSegmentVid-raw-2");
-                assert.strictEqual(data[1].UUID, "requiredSegmentVid-raw-3");
+                const expected = [{
+                    UUID: "requiredSegmentVid-raw-2",
+                }, {
+                    UUID: "requiredSegmentVid-raw-3",
+                }];
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));

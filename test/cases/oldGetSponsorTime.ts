@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
 
@@ -44,7 +44,10 @@ describe("getVideoSponsorTime (Old get method)", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.UUIDs[0], "uuid-1");
+                const expected = {
+                    UUIDs: ["uuid-1"],
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
@@ -55,9 +58,11 @@ describe("getVideoSponsorTime (Old get method)", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                assert.strictEqual(data.sponsorTimes[0][0], 1);
-                assert.strictEqual(data.sponsorTimes[0][1], 11);
-                assert.strictEqual(data.UUIDs[0], "uuid-0");
+                const expected = {
+                    sponsorTimes: [[1, 11]],
+                    UUIDs: ["uuid-0"]
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));

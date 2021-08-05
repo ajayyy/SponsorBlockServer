@@ -2,9 +2,12 @@ import {getHash} from "../utils/getHash";
 import {db} from "../databases/databases";
 import {config} from "../config";
 import {Request, Response} from "express";
+import { isUserVIP } from "../utils/isUserVIP";
+import { HashedUserID } from "../types/user.model";
+
 
 export async function addUserAsVIP(req: Request, res: Response): Promise<Response> {
-    const userID = req.query.userID as string;
+    const userID = req.query.userID as HashedUserID;
     let adminUserIDInput = req.query.adminUserID as string;
 
     const enabled = req.query.enabled === undefined
@@ -25,12 +28,12 @@ export async function addUserAsVIP(req: Request, res: Response): Promise<Respons
     }
 
     //check to see if this user is already a vip
-    const row = await db.prepare("get", 'SELECT count(*) as "userCount" FROM "vipUsers" WHERE "userID" = ?', [userID]);
+    const userIsVIP = await isUserVIP(userID);
 
-    if (enabled && row.userCount == 0) {
+    if (enabled && !userIsVIP) {
         //add them to the vip list
         await db.prepare("run", 'INSERT INTO "vipUsers" VALUES(?)', [userID]);
-    } else if (!enabled && row.userCount > 0) {
+    } else if (!enabled && userIsVIP) {
         //remove them from the shadow ban list
         await db.prepare("run", 'DELETE FROM "vipUsers" WHERE "userID" = ?', [userID]);
     }
