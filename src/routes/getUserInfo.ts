@@ -6,21 +6,28 @@ import {Logger} from "../utils/logger";
 import { HashedUserID, UserID } from "../types/user.model";
 import { getReputation } from "../utils/reputation";
 import { SegmentUUID } from "../types/segments.model";
+import {config} from "../config";
+const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
-    const row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved",
-                                        count(*) as "segmentCount" FROM "sponsorTimes" 
-                                        WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
-    if (row.minutesSaved != null) {
-        return {
-            minutesSaved: row.minutesSaved,
-            segmentCount: row.segmentCount,
-        };
-    } else {
-        return {
-            minutesSaved: 0,
-            segmentCount: 0,
-        };
+    try {
+        const row = await db.prepare("get",
+            `SELECT SUM(((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views") as "minutesSaved",
+            count(*) as "segmentCount" FROM "sponsorTimes"
+            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [maxRewardTime, maxRewardTime, userID]);
+        if (row.minutesSaved != null) {
+            return {
+                minutesSaved: row.minutesSaved,
+                segmentCount: row.segmentCount,
+            };
+        } else {
+            return {
+                minutesSaved: 0,
+                segmentCount: 0,
+            };
+        }
+    } catch (err) {
+        return null;
     }
 }
 
