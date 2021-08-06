@@ -7,7 +7,7 @@ import {postWarning} from "./routes/postWarning";
 import {getIsUserVIP} from "./routes/getIsUserVIP";
 import {deleteLockCategoriesEndpoint} from "./routes/deleteLockCategories";
 import {postLockCategories} from "./routes/postLockCategories";
-import {getUserInfo} from "./routes/getUserInfo";
+import {endpoint as getUserInfo} from "./routes/getUserInfo";
 import {getDaysSavedFormatted} from "./routes/getDaysSavedFormatted";
 import {getTotalStats} from "./routes/getTotalStats";
 import {getTopUsers} from "./routes/getTopUsers";

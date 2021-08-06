@@ -250,13 +250,44 @@ describe("getUserInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should get ban data  for unbanned user (only appears when specifically requested)", (done: Done) => {
+    it("Should get ban data for unbanned user (only appears when specifically requested)", (done: Done) => {
         fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_notban_01&value=banned`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 const expected = {
                     banned: false
+                };
+                assert.ok(partialDeepEquals(data, expected));
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should throw 400 on bad json in values", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=x&values=[userID]`)
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 200 on userID not found", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=notused-userid`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                const expected = {
+                    minutesSaved: 0,
+                    segmentCount: 0,
+                    ignoredSegmentCount: 0,
+                    viewCount: 0,
+                    ignoredViewCount: 0,
+                    warnings: 0,
+                    warningReason: "",
+                    reputation: 0,
+                    vip: false,
                 };
                 assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
