@@ -98,6 +98,15 @@ async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<st
     }
 }
 
+async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
+    try {
+        const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
+        return row?.userCount > 0 ?? false;
+    } catch (err) {
+        return false;
+    }
+}
+
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -118,6 +127,7 @@ const dbGetValue = async (userID: HashedUserID, property: string): Promise<strin
         ignoredViewCount: dbGetIgnoredViewsForUser(userID),
         warnings: dbGetWarningsForUser(userID),
         warningReason: dbGetActiveWarningReasonForUser(userID),
+        banned: dbGetBanned(userID),
         reputation: getReputation(userID),
         vip: isUserVIP(userID),
         lastSegmentID: dbGetLastSegmentForUser(userID),
@@ -127,16 +137,17 @@ const dbGetValue = async (userID: HashedUserID, property: string): Promise<strin
 export async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
     const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
-    const allProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
+    const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
+    const allProperties: string[] = [...defaultProperties, "banned"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value
             ? Array.isArray(req.query.value)
                 ? req.query.value
                 : [req.query.value]
-            : allProperties;
+            : defaultProperties;
     if (!Array.isArray(paramValues)) {
         return res.status(400).send("Invalid values JSON");
     }

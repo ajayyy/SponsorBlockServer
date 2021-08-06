@@ -26,6 +26,9 @@ describe("getUserInfo", () => {
         await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_2"), 40, "getuserinfo_vip", 0, "warning2-0"]);
         await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_3"), 50, "getuserinfo_vip", 1, "warning3-0"]);
         await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_3"), 60, "getuserinfo_vip", 0, "warning3-1"]);
+
+        const insertBanQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
+        await db.prepare("run", insertBanQuery, [getHash("getuserinfo_ban_01")]);
     });
 
     it("Should be able to get a 200", (done: Done) => {
@@ -172,7 +175,7 @@ describe("getUserInfo", () => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 const expected = {
-                    warningReason: "warning0-0"
+                    warningReason: "warning0-0",
                 };
                 assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
@@ -228,6 +231,34 @@ describe("getUserInfo", () => {
         fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_3&value=invalid-value`)
             .then(async res => {
                 assert.strictEqual(res.status, 400);
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get ban data for banned user (only appears when specifically requested)", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_ban_01&value=banned`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                const expected = {
+                    banned: true
+                };
+                assert.ok(partialDeepEquals(data, expected));
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get ban data  for unbanned user (only appears when specifically requested)", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_notban_01&value=banned`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                const expected = {
+                    banned: false
+                };
+                assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
             })
             .catch(err => done(err));

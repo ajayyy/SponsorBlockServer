@@ -616,7 +616,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // }
 
         //check to see if this user is shadowbanned
-        const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+        const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
 
         let shadowBanned = shadowBanRow.userCount;
 
