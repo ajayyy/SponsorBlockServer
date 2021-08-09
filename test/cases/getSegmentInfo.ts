@@ -146,7 +146,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive hidden segment", (done: Done) => {
-        fetch(`${getbaseURL()  }/api/segmentInfo?UUID=${hiddenID}`)
+        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${hiddenID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

@@ -18,6 +18,7 @@ describe("getUserInfo", () => {
         await db.prepare("run", sponsorTimesQuery, ["zzzxxxyyy", 1, 11, 2, "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", 0]);
         await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000007", getHash("getuserinfo_user_02"), 7, 10, "sponsor", 1]);
         await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000008", getHash("getuserinfo_user_02"), 8, 10, "sponsor", 1]);
+        await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 0, 36000, 2, "uuid000009", getHash("getuserinfo_user_03"), 8, 2, "sponsor", 0]);
 
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_0"), 10, "getuserinfo_vip", 1, "warning0-0"]);
@@ -250,7 +251,7 @@ describe("getUserInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should get ban data  for unbanned user (only appears when specifically requested)", (done: Done) => {
+    it("Should get ban data for unbanned user (only appears when specifically requested)", (done: Done) => {
         fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_notban_01&value=banned`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -260,6 +261,62 @@ describe("getUserInfo", () => {
                 };
                 assert.ok(partialDeepEquals(data, expected));
                 done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should throw 400 on bad json in values", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=x&values=[userID]`)
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 200 on userID not found", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=notused-userid`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                const expected = {
+                    minutesSaved: 0,
+                    segmentCount: 0,
+                    ignoredSegmentCount: 0,
+                    viewCount: 0,
+                    ignoredViewCount: 0,
+                    warnings: 0,
+                    warningReason: "",
+                    reputation: 0,
+                    vip: false,
+                };
+                assert.ok(partialDeepEquals(data, expected));
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should only count long segments as 10 minutes", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_03`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    userName: "807e0a5d0a62c9c4365fae3d403e4618a3226f231314a898fa1555a0e55eab9e",
+                    userID: "807e0a5d0a62c9c4365fae3d403e4618a3226f231314a898fa1555a0e55eab9e",
+                    minutesSaved: 20,
+                    viewCount: 2,
+                    ignoredViewCount: 0,
+                    segmentCount: 1,
+                    ignoredSegmentCount: 0,
+                    reputation: 0,
+                    lastSegmentID: "uuid000009",
+                    vip: false,
+                    warnings: 0,
+                    warningReason: ""
+                };
+                const data = await res.json();
+                assert.deepStrictEqual(data, expected);
+                done();
             })
             .catch(err => done(err));
     });

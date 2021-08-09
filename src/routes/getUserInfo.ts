@@ -6,12 +6,15 @@ import {Logger} from "../utils/logger";
 import { HashedUserID, UserID } from "../types/user.model";
 import { getReputation } from "../utils/reputation";
 import { SegmentUUID } from "../types/segments.model";
+import {config} from "../config";
+const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        const row = await db.prepare("get", `SELECT SUM((("endTime" - "startTime") / 60) * "views") as "minutesSaved",
-                                            count(*) as "segmentCount" FROM "sponsorTimes" 
-                                            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID]);
+        const row = await db.prepare("get",
+            `SELECT SUM(((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views") as "minutesSaved",
+            count(*) as "segmentCount" FROM "sponsorTimes"
+            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [maxRewardTime, maxRewardTime, userID]);
         if (row.minutesSaved != null) {
             return {
                 minutesSaved: row.minutesSaved,
@@ -134,7 +137,7 @@ const dbGetValue = async (userID: HashedUserID, property: string): Promise<strin
     })("")(property);
 };
 
-export async function getUserInfo(req: Request, res: Response): Promise<Response> {
+async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
     const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
     const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
@@ -149,7 +152,7 @@ export async function getUserInfo(req: Request, res: Response): Promise<Response
                 : [req.query.value]
             : defaultProperties;
     if (!Array.isArray(paramValues)) {
-        return res.status(400).send("Invalid values JSON");
+        return res.status(400).send("Invalid values");
     }
     // filter array to only include from allProperties
     paramValues = paramValues.filter(param => allProperties.includes(param));
@@ -165,15 +168,21 @@ export async function getUserInfo(req: Request, res: Response): Promise<Response
 
     const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     const responseObj = {} as Record<string, string|SegmentUUID|number>;
-    if (segmentsSummary) {
-        for (const property of paramValues) {
-            responseObj[property] = await dbGetValue(hashedUserID, property);
-        }
-        // add minutesSaved and segmentCount after to avoid getting overwritten
-        if (paramValues.includes("minutesSaved")) { responseObj["minutesSaved"] = segmentsSummary.minutesSaved; }
-        if (paramValues.includes("segmentCount")) responseObj["segmentCount"] = segmentsSummary.segmentCount;
-        res.send(responseObj);
-    } else {
-        return res.sendStatus(404);
+    for (const property of paramValues) {
+        responseObj[property] = await dbGetValue(hashedUserID, property);
+    }
+    // add minutesSaved and segmentCount after to avoid getting overwritten
+    if (paramValues.includes("minutesSaved")) { responseObj["minutesSaved"] = segmentsSummary.minutesSaved; }
+    if (paramValues.includes("segmentCount")) responseObj["segmentCount"] = segmentsSummary.segmentCount;
+    return res.send(responseObj);
+}
+
+export async function endpoint(req: Request, res: Response): Promise<Response> {
+    try {
+        return await getUserInfo(req, res);
+    } catch (err) {
+        if (err instanceof SyntaxError) { // catch JSON.parse error
+            return res.status(400).send("Invalid values JSON");
+        } else return res.sendStatus(500);
     }
 }
