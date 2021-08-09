@@ -46,8 +46,13 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     }
 
     try {
-        const row = await db.prepare("get", `SELECT count(*) as count FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
-        if (adminUserIDInput === undefined && row.count > 0) {
+        const row = await db.prepare("get", `SELECT count(*) as userCount FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
+        if (adminUserIDInput === undefined && row.userCount > 0) {
+            return res.sendStatus(200);
+        }
+
+        const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
+        if (adminUserIDInput === undefined && shadowBanRow.userCount > 0) {
             return res.sendStatus(200);
         }
     }
