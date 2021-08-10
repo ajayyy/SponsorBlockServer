@@ -168,7 +168,7 @@ describe("setUsername", () => {
                 assert.strictEqual(usernameInfo.locked, 1, "username should be locked");
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(`couldn't call endpoint: ${err}`));
     });
 
     it("Should filter out unicode control characters", (done: Done) => {
