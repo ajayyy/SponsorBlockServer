@@ -46,7 +46,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     }
 
     try {
-        const row = await db.prepare("get", `SELECT count(*) as userCount FROM "userNames" WHERE "userID" = ? AND "locked" = '1'`, [userID]);
+        const row = await db.prepare("get", `SELECT count(*) as userCount FROM "userNames" WHERE "userID" = ? AND "locked" = 1`, [userID]);
         if (adminUserIDInput === undefined && row.userCount > 0) {
             return res.sendStatus(200);
         }
