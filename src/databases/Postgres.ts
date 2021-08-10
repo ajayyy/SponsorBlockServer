@@ -55,22 +55,26 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        const queryResult = await this.pool.query({text: query, values: params});
+        try {
+            const queryResult = await this.pool.query({text: query, values: params});
 
-        switch (type) {
-            case "get": {
-                const value = queryResult.rows[0];
-                Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
-                return value;
+            switch (type) {
+                case "get": {
+                    const value = queryResult.rows[0];
+                    Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
+                    return value;
+                }
+                case "all": {
+                    const values = queryResult.rows;
+                    Logger.debug(`result (postgres): ${values}`);
+                    return values;
+                }
+                case "run": {
+                    break;
+                }
             }
-            case "all": {
-                const values = queryResult.rows;
-                Logger.debug(`result (postgres): ${values}`);
-                return values;
-            }
-            case "run": {
-                break;
-            }
+        } catch (err) {
+            Logger.error(`prepare (postgres): ${err}`);
         }
     }
 
