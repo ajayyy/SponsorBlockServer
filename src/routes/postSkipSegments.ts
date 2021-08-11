@@ -548,6 +548,8 @@ function preprocessInput(req: Request) {
         if (!Object.values(ActionType).some((val) => val === segment.actionType)){
             segment.actionType = ActionType.Skip;
         }
+
+        segment.segment = segment.segment.map((time) => typeof segment.segment[0] === "string" ? time?.replace(",", ".") : time);
     });
 
     const userAgent = req.query.userAgent ?? req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";

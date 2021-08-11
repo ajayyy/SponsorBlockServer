@@ -959,4 +959,32 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should be able to submit with commas in timestamps", (done: Done) => {
+        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userID: "testtesttesttesttesttesttesttesttest",
+                videoID: "commas-1",
+                segments: [{
+                    segment: ["0,2", "10,392"],
+                    category: "sponsor",
+                }]
+            }),
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, ["commas-1"]);
+                const expected = {
+                    startTime: 0.2,
+                    endTime: 10.392
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
 });
