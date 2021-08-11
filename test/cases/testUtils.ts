@@ -12,7 +12,8 @@ describe("Test utils ", () => {
             },
             {
 
-            }
+            },
+            false
         ), "Did not match empty expect");
         assert(partialDeepEquals(
             [{a: [1,2,3]}, {a: [1,2]}],
@@ -39,7 +40,8 @@ describe("Test utils ", () => {
             {
                 vip: false,
                 old: 19
-            }
+            },
+            false
         ), "Matched different properties");
         // do not match missing property
         assert(!partialDeepEquals(
@@ -53,7 +55,8 @@ describe("Test utils ", () => {
                 child: {
                     name: ""
                 }
-            }
+            },
+            false
         ));
         assert(!partialDeepEquals(
             {
@@ -69,7 +72,8 @@ describe("Test utils ", () => {
                 child: {
                     name: ""
                 }
-            }
+            },
+            false
         ), "Matched incorrect child property");
         assert(!partialDeepEquals(
             {
@@ -91,7 +95,8 @@ describe("Test utils ", () => {
                         name: "b",
                     }
                 }
-            }
+            },
+            false
         ), "Matched incorrected 2-nested property");
         assert(partialDeepEquals(
             {
