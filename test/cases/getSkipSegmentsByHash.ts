@@ -254,7 +254,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should only return one segment when fetching highlight segments", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/c962?category=highlight`)
+        fetch(`${getbaseURL()}/api/skipSegments/c962?category=poi_highlight`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
