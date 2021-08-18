@@ -106,6 +106,9 @@ docker/database-export
 config.json
 docker/database.env
 
+# Other
+working
+
 # Mac files
 .DS_Store
 /.idea/
