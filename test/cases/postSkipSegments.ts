@@ -536,7 +536,7 @@ describe("postSkipSegments", () => {
 
     it("Should be accepted if highlight segment starts and ends at the same time", (done: Done) => {
         fetch(`${getbaseURL()
-        }/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30&userID=testtesttesttesttesttesttesttesttesting&category=highlight`, {
+        }/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30&userID=testtesttesttesttesttesttesttesttesting&category=poi_highlight`, {
             method: "POST",
         })
             .then(res => {
@@ -548,7 +548,7 @@ describe("postSkipSegments", () => {
 
     it("Should be rejected if highlight segment doesn't start and end at the same time", (done: Done) => {
         fetch(`${getbaseURL()
-        }/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting&category=highlight`, {
+        }/api/skipSegments?videoID=qqwerty&startTime=30&endTime=30.5&userID=testtesttesttesttesttesttesttesttesting&category=poi_highlight`, {
             method: "POST",
         })
             .then(res => {

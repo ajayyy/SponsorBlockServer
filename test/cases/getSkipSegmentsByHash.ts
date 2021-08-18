@@ -21,8 +21,8 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash"]);
         await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b"]);
         await db.prepare("run", query, ["onlyHidden", 60, 70, 2, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3"]);
-        await db.prepare("run", query, ["highlightVid", 60, 60, 2, "highlightVid-1", "testman", 0, 50, "highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1)]);
-        await db.prepare("run", query, ["highlightVid", 70, 70, 2, "highlightVid-2", "testman", 0, 50, "highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1)]);
+        await db.prepare("run", query, ["highlightVid", 60, 60, 2, "highlightVid-1", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1)]);
+        await db.prepare("run", query, ["highlightVid", 70, 70, 2, "highlightVid-2", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1)]);
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61"]);
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61"]);
         await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61"]);

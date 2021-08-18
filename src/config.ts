@@ -19,7 +19,7 @@ addDefaults(config, {
     privateDBSchema: "./databases/_private.db.sql",
     readOnly: false,
     webhooks: [],
-    categoryList: ["sponsor", "selfpromo", "interaction", "intro", "outro", "preview", "music_offtopic", "highlight"],
+    categoryList: ["sponsor", "selfpromo", "interaction", "intro", "outro", "preview", "music_offtopic", "poi_highlight"],
     maxNumberOfActiveWarnings: 1,
     hoursAfterWarningExpires: 24,
     adminUserID: "",

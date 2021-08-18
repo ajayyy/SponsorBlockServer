@@ -1,10 +1,9 @@
 import { Category, CategoryActionType } from "../types/segments.model";
 
 export function getCategoryActionType(category: Category): CategoryActionType {
-    switch (category) {
-    case "highlight":
+    if (category.startsWith("poi_")) {
         return CategoryActionType.POI;
-    default:
+    } else {
         return CategoryActionType.Skippable;
     }
 }
