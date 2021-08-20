@@ -22,7 +22,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
             SUM(CASE WHEN category = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
             SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
             SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
-            SUM(CASE WHEN category = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview,
+            SUM(CASE WHEN category = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
             SUM(CASE WHEN category = 'highlight' THEN 1 ELSE 0 END) as "categorySumHighlight", `;
     }
 
