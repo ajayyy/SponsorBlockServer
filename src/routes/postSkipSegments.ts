@@ -381,6 +381,11 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
             return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400};
         }
 
+        // Check for POI segments before 1 second
+        if (segments[i].category === CategoryActionType.POI && startTime < 1) {
+            return { pass: false, errorMessage: "POI must be after 1 second", errorCode: 400};
+        }
+
         if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Sponsors must be longer than 1 second long", errorCode: 400};
