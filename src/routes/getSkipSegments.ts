@@ -80,7 +80,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
         return segments;
     } catch (err) {
         if (err) {
-            Logger.error(err);
+            Logger.error(err as string);
             return null;
         }
     }
@@ -126,7 +126,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         return segments;
     } catch (err) {
         if (err) {
-            Logger.error(err);
+            Logger.error(err as string);
             return null;
         }
     }
