@@ -988,6 +988,18 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should be rejected if a POI is at less than 1 second", (done: Done) => {
+        fetch(`${getbaseURL()
+        }/api/skipSegments?videoID=qqwerty&startTime=0.5&endTime=0.5&category=poi_highlight&userID=testtesttesttesttesttesttesttesttesting`, {
+            method: "POST",
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should not be able to submit with colons in timestamps", (done: Done) => {
         fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
             method: "POST",
@@ -1003,7 +1015,7 @@ describe("postSkipSegments", () => {
                 }]
             }),
         })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
