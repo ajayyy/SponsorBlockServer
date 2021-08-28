@@ -990,7 +990,7 @@ describe("postSkipSegments", () => {
 
     it("Should be rejected if a POI is at less than 1 second", (done: Done) => {
         fetch(`${getbaseURL()
-        }/api/skipSegments?videoID=qqwerty&startTime=0.5&endTime=0.5&userID=testtesttesttesttesttesttesttesttesting`, {
+        }/api/skipSegments?videoID=qqwerty&startTime=0.5&endTime=0.5&category=poi_highlight&userID=testtesttesttesttesttesttesttesttesting`, {
             method: "POST",
         })
             .then(res => {
