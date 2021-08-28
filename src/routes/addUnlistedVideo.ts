@@ -23,7 +23,7 @@ export function addUnlistedVideo(req: Request, res: Response): Response {
         const timeSubmitted = Date.now();
         db.prepare("run", `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted") values (?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted]);
     } catch (err) {
-        Logger.error(err as string);
+        Logger.error(err);
         return res.sendStatus(500);
     }
 

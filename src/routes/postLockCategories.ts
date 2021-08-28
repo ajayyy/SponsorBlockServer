@@ -68,7 +68,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
             await db.prepare("run", `INSERT INTO "lockCategories" ("videoID", "userID", "category", "hashedVideoID", "reason") VALUES(?, ?, ?, ?, ?)`, [videoID, userID, category, hashedVideoID, reason]);
         } catch (err) {
             Logger.error(`Error submitting 'lockCategories' marker for category '${category}' for video '${videoID}'`);
-            Logger.error(err as string);
+            Logger.error(err);
             res.status(500).json({
                 message: "Internal Server Error: Could not write marker to the database.",
             });
@@ -89,7 +89,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
                     [reason, userID, videoID, category]);
             } catch (err) {
                 Logger.error(`Error submitting 'lockCategories' marker for category '${category}' for video '${videoID}'`);
-                Logger.error(err as string);
+                Logger.error(err);
                 res.status(500).json({
                     message: "Internal Server Error: Could not write marker to the database.",
                 });

@@ -26,7 +26,7 @@ export async function getViewsForUser(req: Request, res: Response): Promise<Resp
             return res.sendStatus(404);
         }
     } catch (err) {
-        Logger.error(err as string);
+        Logger.error(err);
         return res.sendStatus(500);
     }
 }

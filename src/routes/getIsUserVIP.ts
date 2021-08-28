@@ -22,7 +22,7 @@ export async function getIsUserVIP(req: Request, res: Response): Promise<Respons
             vip: vipState,
         });
     } catch (err) {
-        Logger.error(err as string);
+        Logger.error(err);
         return res.sendStatus(500);
     }
 }

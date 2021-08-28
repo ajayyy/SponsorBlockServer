@@ -28,7 +28,7 @@ export async function getUsername(req: Request, res: Response): Promise<Response
             });
         }
     } catch (err) {
-        Logger.error(err as string);
+        Logger.error(err);
         return res.sendStatus(500);
     }
 }
