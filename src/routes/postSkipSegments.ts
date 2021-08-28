@@ -382,7 +382,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
         }
 
         // Check for POI segments before 1 second
-        if (segments[i].category === CategoryActionType.POI && startTime < 1) {
+        if (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < 1) {
             return { pass: false, errorMessage: "POI must be after 1 second", errorCode: 400};
         }
 
