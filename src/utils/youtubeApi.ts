@@ -20,7 +20,7 @@ export class YouTubeAPI {
                     return { err: null, data: JSON.parse(data) };
                 }
             } catch (err) {
-                return { err, data: null };
+                return { err: err as string | boolean, data: null };
             }
         }
 
@@ -45,7 +45,7 @@ export class YouTubeAPI {
                 return { err: result.statusText, data: null };
             }
         } catch (err) {
-            return {err, data: null};
+            return {err: err as string | boolean, data: null};
         }
     }
 }

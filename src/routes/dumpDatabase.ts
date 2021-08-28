@@ -65,10 +65,8 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
 
         // read files in export directory
         fs.readdir(exportPath, async (err: any, files: string[]) => {
-            if (err) {
-                Logger.error(err);
-                return resolve();
-            }
+            if (err) Logger.error(err);
+            if (err) return resolve();
 
             files.forEach(file => {
                 // we only care about files that start with "<tablename>_" and ends with .csv

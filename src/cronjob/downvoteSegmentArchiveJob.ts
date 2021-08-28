@@ -29,7 +29,7 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
 
     } catch (err) {
         Logger.error("Execption when insert segment in archivedSponsorTimes");
-        Logger.error(err);
+        Logger.error(err as string);
         return 1;
     }
 
@@ -47,7 +47,7 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
 
     } catch (err) {
         Logger.error("Execption when deleting segment in sponsorTimes");
-        Logger.error(err);
+        Logger.error(err as string);
         return 1;
     }
 

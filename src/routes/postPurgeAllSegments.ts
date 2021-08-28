@@ -29,7 +29,7 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
         await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "videoID" = ?`, [videoID]);
 
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.sendStatus(500);
     }
     return res.sendStatus(200);

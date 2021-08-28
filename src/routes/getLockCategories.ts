@@ -25,7 +25,7 @@ export async function getLockCategories(req: Request, res: Response): Promise<Re
             categories
         });
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.sendStatus(500);
     }
 }

@@ -53,20 +53,20 @@ class Logger {
         }
     }
 
-    error(str: string | Error) {
+    error(str: string) {
         this.log(LogLevel.ERROR, str);
     }
-    warn(str: string | Error) {
+    warn(str: string) {
         this.log(LogLevel.WARN, str);
     }
-    info(str: string | Error) {
+    info(str: string) {
         this.log(LogLevel.INFO, str);
     }
-    debug(str: string | Error) {
+    debug(str: string) {
         this.log(LogLevel.DEBUG, str);
     }
 
-    private log(level: LogLevel, str: string | Error) {
+    private log(level: LogLevel, str: string) {
         if (!this._settings[level]) {
             return;
         }
