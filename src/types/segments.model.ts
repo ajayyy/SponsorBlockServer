@@ -53,7 +53,9 @@ export interface DBSegment {
     UUID: SegmentUUID;
     userID: UserID;
     votes: number;
+    views: number;
     locked: boolean;
+    hidden: boolean;
     required: boolean; // Requested specifically from the client
     shadowHidden: Visibility;
     videoID: VideoID;
