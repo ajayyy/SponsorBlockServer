@@ -987,4 +987,26 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should not be able to submit with colons in timestamps", (done: Done) => {
+        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userID: "testtesttesttesttesttesttesttesttest",
+                videoID: "colon-1",
+                segments: [{
+                    segment: ["0:2.000", "3:10.392"],
+                    category: "sponsor",
+                }]
+            }),
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

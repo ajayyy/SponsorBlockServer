@@ -324,6 +324,15 @@ function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): Ch
     if (!Array.isArray(segments) || segments.length < 1) {
         invalidFields.push("segments");
     }
+    // validate start and end times (no : marks)
+    for (const segmentPair of segments) {
+        const startTime = segmentPair.segment[0];
+        const endTime = segmentPair.segment[1];
+        if ((typeof startTime === "string" && startTime.includes(":")) ||
+            (typeof endTime === "string" && endTime.includes(":"))) {
+            invalidFields.push("segment time");
+        }
+    }
 
     if (invalidFields.length !== 0) {
         // invalid request
