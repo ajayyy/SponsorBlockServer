@@ -298,7 +298,7 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
         const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
                                 + " that are not malicious, and we just want to clarify the rules. "
-                                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app so we can further help you? "
+                                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
                                 + `Your userID is ${userID}.`;
 
         return {
@@ -375,7 +375,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
                     `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nLock reason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
-                    `\nIf you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app`
+                    `\nIf you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
             };
         }
 
