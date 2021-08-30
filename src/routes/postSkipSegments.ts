@@ -391,8 +391,8 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
         }
 
         // Check for POI segments before 1 second
-        if (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < 1) {
-            return { pass: false, errorMessage: "POI must be after 1 second", errorCode: 400};
+        if (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < config.poiMinimumStartTime) {
+            return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400};
         }
 
         if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
