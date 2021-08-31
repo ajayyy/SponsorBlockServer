@@ -298,7 +298,7 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
         const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
                                 + " that are not malicious, and we just want to clarify the rules. "
-                                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app so we can further help you? "
+                                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
                                 + `Your userID is ${userID}.`;
 
         return {
@@ -323,6 +323,15 @@ function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): Ch
     }
     if (!Array.isArray(segments) || segments.length < 1) {
         invalidFields.push("segments");
+    }
+    // validate start and end times (no : marks)
+    for (const segmentPair of segments) {
+        const startTime = segmentPair.segment[0];
+        const endTime = segmentPair.segment[1];
+        if ((typeof startTime === "string" && startTime.includes(":")) ||
+            (typeof endTime === "string" && endTime.includes(":"))) {
+            invalidFields.push("segment time");
+        }
     }
 
     if (invalidFields.length !== 0) {
@@ -366,7 +375,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
                     `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nLock reason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
-                    `\nIf you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app`
+                    `\nIf you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
             };
         }
 
@@ -379,6 +388,11 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
                 || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
             //invalid request
             return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400};
+        }
+
+        // Check for POI segments before 1 second
+        if (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < 1) {
+            return { pass: false, errorMessage: "POI must be after 1 second", errorCode: 400};
         }
 
         if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
