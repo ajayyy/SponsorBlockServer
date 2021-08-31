@@ -612,7 +612,7 @@ describe("postSkipSegments", () => {
                 const userID = "09dee632bfbb1acc9fda3169cc14b46e459b45cee4f4449be305590e612b5eb7";
                 const expected = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
                 + " that are not malicious, and we just want to clarify the rules. "
-                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/+sponsor:ajay.app so we can further help you? "
+                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
                 + `Your userID is ${userID}.\n\nWarning reason: '${reason}'`;
 
                 assert.strictEqual(errorMessage, expected);
@@ -983,6 +983,40 @@ describe("postSkipSegments", () => {
                     endTime: 10.392
                 };
                 assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be rejected if a POI is at less than 1 second", (done: Done) => {
+        fetch(`${getbaseURL()
+        }/api/skipSegments?videoID=qqwerty&startTime=0.5&endTime=0.5&category=poi_highlight&userID=testtesttesttesttesttesttesttesttesting`, {
+            method: "POST",
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to submit with colons in timestamps", (done: Done) => {
+        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userID: "testtesttesttesttesttesttesttesttest",
+                videoID: "colon-1",
+                segments: [{
+                    segment: ["0:2.000", "3:10.392"],
+                    category: "sponsor",
+                }]
+            }),
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
                 done();
             })
             .catch(err => done(err));

@@ -18,7 +18,11 @@ describe("shadowBanUser", () => {
         await db.prepare("run", insertQuery, ["testtesttest", 1, 11, 2, 0, "shadow-3-uuid-0", "shadowBanned3", 0, 50, "sponsor", "YouTube", 100, 0, 1, getHash("testtesttest", 1)]);
         await db.prepare("run", insertQuery, ["testtesttest2", 1, 11, 2, 0, "shadow-3-uuid-0-1", "shadowBanned3", 0, 50, "sponsor", "PeerTube", 120, 0, 1, getHash("testtesttest2", 1)]);
         await db.prepare("run", insertQuery, ["testtesttest", 20, 33, 2, 0, "shadow-3-uuid-2", "shadowBanned3", 0, 50, "intro", "YouTube", 101, 0, 1, getHash("testtesttest", 1)]);
+
+        await db.prepare("run", insertQuery, ["testtesttest", 21, 34, 2, 0, "shadow-4-uuid-1", "shadowBanned4", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("testtesttest", 1)]);
+
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned3"]);
+        await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned4"]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash("shadow-ban-vip")]);
     });
@@ -101,6 +105,40 @@ describe("shadowBanUser", () => {
                 assert.ok(!shadowRow);
                 assert.strictEqual(videoRow.length, 1);
                 assert.strictEqual(videoRow[0].category, "intro");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get 409 when re-shadowbanning user", (done: Done) => {
+        fetch(`${getbaseURL()
+        }/api/shadowBanUser?userID=shadowBanned4&adminUserID=shadow-ban-vip&enabled=true&categories=["sponsor"]&unHideOldSubmissions=false`, {
+            method: "POST"
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 409);
+                const videoRow = await db.prepare("all", `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned4", 0]);
+                const shadowRow = await db.prepare("get", `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned4"]);
+                assert.ok(shadowRow); // ban still exists
+                assert.strictEqual(videoRow.length, 1); // videos should not be hidden
+                assert.strictEqual(videoRow[0].category, "sponsor");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to re-shadowban user to hide old submissions", (done: Done) => {
+        fetch(`${getbaseURL()
+        }/api/shadowBanUser?userID=shadowBanned4&adminUserID=shadow-ban-vip&enabled=true&categories=["sponsor"]&unHideOldSubmissions=true`, {
+            method: "POST"
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const videoRow = await db.prepare("all", `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, ["shadowBanned4", 1]);
+                const shadowRow = await db.prepare("get", `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, ["shadowBanned4"]);
+                assert.ok(shadowRow); // ban still exists
+                assert.strictEqual(videoRow.length, 1); // videos should be hidden
+                assert.strictEqual(videoRow[0].category, "sponsor");
                 done();
             })
             .catch(err => done(err));
