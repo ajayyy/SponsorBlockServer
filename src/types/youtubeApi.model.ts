@@ -106,6 +106,6 @@ export interface APIVideoData {
 }
 
 export interface APIVideoInfo {
-    err: string | boolean,
+    err: boolean | string,
     data?: APIVideoData
 }

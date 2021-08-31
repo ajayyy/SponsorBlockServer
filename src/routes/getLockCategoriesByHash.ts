@@ -54,7 +54,7 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
         // merge all locks
         return res.send(mergeLocks(lockedRows));
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.sendStatus(500);
     }
 }

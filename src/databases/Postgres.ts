@@ -38,7 +38,7 @@ export class Postgres implements IDatabase {
                 await this.applyIndexes(this.config.fileNamePrefix, this.config.dbSchemaFolder);
             } catch (e) {
                 Logger.warn("Applying indexes failed. See https://github.com/ajayyy/SponsorBlockServer/wiki/Postgres-Extensions for more information.");
-                Logger.warn(e);
+                Logger.warn(e as string);
             }
         }
     }
