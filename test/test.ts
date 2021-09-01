@@ -26,6 +26,9 @@ async function init() {
             : "sqlite";
     Logger.info(`Database Mode: ${dbMode}`);
 
+    // set commit at headCommit
+    (global as any).HEADCOMMIT = "test";
+
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
 
