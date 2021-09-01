@@ -35,6 +35,7 @@ import {postPurgeAllSegments} from "./routes/postPurgeAllSegments";
 import {getUserID} from "./routes/getUserID";
 import {getLockCategories} from "./routes/getLockCategories";
 import {getLockCategoriesByHash} from "./routes/getLockCategoriesByHash";
+import {getStatus } from "./routes/getStatus";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 
@@ -163,6 +164,9 @@ function setupRoutes(router: Router) {
 
     // get privacy protecting lock categories functions
     router.get("/api/lockCategories/:prefix", getLockCategoriesByHash);
+
+    // get status
+    router.get("/api/status", getStatus);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
