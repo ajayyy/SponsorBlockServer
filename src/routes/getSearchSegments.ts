@@ -12,8 +12,8 @@ type searchSegmentResponse = {
 async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise<DBSegment[]> {
     return db.prepare(
         "all",
-        `SELECT "UUID", "timeSubmitted", "startTime", "endTime", "category", "actionType", "votes", "views", "locked", "hidden", "shadowHidden", FROM "sponsorTimes" 
-        WHERE "videoID" = ? AND "service" = ? ORDER BY "UUID"`,
+        `SELECT "UUID", "timeSubmitted", "startTime", "endTime", "category", "actionType", "votes", "views", "locked", "hidden", "shadowHidden" FROM "sponsorTimes" 
+        WHERE "videoID" = ? AND "service" = ? ORDER BY "timeSubmitted"`,
         [videoID, service]
     ) as Promise<DBSegment[]>;
 }
@@ -35,14 +35,13 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         return false;
     }
     // Default to sponsor
-    // If using params instead of JSON, only one category can be pulled
     const categories: Category[] = req.query.categories
         ? JSON.parse(req.query.categories as string)
         : req.query.category
             ? Array.isArray(req.query.category)
                 ? req.query.category
                 : [req.query.category]
-            : ["sponsor"];
+            : [];
     if (!Array.isArray(categories)) {
         res.status(400).send("Categories parameter does not match format requirements.");
         return false;
@@ -65,17 +64,18 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         service = Service.YouTube;
     }
 
-    const page: number = req.query.page ?? req.body.page ?? 0;
+    let page: number = req.query.page ?? req.body.page ?? 0;
+    page = Number(page);
 
-    const minVotes: number = req.query.minVotes ?? req.body.minVotes ?? -2;
+    const minVotes: number = req.query.minVotes ?? req.body.minVotes ?? -3;
     const maxVotes: number = req.query.maxVotes ?? req.body.maxVotes ?? Infinity;
 
-    const minViews: number = req.query.minViews ?? req.body.minViews ?? 0;
+    const minViews: number = req.query.minViews ?? req.body.minViews ?? -1;
     const maxViews: number = req.query.maxViews ?? req.body.maxViews ?? Infinity;
 
-    const locked: boolean = req.query.locked ?? req.body.locked ?? true;
-    const hidden: boolean = req.query.hidden ?? req.body.hidden ?? true;
-    const ignored: boolean = req.query.ignored ?? req.body.ignored ?? true;
+    const locked: boolean = (req.query.locked ?? req.body.locked ?? "") !== "false";
+    const hidden: boolean = (req.query.hidden ?? req.body.hidden ?? "") !== "false";
+    const ignored: boolean = (req.query.ignored ?? req.body.ignored ?? "") !== "false";
 
     const filters = {
         minVotes,
@@ -84,7 +84,9 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         maxViews,
         locked,
         hidden,
-        ignored
+        ignored,
+        categories,
+        actionTypes
     };
 
     const segments = await getSegmentsFromDBByVideoID(videoID, service);
@@ -101,17 +103,16 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
 
     return filterSegments(segments, page, filters);
 }
-
-function filterSegments(segments: DBSegment[], page: number, filters: Record<string, string|boolean|number>) {
+function filterSegments(segments: DBSegment[], page: number, filters: Record<string, any>) {
     const startIndex = 0+(page*segmentsPerPage);
     const endIndex = segmentsPerPage+(page*segmentsPerPage);
     const filteredSegments = segments.filter((segment) =>
-        (!(segment.votes <= filters.minVotes || segment.votes >= filters.maxVotes)
-            || (segment.views <= filters.minViews || segment.views >= filters.maxViews)
-            || (filters.locked && segment.locked)
-            || (filters.hidden && segment.hidden)
-            || (filters.ignored && (segment.hidden || segment.shadowHidden))
-        )
+        !((segment.votes < filters.minVotes || segment.votes > filters.maxVotes)
+            || (segment.views < filters.minViews || segment.views > filters.maxViews)
+            || (!filters.locked && segment.locked)
+            || (!filters.hidden && segment.hidden)
+            || (!filters.ignored && (segment.hidden || segment.shadowHidden))
+            || (filters.categories.length > 0 && !filters.categories.includes(segment.category)))
         // return false if any of the conditions are met
         // return true if none of the conditions are met
     );
