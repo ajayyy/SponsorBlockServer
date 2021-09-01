@@ -215,7 +215,7 @@ async function queueDump(): Promise<void> {
 
             lastUpdate = startTime;
         } catch(e) {
-            Logger.error(e);
+            Logger.error(e as string);
         } finally {
             updateQueued = false;
             updateRunning = false;

@@ -57,7 +57,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         }
     }
     catch (error) {
-        Logger.error(error);
+        Logger.error(error as string);
         return res.sendStatus(500);
     }
 
@@ -80,7 +80,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
 
         return res.sendStatus(200);
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.sendStatus(500);
     }
 }

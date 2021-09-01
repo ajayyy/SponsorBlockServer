@@ -92,7 +92,7 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
             }
         }
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.sendStatus(500);
     }
 

@@ -12,7 +12,7 @@ import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 
 
-async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[],cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
+async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1 && !segment.required) {
             return false; //too untrustworthy, just ignore it
@@ -26,19 +26,19 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
         if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
-            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted"  = ?',
+            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ?',
                 [videoID, segment.timeSubmitted]) as { hashedIP: HashedIP }[];
         }
 
         //if this isn't their ip, don't send it to them
-        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted].some((shadowHiddenSegment) => {
+        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some((shadowHiddenSegment) => {
             if (cache.userHashedIP === undefined) {
                 //hash the IP only if it's strictly necessary
                 cache.userHashedIP = getHash((getIP(req) + config.globalSalt) as IPAddress);
             }
 
             return shadowHiddenSegment.hashedIP === cache.userHashedIP;
-        });
+        }) ?? false;
     }));
 
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
@@ -80,7 +80,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
         return segments;
     } catch (err) {
         if (err) {
-            Logger.error(err);
+            Logger.error(err as string);
             return null;
         }
     }
@@ -125,10 +125,8 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
 
         return segments;
     } catch (err) {
-        if (err) {
-            Logger.error(err);
-            return null;
-        }
+        Logger.error(err as string);
+        return null;
     }
 }
 

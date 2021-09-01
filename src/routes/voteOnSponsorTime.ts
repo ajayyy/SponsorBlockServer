@@ -458,7 +458,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
         }
         return res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.status(500).json({error: "Internal error creating segment vote"});
     }
 }

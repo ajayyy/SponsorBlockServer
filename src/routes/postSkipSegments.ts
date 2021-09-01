@@ -390,9 +390,9 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
             return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400};
         }
 
-        // Check for POI segments before 1 second
-        if (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < 1) {
-            return { pass: false, errorMessage: "POI must be after 1 second", errorCode: 400};
+        // Check for POI segments before some seconds
+        if (!isVIP && getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < config.poiMinimumStartTime) {
+            return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400};
         }
 
         if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
@@ -684,7 +684,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             });
         }
     } catch (err) {
-        Logger.error(err);
+        Logger.error(err as string);
         return res.sendStatus(500);
     }
 
