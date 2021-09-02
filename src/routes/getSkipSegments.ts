@@ -218,7 +218,7 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
     for (const segment of segments) {
-        if (segment.startTime > cursor) {
+        if (segment.startTime >= cursor) {
             currentGroup = {segments: [], votes: 0, reputation: 0, locked: false, required: false};
             overlappingSegmentsGroups.push(currentGroup);
         }
