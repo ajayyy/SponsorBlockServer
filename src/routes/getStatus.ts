@@ -3,6 +3,7 @@ import {Logger} from "../utils/logger";
 import {Request, Response} from "express";
 
 export async function getStatus(req: Request, res: Response): Promise<Response> {
+    const startTime = Date.now();
     let value = req.params.value as string[] | string;
     value = Array.isArray(value) ? value[0] : value;
     try {
@@ -11,6 +12,8 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             uptime: process.uptime(),
             commit: (global as any).HEADCOMMIT || "unknown",
             db: Number(dbVersion),
+            startTime,
+            processTime: Date.now() - startTime,
         };
         return value ? res.send(String(statusValues[value])) : res.send(statusValues);
     } catch (err) {
