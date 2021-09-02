@@ -39,6 +39,7 @@ import {endpoint as getSearchSegments } from "./routes/getSearchSegments";
 import {getStatus } from "./routes/getStatus";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
+import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -172,6 +173,8 @@ function setupRoutes(router: Router) {
     // get status
     router.get("/api/status/:value", getStatus);
     router.get("/api/status", getStatus);
+
+    router.get("/api/youtubeApiProxy", youtubeApiProxy);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
