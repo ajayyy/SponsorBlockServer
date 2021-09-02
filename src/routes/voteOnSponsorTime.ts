@@ -431,7 +431,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             await db.prepare("run", `UPDATE "sponsorTimes" SET "${columnName}" = "${columnName}" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // Unide and Lock this submission
-                await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0 WHERE "UUID" = ?', [UUID]);
+                await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0, "shadowHidden" = 0 WHERE "UUID" = ?', [UUID]);
 
                 // Reset video duration in case that caused it to be hidden
                 if (videoInfo.hidden) await db.prepare("run", 'UPDATE "sponsorTimes" SET "videoDuration" = 0 WHERE "UUID" = ?', [UUID]);

@@ -36,6 +36,7 @@ import {getUserID} from "./routes/getUserID";
 import {getLockCategories} from "./routes/getLockCategories";
 import {getLockCategoriesByHash} from "./routes/getLockCategoriesByHash";
 import {endpoint as getSearchSegments } from "./routes/getSearchSegments";
+import {getStatus } from "./routes/getStatus";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 
@@ -167,6 +168,9 @@ function setupRoutes(router: Router) {
 
     // get all segments that match a search
     router.get("/api/searchSegments", getSearchSegments);
+
+    // get status
+    router.get("/api/status", getStatus);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
