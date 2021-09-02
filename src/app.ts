@@ -170,6 +170,7 @@ function setupRoutes(router: Router) {
     router.get("/api/searchSegments", getSearchSegments);
 
     // get status
+    router.get("/api/status/:value", getStatus);
     router.get("/api/status", getStatus);
 
     if (config.postgres) {
