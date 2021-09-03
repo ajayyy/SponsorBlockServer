@@ -126,6 +126,5 @@ async function unHideSubmissions(categories: string[], userID: UserID) {
     (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]))
         .forEach((videoInfo: { category: Category; videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID: UserID; }) => {
             QueryCacher.clearVideoCache(videoInfo);
-        }
-    ); //eslint-disable-line
+        });
 }
