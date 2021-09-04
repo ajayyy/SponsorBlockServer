@@ -37,6 +37,7 @@ import {getLockCategories} from "./routes/getLockCategories";
 import {getLockCategoriesByHash} from "./routes/getLockCategoriesByHash";
 import {endpoint as getSearchSegments } from "./routes/getSearchSegments";
 import {getStatus } from "./routes/getStatus";
+import {getUserStats} from "./routes/getUserStats";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 
@@ -172,6 +173,9 @@ function setupRoutes(router: Router) {
     // get status
     router.get("/api/status/:value", getStatus);
     router.get("/api/status", getStatus);
+
+    // get user category stats
+    router.get("/api/userStats", getUserStats);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
