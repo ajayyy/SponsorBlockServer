@@ -137,6 +137,31 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should not be able to submit an intro with mute action type (JSON method)", (done: Done) => {
+        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                userID: "testtesttesttesttesttesttesttesttest",
+                videoID: "dQw4w9WgXpQ",
+                segments: [{
+                    segment: [0, 10],
+                    category: "intro",
+                    actionType: "mute"
+                }],
+            }),
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, ["dQw4w9WgXpQ"]);
+                assert.strictEqual(row, undefined);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to submit a single time with a duration from the YouTube API (JSON method)", (done: Done) => {
         fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
             method: "POST",

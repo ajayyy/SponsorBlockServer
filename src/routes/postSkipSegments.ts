@@ -348,8 +348,8 @@ function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): Ch
     return CHECK_PASS;
 }
 
-async function checkEachSegmentValid(userID: string, videoID: VideoID
-    , segments: Array<any>, service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+async function checkEachSegmentValid(userID: string, videoID: VideoID,
+    segments: Array<any>, service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -377,6 +377,10 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
                     `\nIf you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
             };
+        }
+
+        if (!config.categorySupport[segments[i].category]?.includes(segments[i].actionType)) {
+            return { pass: false, errorMessage: "ActionType is not supported with this category.", errorCode: 400 };
         }
 
         const startTime = parseFloat(segments[i].segment[0]);
