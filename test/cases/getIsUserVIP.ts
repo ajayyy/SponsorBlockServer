@@ -6,11 +6,11 @@ import assert from "assert";
 
 describe("getIsUserVIP", () => {
     before((done: Done) => {
-        db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash("supertestman")]).then(done);
+        db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash("isUserVIPVIP")]).then(done);
     });
 
     it("Should be able to get a 200", (done: Done) => {
-        fetch(`${getbaseURL()}/api/isUserVIP?userID=supertestman`)
+        fetch(`${getbaseURL()}/api/isUserVIP?userID=isUserVIPVIP`)
             .then(res => {
                 assert.strictEqual(res.status, 200, "response should be 200");
                 done();
@@ -29,7 +29,7 @@ describe("getIsUserVIP", () => {
     });
 
     it("Should say a VIP is a VIP", (done: Done) => {
-        fetch(`${getbaseURL()}/api/isUserVIP?userID=supertestman`)
+        fetch(`${getbaseURL()}/api/isUserVIP?userID=isUserVIPVIP`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -40,7 +40,7 @@ describe("getIsUserVIP", () => {
     });
 
     it("Should say a normal user is not a VIP", (done: Done) => {
-        fetch(`${getbaseURL()}/api/isUserVIP?userID=regulartestman`)
+        fetch(`${getbaseURL()}/api/isUserVIP?userID=isUserVIPNormal`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

@@ -16,20 +16,20 @@ const stringDeepEquals = (a: string[] ,b: string[]): boolean => {
 describe("lockCategoriesRecords", () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-lockCategories")]);
+        await db.prepare("run", insertVipUserQuery, [getHash("lockCategoriesRecordsVIPUser")]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "no-segments-video-id", "sponsor", "reason-1"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "no-segments-video-id", "intro", "reason-1"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id", "sponsor", "reason-1"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id", "intro", "reason-1"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "no-segments-video-id-1", "sponsor", "reason-2"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "no-segments-video-id-1", "intro", "reason-2"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "lockCategoryVideo", "sponsor", "reason-3"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id-1", "sponsor", "reason-2"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id-1", "intro", "reason-2"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "lockCategoryVideo", "sponsor", "reason-3"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "delete-record", "sponsor", "reason-4"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "delete-record", "sponsor", "reason-4"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "delete-record-1", "sponsor", "reason-5"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-lockCategories"), "delete-record-1", "intro", "reason-5"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "delete-record-1", "sponsor", "reason-5"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "delete-record-1", "intro", "reason-5"]);
     });
 
     it("Should update the database version when starting the application", async () => {
@@ -40,7 +40,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories not in video (http response)", (done: Done) => {
         const json = {
             videoID: "no-segments-video-id",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "outro",
                 "shilling",
@@ -75,7 +75,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories not in video (sql check)", (done: Done) => {
         const json = {
             videoID: "no-segments-video-id-1",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "outro",
                 "shilling",
@@ -114,7 +114,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories not in video with reason (http response)", (done: Done) => {
         const json = {
             videoID: "no-segments-video-id",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "outro",
                 "shilling",
@@ -153,7 +153,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories not in video with reason (sql check)", (done: Done) => {
         const json = {
             videoID: "no-segments-video-id-1",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "outro",
                 "shilling",
@@ -199,7 +199,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories with _ in the category", (done: Done) => {
         const json = {
             videoID: "underscore",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "word_word",
             ],
@@ -223,7 +223,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories with upper and lower case in the category", (done: Done) => {
         const json = {
             videoID: "bothCases",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "wordWord",
             ],
@@ -247,7 +247,7 @@ describe("lockCategoriesRecords", () => {
     it("Should not be able to submit categories with $ in the category", (done: Done) => {
         const json = {
             videoID: "specialChar",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "word&word",
             ],
@@ -414,7 +414,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to delete a lockCategories record", (done: Done) => {
         const json = {
             videoID: "delete-record",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "sponsor",
             ],
@@ -439,7 +439,7 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to delete one lockCategories record without removing another", (done: Done) => {
         const json = {
             videoID: "delete-record-1",
-            userID: "VIPUser-lockCategories",
+            userID: "lockCategoriesRecordsVIPUser",
             categories: [
                 "sponsor",
             ],

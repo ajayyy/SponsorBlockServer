@@ -8,25 +8,24 @@ import assert from "assert";
 describe("getLockCategories", () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-getLockCategories")]);
+        await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesVIP")]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), "getLock-1", "sponsor", "1-short"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), "getLock-1", "interaction", "1-longer-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock1", "sponsor", "1-short"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock1", "interaction", "1-longer-reason"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), "getLock-2", "preview", "2-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock2", "preview", "2-reason"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-getLockCategories"), "getLock-3", "nonmusic", "3-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock3", "nonmusic", "3-reason"]);
     });
 
     it("Should update the database version when starting the application", async () => {
         const version = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
-        if (version > 20) return;
-        else return `Version isn't greater than 20. Version is ${version}`;
+        assert.ok(version > 20, `Version isn't greater than 20. Version is ${version}`);
     });
 
     it("Should be able to get multiple locks", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock-1`)
+        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock1`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -44,7 +43,7 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get single locks", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock-2`)
+        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock2`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -61,7 +60,7 @@ describe("getLockCategories", () => {
     });
 
     it("should return 404 if no lock exists", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock-0`)
+        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLockNull`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();

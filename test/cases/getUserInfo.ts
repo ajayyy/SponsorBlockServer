@@ -10,15 +10,16 @@ describe("getUserInfo", () => {
         await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_01"), "Username user 01"]);
 
         const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000001", getHash("getuserinfo_user_01"), 1, 10, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000002", getHash("getuserinfo_user_01"), 2, 10, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["yyyxxxzzz", 1, 11, -1, "uuid000003", getHash("getuserinfo_user_01"), 3, 10, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["yyyxxxzzz", 1, 11, -2, "uuid000004", getHash("getuserinfo_user_01"), 4, 10, "sponsor", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["xzzzxxyyy", 1, 11, -5, "uuid000005", getHash("getuserinfo_user_01"), 5, 10, "sponsor", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["zzzxxxyyy", 1, 11, 2, "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000007", getHash("getuserinfo_user_02"), 7, 10, "sponsor", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 1, 11, 2, "uuid000008", getHash("getuserinfo_user_02"), 8, 10, "sponsor", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["xxxyyyzzz", 0, 36000, 2, "uuid000009", getHash("getuserinfo_user_03"), 8, 2, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000001", getHash("getuserinfo_user_01"), 1, 10, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000002", getHash("getuserinfo_user_01"), 2, 10, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo1", 1, 11, -1,  "uuid000003", getHash("getuserinfo_user_01"), 3, 10, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo1", 1, 11, -2,  "uuid000004", getHash("getuserinfo_user_01"), 4, 10, "sponsor", 1]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo2", 1, 11, -5,  "uuid000005", getHash("getuserinfo_user_01"), 5, 10, "sponsor", 1]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000007", getHash("getuserinfo_user_02"), 7, 10, "sponsor", 1]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000008", getHash("getuserinfo_user_02"), 8, 10, "sponsor", 1]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 0, 36000, 2,"uuid000009", getHash("getuserinfo_user_03"), 8, 10, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo3", 1, 11, 2,   "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", 0]);
+
 
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_0"), 10, "getuserinfo_vip", 1, "warning0-0"]);
@@ -303,8 +304,8 @@ describe("getUserInfo", () => {
                 const expected = {
                     userName: "807e0a5d0a62c9c4365fae3d403e4618a3226f231314a898fa1555a0e55eab9e",
                     userID: "807e0a5d0a62c9c4365fae3d403e4618a3226f231314a898fa1555a0e55eab9e",
-                    minutesSaved: 20,
-                    viewCount: 2,
+                    minutesSaved: 100,
+                    viewCount: 10,
                     ignoredViewCount: 0,
                     segmentCount: 1,
                     ignoredSegmentCount: 0,
