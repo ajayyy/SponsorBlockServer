@@ -349,7 +349,7 @@ function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): Ch
 }
 
 async function checkEachSegmentValid(userID: string, videoID: VideoID,
-    segments: Array<any>, service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+    segments: IncomingSegment[], service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -406,7 +406,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
-            and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
+            and "endTime" = ? and "category" = ? and "actionType" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, videoID, service]);
         if (duplicateCheck2Row.count > 0) {
             return { pass: false, errorMessage: "Sponsors has already been submitted before.", errorCode: 409};
         }
