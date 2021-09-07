@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
@@ -59,7 +59,7 @@ describe("getUserStats", () => {
                     }
                 };
                 const data = await res.json();
-                assert.deepStrictEqual(data, expected);
+                assert.ok(partialDeepEquals(data, expected));
                 done();
             })
             .catch(err => done(err));
