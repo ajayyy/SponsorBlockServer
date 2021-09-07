@@ -3,7 +3,6 @@ import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
-const includeAllStats = "&categoryStats=true&typeStats=true";
 
 describe("getUserStats", () => {
     before(async () => {
@@ -33,7 +32,7 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all user info", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01${includeAllStats}`)
+        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&categoryStats=true&typeStats=true`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -102,6 +101,20 @@ describe("getUserStats", () => {
                 const data = await res.json();
                 // check for categoryCount
                 if (data.categoryCount || data.actionTypeCount) {
+                    done("returned extra stats");
+                }
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get parts of extra stats if not requested", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&typeStats=true`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                // check for categoryCount
+                if (data.categoryCount && !data.actionTypeCount) {
                     done("returned extra stats");
                 }
                 done();
