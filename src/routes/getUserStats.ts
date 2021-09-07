@@ -22,8 +22,8 @@ async function dbGetUserSummary(userID: HashedUserID, categoryStats: boolean, ty
     }
     if (typeStats) {
         additionalQuery += `
-            SUM(CASE WHEN actionType = 'skip' THEN 1 ELSE 0 END) as 'typeSumSkip',
-            SUM(CASE WHEN actionType = 'mute' THEN 1 ELSE 0 END) as 'typeSumMute',`;
+            SUM(CASE WHEN actionType = 'skip' THEN 1 ELSE 0 END) as "typeSumSkip",
+            SUM(CASE WHEN actionType = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",`;
     }
     try {
         const row = await db.prepare("get", `
