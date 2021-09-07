@@ -3,6 +3,7 @@ import {Done, getbaseURL} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
+const includeAllStats = "&categoryStats=true&typeStats=true";
 
 describe("getUserStats", () => {
     before(async () => {
@@ -31,30 +32,31 @@ describe("getUserStats", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get user info", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01`)
+    it("Should be able to get all user info", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01${includeAllStats}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
                     userName: "Username user 01",
                     userID: getHash("getuserstats_user_01"),
-                    sponsor: {
-                        minutesSaved: 1, segmentCount: 1,
-                    }, selfpromo: {
-                        minutesSaved: 2, segmentCount: 1,
-                    }, interaction: {
-                        minutesSaved: 3, segmentCount: 1,
-                    }, intro: {
-                        minutesSaved: 4, segmentCount: 1,
-                    }, outro: {
-                        minutesSaved: 5, segmentCount: 1,
-                    }, preview: {
-                        minutesSaved: 6, segmentCount: 1,
-                    }, music_offtopic: {
-                        minutesSaved: 7, segmentCount: 1,
-                    }, poi_highlight: {
-                        minutesSaved: 0, segmentCount: 1,
+                    categoryCount: {
+                        sponsor: 1,
+                        selfpromo: 1,
+                        interaction: 1,
+                        intro: 1,
+                        outro: 1,
+                        preview: 1,
+                        music_offtopic: 1,
+                        poi_highlight: 1,
                     },
+                    actionTypeCount: {
+                        mute: 0,
+                        skip: 8
+                    },
+                    overallStats: {
+                        minutesSaved: 28,
+                        segmentCount: 8
+                    }
                 };
                 const data = await res.json();
                 assert.deepStrictEqual(data, expected);
@@ -68,8 +70,8 @@ describe("getUserStats", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                for (const value in data) {
-                    if (data[value]?.minutesSaved || data[value]?.segmentCount) {
+                for (const value in data.overallStats) {
+                    if (data[value]) {
                         done(`returned non-zero for ${value}`);
                     }
                 }
@@ -83,10 +85,24 @@ describe("getUserStats", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                for (const value in data) {
-                    if (data[value]?.minutesSaved || data[value]?.segmentCount) {
+                for (const value in data.overallStats) {
+                    if (data[value]) {
                         done(`returned non-zero for ${value}`);
                     }
+                }
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not get extra stats if not requested", (done: Done) => {
+        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01`)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await res.json();
+                // check for categoryCount
+                if (data.categoryCount || data.actionTypeCount) {
+                    done("returned extra stats");
                 }
                 done();
             })
