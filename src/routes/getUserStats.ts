@@ -11,19 +11,19 @@ async function dbGetUserSummary(userID: HashedUserID, categoryStats: boolean, ty
     let additionalQuery = "";
     if (categoryStats) {
         additionalQuery += `
-            SUM(CASE WHEN category = 'sponsor' THEN 1 ELSE 0 END) as "categorySumSponsor",
-            SUM(CASE WHEN category = 'intro' THEN 1 ELSE 0 END) as "categorySumIntro",
-            SUM(CASE WHEN category = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
-            SUM(CASE WHEN category = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
-            SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
-            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
-            SUM(CASE WHEN category = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
-            SUM(CASE WHEN category = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",`;
+            SUM(CASE WHEN "category" = 'sponsor' THEN 1 ELSE 0 END) as "categorySumSponsor",
+            SUM(CASE WHEN "category" = 'intro' THEN 1 ELSE 0 END) as "categorySumIntro",
+            SUM(CASE WHEN "category" = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
+            SUM(CASE WHEN "category" = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
+            SUM(CASE WHEN "category" = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
+            SUM(CASE WHEN "category" = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
+            SUM(CASE WHEN "category" = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
+            SUM(CASE WHEN "category" = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",`;
     }
     if (typeStats) {
         additionalQuery += `
-            SUM(CASE WHEN actionType = 'skip' THEN 1 ELSE 0 END) as "typeSumSkip",
-            SUM(CASE WHEN actionType = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",`;
+            SUM(CASE WHEN "actionType" = 'skip' THEN 1 ELSE 0 END) as "typeSumSkip",
+            SUM(CASE WHEN "actionType" = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",`;
     }
     try {
         const row = await db.prepare("get", `
