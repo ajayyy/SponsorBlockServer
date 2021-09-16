@@ -19,6 +19,7 @@ import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import { UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseUserAgent } from "../utils/userAgent";
+import { getService } from "../utils/getService";
 
 type CheckResult = {
     pass: boolean,
@@ -545,10 +546,7 @@ function proxySubmission(req: Request) {
 function preprocessInput(req: Request) {
     const videoID = req.query.videoID || req.body.videoID;
     const userID = req.query.userID || req.body.userID;
-    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
-    if (!Object.values(Service).some((val) => val === service)) {
-        service = Service.YouTube;
-    }
+    const service = getService(req.query.service, req.body.service);
     const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
     const videoDuration = videoDurationParam;
 

@@ -10,6 +10,7 @@ import { getIP } from "../utils/getIP";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
+import { getService } from "../utils/getService";
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
@@ -317,10 +318,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         return false;
     }
 
-    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
-    if (!Object.values(Service).some((val) => val == service)) {
-        service = Service.YouTube;
-    }
+    const service = getService(req.query.service, req.body.service);
 
     const segments = await getSegmentsByVideoID(req, videoID, categories, actionTypes, requiredSegments, service);
 
