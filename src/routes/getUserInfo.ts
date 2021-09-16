@@ -43,12 +43,7 @@ async function dbGetIgnoredSegmentCount(userID: HashedUserID): Promise<number> {
 async function dbGetUsername(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
-        if (row !== undefined) {
-            return row.userName;
-        } else {
-            //no username yet, just send back the userID
-            return userID;
-        }
+        return row?.userName ?? userID;
     } catch (err) {
         return false;
     }
@@ -172,7 +167,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
         responseObj[property] = await dbGetValue(hashedUserID, property);
     }
     // add minutesSaved and segmentCount after to avoid getting overwritten
-    if (paramValues.includes("minutesSaved")) { responseObj["minutesSaved"] = segmentsSummary.minutesSaved; }
+    if (paramValues.includes("minutesSaved")) responseObj["minutesSaved"] = segmentsSummary.minutesSaved;
     if (paramValues.includes("segmentCount")) responseObj["segmentCount"] = segmentsSummary.segmentCount;
     return res.send(responseObj);
 }
