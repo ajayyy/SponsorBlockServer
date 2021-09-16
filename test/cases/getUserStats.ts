@@ -32,7 +32,7 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all user info", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&categoryStats=true&typeStats=true`)
+        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&fetchCategoryStats=true&fetchActionTypeStats=true`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -109,7 +109,7 @@ describe("getUserStats", () => {
     });
 
     it("Should get parts of extra stats if not requested", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&typeStats=true`)
+        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&fetchActionTypeStats=true`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

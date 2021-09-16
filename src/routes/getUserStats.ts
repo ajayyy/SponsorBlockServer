@@ -7,9 +7,9 @@ import { Logger } from "../utils/logger";
 type nestedObj = Record<string, Record<string, number>>;
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
-async function dbGetUserSummary(userID: HashedUserID, categoryStats: boolean, typeStats: boolean) {
+async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolean, fetchActionTypeStats: boolean) {
     let additionalQuery = "";
-    if (categoryStats) {
+    if (fetchCategoryStats) {
         additionalQuery += `
             SUM(CASE WHEN "category" = 'sponsor' THEN 1 ELSE 0 END) as "categorySumSponsor",
             SUM(CASE WHEN "category" = 'intro' THEN 1 ELSE 0 END) as "categorySumIntro",
@@ -20,7 +20,7 @@ async function dbGetUserSummary(userID: HashedUserID, categoryStats: boolean, ty
             SUM(CASE WHEN "category" = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
             SUM(CASE WHEN "category" = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",`;
     }
-    if (typeStats) {
+    if (fetchActionTypeStats) {
         additionalQuery += `
             SUM(CASE WHEN "actionType" = 'skip' THEN 1 ELSE 0 END) as "typeSumSkip",
             SUM(CASE WHEN "actionType" = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",`;
@@ -42,7 +42,7 @@ async function dbGetUserSummary(userID: HashedUserID, categoryStats: boolean, ty
             minutesSaved: proxy.minutesSaved,
             segmentCount: proxy.segmentCount,
         };
-        if (categoryStats) {
+        if (fetchCategoryStats) {
             result.categoryCount = {
                 sponsor: proxy.categorySumSponsor,
                 intro: proxy.categorySumIntro,
@@ -54,7 +54,7 @@ async function dbGetUserSummary(userID: HashedUserID, categoryStats: boolean, ty
                 poi_highlight: proxy.categorySumHighlight,
             };
         }
-        if (typeStats) {
+        if (fetchActionTypeStats) {
             result.actionTypeCount = {
                 skip: proxy.typeSumSkip,
                 mute: proxy.typeSumMute,
@@ -79,14 +79,14 @@ async function dbGetUsername(userID: HashedUserID) {
 export async function getUserStats(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
     const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
-    const categoryStats = req.query.categoryStats == "true";
-    const typeStats = req.query.typeStats == "true";
+    const fetchCategoryStats = req.query.fetchCategoryStats == "true";
+    const fetchActionTypeStats = req.query.fetchActionTypeStats == "true";
 
     if (hashedUserID == undefined) {
         //invalid request
         return res.status(400).send("Invalid userID or publicUserID parameter");
     }
-    const segmentSummary = await dbGetUserSummary(hashedUserID, categoryStats, typeStats);
+    const segmentSummary = await dbGetUserSummary(hashedUserID, fetchCategoryStats, fetchActionTypeStats);
     const responseObj = {
         userID: hashedUserID,
         userName: await dbGetUsername(hashedUserID),
