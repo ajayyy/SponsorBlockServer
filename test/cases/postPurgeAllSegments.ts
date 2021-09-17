@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, postJSON} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import {IDatabase} from "../../src/databases/IDatabase";
@@ -32,9 +32,8 @@ async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string, expec
 
 describe("postPurgeAllSegments", function () {
     const privateVipUserID = "VIPUser-purgeAll";
-    const route = "/api/purgeAllSegments";
     const vipUserID = getHash(privateVipUserID);
-    const baseURL = getbaseURL();
+    const endpoint = `${getbaseURL()}/api/purgeAllSegments`;
 
     before(async function () {
         // startTime and endTime get set in beforeEach for consistency
@@ -47,11 +46,8 @@ describe("postPurgeAllSegments", function () {
     });
 
     it("Reject non-VIP user", function (done: Done) {
-        fetch(`${baseURL}${route}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify({
                 videoID: "vsegpurge01",
                 userID: "segshift_randomuser001",
@@ -65,11 +61,8 @@ describe("postPurgeAllSegments", function () {
     });
 
     it("Purge all segments success", function (done: Done) {
-        fetch(`${baseURL}${route}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify({
                 videoID: "vsegpurge01",
                 userID: privateVipUserID,
@@ -83,12 +76,7 @@ describe("postPurgeAllSegments", function () {
     });
 
     it("Should return 400 if missing body", function (done: Done) {
-        fetch(`${baseURL}${route}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        })
+        fetch(endpoint, { ...postJSON })
             .then(async res => {
                 assert.strictEqual(res.status, 400);
                 done();

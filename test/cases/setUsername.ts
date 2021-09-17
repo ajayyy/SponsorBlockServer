@@ -60,6 +60,7 @@ async function testUserNameChangelog(userID: string, newUserName: string, oldUse
 }
 
 describe("setUsername", () => {
+    const endpoint = `${getbaseURL()}/api/setUsername`;
     before(async () => {
         await addUsername(getHash(user01PrivateUserID), username01, 0);
         await addUsername(getHash(user02PrivateUserID), username02, 0);
@@ -71,7 +72,7 @@ describe("setUsername", () => {
     });
 
     it("Should be able to set username that has never been set", (done: Done) => {
-        fetch(`${getbaseURL()}/api/setUsername?userID=${user00PrivateUserID}&username=${username00}`, {
+        fetch(`${endpoint}?userID=${user00PrivateUserID}&username=${username00}`, {
             method: "POST",
         })
             .then(async res => {
@@ -85,7 +86,7 @@ describe("setUsername", () => {
     });
 
     it("Should return 200", (done: Done) => {
-        fetch(`${getbaseURL()}/api/setUsername?userID=${user01PrivateUserID}&username=Changed%20Username`, {
+        fetch(`${endpoint}?userID=${user01PrivateUserID}&username=Changed%20Username`, {
             method: "POST",
         })
             .then(async res => {
@@ -96,7 +97,7 @@ describe("setUsername", () => {
     });
 
     it('Should return 400 for missing param "userID"', (done: Done) => {
-        fetch(`${getbaseURL()}/api/setUsername?username=MyUsername`, {
+        fetch(`${endpoint}?username=MyUsername`, {
             method: "POST",
         })
             .then(res => {
@@ -107,7 +108,7 @@ describe("setUsername", () => {
     });
 
     it('Should return 400 for missing param "username"', (done: Done) => {
-        fetch(`${getbaseURL()}/api/setUsername?userID=test`, {
+        fetch(`${endpoint}?userID=test`, {
             method: "POST",
         })
             .then(res => {
@@ -119,7 +120,7 @@ describe("setUsername", () => {
 
     it('Should return 400 for "username" longer then 64 characters', (done: Done) => {
         const username65 = "0000000000000000000000000000000000000000000000000000000000000000X";
-        fetch(`${getbaseURL()}/api/setUsername?userID=test&username=${encodeURIComponent(username65)}`, {
+        fetch(`${endpoint}?userID=test&username=${encodeURIComponent(username65)}`, {
             method: "POST",
         })
             .then(res => {
@@ -131,7 +132,7 @@ describe("setUsername", () => {
 
     it('Should not change username if it contains "discord"', (done: Done) => {
         const newUsername = "discord.me";
-        fetch(`${getbaseURL()}/api/setUsername?userID=${user02PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?userID=${user02PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async res => {
@@ -145,7 +146,7 @@ describe("setUsername", () => {
 
     it("Should be able to change username", (done: Done) => {
         const newUsername = "newUsername";
-        fetch(`${getbaseURL()}/api/setUsername?userID=${user03PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?userID=${user03PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async () => {
@@ -159,7 +160,7 @@ describe("setUsername", () => {
 
     it("Should not be able to change locked username", (done: Done) => {
         const newUsername = "newUsername";
-        fetch(`${getbaseURL()}/api/setUsername?userID=${user04PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?userID=${user04PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async () => {
@@ -173,7 +174,7 @@ describe("setUsername", () => {
 
     it("Should filter out unicode control characters", (done: Done) => {
         const newUsername = "This\nUsername+has\tInvalid+Characters";
-        fetch(`${getbaseURL()}/api/setUsername?userID=${user05PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?userID=${user05PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async () => {
@@ -186,7 +187,7 @@ describe("setUsername", () => {
 
     it("Incorrect adminUserID should return 403", (done: Done) => {
         const newUsername = "New Username";
-        fetch(`${getbaseURL()}/api/setUsername?adminUserID=invalidAdminID&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?adminUserID=invalidAdminID&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async res => {
@@ -198,7 +199,7 @@ describe("setUsername", () => {
 
     it("Admin should be able to change username", (done: Done) => {
         const newUsername = "New Username";
-        fetch(`${getbaseURL()}/api/setUsername?adminUserID=${adminPrivateUserID}&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?adminUserID=${adminPrivateUserID}&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async () => {
@@ -212,7 +213,7 @@ describe("setUsername", () => {
 
     it("Admin should be able to change locked username", (done: Done) => {
         const newUsername = "New Username";
-        fetch(`${getbaseURL()}/api/setUsername?adminUserID=${adminPrivateUserID}&userID=${getHash(user07PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
+        fetch(`${endpoint}?adminUserID=${adminPrivateUserID}&userID=${getHash(user07PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
             method: "POST",
         })
             .then(async () => {

@@ -12,32 +12,32 @@ const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 
-// Constant and helpers
-const submitUserOne = `PostSkipUser1${".".repeat(18)}`;
-const submitUserTwo = `PostSkipUser2${".".repeat(18)}`;
-const submitUserThree = `PostSkipUser3${".".repeat(18)}`;
-
-const warnUser01 = "warn-user01-qwertyuiopasdfghjklzxcvbnm";
-const warnUser01Hash = getHash(warnUser01);
-const warnUser02 = "warn-user02-qwertyuiopasdfghjklzxcvbnm";
-const warnUser02Hash = getHash(warnUser02);
-const warnUser03 = "warn-user03-qwertyuiopasdfghjklzxcvbnm";
-const warnUser03Hash = getHash(warnUser03);
-const warnUser04 = "warn-user04-qwertyuiopasdfghjklzxcvbnm";
-const warnUser04Hash = getHash(warnUser04);
-
-const submitUserOneHash = getHash(submitUserOne);
-const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
-const warnVideoID = "dQw4w9WgXcF";
-const badInputVideoID = "dQw4w9WgXcQ";
-
-const queryDatabase = async (videoID: string) => await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
-const queryDatabaseActionType = async(videoID: string) => await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
-const queryDatabaseDuration = async (videoID: string) => await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
-
-const endpoint = `${getbaseURL()}/api/skipSegments`;
-
 describe("postSkipSegments", () => {
+// Constant and helpers
+    const submitUserOne = `PostSkipUser1${".".repeat(18)}`;
+    const submitUserTwo = `PostSkipUser2${".".repeat(18)}`;
+    const submitUserThree = `PostSkipUser3${".".repeat(18)}`;
+
+    const warnUser01 = "warn-user01-qwertyuiopasdfghjklzxcvbnm";
+    const warnUser01Hash = getHash(warnUser01);
+    const warnUser02 = "warn-user02-qwertyuiopasdfghjklzxcvbnm";
+    const warnUser02Hash = getHash(warnUser02);
+    const warnUser03 = "warn-user03-qwertyuiopasdfghjklzxcvbnm";
+    const warnUser03Hash = getHash(warnUser03);
+    const warnUser04 = "warn-user04-qwertyuiopasdfghjklzxcvbnm";
+    const warnUser04Hash = getHash(warnUser04);
+
+    const submitUserOneHash = getHash(submitUserOne);
+    const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
+    const warnVideoID = "dQw4w9WgXcF";
+    const badInputVideoID = "dQw4w9WgXcQ";
+
+    const queryDatabase = async (videoID: string) => await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabaseActionType = async(videoID: string) => await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabaseDuration = async (videoID: string) => await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+
+    const endpoint = `${getbaseURL()}/api/skipSegments`;
+
     before(() => {
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
@@ -598,7 +598,6 @@ describe("postSkipSegments", () => {
         })
             .then( async res => {
                 assert.strictEqual(res.status, 403);
-                console.log(res.text());
                 done();
             })
             .catch(err => done(err));
@@ -611,7 +610,6 @@ describe("postSkipSegments", () => {
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                console.log(res.text());
                 done();
             })
             .catch(err => done(err));

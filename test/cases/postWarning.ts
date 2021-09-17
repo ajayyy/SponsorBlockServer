@@ -1,10 +1,14 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
+import {Done, getbaseURL, partialDeepEquals, postJSON} from "../utils";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
 
 describe("postWarning", () => {
+    // constants
+    const endpoint = `${getbaseURL()}/api/warnUser`;
+    const getWarning = async (userID: string) => await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [userID]);
+
     before(async () => {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash("warning-vip")]);
     });
@@ -15,16 +19,13 @@ describe("postWarning", () => {
             userID: "warning-0",
             reason: "warning-reason-0"
         };
-        fetch(`${getbaseURL()}/api/warnUser`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 1,
                     issuerUserID: getHash(json.issuerUserID),
@@ -42,16 +43,13 @@ describe("postWarning", () => {
             userID: "warning-0",
         };
 
-        fetch(`${getbaseURL()}/api/warnUser`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 409);
-                const row = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 1,
                     issuerUserID: getHash(json.issuerUserID),
@@ -69,16 +67,13 @@ describe("postWarning", () => {
             enabled: false
         };
 
-        fetch(`${getbaseURL()}/api/warnUser`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 0
                 };
@@ -94,11 +89,8 @@ describe("postWarning", () => {
             userID: "warning-1",
         };
 
-        fetch(`${getbaseURL()}/api/warnUser`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -109,12 +101,7 @@ describe("postWarning", () => {
     });
 
     it("Should return 400 if missing body", (done: Done) => {
-        fetch(`${getbaseURL()}/api/warnUser`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        })
+        fetch(endpoint, postJSON)
             .then(async res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -129,16 +116,13 @@ describe("postWarning", () => {
             enabled: true
         };
 
-        fetch(`${getbaseURL()}/api/warnUser`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const data = await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled FROM warnings WHERE "userID" = ?`, [json.userID]);
+                const data = await getWarning(json.userID);
                 const expected = {
                     enabled: 1
                 };

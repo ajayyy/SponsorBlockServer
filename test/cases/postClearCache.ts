@@ -6,6 +6,7 @@ import assert from "assert";
 
 const VIPUser = "clearCacheVIP";
 const regularUser = "regular-user";
+const endpoint = `${getbaseURL()}/api/clearCache`;
 
 describe("postClearCache", () => {
     before(async () => {
@@ -15,8 +16,7 @@ describe("postClearCache", () => {
     });
 
     it("Should be able to clear cache for existing video", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/clearCache?userID=${VIPUser}&videoID=clear-test`, {
+        fetch(`${endpoint}?userID=${VIPUser}&videoID=clear-test`, {
             method: "POST"
         })
             .then(res => {
@@ -27,8 +27,7 @@ describe("postClearCache", () => {
     });
 
     it("Should be able to clear cache for nonexistent video", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/clearCache?userID=${VIPUser}&videoID=dne-video`, {
+        fetch(`${endpoint}?userID=${VIPUser}&videoID=dne-video`, {
             method: "POST"
         })
             .then(res => {
@@ -39,8 +38,7 @@ describe("postClearCache", () => {
     });
 
     it("Should get 403 as non-vip", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/clearCache?userID=${regularUser}&videoID=clear-tes`, {
+        fetch(`${endpoint}?userID=${regularUser}&videoID=clear-tes`, {
             method: "POST"
         })
             .then(async res => {
@@ -51,8 +49,7 @@ describe("postClearCache", () => {
     });
 
     it("Should give 400 with missing videoID", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/clearCache?userID=${VIPUser}`, {
+        fetch(`${endpoint}?userID=${VIPUser}`, {
             method: "POST"
         })
             .then(async res => {
@@ -63,8 +60,7 @@ describe("postClearCache", () => {
     });
 
     it("Should give 400 with missing userID", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/clearCache?userID=${VIPUser}`, {
+        fetch(`${endpoint}?userID=${VIPUser}`, {
             method: "POST"
         })
             .then(async res => {
