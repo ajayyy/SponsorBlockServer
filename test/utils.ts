@@ -38,3 +38,10 @@ function printActualExpected(actual: Record<string, any>, expected: Record<strin
     Logger.error(`Actual: ${JSON.stringify(actual)}`);
     Logger.error(`Expected: ${JSON.stringify(expected)}`);
 }
+
+export const postJSON = {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+};
