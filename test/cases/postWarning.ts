@@ -7,7 +7,7 @@ import assert from "assert";
 describe("postWarning", () => {
     // constants
     const endpoint = `${getbaseURL()}/api/warnUser`;
-    const getWarning = async (userID: string) => await db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [userID]);
+    const getWarning = (userID: string) => db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [userID]);
 
     before(async () => {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash("warning-vip")]);
