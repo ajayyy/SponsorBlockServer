@@ -1,9 +1,9 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL} from "../utils";
+import {Done, getbaseURL, postJSON} from "../utils";
 import {getHash} from "../../src/utils/getHash";
 import {db} from "../../src/databases/databases";
 import assert from "assert";
-import {LockCategory} from "../../src/types/segments.model";
+import {LockCategory } from "../../src/types/segments.model";
 
 const stringDeepEquals = (a: string[] ,b: string[]): boolean => {
     let result = true;
@@ -13,23 +13,29 @@ const stringDeepEquals = (a: string[] ,b: string[]): boolean => {
     return result;
 };
 
+const endpoint = `${getbaseURL()}/api/lockCategories`;
+const submitEndpoint = `${getbaseURL()}/api/skipSegments`;
+const checkLockCategories = (videoID: string): Promise<LockCategory[]> => db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', [videoID]);
+const lockVIPUser = "lockCategoriesRecordsVIPUser";
+const lockVIPUserHash = getHash(lockVIPUser);
+
 describe("lockCategoriesRecords", () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash("lockCategoriesRecordsVIPUser")]);
+        await db.prepare("run", insertVipUserQuery, [lockVIPUserHash]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id", "sponsor", "reason-1"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id", "intro", "reason-1"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "sponsor", "reason-1"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "intro", "reason-1"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id-1", "sponsor", "reason-2"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "no-segments-video-id-1", "intro", "reason-2"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "lockCategoryVideo", "sponsor", "reason-3"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id-1", "sponsor", "reason-2"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id-1", "intro", "reason-2"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "lockCategoryVideo", "sponsor", "reason-3"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "delete-record", "sponsor", "reason-4"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "sponsor", "reason-4"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "delete-record-1", "sponsor", "reason-5"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("lockCategoriesRecordsVIPUser"), "delete-record-1", "intro", "reason-5"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "sponsor", "reason-5"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "intro", "reason-5"]);
     });
 
     it("Should update the database version when starting the application", async () => {
@@ -56,11 +62,8 @@ describe("lockCategoriesRecords", () => {
                 "shilling",
             ],
         };
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json)
         })
             .then(async res => {
@@ -73,9 +76,10 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to submit categories not in video (sql check)", (done: Done) => {
+        const videoID = "no-segments-video-id-1";
         const json = {
-            videoID: "no-segments-video-id-1",
-            userID: "lockCategoriesRecordsVIPUser",
+            videoID,
+            userID: lockVIPUser,
             categories: [
                 "outro",
                 "shilling",
@@ -85,25 +89,20 @@ describe("lockCategoriesRecords", () => {
                 "intro",
             ],
         };
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json)
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["no-segments-video-id-1"]) as LockCategory[];
+                const result = await checkLockCategories(videoID);
                 assert.strictEqual(result.length, 4);
                 const oldRecordNotChangeReason = result.filter(item =>
                     item.reason === "reason-2" && ["sponsor", "intro"].includes(item.category)
                 );
-
                 const newRecordWithEmptyReason = result.filter(item =>
                     item.reason === "" && ["outro", "shilling"].includes(item.category)
                 );
-
                 assert.strictEqual(newRecordWithEmptyReason.length, 2);
                 assert.strictEqual(oldRecordNotChangeReason.length, 2);
                 done();
@@ -112,9 +111,10 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to submit categories not in video with reason (http response)", (done: Done) => {
+        const videoID = "no-segments-video-id";
         const json = {
-            videoID: "no-segments-video-id",
-            userID: "lockCategoriesRecordsVIPUser",
+            videoID,
+            userID: lockVIPUser,
             categories: [
                 "outro",
                 "shilling",
@@ -134,11 +134,8 @@ describe("lockCategoriesRecords", () => {
             ],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json)
         })
             .then(async res => {
@@ -151,9 +148,10 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to submit categories not in video with reason (sql check)", (done: Done) => {
+        const videoID = "no-segments-video-id-1";
         const json = {
-            videoID: "no-segments-video-id-1",
-            userID: "lockCategoriesRecordsVIPUser",
+            videoID,
+            userID: lockVIPUser,
             categories: [
                 "outro",
                 "shilling",
@@ -171,16 +169,13 @@ describe("lockCategoriesRecords", () => {
             "intro"
         ];
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json)
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["no-segments-video-id-1"]) as LockCategory[];
+                const result = await checkLockCategories(videoID);
                 assert.strictEqual(result.length, 4);
                 const newRecordWithNewReason = result.filter(item =>
                     expectedWithNewReason.includes(item.category) && item.reason === "new reason"
@@ -199,21 +194,18 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories with _ in the category", (done: Done) => {
         const json = {
             videoID: "underscore",
-            userID: "lockCategoriesRecordsVIPUser",
+            userID: lockVIPUser,
             categories: [
                 "word_word",
             ],
         };
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["underscore"]);
+                const result = await checkLockCategories("underscore");
                 assert.strictEqual(result.length, 1);
                 done();
             })
@@ -223,21 +215,18 @@ describe("lockCategoriesRecords", () => {
     it("Should be able to submit categories with upper and lower case in the category", (done: Done) => {
         const json = {
             videoID: "bothCases",
-            userID: "lockCategoriesRecordsVIPUser",
+            userID: lockVIPUser,
             categories: [
                 "wordWord",
             ],
         };
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["bothCases"]);
+                const result = await checkLockCategories("bothCases");
                 assert.strictEqual(result.length, 1);
                 done();
             })
@@ -245,24 +234,22 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should not be able to submit categories with $ in the category", (done: Done) => {
+        const videoID = "specialChar";
         const json = {
-            videoID: "specialChar",
-            userID: "lockCategoriesRecordsVIPUser",
+            videoID,
+            userID: lockVIPUser,
             categories: [
                 "word&word",
             ],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["specialChar"]);
+                const result = await checkLockCategories(videoID);
                 assert.strictEqual(result.length, 0);
                 done();
             })
@@ -270,11 +257,8 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should return 400 for missing params", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify({}),
         })
             .then(res => {
@@ -290,11 +274,8 @@ describe("lockCategoriesRecords", () => {
             userID: "test",
             categories: [],
         };
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -311,11 +292,8 @@ describe("lockCategoriesRecords", () => {
             categories: ["sponsor"],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -332,11 +310,8 @@ describe("lockCategoriesRecords", () => {
             categories: ["sponsor"],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -353,11 +328,8 @@ describe("lockCategoriesRecords", () => {
             categories: {},
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -374,11 +346,8 @@ describe("lockCategoriesRecords", () => {
             categories: "sponsor",
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -397,11 +366,8 @@ describe("lockCategoriesRecords", () => {
             ],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(endpoint, {
+            ...postJSON,
             body: JSON.stringify(json),
         })
             .then(res => {
@@ -412,15 +378,16 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to delete a lockCategories record", (done: Done) => {
+        const videoID = "delete-record";
         const json = {
-            videoID: "delete-record",
-            userID: "lockCategoriesRecordsVIPUser",
+            videoID,
+            userID: lockVIPUser,
             categories: [
                 "sponsor",
             ],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
+        fetch(endpoint, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -429,7 +396,7 @@ describe("lockCategoriesRecords", () => {
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["delete-record"]);
+                const result = await checkLockCategories(videoID);
                 assert.strictEqual(result.length, 0);
                 done();
             })
@@ -437,15 +404,16 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to delete one lockCategories record without removing another", (done: Done) => {
+        const videoID = "delete-record-1";
         const json = {
-            videoID: "delete-record-1",
-            userID: "lockCategoriesRecordsVIPUser",
+            videoID,
+            userID: lockVIPUser,
             categories: [
                 "sponsor",
             ],
         };
 
-        fetch(`${getbaseURL()}/api/lockCategories`, {
+        fetch(endpoint, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -454,7 +422,7 @@ describe("lockCategoriesRecords", () => {
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', ["delete-record-1"]);
+                const result = await checkLockCategories(videoID);
                 assert.strictEqual(result.length, 1);
                 done();
             })
@@ -466,16 +434,14 @@ describe("lockCategoriesRecords", () => {
      * Submission tests in this file do not check database records, only status codes.
      * To test the submission code properly see ./test/cases/postSkipSegments.js
      */
-
+    const lockedVideoID = "lockCategoryVideo";
+    const testSubmitUser = "testman42-qwertyuiopasdfghjklzxcvbnm";
     it("Should not be able to submit a segment to a video with a lock-category record (single submission)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(submitEndpoint, {
+            ...postJSON,
             body: JSON.stringify({
-                userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
-                videoID: "lockCategoryVideo",
+                userID: testSubmitUser,
+                videoID: lockedVideoID,
                 segments: [{
                     segment: [20, 40],
                     category: "sponsor",
@@ -490,14 +456,11 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should not be able to submit segments to a video where any of the submissions with a no-segment record", (done: Done) => {
-        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(submitEndpoint, {
+            ...postJSON,
             body: JSON.stringify({
-                userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
-                videoID: "lockCategoryVideo",
+                userID: testSubmitUser,
+                videoID: lockedVideoID,
                 segments: [{
                     segment: [20, 40],
                     category: "sponsor",
@@ -516,14 +479,11 @@ describe("lockCategoriesRecords", () => {
 
 
     it("Should be able to submit a segment to a video with a different no-segment record", (done: Done) => {
-        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(submitEndpoint, {
+            ...postJSON,
             body: JSON.stringify({
-                userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
-                videoID: "lockCategoryVideo",
+                userID: testSubmitUser,
+                videoID: lockedVideoID,
                 segments: [{
                     segment: [20, 40],
                     category: "intro",
@@ -538,13 +498,10 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to submit a segment to a video with no no-segment records", (done: Done) => {
-        fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+        fetch(submitEndpoint, {
+            ...postJSON,
             body: JSON.stringify({
-                userID: "testman42-qwertyuiopasdfghjklzxcvbnm",
+                userID: testSubmitUser,
                 videoID: "normalVideo",
                 segments: [{
                     segment: [20, 40],
@@ -568,8 +525,7 @@ describe("lockCategoriesRecords", () => {
                 "shilling"
             ],
         };
-
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=` + `no-segments-video-id`)
+        fetch(`${endpoint}?videoID=no-segments-video-id`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

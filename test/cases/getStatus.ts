@@ -6,12 +6,13 @@ import {db} from "../../src/databases/databases";
 let dbVersion: number;
 
 describe("getStatus", () => {
+    const endpoint = `${getbaseURL()}/api/status`;
     before(async () => {
         dbVersion = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
     });
 
     it("Should be able to get status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/status`)
+        fetch(endpoint)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -26,7 +27,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get uptime only", (done: Done) => {
-        fetch(`${getbaseURL()}/api/status/uptime`)
+        fetch(`${endpoint}/uptime`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.text();
@@ -37,7 +38,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get commit only", (done: Done) => {
-        fetch(`${getbaseURL()}/api/status/commit`)
+        fetch(`${endpoint}/commit`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.text();
@@ -48,7 +49,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get db only", (done: Done) => {
-        fetch(`${getbaseURL()}/api/status/db`)
+        fetch(`${endpoint}/db`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.text();
@@ -59,7 +60,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get startTime only", (done: Done) => {
-        fetch(`${getbaseURL()}/api/status/startTime`)
+        fetch(`${endpoint}/startTime`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.text();
@@ -71,7 +72,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get processTime only", (done: Done) => {
-        fetch(`${getbaseURL()}/api/status/processTime`)
+        fetch(`${endpoint}/processTime`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.text();

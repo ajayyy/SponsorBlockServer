@@ -3,6 +3,8 @@ import {db} from "../../src/databases/databases";
 import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import assert from "assert";
 
+const endpoint = `${getbaseURL()}/api/getVideoSponsorTimes`;
+
 describe("getVideoSponsorTime (Old get method)", () => {
     before(async () => {
         const insertSponsorTimes = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
@@ -11,7 +13,7 @@ describe("getVideoSponsorTime (Old get method)", () => {
     });
 
     it("Should be able to get a time", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=oldGetSponsorTime0`)
+        fetch(`${endpoint}?videoID=oldGetSponsorTime0`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -20,7 +22,7 @@ describe("getVideoSponsorTime (Old get method)", () => {
     });
 
     it("Should return 404 if no segment found", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=notarealvideo`)
+        fetch(`${endpoint}?videoID=notarealvideo`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();

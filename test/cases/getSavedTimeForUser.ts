@@ -5,6 +5,7 @@ import {getHash} from "../../src/utils/getHash";
 import {deepStrictEqual} from "assert";
 
 describe("getSavedTimeForUser", () => {
+    const endpoint = `${getbaseURL()}/api/getSavedTimeForUser`;
     before(async () => {
         const startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", "views", "shadowHidden") VALUES';
         await db.prepare("run", `${startOfQuery}(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -13,7 +14,7 @@ describe("getSavedTimeForUser", () => {
     });
 
     it("Should be able to get a 200", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getSavedTimeForUser?userID=getSavedTimeForUserUser`)
+        fetch(`${endpoint}?userID=getSavedTimeForUserUser`)
             .then(async res => {
                 const data = await res.json();
                 // (end-start)*minute * views

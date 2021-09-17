@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
+import {Done, getbaseURL, partialDeepEquals, postJSON} from "../utils";
 import {getHash} from "../../src/utils/getHash";
 import {ImportMock,} from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -12,6 +12,7 @@ const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe("getSkipSegmentsByHash", () => {
+    const endpoint = `${getbaseURL()}/api/skipSegments`;
     const getSegmentsByHash0Hash = "fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910";
     const requiredSegmentVidHash = "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61";
     before(async () => {
@@ -32,7 +33,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get a 200", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/3272f?categories=["sponsor", "intro"]`)
+        fetch(`${endpoint}/3272f?categories=["sponsor", "intro"]`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -41,7 +42,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 404 if no segments are found even if a video for the given hash is known", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/3272f?categories=["shilling"]`)
+        fetch(`${endpoint}/3272f?categories=["shilling"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 404);
                 const expected = "[]";
@@ -53,7 +54,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get an empty array if no videos", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/11111?categories=["shilling"]`)
+        fetch(`${endpoint}/11111?categories=["shilling"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 404);
                 const body = await res.text();
@@ -66,7 +67,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get an empty array if only hidden videos", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/f3a1?categories=["sponsor"]`)
+        fetch(`${endpoint}/f3a1?categories=["sponsor"]`)
             .then(async res => {
                 if (res.status !== 404) done(`non 404 status code, was ${res.status}`);
                 else {
@@ -79,7 +80,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 400 prefix too short", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/11?categories=["shilling"]`)
+        fetch(`${endpoint}/11?categories=["shilling"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -90,7 +91,7 @@ describe("getSkipSegmentsByHash", () => {
     it("Should return 400 prefix too long", (done: Done) => {
         const prefix = "1".repeat(50);
         assert.ok(prefix.length > 33, "failed to generate long enough string");
-        fetch(`${getbaseURL()}/api/skipSegments/${prefix}?categories=["shilling"]`)
+        fetch(`${endpoint}/${prefix}?categories=["shilling"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -100,7 +101,7 @@ describe("getSkipSegmentsByHash", () => {
 
     it("Should return 404 prefix in range", (done: Done) => {
         const prefix = "1".repeat(5);
-        fetch(`${getbaseURL()}/api/skipSegments/${prefix}?categories=["shilling"]`)
+        fetch(`${endpoint}/${prefix}?categories=["shilling"]`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -109,7 +110,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 400 for no hash", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/?categories=["shilling"]`)
+        fetch(`${endpoint}/?categories=["shilling"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -118,7 +119,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 400 for bad format categories", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf?categories=shilling`)
+        fetch(`${endpoint}/fdaf?categories=shilling`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -127,7 +128,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get multiple videos", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf?categories=["sponsor","intro"]`)
+        fetch(`${endpoint}/fdaf?categories=["sponsor","intro"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -140,7 +141,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf`)
+        fetch(`${endpoint}/fdaf`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -164,7 +165,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor) with action type", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf?actionType=skip`)
+        fetch(`${endpoint}/fdaf?actionType=skip`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -188,7 +189,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor) with multiple action types", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf?actionType=skip&actionType=mute`)
+        fetch(`${endpoint}/fdaf?actionType=skip&actionType=mute`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -214,7 +215,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor) with multiple action types (JSON array)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf?actionTypes=["skip","mute"]`)
+        fetch(`${endpoint}/fdaf?actionTypes=["skip","mute"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -238,7 +239,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor) for a non YouTube service", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaf?service=PeerTube`)
+        fetch(`${endpoint}/fdaf?service=PeerTube`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -256,7 +257,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should only return one segment when fetching highlight segments", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/c962?category=poi_highlight`)
+        fetch(`${endpoint}/c962?category=poi_highlight`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -270,10 +271,7 @@ describe("getSkipSegmentsByHash", () => {
     it("Should be able to post a segment and get it using endpoint", (done: Done) => {
         const testID = "abc123goodVideo";
         fetch(`${getbaseURL()}/api/postVideoSponsorTimes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            ...postJSON,
             body: JSON.stringify({
                 userID: "test-qwertyuiopasdfghjklzxcvbnm",
                 videoID: testID,
@@ -284,7 +282,7 @@ describe("getSkipSegmentsByHash", () => {
             }),
         })
             .then(async () => {
-                fetch(`${getbaseURL()}/api/skipSegments/${getHash(testID, 1).substring(0, 3)}`)
+                fetch(`${endpoint}/${getHash(testID, 1).substring(0, 3)}`)
                     .then(async res => {
                         assert.strictEqual(res.status, 200);
                         const data = await res.json();
@@ -304,7 +302,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get multiple categories with repeating parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/fdaff4?&category=sponsor&category=intro`)
+        fetch(`${endpoint}/fdaff4?&category=sponsor&category=intro`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -327,7 +325,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get specific segments with requiredSegments", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/d518?requiredSegments=["requiredSegmentVid-2","requiredSegmentVid-3"]`)
+        fetch(`${endpoint}/d518?requiredSegments=["requiredSegmentVid-2","requiredSegmentVid-3"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -347,7 +345,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get specific segments with repeating requiredSegment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments/d518?requiredSegment=requiredSegmentVid-2&requiredSegment=requiredSegmentVid-3`)
+        fetch(`${endpoint}/d518?requiredSegment=requiredSegmentVid-2&requiredSegment=requiredSegmentVid-3`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

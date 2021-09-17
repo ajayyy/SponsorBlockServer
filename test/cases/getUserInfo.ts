@@ -5,6 +5,7 @@ import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
 
 describe("getUserInfo", () => {
+    const endpoint = `${getbaseURL()}/api/userInfo`;
     before(async () => {
         const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
         await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_01"), "Username user 01"]);
@@ -34,7 +35,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should be able to get a 200", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_01`)
+        fetch(`${endpoint}?userID=getuserinfo_user_01`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -43,7 +44,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should be able to get a 400 (No userID parameter)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo`)
+        fetch(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -52,7 +53,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should be able to get user info", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_01`)
+        fetch(`${endpoint}?userID=getuserinfo_user_01`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -77,7 +78,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_0&value=warnings`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_0&value=warnings`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -91,7 +92,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data with public ID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?publicUserID=${getHash("getuserinfo_warning_0")}&values=["warnings"]`)
+        fetch(`${endpoint}?publicUserID=${getHash("getuserinfo_warning_0")}&values=["warnings"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -105,7 +106,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get multiple warnings", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_1&value=warnings`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_1&value=warnings`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -119,7 +120,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should not get warnings if none", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_2&value=warnings`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_2&value=warnings`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -133,7 +134,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should done(userID for userName (No userName set)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_02&value=userName`)
+        fetch(`${endpoint}?userID=getuserinfo_user_02&value=userName`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -147,7 +148,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return null segment if none", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_null&value=lastSegmentID`)
+        fetch(`${endpoint}?userID=getuserinfo_null&value=lastSegmentID`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -158,7 +159,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return zeroes if userid does not exist", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_null&value=lastSegmentID`)
+        fetch(`${endpoint}?userID=getuserinfo_null&value=lastSegmentID`)
             .then(async res => {
                 const data = await res.json();
                 for (const value in data) {
@@ -172,7 +173,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning reason from from single enabled warning", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_0&values=["warningReason"]`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_0&values=["warningReason"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -186,7 +187,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get most recent warning from two enabled warnings", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_1&value=warningReason`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_1&value=warningReason`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -200,7 +201,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should not get disabled warning", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_2&values=["warnings","warningReason"]`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_2&values=["warnings","warningReason"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -215,7 +216,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should not get newer disabled warning", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_3&value=warnings&value=warningReason`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_3&value=warnings&value=warningReason`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -230,7 +231,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get 400 if bad values specified", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_warning_3&value=invalid-value`)
+        fetch(`${endpoint}?userID=getuserinfo_warning_3&value=invalid-value`)
             .then(async res => {
                 assert.strictEqual(res.status, 400);
                 done(); // pass
@@ -239,7 +240,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get ban data for banned user (only appears when specifically requested)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_ban_01&value=banned`)
+        fetch(`${endpoint}?userID=getuserinfo_ban_01&value=banned`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -253,7 +254,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get ban data for unbanned user (only appears when specifically requested)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_notban_01&value=banned`)
+        fetch(`${endpoint}?userID=getuserinfo_notban_01&value=banned`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -267,7 +268,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should throw 400 on bad json in values", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=x&values=[userID]`)
+        fetch(`${endpoint}?userID=x&values=[userID]`)
             .then(async res => {
                 assert.strictEqual(res.status, 400);
                 done(); // pass
@@ -276,7 +277,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return 200 on userID not found", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=notused-userid`)
+        fetch(`${endpoint}?userID=notused-userid`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -298,7 +299,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should only count long segments as 10 minutes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userInfo?userID=getuserinfo_user_03`)
+        fetch(`${endpoint}?userID=getuserinfo_user_03`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {

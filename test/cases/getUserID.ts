@@ -5,6 +5,7 @@ import {getHash} from "../../src/utils/getHash";
 import assert from "assert";
 
 describe("getUserID", () => {
+    const endpoint = `${getbaseURL()}/api/userID`;
     before(async () => {
         const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
         await db.prepare("run", insertUserNameQuery, [getHash("getuserid_user_01"), "fuzzy user 01"]);
@@ -22,7 +23,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get a 200", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=fuzzy+user+01`)
+        fetch(`${endpoint}?username=fuzzy+user+01`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -31,7 +32,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get a 400 (No username parameter)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID`)
+        fetch(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -40,7 +41,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get a 200 (username is public id)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=${getHash("getuserid_user_06")}`)
+        fetch(`${endpoint}?username=${getHash("getuserid_user_06")}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -49,7 +50,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get a 400 (username longer than 64 chars)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=${getHash("getuserid_user_06")}0`)
+        fetch(`${endpoint}?username=${getHash("getuserid_user_06")}0`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -58,7 +59,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get single username", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=fuzzy+user+01`)
+        fetch(`${endpoint}?username=fuzzy+user+01`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -73,7 +74,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get multiple fuzzy user info from start", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=fuzzy+user`)
+        fetch(`${endpoint}?username=fuzzy+user`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -91,7 +92,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get multiple fuzzy user info from middle", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=user`)
+        fetch(`${endpoint}?username=user`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -113,7 +114,7 @@ describe("getUserID", () => {
 
     it("Should be able to get with public ID", (done: Done) => {
         const userID = getHash("getuserid_user_06");
-        fetch(`${getbaseURL()}/api/userID?username=${userID}`)
+        fetch(`${endpoint}?username=${userID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -129,7 +130,7 @@ describe("getUserID", () => {
 
     it("Should be able to get with fuzzy public ID", (done: Done) => {
         const userID = getHash("getuserid_user_06");
-        fetch(`${getbaseURL()}/api/userID?username=${userID.substr(10,60)}`)
+        fetch(`${endpoint}?username=${userID.substr(10,60)}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -144,7 +145,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get repeating username", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=repeating`)
+        fetch(`${endpoint}?username=repeating`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -162,7 +163,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get repeating fuzzy username", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=peat`)
+        fetch(`${endpoint}?username=peat`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -180,7 +181,7 @@ describe("getUserID", () => {
     });
 
     it("should avoid ReDOS with _", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=_redos_`)
+        fetch(`${endpoint}?username=_redos_`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -195,7 +196,7 @@ describe("getUserID", () => {
     });
 
     it("should avoid ReDOS with %", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=%redos%`)
+        fetch(`${endpoint}?username=%redos%`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -210,7 +211,7 @@ describe("getUserID", () => {
     });
 
     it("should return 404 if escaped backslashes present", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=%redos\\\\_`)
+        fetch(`${endpoint}?username=%redos\\\\_`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -219,7 +220,7 @@ describe("getUserID", () => {
     });
 
     it("should return 404 if backslashes present", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=\\%redos\\_`)
+        fetch(`${endpoint}?username=\\%redos\\_`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -228,7 +229,7 @@ describe("getUserID", () => {
     });
 
     it("should return user if just backslashes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=\\\\\\`)
+        fetch(`${endpoint}?username=\\\\\\`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -243,7 +244,7 @@ describe("getUserID", () => {
     });
 
     it("should not allow usernames more than 64 characters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=${"0".repeat(65)}`)
+        fetch(`${endpoint}?username=${"0".repeat(65)}`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -252,7 +253,7 @@ describe("getUserID", () => {
     });
 
     it("should not allow usernames less than 3 characters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=aa`)
+        fetch(`${endpoint}?username=aa`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -261,7 +262,7 @@ describe("getUserID", () => {
     });
 
     it("should allow exact match", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=a&exact=true`)
+        fetch(`${endpoint}?username=a&exact=true`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -276,7 +277,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get repeating username with exact username", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=repeating&exact=true`)
+        fetch(`${endpoint}?username=repeating&exact=true`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -294,7 +295,7 @@ describe("getUserID", () => {
     });
 
     it("Should not get exact unless explicitly set to true", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID?username=user&exact=1`)
+        fetch(`${endpoint}?username=user&exact=1`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -315,7 +316,7 @@ describe("getUserID", () => {
     });
 
     it("should return 400 if no username parameter specified", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userID`)
+        fetch(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

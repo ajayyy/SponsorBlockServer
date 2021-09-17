@@ -4,6 +4,7 @@ import {Done, getbaseURL} from "../utils";
 import assert from "assert";
 
 describe("getSearchSegments", () => {
+    const endpoint = `${getbaseURL()}/api/searchSegments`;
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "views", "locked", "hidden", "shadowHidden", "timeSubmitted", "UUID", "userID", "category", "actionType") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ["searchTest0", 0, 1,    2, 0,   0, 0, 0, 1, "search-normal",        "searchTestUser", "sponsor", "skip"]);
@@ -33,7 +34,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to show all segments under searchTest0", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0`)
+        fetch(`${endpoint}?videoID=searchTest0`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -51,7 +52,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by category", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&category=selfpromo`)
+        fetch(`${endpoint}?videoID=searchTest0&category=selfpromo`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -65,7 +66,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by category", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&category=selfpromo`)
+        fetch(`${endpoint}?videoID=searchTest0&category=selfpromo`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -79,7 +80,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by lock status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&locked=false`)
+        fetch(`${endpoint}?videoID=searchTest0&locked=false`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -96,7 +97,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by hide status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&hidden=false`)
+        fetch(`${endpoint}?videoID=searchTest0&hidden=false`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -113,7 +114,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by ignored status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&ignored=false`)
+        fetch(`${endpoint}?videoID=searchTest0&ignored=false`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -129,7 +130,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by min views", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest1&minViews=6`)
+        fetch(`${endpoint}?videoID=searchTest1&minViews=6`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -143,7 +144,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by max views", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest1&maxViews=10`)
+        fetch(`${endpoint}?videoID=searchTest1&maxViews=10`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -157,7 +158,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by min and max views", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest1&maxViews=10&minViews=1`)
+        fetch(`${endpoint}?videoID=searchTest1&maxViews=10&minViews=1`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -171,7 +172,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by min votes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest2&minVotes=0`)
+        fetch(`${endpoint}?videoID=searchTest2&minVotes=0`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -186,7 +187,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by max votes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest2&maxVotes=10`)
+        fetch(`${endpoint}?videoID=searchTest2&maxVotes=10`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -201,7 +202,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by both min and max votes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest2&maxVotes=10&minVotes=0`)
+        fetch(`${endpoint}?videoID=searchTest2&maxVotes=10&minVotes=0`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -215,7 +216,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to get first page of results", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest4`)
+        fetch(`${endpoint}?videoID=searchTest4`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -238,7 +239,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to get second page of results", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest4&page=1`)
+        fetch(`${endpoint}?videoID=searchTest4&page=1`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

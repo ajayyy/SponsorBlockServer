@@ -4,6 +4,7 @@ import {Done, getbaseURL, partialDeepEquals} from "../utils";
 import assert from "assert";
 
 describe("getSkipSegments", () => {
+    const endpoint = `${getbaseURL()}/api/skipSegments`;
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ["getSkipSegmentID0", 1, 11, 2, 0, "uuid01", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0]);
@@ -27,7 +28,7 @@ describe("getSkipSegments", () => {
 
 
     it("Should be able to get a time by category 1", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&category=sponsor`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&category=sponsor`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -43,7 +44,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category and action type", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&category=sponsor&actionType=mute`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&category=sponsor&actionType=mute`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -61,7 +62,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category and getSkipSegmentMultiple action types", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&category=sponsor&actionType=mute&actionType=skip`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&category=sponsor&actionType=mute&actionType=skip`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -81,7 +82,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category and getSkipSegmentMultiple action types (JSON array)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&category=sponsor&actionTypes=["mute","skip"]`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&category=sponsor&actionTypes=["mute","skip"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -100,7 +101,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category for a different service 1", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID1&category=sponsor&service=PeerTube`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID1&category=sponsor&service=PeerTube`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -118,7 +119,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category 2", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&category=intro`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&category=intro`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -135,7 +136,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by categories array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&categories=["sponsor"]`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&categories=["sponsor"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -153,7 +154,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by categories array 2", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&categories=["intro"]`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&categories=["intro"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -171,7 +172,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should return 404 if all submissions are hidden", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID6`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID6`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -180,7 +181,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get getSkipSegmentMultiple times by category", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentMultiple&categories=["intro"]`)
+        fetch(`${endpoint}?videoID=getSkipSegmentMultiple&categories=["intro"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -201,7 +202,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get getSkipSegmentMultiple times by getSkipSegmentMultiple categories", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&categories=["sponsor", "intro"]`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&categories=["sponsor", "intro"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -222,7 +223,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be possible to send unexpected query parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&fakeparam=hello&category=sponsor`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&fakeparam=hello&category=sponsor`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -239,7 +240,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Low voted submissions should be hidden", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID3&category=sponsor`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID3&category=sponsor`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -256,7 +257,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should return 404 if no segment found", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=notarealvideo`)
+        fetch(`${endpoint}?videoID=notarealvideo`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -265,7 +266,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should return 400 if bad categories argument", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&categories=[not-quoted,not-quoted]`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&categories=[not-quoted,not-quoted]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -274,7 +275,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able send a comma in a query param", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID2&category=sponsor`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID2&category=sponsor`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -291,7 +292,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should always get getSkipSegmentLocked segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentLocked&category=intro`)
+        fetch(`${endpoint}?videoID=getSkipSegmentLocked&category=intro`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -308,7 +309,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get getSkipSegmentMultiple categories with repeating parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&category=sponsor&category=intro`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&category=sponsor&category=intro`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -329,7 +330,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get, categories param overriding repeating category", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=getSkipSegmentID0&categories=["sponsor"]&category=intro`)
+        fetch(`${endpoint}?videoID=getSkipSegmentID0&categories=["sponsor"]&category=intro`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -346,15 +347,17 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get specific segments with requiredSegments", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=requiredSegmentVid&requiredSegments=["requiredSegmentVid2","requiredSegmentVid3"]`)
+        const required2 = "requiredSegmentVid2";
+        const required3 = "requiredSegmentVid3";
+        fetch(`${endpoint}?videoID=requiredSegmentVid&requiredSegments=["${required2}","${required3}"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
                 const expected = [{
-                    UUID: "requiredSegmentVid2",
+                    UUID: required2,
                 }, {
-                    UUID: "requiredSegmentVid3",
+                    UUID: required3,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
                 done();
@@ -363,15 +366,17 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get specific segments with repeating requiredSegment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments?videoID=requiredSegmentVid&requiredSegment=requiredSegmentVid2&requiredSegment=requiredSegmentVid3`)
+        const required2 = "requiredSegmentVid2";
+        const required3 = "requiredSegmentVid3";
+        fetch(`${endpoint}?videoID=requiredSegmentVid&requiredSegment=${required2}&requiredSegment=${required3}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
                 assert.strictEqual(data.length, 2);
                 const expected = [{
-                    UUID: "requiredSegmentVid2",
+                    UUID: required2,
                 }, {
-                    UUID: "requiredSegmentVid3",
+                    UUID: required3,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
                 done();
@@ -380,7 +385,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should get 400 if no videoID passed in", (done: Done) => {
-        fetch(`${getbaseURL()}/api/skipSegments`)
+        fetch(`${endpoint}`)
             .then(async res => {
                 assert.strictEqual(res.status, 400);
                 done();

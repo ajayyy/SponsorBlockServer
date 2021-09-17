@@ -26,6 +26,7 @@ const userAgents = {
 };
 
 describe("getSegmentInfo", () => {
+    const endpoint = `${getbaseURL()}/api/segmentInfo`;
     before(async () => {
         const insertQuery = `INSERT INTO 
             "sponsorTimes"("videoID", "startTime", "endTime", "votes", "locked",
@@ -47,7 +48,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive upvoted segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${upvotedID}`)
+        fetch(`${endpoint}?UUID=${upvotedID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -63,7 +64,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive downvoted segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${downvotedID}`)
+        fetch(`${endpoint}?UUID=${downvotedID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -79,7 +80,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive locked up segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${lockedupID}`)
+        fetch(`${endpoint}?UUID=${lockedupID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -96,7 +97,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive infinite vote segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${infvotesID}`)
+        fetch(`${endpoint}?UUID=${infvotesID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -112,7 +113,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive shadowhidden segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${shadowhiddenID}`)
+        fetch(`${endpoint}?UUID=${shadowhiddenID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -128,7 +129,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive locked down segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${lockeddownID}`)
+        fetch(`${endpoint}?UUID=${lockeddownID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -144,7 +145,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive hidden segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${hiddenID}`)
+        fetch(`${endpoint}?UUID=${hiddenID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -159,7 +160,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive segment with old ID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${oldID}`)
+        fetch(`${endpoint}?UUID=${oldID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -174,7 +175,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive single segment in array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}"]`)
+        fetch(`${endpoint}?UUIDs=["${upvotedID}"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -190,7 +191,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive multiple segments in array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}", "${downvotedID}"]`)
+        fetch(`${endpoint}?UUIDs=["${upvotedID}", "${downvotedID}"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -209,7 +210,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be possible to send unexpected query parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${upvotedID}&fakeparam=hello&category=sponsor`)
+        fetch(`${endpoint}?UUID=${upvotedID}&fakeparam=hello&category=sponsor`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -224,7 +225,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return 400 if array passed to UUID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=["${upvotedID}", "${downvotedID}"]`)
+        fetch(`${endpoint}?UUID=["${upvotedID}", "${downvotedID}"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -233,7 +234,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return 400 if bad array passed to UUIDs", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=[not-quoted,not-quoted]`)
+        fetch(`${endpoint}?UUIDs=[not-quoted,not-quoted]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -242,7 +243,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return 400 if bad UUID passed", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=notarealuuid`)
+        fetch(`${endpoint}?UUID=notarealuuid`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -251,7 +252,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return 400 if bad UUIDs passed in array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["notarealuuid", "anotherfakeuuid"]`)
+        fetch(`${endpoint}?UUIDs=["notarealuuid", "anotherfakeuuid"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -260,7 +261,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return good UUID when mixed with bad UUIDs", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}", "anotherfakeuuid"]`)
+        fetch(`${endpoint}?UUIDs=["${upvotedID}", "anotherfakeuuid"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -278,7 +279,7 @@ describe("getSegmentInfo", () => {
     it("Should cut off array at 10", function(done: Done) {
         this.timeout(10000);
         const filledIDArray = `["${upvotedID}", "${downvotedID}", "${lockedupID}", "${shadowhiddenID}", "${lockeddownID}", "${hiddenID}", "${fillerID1}", "${fillerID2}", "${fillerID3}", "${fillerID4}", "${fillerID5}"]`;
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=${filledIDArray}`)
+        fetch(`${endpoint}?UUIDs=${filledIDArray}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -293,7 +294,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should not duplicate reponses", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${downvotedID}"]`)
+        fetch(`${endpoint}?UUIDs=["${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${downvotedID}"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -304,7 +305,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return 400 if UUID not found", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${ENOENTID}`)
+        fetch(`${endpoint}?UUID=${ENOENTID}`)
             .then(res => {
                 if (res.status !== 400) done(`non 400 response code: ${res.status}`);
                 else done(); // pass
@@ -313,7 +314,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive multiple segments with multiple parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${upvotedID}&UUID=${downvotedID}`)
+        fetch(`${endpoint}?UUID=${upvotedID}&UUID=${downvotedID}`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -332,7 +333,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should not parse repeated UUID if UUIDs present", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=["${upvotedID}"]`)
+        fetch(`${endpoint}?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=["${upvotedID}"]`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();

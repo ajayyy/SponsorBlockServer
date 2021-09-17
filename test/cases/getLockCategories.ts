@@ -6,6 +6,7 @@ import assert from "assert";
 
 
 describe("getLockCategories", () => {
+    const endpoint = `${getbaseURL()}/api/lockCategories`;
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesVIP")]);
@@ -25,7 +26,7 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get multiple locks", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock1`)
+        fetch(`${endpoint}?videoID=getLock1`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -43,7 +44,7 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get single locks", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLock2`)
+        fetch(`${endpoint}?videoID=getLock2`)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
@@ -60,7 +61,7 @@ describe("getLockCategories", () => {
     });
 
     it("should return 404 if no lock exists", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories?videoID=getLockNull`)
+        fetch(`${endpoint}?videoID=getLockNull`)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -69,7 +70,7 @@ describe("getLockCategories", () => {
     });
 
     it("should return 400 if no videoID specified", (done: Done) => {
-        fetch(`${getbaseURL()}/api/lockCategories`)
+        fetch(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
