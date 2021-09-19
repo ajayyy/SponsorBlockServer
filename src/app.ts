@@ -38,6 +38,7 @@ import {getLockCategoriesByHash} from "./routes/getLockCategoriesByHash";
 import {endpoint as getSearchSegments } from "./routes/getSearchSegments";
 import {getStatus } from "./routes/getStatus";
 import { getLockReason } from "./routes/getLockReason";
+import {getUserStats} from "./routes/getUserStats";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
@@ -176,6 +177,8 @@ function setupRoutes(router: Router) {
     router.get("/api/status", getStatus);
 
     router.get("/api/youtubeApiProxy", youtubeApiProxy);
+    // get user category stats
+    router.get("/api/userStats", getUserStats);
 
     router.get("/api/lockReason", getLockReason);
 

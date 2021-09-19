@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../databases/databases";
 import { ActionType, Category, DBSegment, Service, VideoID } from "../types/segments.model";
+import { getService } from "../utils/getService";
 const segmentsPerPage = 10;
 
 type searchSegmentResponse = {
@@ -59,10 +60,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         return false;
     }
 
-    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
-    if (!Object.values(Service).some((val) => val == service)) {
-        service = Service.YouTube;
-    }
+    const service = getService(req.query.service, req.body.service);
 
     let page: number = req.query.page ?? req.body.page ?? 0;
     page = Number(page);
