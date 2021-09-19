@@ -11,7 +11,7 @@ interface lockArray {
     reason: string
 }
 
-export async function getLockCategories(req: Request, res: Response): Promise<Response> {
+export async function getLockReason(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
     let categories: Category[] = [];
     try {
