@@ -1,6 +1,6 @@
 import assert from "assert";
 
-import { partialDeepEquals } from "../utils";
+import { partialDeepEquals } from "../utils.js";
 
 describe("Test utils ", () => {
     it("objectContain", async () => {

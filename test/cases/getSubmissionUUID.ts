@@ -1,7 +1,7 @@
-import { getSubmissionUUID } from "../../src/utils/getSubmissionUUID";
+import { getSubmissionUUID } from "../../src/utils/getSubmissionUUID.js";
 import assert from "assert";
-import { ActionType, VideoID } from "../../src/types/segments.model";
-import { UserID } from "../../src/types/user.model";
+import { ActionType, VideoID } from "../../src/types/segments.model.js";
+import { UserID } from "../../src/types/user.model.js";
 
 describe("getSubmissionUUID", () => {
     it("Should return the hashed value", () => {

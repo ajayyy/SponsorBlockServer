@@ -1,9 +1,9 @@
 import fetch from "node-fetch";
-import { Done, getbaseURL } from "../utils";
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
+import { Done, getbaseURL } from "../utils.js";
+import { getHash } from "../../src/utils/getHash.js";
+import { db } from "../../src/databases/databases.js";
 import assert from "assert";
-import { LockCategory } from "../../src/types/segments.model";
+import { LockCategory } from "../../src/types/segments.model.js";
 
 const stringDeepEquals = (a: string[] ,b: string[]): boolean => {
     let result = true;

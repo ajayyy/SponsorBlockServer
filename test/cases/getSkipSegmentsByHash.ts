@@ -1,10 +1,10 @@
 import fetch from "node-fetch";
-import { db } from "../../src/databases/databases";
-import { Done, getbaseURL, partialDeepEquals } from "../utils";
-import { getHash } from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases.js";
+import { Done, getbaseURL, partialDeepEquals } from "../utils.js";
+import { getHash } from "../../src/utils/getHash.js";
 import { ImportMock, } from "ts-mock-imports";
-import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import { YouTubeApiMock } from "../youtubeMock";
+import * as YouTubeAPIModule from "../../src/utils/youtubeApi.js";
+import { YouTubeApiMock } from "../youtubeMock.js";
 import assert from "assert";
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");

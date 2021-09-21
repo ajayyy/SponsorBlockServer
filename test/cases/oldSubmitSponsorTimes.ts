@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
-import { Done, getbaseURL, partialDeepEquals } from "../utils";
-import { db } from "../../src/databases/databases";
+import { Done, getbaseURL, partialDeepEquals } from "../utils.js";
+import { db } from "../../src/databases/databases.js";
 import assert from "assert";
 
 describe("postVideoSponsorTime (Old submission method)", () => {

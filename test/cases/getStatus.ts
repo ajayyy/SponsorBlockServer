@@ -1,8 +1,8 @@
 import assert from "assert";
 import fetch from "node-fetch";
-import { Done, getbaseURL } from "../utils";
+import { Done, getbaseURL } from "../utils.js";
 
-import { db } from "../../src/databases/databases";
+import { db } from "../../src/databases/databases.js";
 let dbVersion: number;
 
 describe("getStatus", () => {

@@ -1,8 +1,8 @@
 import assert from "assert";
-import { db } from "../../src/databases/databases";
-import { UserID } from "../../src/types/user.model";
-import { getHash } from "../../src/utils/getHash";
-import { getReputation, calculateReputationFromMetrics } from "../../src/utils/reputation";
+import { db } from "../../src/databases/databases.js";
+import { UserID } from "../../src/types/user.model.js";
+import { getHash } from "../../src/utils/getHash.js";
+import { getReputation, calculateReputationFromMetrics } from "../../src/utils/reputation.js";
 
 const userIDLowSubmissions = "reputation-lowsubmissions" as UserID;
 const userIDHighDownvotes = "reputation-highdownvotes" as UserID;

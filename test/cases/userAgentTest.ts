@@ -1,5 +1,5 @@
 import assert from "assert";
-import { parseUserAgent } from "../../src/utils/userAgent";
+import { parseUserAgent } from "../../src/utils/userAgent.js";
 
 describe("userAgent", () => {
     it ("Works for Vanced package", () => {

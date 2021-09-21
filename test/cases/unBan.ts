@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
-import * as utils from  "../utils";
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
+import * as utils from  "../utils.js";
+import { getHash } from "../../src/utils/getHash.js";
+import { db } from "../../src/databases/databases.js";
 import assert from "assert";
 
 describe("unBan", () => {

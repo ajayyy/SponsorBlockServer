@@ -1,4 +1,4 @@
-import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model";
+import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model.js";
 
 export class YouTubeApiMock {
     static async listVideos(videoID: string): Promise<APIVideoInfo> {
