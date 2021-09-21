@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
-import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import { db } from "../../src/databases/databases.js";
+import { Done, getbaseURL } from "../utils.js";
 import assert from "assert";
 
 describe("getSearchSegments", () => {

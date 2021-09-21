@@ -1,8 +1,8 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
-import {hashPrefixTester} from "../utils/hashPrefixTester";
-import { Category, VideoID, VideoIDHash } from "../types/segments.model";
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { Request, Response } from "express";
+import { hashPrefixTester } from "../utils/hashPrefixTester.js";
+import { Category, VideoID, VideoIDHash } from "../types/segments.model.js";
 
 interface LockResultByHash {
     videoID: VideoID,

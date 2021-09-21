@@ -1,5 +1,5 @@
-import {Logger} from "../utils/logger";
-import {IDatabase, QueryType} from "./IDatabase";
+import { Logger } from "../utils/logger.js";
+import { IDatabase, QueryType } from "./IDatabase.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import MysqlInterface from "sync-mysql";

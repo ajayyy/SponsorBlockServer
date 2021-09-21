@@ -1,9 +1,9 @@
-import {Request, Response} from "express";
-import {isUserVIP} from "../utils/isUserVIP";
-import {getHash} from "../utils/getHash";
-import {db} from "../databases/databases";
-import { Category, VideoID } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import { Request, Response } from "express";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { getHash } from "../utils/getHash.js";
+import { db } from "../databases/databases.js";
+import { Category, VideoID } from "../types/segments.model.js";
+import { UserID } from "../types/user.model.js";
 
 export async function deleteLockCategoriesEndpoint(req: Request, res: Response): Promise<Response> {
     // Collect user input data
@@ -35,7 +35,7 @@ export async function deleteLockCategoriesEndpoint(req: Request, res: Response):
 
     await deleteLockCategories(videoID, categories);
 
-    return res.status(200).json({message: `Removed lock categories entrys for video ${videoID}`});
+    return res.status(200).json({ message: `Removed lock categories entrys for video ${videoID}` });
 }
 
 /**

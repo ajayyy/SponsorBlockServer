@@ -1,7 +1,7 @@
-import { db } from "../databases/databases";
-import { UserID } from "../types/user.model";
-import { QueryCacher } from "./queryCacher";
-import { reputationKey } from "./redisKeys";
+import { db } from "../databases/databases.js";
+import { UserID } from "../types/user.model.js";
+import { QueryCacher } from "./queryCacher.js";
+import { reputationKey } from "./redisKeys.js";
 
 interface ReputationDBResult {
     totalSubmissions: number,

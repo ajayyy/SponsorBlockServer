@@ -1,19 +1,18 @@
 import { Request, Response } from "express";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-import { skipSegmentsHashKey, skipSegmentsKey } from "../utils/redisKeys";
-import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
-import { getCategoryActionType } from "../utils/categoryInfo";
-import { getHash } from "../utils/getHash";
-import { getIP } from "../utils/getIP";
-import { Logger } from "../utils/logger";
-import { QueryCacher } from "../utils/queryCacher";
-import { getReputation } from "../utils/reputation";
-import { getService } from "../utils/getService";
+import { config } from "../config.js";
+import { db, privateDB } from "../databases/databases.js";
+import { skipSegmentsHashKey, skipSegmentsKey } from "../utils/redisKeys.js";
+import { SBRecord } from "../types/lib.model.js";
+import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model.js";
+import { getCategoryActionType } from "../utils/categoryInfo.js";
+import { getHash } from "../utils/getHash.js";
+import { getIP } from "../utils/getIP.js";
+import { Logger } from "../utils/logger.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { getReputation } from "../utils/reputation.js";
+import { getService } from "../utils/getService.js";
 
-
-async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
+async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1 && !segment.required) {
             return false; //too untrustworthy, just ignore it
@@ -56,7 +55,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
 
 async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[],
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
-    const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
+    const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: Segment[] = [];
 
     try {
@@ -89,7 +88,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
 
 async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[],
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
-    const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
+    const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
@@ -182,7 +181,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
         const weight = Math.exp(choice.votes * Math.max(1, choice.reputation + 1) + 3 + boost);
         totalWeight += Math.max(weight, 0);
 
-        return {...choice, weight};
+        return { ...choice, weight };
     });
 
     //iterate and find amountOfChoices choices
@@ -220,7 +219,7 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
     for (const segment of segments) {
         if (segment.startTime >= cursor) {
-            currentGroup = {segments: [], votes: 0, reputation: 0, locked: false, required: false};
+            currentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
             overlappingSegmentsGroups.push(currentGroup);
         }
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { YouTubeAPI } from "../utils/youtubeApi";
+import { YouTubeAPI } from "../utils/youtubeApi.js";
 
 
 export async function youtubeApiProxy(req: Request, res: Response): Promise<Response> {

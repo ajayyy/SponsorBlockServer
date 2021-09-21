@@ -1,9 +1,9 @@
 import assert from "assert";
 
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
-import { archiveDownvoteSegment } from "../../src/cronjob/downvoteSegmentArchiveJob";
-import { DBSegment } from "../../src/types/segments.model";
+import { db } from "../../src/databases/databases.js";
+import { getHash } from "../../src/utils/getHash.js";
+import { archiveDownvoteSegment } from "../../src/cronjob/downvoteSegmentArchiveJob.js";
+import { DBSegment } from "../../src/types/segments.model.js";
 
 const records = [
     ["testtesttest", 1, 11, 2, 0, "1-uuid-0", "testman", new Date("December 17, 2021").getTime(), 50, "sponsor", "skip", "ytb", 100, 0, 0, getHash("testtesttest", 1)],

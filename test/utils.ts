@@ -1,5 +1,5 @@
-import {config} from "../src/config";
-import { Logger } from "../src/utils/logger";
+import { config } from "../src/config.js";
+import { Logger } from "../src/utils/logger.js";
 
 export function getbaseURL(): string {
     return `http://localhost:${config.port}`;

@@ -1,4 +1,4 @@
-import { Category, CategoryActionType } from "../types/segments.model";
+import { Category, CategoryActionType } from "../types/segments.model.js";
 
 export function getCategoryActionType(category: Category): CategoryActionType {
     if (category.startsWith("poi_")) {

@@ -1,8 +1,7 @@
 import { CronJob } from "cron";
-
-import { config as serverConfig } from "../config";
-import { Logger } from "../utils/logger";
-import { db } from "../databases/databases";
+import { config as serverConfig } from "../config.js";
+import { Logger } from "../utils/logger.js";
+import { db } from "../databases/databases.js";
 import { DBSegment } from "../types/segments.model";
 
 const jobConfig = serverConfig?.crons?.downvoteSegmentArchive;

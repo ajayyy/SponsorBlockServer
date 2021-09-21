@@ -1,5 +1,5 @@
-import { getService } from "../../src/utils/getService";
-import { Service } from "../../src/types/segments.model";
+import { getService } from "../../src/utils/getService.js";
+import { Service } from "../../src/types/segments.model.js";
 
 import assert from "assert";
 

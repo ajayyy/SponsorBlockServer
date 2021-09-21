@@ -1,46 +1,46 @@
-import express, {Request, RequestHandler, Response, Router} from "express";
-import {config} from "./config";
-import {oldSubmitSponsorTimes} from "./routes/oldSubmitSponsorTimes";
-import {oldGetVideoSponsorTimes} from "./routes/oldGetVideoSponsorTimes";
-import {postSegmentShift} from "./routes/postSegmentShift";
-import {postWarning} from "./routes/postWarning";
-import {getIsUserVIP} from "./routes/getIsUserVIP";
-import {deleteLockCategoriesEndpoint} from "./routes/deleteLockCategories";
-import {postLockCategories} from "./routes/postLockCategories";
-import {endpoint as getUserInfo} from "./routes/getUserInfo";
-import {getDaysSavedFormatted} from "./routes/getDaysSavedFormatted";
-import {getTotalStats} from "./routes/getTotalStats";
-import {getTopUsers} from "./routes/getTopUsers";
-import {getViewsForUser} from "./routes/getViewsForUser";
-import {getSavedTimeForUser} from "./routes/getSavedTimeForUser";
-import {addUserAsVIP} from "./routes/addUserAsVIP";
-import {shadowBanUser} from "./routes/shadowBanUser";
-import {getUsername} from "./routes/getUsername";
-import {setUsername} from "./routes/setUsername";
-import {viewedVideoSponsorTime} from "./routes/viewedVideoSponsorTime";
-import {voteOnSponsorTime, getUserID as voteGetUserID} from "./routes/voteOnSponsorTime";
-import {getSkipSegmentsByHash} from "./routes/getSkipSegmentsByHash";
-import {postSkipSegments} from "./routes/postSkipSegments";
-import {endpoint as getSkipSegments} from "./routes/getSkipSegments";
-import {userCounter} from "./middleware/userCounter";
-import {loggerMiddleware} from "./middleware/logger";
-import {corsMiddleware} from "./middleware/cors";
-import {apiCspMiddleware} from "./middleware/apiCsp";
-import {rateLimitMiddleware} from "./middleware/requestRateLimit";
-import dumpDatabase, {redirectLink} from "./routes/dumpDatabase";
-import {endpoint as getSegmentInfo} from "./routes/getSegmentInfo";
-import {postClearCache} from "./routes/postClearCache";
-import { addUnlistedVideo } from "./routes/addUnlistedVideo";
-import {postPurgeAllSegments} from "./routes/postPurgeAllSegments";
-import {getUserID} from "./routes/getUserID";
-import {getLockCategories} from "./routes/getLockCategories";
-import {getLockCategoriesByHash} from "./routes/getLockCategoriesByHash";
-import {endpoint as getSearchSegments } from "./routes/getSearchSegments";
-import {getStatus } from "./routes/getStatus";
-import {getUserStats} from "./routes/getUserStats";
+import express, { Request, RequestHandler, Response, Router } from "express";
+import { config } from "./config.js";
+import { oldSubmitSponsorTimes } from "./routes/oldSubmitSponsorTimes.js";
+import { oldGetVideoSponsorTimes } from "./routes/oldGetVideoSponsorTimes.js";
+import { postSegmentShift } from "./routes/postSegmentShift.js";
+import { postWarning } from "./routes/postWarning.js";
+import { getIsUserVIP } from "./routes/getIsUserVIP.js";
+import { deleteLockCategoriesEndpoint } from "./routes/deleteLockCategories.js";
+import { postLockCategories } from "./routes/postLockCategories.js";
+import { endpoint as getUserInfo } from "./routes/getUserInfo.js";
+import { getDaysSavedFormatted } from "./routes/getDaysSavedFormatted.js";
+import { getTotalStats } from "./routes/getTotalStats.js";
+import { getTopUsers } from "./routes/getTopUsers.js";
+import { getViewsForUser } from "./routes/getViewsForUser.js";
+import { getSavedTimeForUser } from "./routes/getSavedTimeForUser.js";
+import { addUserAsVIP } from "./routes/addUserAsVIP.js";
+import { shadowBanUser } from "./routes/shadowBanUser.js";
+import { getUsername } from "./routes/getUsername.js";
+import { setUsername } from "./routes/setUsername.js";
+import { viewedVideoSponsorTime } from "./routes/viewedVideoSponsorTime.js";
+import { voteOnSponsorTime, getUserID as voteGetUserID } from "./routes/voteOnSponsorTime.js";
+import { getSkipSegmentsByHash } from "./routes/getSkipSegmentsByHash.js";
+import { postSkipSegments } from "./routes/postSkipSegments.js";
+import { endpoint as getSkipSegments } from "./routes/getSkipSegments.js";
+import { userCounter } from "./middleware/userCounter.js";
+import { loggerMiddleware } from "./middleware/logger.js";
+import { corsMiddleware } from "./middleware/cors.js";
+import { apiCspMiddleware } from "./middleware/apiCsp.js";
+import { rateLimitMiddleware } from "./middleware/requestRateLimit.js";
+import dumpDatabase, { redirectLink } from "./routes/dumpDatabase.js";
+import { endpoint as getSegmentInfo } from "./routes/getSegmentInfo.js";
+import { postClearCache } from "./routes/postClearCache.js";
+import { addUnlistedVideo } from "./routes/addUnlistedVideo.js";
+import { postPurgeAllSegments } from "./routes/postPurgeAllSegments.js";
+import { getUserID } from "./routes/getUserID.js";
+import { getLockCategories } from "./routes/getLockCategories.js";
+import { getLockCategoriesByHash } from "./routes/getLockCategoriesByHash.js";
+import { endpoint as getSearchSegments } from "./routes/getSearchSegments.js";
+import { getStatus } from "./routes/getStatus.js";
+import { getUserStats } from "./routes/getUserStats.js";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
-import { youtubeApiProxy } from "./routes/youtubeApiProxy";
+import { youtubeApiProxy } from "./routes/youtubeApiProxy.js";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -185,7 +185,7 @@ function setupRoutes(router: Router) {
         router.get("/database/*", redirectLink);
     } else {
         router.get("/database.db", function (req: Request, res: Response) {
-            res.sendFile("./databases/sponsorTimes.db", {root: "./"});
+            res.sendFile("./databases/sponsorTimes.db", { root: "./" });
         });
     }
 }

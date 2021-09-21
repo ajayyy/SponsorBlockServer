@@ -1,18 +1,18 @@
-import {Request, Response} from "express";
-import {Logger} from "../utils/logger";
-import {isUserVIP} from "../utils/isUserVIP";
+import { Request, Response } from "express";
+import { Logger } from "../utils/logger.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
 import fetch from "node-fetch";
-import {getMaxResThumbnail, YouTubeAPI} from "../utils/youtubeApi";
-import {db, privateDB} from "../databases/databases";
-import {dispatchEvent, getVoteAuthor, getVoteAuthorRaw} from "../utils/webhookUtils";
-import {getFormattedTime} from "../utils/getFormattedTime";
-import {getIP} from "../utils/getIP";
-import {getHash} from "../utils/getHash";
-import {config} from "../config";
-import { UserID } from "../types/user.model";
-import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
-import { getCategoryActionType } from "../utils/categoryInfo";
-import { QueryCacher } from "../utils/queryCacher";
+import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi.js";
+import { db, privateDB } from "../databases/databases.js";
+import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils.js";
+import { getFormattedTime } from "../utils/getFormattedTime.js";
+import { getIP } from "../utils/getIP.js";
+import { getHash } from "../utils/getHash.js";
+import { config } from "../config.js";
+import { UserID } from "../types/user.model.js";
+import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model.js";
+import { getCategoryActionType } from "../utils/categoryInfo.js";
+import { QueryCacher } from "../utils/queryCacher.js";
 
 const voteTypes = {
     normal: 0,
@@ -459,6 +459,6 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
         return res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
     } catch (err) {
         Logger.error(err as string);
-        return res.status(500).json({error: "Internal error creating segment vote"});
+        return res.status(500).json({ error: "Internal error creating segment vote" });
     }
 }

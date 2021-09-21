@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
-import {config} from "../config";
-import {Logger} from "./logger";
-import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
-import DiskCache from "./diskCache";
+import { config } from "../config.js";
+import { Logger } from "./logger.js";
+import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model.js";
+import DiskCache from "./diskCache.js";
 
 export class YouTubeAPI {
     static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
@@ -24,7 +24,7 @@ export class YouTubeAPI {
             }
         }
 
-        if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return {err: "NewLeaf URL not found", data: null};
+        if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return { err: "NewLeaf URL not found", data: null };
 
         try {
             const result = await fetch(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`, { method: "GET" });
@@ -45,7 +45,7 @@ export class YouTubeAPI {
                 return { err: result.statusText, data: null };
             }
         } catch (err) {
-            return {err: err as string | boolean, data: null};
+            return { err: err as string | boolean, data: null };
         }
     }
 }

@@ -1,10 +1,10 @@
-import {getIP} from "../utils/getIP";
-import {getHash} from "../utils/getHash";
+import { getIP } from "../utils/getIP.js";
+import { getHash } from "../utils/getHash.js";
 import rateLimit from "express-rate-limit";
-import {RateLimitConfig} from "../types/config.model";
-import {Request} from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { UserID } from "../types/user.model";
+import { RateLimitConfig } from "../types/config.model.js";
+import { Request } from "express";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { UserID } from "../types/user.model.js";
 
 export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (req: Request) => UserID): rateLimit.RateLimit {
     return rateLimit({

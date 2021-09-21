@@ -1,8 +1,8 @@
-import {db} from "../databases/databases";
-import {config} from "../config";
-import {Request, Response} from "express";
+import { db } from "../databases/databases.js";
+import { config } from "../config.js";
+import { Request, Response } from "express";
 import fetch from "node-fetch";
-import {Logger} from "../utils/logger";
+import { Logger } from "../utils/logger.js";
 
 // A cache of the number of chrome web store users
 let chromeUsersCache = 0;
@@ -36,7 +36,6 @@ export async function getTotalStats(req: Request, res: Response): Promise<void> 
         const now = Date.now();
         if (now - lastUserCountCheck > 5000000) {
             lastUserCountCheck = now;
-
             updateExtensionUsers();
         }
     }

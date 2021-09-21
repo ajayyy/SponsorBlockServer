@@ -1,10 +1,10 @@
-import {Logger} from "../utils/logger";
-import {getHash} from "../utils/getHash";
-import {isUserVIP} from "../utils/isUserVIP";
-import {Request, Response} from "express";
-import {HashedUserID, UserID} from "../types/user.model";
-import {VideoID} from "../types/segments.model";
-import {db} from "../databases/databases";
+import { Logger } from "../utils/logger.js";
+import { getHash } from "../utils/getHash.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { Request, Response } from "express";
+import { HashedUserID, UserID } from "../types/user.model.js";
+import { VideoID } from "../types/segments.model.js";
+import { db } from "../databases/databases.js";
 
 export async function postPurgeAllSegments(req: Request, res: Response): Promise<Response> {
     const userID = req.body.userID as UserID;

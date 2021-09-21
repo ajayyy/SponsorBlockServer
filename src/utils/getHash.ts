@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { HashedValue } from "../types/hash.model";
+import { HashedValue } from "../types/hash.model.js";
 
 export function getHash<T extends string>(value: T, times = 5000): T & HashedValue {
     if (times <= 0) return "" as T & HashedValue;

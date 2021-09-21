@@ -1,6 +1,6 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { Request, Response } from "express";
 
 export async function getStatus(req: Request, res: Response): Promise<Response> {
     const startTime = Date.now();

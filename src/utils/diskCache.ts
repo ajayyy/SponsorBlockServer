@@ -1,5 +1,5 @@
 import LRU from "@ajayyy/lru-diskcache";
-import { config } from "../config";
+import { config } from "../config.js";
 
 let DiskCache: LRU<string, string>;
 

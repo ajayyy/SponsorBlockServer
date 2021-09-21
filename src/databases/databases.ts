@@ -1,9 +1,8 @@
-import {config} from "../config";
-import {Sqlite} from "./Sqlite";
-import {Mysql} from "./Mysql";
-import {Postgres} from "./Postgres";
-import {IDatabase} from "./IDatabase";
-
+import { config } from "../config.js";
+import { Sqlite } from "./Sqlite.js";
+import { Mysql } from "./Mysql.js";
+import { Postgres } from "./Postgres.js";
+import { IDatabase } from "./IDatabase.js";
 
 let db: IDatabase;
 let privateDB: IDatabase;

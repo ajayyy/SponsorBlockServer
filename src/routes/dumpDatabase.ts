@@ -1,7 +1,7 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
-import { config } from "../config";
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { Request, Response } from "express";
+import { config } from "../config.js";
 import util from "util";
 import fs from "fs";
 import path from "path";

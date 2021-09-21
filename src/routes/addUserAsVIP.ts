@@ -1,8 +1,8 @@
-import {getHash} from "../utils/getHash";
-import {db} from "../databases/databases";
-import {config} from "../config";
-import {Request, Response} from "express";
-import { isUserVIP } from "../utils/isUserVIP";
+import { getHash } from "../utils/getHash.js";
+import { db } from "../databases/databases.js";
+import { config } from "../config.js";
+import { Request, Response } from "express";
+import { isUserVIP } from "../utils/isUserVIP.js";
 import { HashedUserID } from "../types/user.model";
 
 

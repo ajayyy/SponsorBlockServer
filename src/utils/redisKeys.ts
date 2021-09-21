@@ -1,6 +1,6 @@
-import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
-import { Logger } from "./logger";
+import { Service, VideoID, VideoIDHash } from "../types/segments.model.js";
+import { UserID } from "../types/user.model.js";
+import { Logger } from "./logger.js";
 
 export function skipSegmentsKey(videoID: VideoID, service: Service): string {
     return `segments.v2.${service}.videoID.${videoID}`;

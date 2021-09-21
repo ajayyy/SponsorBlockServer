@@ -1,6 +1,6 @@
-import { HashedValue } from "./hash.model";
-import { SBRecord } from "./lib.model";
-import { UserID } from "./user.model";
+import { HashedValue } from "./hash.model.js";
+import { SBRecord } from "./lib.model.js";
+import { UserID } from "./user.model.js";
 
 export type SegmentUUID = string  & { __segmentUUIDBrand: unknown };
 export type VideoID = string & { __videoIDBrand: unknown };

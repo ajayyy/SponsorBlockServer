@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { ActionType, Category, DBSegment, Service, VideoID } from "../types/segments.model";
-import { getService } from "../utils/getService";
+import { db } from "../databases/databases.js";
+import { ActionType, Category, DBSegment, Service, VideoID } from "../types/segments.model.js";
+import { getService } from "../utils/getService.js";
 const segmentsPerPage = 10;
 
 type searchSegmentResponse = {

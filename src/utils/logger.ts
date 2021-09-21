@@ -1,4 +1,4 @@
-import {config} from "../config";
+import { config } from "../config.js";
 
 const enum LogLevel {
     ERROR = "ERROR",
@@ -34,7 +34,6 @@ const colors = {
     BgCyan: "\x1b[46m",
     BgWhite: "\x1b[47m",
 };
-
 
 class Logger {
     private _settings = {

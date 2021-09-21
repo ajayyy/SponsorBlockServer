@@ -1,9 +1,9 @@
-import {Logger} from "../utils/logger";
-import {getHash} from "../utils/getHash";
-import {isUserVIP} from "../utils/isUserVIP";
-import {db} from "../databases/databases";
-import {Request, Response} from "express";
-import { VideoIDHash } from "../types/segments.model";
+import { Logger } from "../utils/logger.js";
+import { getHash } from "../utils/getHash.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { db } from "../databases/databases.js";
+import { Request, Response } from "express";
+import { VideoIDHash } from "../types/segments.model.js";
 
 export async function postLockCategories(req: Request, res: Response): Promise<string[]> {
     // Collect user input data

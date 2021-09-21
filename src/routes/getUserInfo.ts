@@ -1,12 +1,12 @@
-import {db} from "../databases/databases";
-import {getHash} from "../utils/getHash";
-import {isUserVIP} from "../utils/isUserVIP";
-import {Request, Response} from "express";
-import {Logger} from "../utils/logger";
-import { HashedUserID, UserID } from "../types/user.model";
-import { getReputation } from "../utils/reputation";
-import { SegmentUUID } from "../types/segments.model";
-import {config} from "../config";
+import { db } from "../databases/databases.js";
+import { getHash } from "../utils/getHash.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { Request, Response } from "express";
+import { Logger } from "../utils/logger.js";
+import { HashedUserID, UserID } from "../types/user.model.js";
+import { getReputation } from "../utils/reputation.js";
+import { SegmentUUID } from "../types/segments.model.js";
+import { config } from "../config.js";
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {

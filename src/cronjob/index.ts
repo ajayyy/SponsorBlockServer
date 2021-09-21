@@ -1,6 +1,6 @@
-import { Logger } from "../utils/logger";
-import { config } from "../config";
-import DownvoteSegmentArchiveJob from "./downvoteSegmentArchiveJob";
+import { Logger } from "../utils/logger.js";
+import { config } from "../config.js";
+import DownvoteSegmentArchiveJob from "./downvoteSegmentArchiveJob.js";
 
 export function startAllCrons (): void {
     if (config?.crons?.enabled) {

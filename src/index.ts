@@ -1,9 +1,9 @@
-import {config} from "./config";
-import {initDb} from "./databases/databases";
-import {createServer} from "./app";
-import {Logger} from "./utils/logger";
-import {startAllCrons} from "./cronjob";
-import { getCommit } from "./utils/getCommit";
+import { config } from "./config.js";
+import { initDb } from "./databases/databases.js";
+import { createServer } from "./app.js";
+import { Logger } from "./utils/logger.js";
+import { startAllCrons } from "./cronjob";
+import { getCommit } from "./utils/getCommit.js";
 
 async function init() {
     await initDb();

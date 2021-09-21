@@ -1,11 +1,11 @@
-import redis from "../utils/redis";
-import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey } from "./redisKeys";
-import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import redis from "../utils/redis.js";
+import { Logger } from "../utils/logger.js";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey } from "./redisKeys.js";
+import { Service, VideoID, VideoIDHash } from "../types/segments.model.js";
+import { UserID } from "../types/user.model.js";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
-    const {err, reply} = await redis.getAsync(key);
+    const { err, reply } = await redis.getAsync(key);
 
     if (!err && reply) {
         try {

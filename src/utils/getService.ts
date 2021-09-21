@@ -1,4 +1,4 @@
-import { Service } from "../types/segments.model";
+import { Service } from "../types/segments.model.js";
 
 export function getService<T extends string>(...value: T[]): Service {
     for (const name of value) {

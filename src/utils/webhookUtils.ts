@@ -1,5 +1,5 @@
-import {config} from "../config";
-import {Logger} from "../utils/logger";
+import { config } from "../config.js";
+import { Logger } from "../utils/logger.js";
 import fetch from "node-fetch";
 
 function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {

@@ -1,6 +1,6 @@
 import assert from "assert";
 
-import {db, privateDB} from "../../src/databases/databases";
+import { db, privateDB } from "../../src/databases/databases.js";
 
 describe("dbUpgrade", () => {
     it("Should update the database version when starting the application", async () => {

@@ -1,9 +1,9 @@
-import {db} from "../databases/databases";
-import {getHash} from "../utils/getHash";
-import {Request, Response} from "express";
-import {HashedUserID, UserID} from "../types/user.model";
-import {config} from "../config";
-import { Logger } from "../utils/logger";
+import { db } from "../databases/databases.js";
+import { getHash } from "../utils/getHash.js";
+import { Request, Response } from "express";
+import { HashedUserID, UserID } from "../types/user.model.js";
+import { config } from "../config.js";
+import { Logger } from "../utils/logger.js";
 type nestedObj = Record<string, Record<string, number>>;
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 

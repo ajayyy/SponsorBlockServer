@@ -1,5 +1,5 @@
-import { Logger } from "../utils/logger";
-import { IDatabase, QueryType } from "./IDatabase";
+import { Logger } from "../utils/logger.js";
+import { IDatabase, QueryType } from "./IDatabase.js";
 import { Client, Pool, types } from "pg";
 
 import fs from "fs";
@@ -56,7 +56,7 @@ export class Postgres implements IDatabase {
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
         try {
-            const queryResult = await this.pool.query({text: query, values: params});
+            const queryResult = await this.pool.query({ text: query, values: params });
 
             switch (type) {
                 case "get": {

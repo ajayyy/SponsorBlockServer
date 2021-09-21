@@ -1,7 +1,7 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
-import { Category, VideoID } from "../types/segments.model";
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { Request, Response } from "express";
+import { Category, VideoID } from "../types/segments.model.js";
 
 export async function getLockCategories(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;

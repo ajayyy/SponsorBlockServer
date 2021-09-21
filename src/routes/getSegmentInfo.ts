@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { DBSegment, SegmentUUID } from "../types/segments.model";
+import { db } from "../databases/databases.js";
+import { DBSegment, SegmentUUID } from "../types/segments.model.js";
 
-const isValidSegmentUUID = (str: string): boolean => /^([a-f0-9]{64}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/.test(str);
+const isValidSegmentUUID = (str: string): boolean => /^([a-f0-9]{64,65}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/.test(str);
 
 async function getSegmentFromDBByUUID(UUID: SegmentUUID): Promise<DBSegment> {
     try {

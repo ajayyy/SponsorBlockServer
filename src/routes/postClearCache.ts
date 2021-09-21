@@ -1,12 +1,12 @@
-import { Logger } from "../utils/logger";
-import { HashedUserID, UserID } from "../types/user.model";
-import { getHash } from "../utils/getHash";
+import { Logger } from "../utils/logger.js";
+import { HashedUserID, UserID } from "../types/user.model.js";
+import { getHash } from "../utils/getHash.js";
 import { Request, Response } from "express";
-import { Service, VideoID } from "../types/segments.model";
-import { QueryCacher } from "../utils/queryCacher";
-import { isUserVIP } from "../utils/isUserVIP";
-import { VideoIDHash } from "../types/segments.model";
-import { getService } from "../utils/getService";
+import { Service, VideoID } from "../types/segments.model.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { VideoIDHash } from "../types/segments.model.js";
+import { getService } from "../utils/getService.js";
 
 export async function postClearCache(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
@@ -35,7 +35,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
     // Ensure user is a VIP
     if (!(await isUserVIP(hashedUserID))){
         Logger.warn(`Permission violation: User ${hashedUserID} attempted to clear cache for video ${videoID}.`);
-        return res.status(403).json({"message": "Not a VIP"});
+        return res.status(403).json({ "message": "Not a VIP" });
     }
 
     try {
