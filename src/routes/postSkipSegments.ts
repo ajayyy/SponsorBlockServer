@@ -19,6 +19,7 @@ import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import { UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseUserAgent } from "../utils/userAgent";
+import { getService } from "../utils/getService";
 
 type CheckResult = {
     pass: boolean,
@@ -349,7 +350,7 @@ function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): Ch
 }
 
 async function checkEachSegmentValid(userID: string, videoID: VideoID,
-    segments: Array<any>, service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+    segments: IncomingSegment[], service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -406,7 +407,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
-            and "endTime" = ? and "category" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, videoID, service]);
+            and "endTime" = ? and "category" = ? and "actionType" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, videoID, service]);
         if (duplicateCheck2Row.count > 0) {
             return { pass: false, errorMessage: "Sponsors has already been submitted before.", errorCode: 409};
         }
@@ -545,10 +546,7 @@ function proxySubmission(req: Request) {
 function preprocessInput(req: Request) {
     const videoID = req.query.videoID || req.body.videoID;
     const userID = req.query.userID || req.body.userID;
-    let service: Service = req.query.service ?? req.body.service ?? Service.YouTube;
-    if (!Object.values(Service).some((val) => val === service)) {
-        service = Service.YouTube;
-    }
+    const service = getService(req.query.service, req.body.service);
     const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
     const videoDuration = videoDurationParam;
 

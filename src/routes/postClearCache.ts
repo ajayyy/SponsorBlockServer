@@ -6,11 +6,12 @@ import { Service, VideoID } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import { isUserVIP } from "../utils/isUserVIP";
 import { VideoIDHash } from "../types/segments.model";
+import { getService } from "../utils/getService";
 
 export async function postClearCache(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
     const userID = req.query.userID as UserID;
-    const service = req.query.service as Service ?? Service.YouTube;
+    const service = getService(req.query.service as Service);
 
     const invalidFields = [];
     if (typeof videoID !== "string") {
