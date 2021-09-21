@@ -16,8 +16,8 @@ describe("Test utils ", () => {
             false
         ), "Did not match empty expect");
         assert(partialDeepEquals(
-            [{a: [1,2,3]}, {a: [1,2]}],
-            [{a: [1,2,3]}, {a: [1,2]}]
+            [{ a: [1,2,3] }, { a: [1,2] }],
+            [{ a: [1,2,3] }, { a: [1,2] }]
         ), "Did not match same arrays");
         assert(partialDeepEquals(
             {

@@ -1,7 +1,7 @@
-import {db} from "../databases/databases";
-import {Request, Response} from "express";
-import {getHash} from "../utils/getHash";
-import {Logger} from "../utils/logger";
+import { db } from "../databases/databases";
+import { Request, Response } from "express";
+import { getHash } from "../utils/getHash";
+import { Logger } from "../utils/logger";
 
 export async function getViewsForUser(req: Request, res: Response): Promise<Response> {
     let userID = req.query.userID as string;

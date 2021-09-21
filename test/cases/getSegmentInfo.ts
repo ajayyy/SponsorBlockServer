@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
-import {db} from "../../src/databases/databases";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { Done, getbaseURL, partialDeepEquals } from "../utils";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 
 const ENOENTID =        "0".repeat(64);

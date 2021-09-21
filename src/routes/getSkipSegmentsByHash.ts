@@ -1,6 +1,6 @@
-import {hashPrefixTester} from "../utils/hashPrefixTester";
-import {getSegmentsByHash} from "./getSkipSegments";
-import {Request, Response} from "express";
+import { hashPrefixTester } from "../utils/hashPrefixTester";
+import { getSegmentsByHash } from "./getSkipSegments";
+import { Request, Response } from "express";
 import { ActionType, Category, SegmentUUID, Service, VideoIDHash } from "../types/segments.model";
 import { getService } from "../utils/getService";
 

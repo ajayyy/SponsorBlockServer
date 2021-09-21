@@ -1,5 +1,5 @@
-import {config} from "../config";
-import {Request} from "express";
+import { config } from "../config";
+import { Request } from "express";
 import { IPAddress } from "../types/segments.model";
 
 export function getIP(req: Request): IPAddress {

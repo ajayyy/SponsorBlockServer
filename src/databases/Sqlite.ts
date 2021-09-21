@@ -1,9 +1,9 @@
-import {IDatabase, QueryType} from "./IDatabase";
-import Sqlite3, {Database, Database as SQLiteDatabase} from "better-sqlite3";
+import { IDatabase, QueryType } from "./IDatabase";
+import Sqlite3, { Database, Database as SQLiteDatabase } from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import {getHash} from "../utils/getHash";
-import {Logger} from "../utils/logger";
+import { getHash } from "../utils/getHash";
+import { Logger } from "../utils/logger";
 
 export class Sqlite implements IDatabase {
     private db: SQLiteDatabase;
@@ -36,7 +36,7 @@ export class Sqlite implements IDatabase {
             fs.mkdirSync(path.join(this.config.dbPath, "../"));
         }
 
-        this.db = new Sqlite3(this.config.dbPath, {readonly: this.config.readOnly, fileMustExist: !this.config.createDbIfNotExists});
+        this.db = new Sqlite3(this.config.dbPath, { readonly: this.config.readOnly, fileMustExist: !this.config.createDbIfNotExists });
 
         if (this.config.createDbIfNotExists && !this.config.readOnly && fs.existsSync(this.config.dbSchemaFileName)) {
             this.db.exec(Sqlite.processUpgradeQuery(fs.readFileSync(this.config.dbSchemaFileName).toString()));

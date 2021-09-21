@@ -25,5 +25,6 @@ module.exports = {
         "quotes": ["warn", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
         "no-multiple-empty-lines": ["error", { max: 2, maxEOF: 0 }],
         "indent": ["warn", 4, { "SwitchCase": 1 }],
+        "object-curly-spacing": ["warn", "always"]
     },
 };

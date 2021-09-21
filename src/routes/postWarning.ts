@@ -1,8 +1,8 @@
-import {Request, Response} from "express";
-import {Logger} from "../utils/logger";
-import {db} from "../databases/databases";
-import {isUserVIP} from "../utils/isUserVIP";
-import {getHash} from "../utils/getHash";
+import { Request, Response } from "express";
+import { Logger } from "../utils/logger";
+import { db } from "../databases/databases";
+import { isUserVIP } from "../utils/isUserVIP";
+import { getHash } from "../utils/getHash";
 import { HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
 
@@ -23,7 +23,7 @@ function checkExpiredWarning(warning: warningEntry): boolean {
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
     // exit early if no body passed in
-    if (!req.body.userID && !req.body.issuerUserID) return res.status(400).json({"message": "Missing parameters"});
+    if (!req.body.userID && !req.body.issuerUserID) return res.status(400).json({ "message": "Missing parameters" });
     // Collect user input data
     const issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
     const userID: UserID = req.body.userID;
@@ -34,7 +34,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     // Ensure user is a VIP
     if (!await isUserVIP(issuerUserID)) {
         Logger.warn(`Permission violation: User ${issuerUserID} attempted to warn user ${userID}.`);
-        return res.status(403).json({"message": "Not a VIP"});
+        return res.status(403).json({ "message": "Not a VIP" });
     }
 
     let resultStatus = "";

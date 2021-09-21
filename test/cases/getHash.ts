@@ -1,4 +1,4 @@
-import {getHash} from "../../src/utils/getHash";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 
 describe("getHash", () => {

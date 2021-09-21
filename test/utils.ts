@@ -1,4 +1,4 @@
-import {config} from "../src/config";
+import { config } from "../src/config";
 import { Logger } from "../src/utils/logger";
 
 export function getbaseURL(): string {

@@ -1,6 +1,6 @@
-import {db} from "../databases/databases";
-import {getHash} from "../utils/getHash";
-import {Request, Response} from "express";
+import { db } from "../databases/databases";
+import { getHash } from "../utils/getHash";
+import { Request, Response } from "express";
 import { config } from "../config";
 import { Category, Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { UserID } from "../types/user.model";

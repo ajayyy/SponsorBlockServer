@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
-import {getbaseURL, Done} from "../utils";
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
+import { getbaseURL, Done } from "../utils";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 
 describe("getIsUserVIP", () => {
