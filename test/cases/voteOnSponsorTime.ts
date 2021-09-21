@@ -1,7 +1,8 @@
 import fetch from "node-fetch";
 import {config} from "../../src/config";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import { Done } from "../utils/utils";
+import { getbaseURL } from "../utils/getBaseURL";
 import {getHash} from "../../src/utils/getHash";
 import {ImportMock} from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";

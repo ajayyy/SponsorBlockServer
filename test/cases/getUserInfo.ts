@@ -1,5 +1,7 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
+import { Done } from "../utils/utils";
+import { getbaseURL } from "../utils/getBaseURL";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 import {db} from "../../src/databases/databases";
 import {getHash} from "../../src/utils/getHash";
 import assert from "assert";

@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
+import { Done } from "../utils/utils";
+import { getbaseURL } from "../utils/getBaseURL";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
 
 const endpoint = `${getbaseURL()}/api/getVideoSponsorTimes`;

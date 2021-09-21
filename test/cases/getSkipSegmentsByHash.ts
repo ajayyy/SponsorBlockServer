@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import {Done, getbaseURL, partialDeepEquals, postJSON} from "../utils";
+import { Done, postJSON } from "../utils/utils";
+import { getbaseURL } from "../utils/getBaseURL";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 import {getHash} from "../../src/utils/getHash";
 import {ImportMock,} from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";

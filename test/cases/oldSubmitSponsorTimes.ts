@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
-import {db} from "../../src/databases/databases";
+import { Done } from "../utils/utils";
+import { getbaseURL } from "../utils/getBaseURL";
+import { partialDeepEquals } from "../utils/partialDeepEquals";import {db} from "../../src/databases/databases";
 import assert from "assert";
 
 const videoID1 = "dQw4w9WgXcQ";

@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
-import {Done, getbaseURL, postJSON} from "../utils";
+import { Done, postJSON } from "../utils/utils";
+import { getbaseURL } from "../utils/getBaseURL";
 import {getHash} from "../../src/utils/getHash";
 import {db} from "../../src/databases/databases";
 import assert from "assert";
