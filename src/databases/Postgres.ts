@@ -1,6 +1,8 @@
 import { Logger } from "../utils/logger.js";
 import { IDatabase, QueryType } from "./IDatabase.js";
-import { Client, Pool, types } from "pg";
+import * as pg from "pg";
+import * as types from "pg-types";
+const { Client, Pool } = pg;
 
 import fs from "fs";
 
@@ -15,7 +17,7 @@ types.setTypeParser(20, function(val) {
 });
 
 export class Postgres implements IDatabase {
-    private pool: Pool;
+    private pool: pg.Pool;
 
     constructor(private config: Record<string, any>) {}
 

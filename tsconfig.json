@@ -80,6 +80,7 @@
         "resolveJsonModule": true
     },
     "include": [
-        "./src/**/*"
+        "./src/**/*",
+        "./test/**/*"
     ]
 }

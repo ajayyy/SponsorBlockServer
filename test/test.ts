@@ -6,12 +6,13 @@ import { createServer } from "../src/app.js";
 import { createMockServer } from "./mocks.js";
 import { Logger } from "../src/utils/logger.js";
 import { initDb } from "../src/databases/databases.js";
-import { ImportMock } from "ts-mock-imports";
-import * as rateLimitMiddlewareModule from "../src/middleware/requestRateLimit.js";
+//import { ImportMock } from "ts-mock-imports";
+import * as td from "testdouble";
+//import * as rateLimitMiddlewareModule from "../src/middleware/requestRateLimit.js";
 import rateLimit from "express-rate-limit";
 
 async function init() {
-    ImportMock.mockFunction(rateLimitMiddlewareModule, "rateLimitMiddleware", rateLimit({
+    td.replaceEsm("../src/middleware/requestRateLimit.js", rateLimit({
         skip: () => true
     }));
 
@@ -27,7 +28,9 @@ async function init() {
     Logger.info(`Database Mode: ${dbMode}`);
 
     // set commit at headCommit
-    (global as any).HEADCOMMIT = "test";
+    // super janked together by https://stackoverflow.com/a/59243202/15034732
+    const global = (0,eval)("this");
+    global.HEADCOMMIT = "test";
 
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
