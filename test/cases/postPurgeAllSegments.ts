@@ -1,9 +1,9 @@
 import fetch from "node-fetch";
-import {Done, postJSON} from "../utils/utils";
+import { Done, postJSON } from "../utils/utils";
 import { getbaseURL } from "../utils/getBaseURL";
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
-import {IDatabase} from "../../src/databases/IDatabase";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
+import { IDatabase } from "../../src/databases/IDatabase";
 import assert from "assert";
 
 async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {

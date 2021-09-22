@@ -1,5 +1,5 @@
-import {getHash} from "../../src/utils/getHash";
-import {notStrictEqual, strictEqual} from "assert";
+import { getHash } from "../../src/utils/getHash";
+import { notStrictEqual, strictEqual } from "assert";
 
 describe("getHash", () => {
     it("Should not output the input string", () => {

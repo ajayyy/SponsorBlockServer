@@ -1,7 +1,7 @@
-import {getHash} from "../../src/utils/getHash";
-import {db} from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
 import assert from "assert";
-import {LockCategory } from "../../src/types/segments.model";
+import { LockCategory } from "../../src/types/segments.model";
 import { client } from "../utils/httpClient";
 
 const stringDeepEquals = (a: string[] ,b: string[]): boolean => {
@@ -455,7 +455,7 @@ describe("lockCategoriesRecords", () => {
                 "shilling"
             ],
         };
-        client.get(endpoint, { params: {videoID: "no-segments-video-id" }})
+        client.get(endpoint, { params: { videoID: "no-segments-video-id" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;

@@ -1,9 +1,9 @@
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
-import {getHash} from "../../src/utils/getHash";
-import {ImportMock,} from "ts-mock-imports";
+import { getHash } from "../../src/utils/getHash";
+import { ImportMock, } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import {YouTubeApiMock} from "../youtubeMock";
+import { YouTubeApiMock } from "../youtubeMock";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
@@ -33,7 +33,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get a 200", (done) => {
-        client.get(`${endpoint}/3272f`, { params: { categories: `["sponsor", "intro"]` }})
+        client.get(`${endpoint}/3272f`, { params: { categories: `["sponsor", "intro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -42,7 +42,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 404 if no segments are found even if a video for the given hash is known", (done) => {
-        client.get(`${endpoint}/3272f`, { params: { categories: `["shilling"]` }})
+        client.get(`${endpoint}/3272f`, { params: { categories: `["shilling"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 assert.equal(res.data.length, 0);
@@ -52,7 +52,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get an empty array if no videos", (done) => {
-        client.get(`${endpoint}/11111`, { params: { categories: `["shilling"]` }})
+        client.get(`${endpoint}/11111`, { params: { categories: `["shilling"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 const body = res.data;
@@ -63,7 +63,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get an empty array if only hidden videos", (done) => {
-        client.get(`${endpoint}/f3a1`, { params: { categories:`["sponsor"]` }})
+        client.get(`${endpoint}/f3a1`, { params: { categories:`["sponsor"]` } })
             .then(res => {
                 if (res.status !== 404) done(`non 404 status code, was ${res.status}`);
                 else {
@@ -76,7 +76,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 400 prefix too short", (done) => {
-        client.get(`${endpoint}/11`, { params: { categories: `["shilling"]` }})
+        client.get(`${endpoint}/11`, { params: { categories: `["shilling"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -87,7 +87,7 @@ describe("getSkipSegmentsByHash", () => {
     it("Should return 400 prefix too long", (done) => {
         const prefix = "1".repeat(50);
         assert.ok(prefix.length > 33, "failed to generate long enough string");
-        client.get(`${endpoint}/${prefix}`, { params: { categories: `["shilling"]` }})
+        client.get(`${endpoint}/${prefix}`, { params: { categories: `["shilling"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -97,7 +97,7 @@ describe("getSkipSegmentsByHash", () => {
 
     it("Should return 404 prefix in range", (done) => {
         const prefix = "1".repeat(5);
-        client.get(`${endpoint}/${prefix}`, { params: { categories: `["shilling"]` }})
+        client.get(`${endpoint}/${prefix}`, { params: { categories: `["shilling"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -106,7 +106,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 400 for no hash", (done) => {
-        client.get(`${endpoint}`, { params: { categories: `["shilling"]` }})
+        client.get(`${endpoint}`, { params: { categories: `["shilling"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -115,7 +115,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should return 400 for bad format categories", (done) => {
-        client.get(`${endpoint}/fdaf`, { params: { categories: "shilling" }})
+        client.get(`${endpoint}/fdaf`, { params: { categories: "shilling" } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -124,7 +124,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get multiple videos", (done) => {
-        client.get(`${endpoint}/fdaf`, { params: { categories: `["sponsor","intro"]` }})
+        client.get(`${endpoint}/fdaf`, { params: { categories: `["sponsor","intro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -161,7 +161,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor) with action type", (done) => {
-        client.get(`${endpoint}/fdaf`, { params: { actionType: "skip" }})
+        client.get(`${endpoint}/fdaf`, { params: { actionType: "skip" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -235,7 +235,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should be able to get 200 for no categories (default sponsor) for a non YouTube service", (done) => {
-        client.get(`${endpoint}/fdaf`, { params: { service: "PeerTube" }})
+        client.get(`${endpoint}/fdaf`, { params: { service: "PeerTube" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -253,7 +253,7 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should only return one segment when fetching highlight segments", (done) => {
-        client.get(`${endpoint}/c962`, { params: { category: "poi_highlight" }})
+        client.get(`${endpoint}/c962`, { params: { category: "poi_highlight" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;

@@ -1,4 +1,4 @@
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { client } from "../utils/httpClient";
 import assert from "assert";
 
@@ -33,7 +33,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to show all segments under searchTest0", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest0" }})
+        client.get(endpoint, { params: { videoID: "searchTest0" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -51,7 +51,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by category", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest0", category: "selfpromo" }})
+        client.get(endpoint, { params: { videoID: "searchTest0", category: "selfpromo" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -65,7 +65,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by category", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest0", category: "selfpromo" }})
+        client.get(endpoint, { params: { videoID: "searchTest0", category: "selfpromo" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -79,7 +79,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by lock status", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest0", locked: false }})
+        client.get(endpoint, { params: { videoID: "searchTest0", locked: false } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -96,7 +96,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by hide status", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest0", hidden: false }})
+        client.get(endpoint, { params: { videoID: "searchTest0", hidden: false } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -113,7 +113,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter by ignored status", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest0", ignored: false }})
+        client.get(endpoint, { params: { videoID: "searchTest0", ignored: false } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -129,7 +129,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by min views", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest1", minViews: 6 }})
+        client.get(endpoint, { params: { videoID: "searchTest1", minViews: 6 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -143,7 +143,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by max views", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest1", maxViews: 10 }})
+        client.get(endpoint, { params: { videoID: "searchTest1", maxViews: 10 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -157,7 +157,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by min and max views", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest1", maxViews: 10, minViews: 1 }})
+        client.get(endpoint, { params: { videoID: "searchTest1", maxViews: 10, minViews: 1 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -171,7 +171,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by min votes", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest2", minVotes: 0 }})
+        client.get(endpoint, { params: { videoID: "searchTest2", minVotes: 0 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -186,7 +186,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by max votes", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest2", maxVotes: 10 }})
+        client.get(endpoint, { params: { videoID: "searchTest2", maxVotes: 10 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -201,7 +201,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to filter segments by both min and max votes", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest2", maxVotes: 10, minVotes: 0 }})
+        client.get(endpoint, { params: { videoID: "searchTest2", maxVotes: 10, minVotes: 0 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -215,7 +215,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to get first page of results", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest4" }})
+        client.get(endpoint, { params: { videoID: "searchTest4" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -238,7 +238,7 @@ describe("getSearchSegments", () => {
     });
 
     it("Should be able to get second page of results", (done) => {
-        client.get(endpoint, { params: { videoID: "searchTest4", page: 1 }})
+        client.get(endpoint, { params: { videoID: "searchTest4", page: 1 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;

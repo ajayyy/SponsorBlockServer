@@ -1,6 +1,6 @@
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
-import {deepStrictEqual} from "assert";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
+import { deepStrictEqual } from "assert";
 import { client } from "../utils/httpClient";
 const endpoint = "/api/getSavedTimeForUser";
 
@@ -14,7 +14,7 @@ describe("getSavedTimeForUser", () => {
     });
 
     it("Should be able to get a 200", (done) => {
-        client.get(endpoint, { params: { userID: user1 }})
+        client.get(endpoint, { params: { userID: user1 } })
             .then(res => {
                 // (end-start)*minute * views
                 const savedMinutes = ((11-1)/60) * 50;

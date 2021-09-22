@@ -1,5 +1,5 @@
 import assert from "assert";
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { client } from "../utils/httpClient";
 let dbVersion: number;
 

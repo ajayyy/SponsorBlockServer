@@ -1,8 +1,8 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
+import { db } from "../databases/databases";
+import { Logger } from "../utils/logger";
+import { Request, Response } from "express";
 import { Category, VideoID } from "../types/segments.model";
-import {config} from "../config";
+import { config } from "../config";
 
 const possibleCategoryList = config.categoryList;
 interface lockArray {

@@ -1,8 +1,8 @@
-import {getIP} from "../utils/getIP";
-import {getHash} from "../utils/getHash";
+import { getIP } from "../utils/getIP";
+import { getHash } from "../utils/getHash";
 import rateLimit from "express-rate-limit";
-import {RateLimitConfig} from "../types/config.model";
-import {Request} from "express";
+import { RateLimitConfig } from "../types/config.model";
+import { Request } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { UserID } from "../types/user.model";
 

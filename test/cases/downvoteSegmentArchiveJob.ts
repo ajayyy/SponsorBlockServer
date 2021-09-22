@@ -1,4 +1,4 @@
-import {strictEqual, ok} from "assert";
+import { strictEqual, ok } from "assert";
 import { db } from "../../src/databases/databases";
 import { archiveDownvoteSegment } from "../../src/cronjob/downvoteSegmentArchiveJob";
 import { DBSegment } from "../../src/types/segments.model";

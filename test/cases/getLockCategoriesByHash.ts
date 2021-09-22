@@ -1,5 +1,5 @@
-import {getHash} from "../../src/utils/getHash";
-import {db} from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 

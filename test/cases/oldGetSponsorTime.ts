@@ -1,4 +1,4 @@
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
 import { client } from "../utils/httpClient";
@@ -33,7 +33,7 @@ describe("getVideoSponsorTime (Old get method)", () => {
 
 
     it("Should be possible to send unexpected query parameters", (done) => {
-        client.get(endpoint, { params: { videoID: "oldGetSponsorTime0", fakeparam: "hello" }})
+        client.get(endpoint, { params: { videoID: "oldGetSponsorTime0", fakeparam: "hello" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();

@@ -35,7 +35,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
     // Ensure user is a VIP
     if (!(await isUserVIP(hashedUserID))){
         Logger.warn(`Permission violation: User ${hashedUserID} attempted to clear cache for video ${videoID}.`);
-        return res.status(403).json({"message": "Not a VIP"});
+        return res.status(403).json({ "message": "Not a VIP" });
     }
 
     try {

@@ -1,12 +1,12 @@
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
 import { client } from "../utils/httpClient";
 import assert from "assert";
 
 const VIPUser = "isUserVIPVIP";
 const normalUser = "isUserVIPNormal";
 const endpoint = "/api/isUserVIP";
-const vipUserRequest = (userID: string) => client.get(endpoint, { params: { userID }});
+const vipUserRequest = (userID: string) => client.get(endpoint, { params: { userID } });
 
 describe("getIsUserVIP", () => {
     before(() => {

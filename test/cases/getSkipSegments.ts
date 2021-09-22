@@ -1,4 +1,4 @@
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
 import { client } from "../utils/httpClient";
@@ -27,7 +27,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category 1", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -43,7 +43,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category and action type", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", actionType: "mute" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", actionType: "mute" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -81,7 +81,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category and getSkipSegmentMultiple action types (JSON array)", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", actionTypes: `["mute","skip"]` }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", actionTypes: `["mute","skip"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -100,7 +100,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category for a different service 1", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID1", category: "sponsor", service: "PeerTube" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID1", category: "sponsor", service: "PeerTube" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -118,7 +118,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by category 2", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "intro" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "intro" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -135,7 +135,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by categories array", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["sponsor"]` }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["sponsor"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -153,7 +153,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get a time by categories array 2", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["intro"]` }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["intro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -171,7 +171,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should return 404 if all submissions are hidden", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID6" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID6" } })
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -180,7 +180,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get getSkipSegmentMultiple times by category", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentMultiple",  categories: `["intro"]` }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentMultiple",  categories: `["intro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -201,7 +201,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get getSkipSegmentMultiple times by getSkipSegmentMultiple categories", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["sponsor", "intro"]` }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["sponsor", "intro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -222,7 +222,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be possible to send unexpected query parameters", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", fakeparam: "hello", category: "sponsor" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", fakeparam: "hello", category: "sponsor" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -239,7 +239,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Low voted submissions should be hidden", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID3", category: "sponsor" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID3", category: "sponsor" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -256,7 +256,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should return 404 if no segment found", (done) => {
-        client.get(endpoint, { params: { videoID: "notarealvideo" }})
+        client.get(endpoint, { params: { videoID: "notarealvideo" } })
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -265,7 +265,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should return 400 if bad categories argument", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `[not-quoted,not-quoted]` }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `[not-quoted,not-quoted]` } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -274,7 +274,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able send a comma in a query param", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID2", category: "sponsor" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID2", category: "sponsor" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -291,7 +291,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should always get getSkipSegmentLocked segment", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentLocked", category: "intro" }})
+        client.get(endpoint, { params: { videoID: "getSkipSegmentLocked", category: "intro" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -308,7 +308,7 @@ describe("getSkipSegments", () => {
     });
 
     it("Should be able to get getSkipSegmentMultiple categories with repeating parameters", (done) => {
-        client.get(`${endpoint}?category=sponsor&category=intro`, { params: { videoID: "getSkipSegmentID0" }})
+        client.get(`${endpoint}?category=sponsor&category=intro`, { params: { videoID: "getSkipSegmentID0" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -348,7 +348,7 @@ describe("getSkipSegments", () => {
     it("Should be able to get specific segments with requiredSegments", (done) => {
         const required2 = "requiredSegmentVid2";
         const required3 = "requiredSegmentVid3";
-        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${required2}","${required3}"]` }})
+        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${required2}","${required3}"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;

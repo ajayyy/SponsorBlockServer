@@ -1,4 +1,4 @@
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
 import { client } from "../utils/httpClient";
@@ -169,7 +169,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive single segment in array", (done) => {
-        client.get(endpoint, { params: { UUIDs: `["${upvotedID}"]` }})
+        client.get(endpoint, { params: { UUIDs: `["${upvotedID}"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -185,7 +185,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be able to retreive multiple segments in array", (done) => {
-        client.get(endpoint, { params: { UUIDs: `["${upvotedID}", "${downvotedID}"]` }})
+        client.get(endpoint, { params: { UUIDs: `["${upvotedID}", "${downvotedID}"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -204,7 +204,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should be possible to send unexpected query parameters", (done) => {
-        client.get(endpoint, { params: { UUID: upvotedID, fakeparam: "hello", category: "sponsor" }})
+        client.get(endpoint, { params: { UUID: upvotedID, fakeparam: "hello", category: "sponsor" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -273,7 +273,7 @@ describe("getSegmentInfo", () => {
     it("Should cut off array at 10", function(done) {
         this.timeout(10000);
         const filledIDArray = `["${upvotedID}", "${downvotedID}", "${lockedupID}", "${shadowhiddenID}", "${lockeddownID}", "${hiddenID}", "${fillerID1}", "${fillerID2}", "${fillerID3}", "${fillerID4}", "${fillerID5}"]`;
-        client.get(endpoint, { params: { UUIDs: filledIDArray }})
+        client.get(endpoint, { params: { UUIDs: filledIDArray } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -298,7 +298,7 @@ describe("getSegmentInfo", () => {
     });
 
     it("Should return 400 if UUID not found", (done) => {
-        client.get(endpoint, { params: { UUID: ENOENTID }})
+        client.get(endpoint, { params: { UUID: ENOENTID } })
             .then(res => {
                 if (res.status !== 400) done(`non 400 response code: ${res.status}`);
                 else done(); // pass

@@ -33,7 +33,7 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all user info", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchCategoryStats: true, fetchActionTypeStats: true }})
+        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchCategoryStats: true, fetchActionTypeStats: true } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -65,7 +65,7 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all zeroes for invalid userid", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_invalid" }})
+        client.get(endpoint, { params: { userID: "getuserstats_user_invalid" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -80,7 +80,7 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all zeroes for only ignored segments", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_02" }})
+        client.get(endpoint, { params: { userID: "getuserstats_user_02" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -95,7 +95,7 @@ describe("getUserStats", () => {
     });
 
     it("Should not get extra stats if not requested", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_01" }})
+        client.get(endpoint, { params: { userID: "getuserstats_user_01" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -109,7 +109,7 @@ describe("getUserStats", () => {
     });
 
     it("Should get parts of extra stats if not requested", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchActionTypeStats: true }})
+        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchActionTypeStats: true } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;

@@ -5,7 +5,7 @@ import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { UserID } from "../types/user.model";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
-    const {err, reply} = await redis.getAsync(key);
+    const { err, reply } = await redis.getAsync(key);
 
     if (!err && reply) {
         try {

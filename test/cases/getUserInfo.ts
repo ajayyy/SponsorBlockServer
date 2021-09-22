@@ -1,6 +1,6 @@
 import { partialDeepEquals } from "../utils/partialDeepEquals";
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
@@ -35,7 +35,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should be able to get a 200", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_01" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_user_01" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -44,7 +44,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should be able to get a 400 (No userID parameter)", (done) => {
-        client.get(endpoint, { params: { userID: "" }})
+        client.get(endpoint, { params: { userID: "" } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -53,7 +53,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should be able to get user info", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_01" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_user_01" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -77,7 +77,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_0", value: "warnings" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_0", value: "warnings" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -90,7 +90,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning data with public ID", (done) => {
-        client.get(endpoint, { params: { publicUserID: getHash("getuserinfo_warning_0"), values: `["warnings"]` }})
+        client.get(endpoint, { params: { publicUserID: getHash("getuserinfo_warning_0"), values: `["warnings"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -103,7 +103,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get multiple warnings", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_1", value: "warnings" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_1", value: "warnings" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -116,7 +116,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should not get warnings if none", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_2", value: "warnings" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_2", value: "warnings" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -129,7 +129,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should done(userID for userName (No userName set)", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_02", value: "userName" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_user_02", value: "userName" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -142,7 +142,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return null segment if none", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_null", value: "lastSegmentID" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_null", value: "lastSegmentID" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(res.data.lastSegmentID, null);
@@ -152,7 +152,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return zeroes if userid does not exist", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_null", value: "lastSegmentID" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_null", value: "lastSegmentID" } })
             .then(res => {
                 const data = res.data;
                 for (const value in data) {
@@ -166,7 +166,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get warning reason from from single enabled warning", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_0", values: `["warningReason"]` }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_0", values: `["warningReason"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -179,7 +179,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get most recent warning from two enabled warnings", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_1", value: "warningReason" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_1", value: "warningReason" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -192,7 +192,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should not get disabled warning", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_2", values: `["warnings","warningReason"]` }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_2", values: `["warnings","warningReason"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -220,7 +220,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get 400 if bad values specified", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_3", value: "invalid-value" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_warning_3", value: "invalid-value" } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done(); // pass
@@ -229,7 +229,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get ban data for banned user (only appears when specifically requested)", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_ban_01", value: "banned" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_ban_01", value: "banned" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -242,7 +242,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should get ban data for unbanned user (only appears when specifically requested)", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_notban_01", value: "banned" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_notban_01", value: "banned" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -255,7 +255,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should throw 400 on bad json in values", (done) => {
-        client.get(endpoint, { params: { userID: "x", values: `[userID]` }})
+        client.get(endpoint, { params: { userID: "x", values: `[userID]` } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done(); // pass
@@ -264,7 +264,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should return 200 on userID not found", (done) => {
-        client.get(endpoint, { params: { userID: "notused-userid" }})
+        client.get(endpoint, { params: { userID: "notused-userid" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -285,7 +285,7 @@ describe("getUserInfo", () => {
     });
 
     it("Should only count long segments as 10 minutes", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_03" }})
+        client.get(endpoint, { params: { userID: "getuserinfo_user_03" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {

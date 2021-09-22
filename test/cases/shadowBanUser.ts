@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
-import {db} from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { Done } from "../utils/utils";
 import { getbaseURL } from "../utils/getBaseURL";
-import {getHash} from "../../src/utils/getHash";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { Category } from "../../src/types/segments.model";
 

@@ -1,6 +1,6 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
+import { db } from "../databases/databases";
+import { Logger } from "../utils/logger";
+import { Request, Response } from "express";
 import { Category, VideoID } from "../types/segments.model";
 
 export async function getLockCategories(req: Request, res: Response): Promise<Response> {

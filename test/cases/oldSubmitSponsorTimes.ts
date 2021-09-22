@@ -1,4 +1,4 @@
-import { partialDeepEquals } from "../utils/partialDeepEquals";import {db} from "../../src/databases/databases";
+import { partialDeepEquals } from "../utils/partialDeepEquals";import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
@@ -9,7 +9,7 @@ const endpoint = "/api/postVideoSponsorTimes";
 
 describe("postVideoSponsorTime (Old submission method)", () => {
     it("Should be able to submit a time (GET)", (done) => {
-        client.get(endpoint, { params: { videoID: videoID1, startTime: 1, endTime: 10, userID }})
+        client.get(endpoint, { params: { videoID: videoID1, startTime: 1, endTime: 10, userID } })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID1]);
@@ -45,7 +45,7 @@ describe("postVideoSponsorTime (Old submission method)", () => {
     });
 
     it("Should return 400 for missing params", (done) => {
-        client.post(endpoint, { params: { startTime: 1, endTime: 10, userID }})
+        client.post(endpoint, { params: { startTime: 1, endTime: 10, userID } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

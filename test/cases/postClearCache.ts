@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
 import { Done } from "../utils/utils";
 import { getbaseURL } from "../utils/getBaseURL";
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 
 const VIPUser = "clearCacheVIP";

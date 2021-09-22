@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
-import {Done} from "../utils/utils";
+import { Done } from "../utils/utils";
 import { getbaseURL } from "../utils/getBaseURL";
-import {getHash} from "../../src/utils/getHash";
-import {db} from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
 import assert from "assert";
 
 const endpoint = `${getbaseURL()}/api/lockReason`;
@@ -63,7 +63,7 @@ describe("getLockReason", () => {
                 const data = await res.json();
                 const expected = [
                     { category: "sponsor", locked: 1, reason: "sponsor-reason" },
-                    { category: "intro", locked: 0, reason: ""}
+                    { category: "intro", locked: 0, reason: "" }
                 ];
                 assert.deepStrictEqual(data, expected);
                 done();

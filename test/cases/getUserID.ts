@@ -1,11 +1,11 @@
-import {db} from "../../src/databases/databases";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 import { AxiosResponse } from "axios";
 
 const endpoint = "/api/userID";
-const getUserName = (username: string): Promise<AxiosResponse> => client.get(endpoint, { params: { username }});
+const getUserName = (username: string): Promise<AxiosResponse> => client.get(endpoint, { params: { username } });
 
 describe("getUserID", () => {
     before(async () => {
@@ -43,7 +43,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get a 200 (username is public id)", (done) => {
-        client.get(endpoint, { params: { username: getHash("getuserid_user_06") }})
+        client.get(endpoint, { params: { username: getHash("getuserid_user_06") } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -52,7 +52,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get a 400 (username longer than 64 chars)", (done) => {
-        client.get(endpoint, { params: { username: `${getHash("getuserid_user_06")}0` }})
+        client.get(endpoint, { params: { username: `${getHash("getuserid_user_06")}0` } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -61,7 +61,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get single username", (done) => {
-        client.get(endpoint, { params: { username: "fuzzy user 01" }})
+        client.get(endpoint, { params: { username: "fuzzy user 01" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -254,7 +254,7 @@ describe("getUserID", () => {
     });
 
     it("should allow exact match", (done) => {
-        client.get(endpoint, { params: { username: "a", exact: true }})
+        client.get(endpoint, { params: { username: "a", exact: true } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -268,7 +268,7 @@ describe("getUserID", () => {
     });
 
     it("Should be able to get repeating username with exact username", (done) => {
-        client.get(endpoint, { params: { username: "repeating", exact: true }})
+        client.get(endpoint, { params: { username: "repeating", exact: true } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -285,7 +285,7 @@ describe("getUserID", () => {
     });
 
     it("Should not get exact unless explicitly set to true", (done) => {
-        client.get(endpoint, { params: { username: "user", exact: 1 }})
+        client.get(endpoint, { params: { username: "user", exact: 1 } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
