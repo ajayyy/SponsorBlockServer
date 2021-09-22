@@ -179,6 +179,8 @@ function setupRoutes(router: Router) {
     // get user category stats
     router.get("/api/userStats", getUserStats);
 
+    router.get("/api/lockReason", getLockReason);
+
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
