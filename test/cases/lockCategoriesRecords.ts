@@ -255,7 +255,7 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should return 400 for no userID", (done) => {
-        const json = {
+        const json: any = {
             videoID: "test",
             userID: null,
             categories: ["sponsor"],
@@ -270,7 +270,7 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should return 400 for no videoID", (done) => {
-        const json = {
+        const json: any = {
             videoID: null,
             userID: "test",
             categories: ["sponsor"],
