@@ -2,6 +2,7 @@ import {db} from "../databases/databases";
 import {config} from "../config";
 import {Request, Response} from "express";
 import fetch from "node-fetch";
+import axios from "axios";
 import {Logger} from "../utils/logger";
 
 // A cache of the number of chrome web store users
@@ -44,10 +45,9 @@ export async function getTotalStats(req: Request, res: Response): Promise<void> 
 
 function updateExtensionUsers() {
     if (config.userCounterURL) {
-        fetch(`${config.userCounterURL}/api/v1/userCount`)
-            .then(res => res.json())
-            .then(data => {
-                apiUsersCache = Math.max(apiUsersCache, data.userCount);
+        axios.get(`${config.userCounterURL}/api/v1/userCount`)
+            .then(res => {
+                apiUsersCache = Math.max(apiUsersCache, res.data.userCount);
             })
             .catch(() => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
     }

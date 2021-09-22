@@ -1,11 +1,10 @@
-import fetch from "node-fetch";
 import {db} from "../../src/databases/databases";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
-const endpoint = `${getbaseURL()}/api/getVideoSponsorTimes`;
+const endpoint = "/api/getVideoSponsorTimes";
+const getOldSponsorTime = (videoID: string) => client.get(endpoint, { params: { videoID } });
 
 describe("getVideoSponsorTime (Old get method)", () => {
     before(async () => {
@@ -14,8 +13,8 @@ describe("getVideoSponsorTime (Old get method)", () => {
         await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime1,test", 1, 11, 2, "oldGetSponsorTime01", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0]);
     });
 
-    it("Should be able to get a time", (done: Done) => {
-        fetch(`${endpoint}?videoID=oldGetSponsorTime0`)
+    it("Should be able to get a time", (done) => {
+        getOldSponsorTime("oldGetSponsorTime0")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -23,8 +22,8 @@ describe("getVideoSponsorTime (Old get method)", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 404 if no segment found", (done: Done) => {
-        fetch(`${endpoint}?videoID=notarealvideo`)
+    it("Should return 404 if no segment found", (done) => {
+        getOldSponsorTime("notarealvideo")
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -33,8 +32,8 @@ describe("getVideoSponsorTime (Old get method)", () => {
     });
 
 
-    it("Should be possible to send unexpected query parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=oldGetSponsorTime0&fakeparam=hello`)
+    it("Should be possible to send unexpected query parameters", (done) => {
+        client.get(endpoint, { params: { videoID: "oldGetSponsorTime0", fakeparam: "hello" }})
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -42,30 +41,28 @@ describe("getVideoSponsorTime (Old get method)", () => {
             .catch(() => done("couldn't callendpoint"));
     });
 
-    it("Should be able send a comma in a query param", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=oldGetSponsorTime1,test`)
-            .then(async res => {
+    it("Should be able send a comma in a query param", (done) => {
+        getOldSponsorTime("oldGetSponsorTime1,test")
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = {
                     UUIDs: ["oldGetSponsorTime01"],
                 };
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to get the correct time", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=oldGetSponsorTime0`)
-            .then(async res => {
+    it("Should be able to get the correct time", (done) => {
+        getOldSponsorTime("oldGetSponsorTime0")
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = {
                     sponsorTimes: [[1, 11]],
                     UUIDs: ["oldGetSponsorTime00"]
                 };
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));

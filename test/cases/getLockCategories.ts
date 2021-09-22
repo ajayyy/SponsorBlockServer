@@ -1,13 +1,11 @@
-import fetch from "node-fetch";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import {getHash} from "../../src/utils/getHash";
 import {db} from "../../src/databases/databases";
 import assert from "assert";
-
+import { client } from "../utils/httpClient";
+const endpoint = "/api/lockCategories";
+const getLockCategories = (videoID: string) => client.get(endpoint, { params: { videoID } });
 
 describe("getLockCategories", () => {
-    const endpoint = `${getbaseURL()}/api/lockCategories`;
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesVIP")]);
@@ -26,11 +24,10 @@ describe("getLockCategories", () => {
         assert.ok(version > 20, `Version isn't greater than 20. Version is ${version}`);
     });
 
-    it("Should be able to get multiple locks", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLock1`)
-            .then(async res => {
+    it("Should be able to get multiple locks", (done) => {
+        getLockCategories("getLock1")
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = {
                     categories: [
                         "sponsor",
@@ -38,31 +35,30 @@ describe("getLockCategories", () => {
                     ],
                     reason: "1-longer-reason"
                 };
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to get single locks", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLock2`)
-            .then(async res => {
+    it("Should be able to get single locks", (done) => {
+        getLockCategories("getLock2")
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = {
                     categories: [
                         "preview"
                     ],
                     reason: "2-reason"
                 };
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("should return 404 if no lock exists", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLockNull`)
+    it("should return 404 if no lock exists", (done) => {
+        getLockCategories("getLockNull")
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -70,8 +66,8 @@ describe("getLockCategories", () => {
             .catch(err => done(err));
     });
 
-    it("should return 400 if no videoID specified", (done: Done) => {
-        fetch(endpoint)
+    it("should return 400 if no videoID specified", (done) => {
+        client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

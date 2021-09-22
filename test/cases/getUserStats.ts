@@ -1,12 +1,11 @@
-import fetch from "node-fetch";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { db } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 describe("getUserStats", () => {
+    const endpoint = "/api/userStats";
     before(async () => {
         const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
         await db.prepare("run", insertUserNameQuery, [getHash("getuserstats_user_01"), "Username user 01"]);
@@ -24,8 +23,8 @@ describe("getUserStats", () => {
 
     });
 
-    it("Should be able to get a 400 (No userID parameter)", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats`)
+    it("Should be able to get a 400 (No userID parameter)", (done) => {
+        client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -33,9 +32,9 @@ describe("getUserStats", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get all user info", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&fetchCategoryStats=true&fetchActionTypeStats=true`)
-            .then(async res => {
+    it("Should be able to get all user info", (done) => {
+        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchCategoryStats: true, fetchActionTypeStats: true }})
+            .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
                     userName: "Username user 01",
@@ -59,18 +58,17 @@ describe("getUserStats", () => {
                         segmentCount: 8
                     }
                 };
-                const data = await res.json();
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to get all zeroes for invalid userid", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_invalid`)
-            .then(async res => {
+    it("Should be able to get all zeroes for invalid userid", (done) => {
+        client.get(endpoint, { params: { userID: "getuserstats_user_invalid" }})
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 for (const value in data.overallStats) {
                     if (data[value]) {
                         done(`returned non-zero for ${value}`);
@@ -81,11 +79,11 @@ describe("getUserStats", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get all zeroes for only ignored segments", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_02`)
-            .then(async res => {
+    it("Should be able to get all zeroes for only ignored segments", (done) => {
+        client.get(endpoint, { params: { userID: "getuserstats_user_02" }})
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 for (const value in data.overallStats) {
                     if (data[value]) {
                         done(`returned non-zero for ${value}`);
@@ -96,11 +94,11 @@ describe("getUserStats", () => {
             .catch(err => done(err));
     });
 
-    it("Should not get extra stats if not requested", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01`)
-            .then(async res => {
+    it("Should not get extra stats if not requested", (done) => {
+        client.get(endpoint, { params: { userID: "getuserstats_user_01" }})
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 // check for categoryCount
                 if (data.categoryCount || data.actionTypeCount) {
                     done("returned extra stats");
@@ -110,11 +108,11 @@ describe("getUserStats", () => {
             .catch(err => done(err));
     });
 
-    it("Should get parts of extra stats if not requested", (done: Done) => {
-        fetch(`${getbaseURL()}/api/userStats?userID=getuserstats_user_01&fetchActionTypeStats=true`)
-            .then(async res => {
+    it("Should get parts of extra stats if not requested", (done) => {
+        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchActionTypeStats: true }})
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 // check for categoryCount
                 if (data.categoryCount && !data.actionTypeCount) {
                     done("returned extra stats");

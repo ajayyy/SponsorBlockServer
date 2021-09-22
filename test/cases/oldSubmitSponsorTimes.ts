@@ -1,17 +1,15 @@
-import fetch from "node-fetch";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { partialDeepEquals } from "../utils/partialDeepEquals";import {db} from "../../src/databases/databases";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 const videoID1 = "dQw4w9WgXcQ";
 const videoID2 = "dQw4w9WgXcE";
 const userID = "testtesttesttesttesttesttesttesttest";
+const endpoint = "/api/postVideoSponsorTimes";
 
 describe("postVideoSponsorTime (Old submission method)", () => {
-    it("Should be able to submit a time (GET)", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/postVideoSponsorTimes?videoID=${videoID1}&startTime=1&endTime=10&userID=${userID}`)
+    it("Should be able to submit a time (GET)", (done) => {
+        client.get(endpoint, { params: { videoID: videoID1, startTime: 1, endTime: 10, userID }})
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await db.prepare("get", `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID1]);
@@ -26,13 +24,11 @@ describe("postVideoSponsorTime (Old submission method)", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a time (POST)", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/postVideoSponsorTimes?videoID=${videoID2}&startTime=1&endTime=11&userID=${userID}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+    it("Should be able to submit a time (POST)", (done) => {
+        client({
+            url: endpoint,
+            params: { videoID: videoID2, startTime: 1, endTime: 11, userID },
+            method: "post",
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -48,10 +44,9 @@ describe("postVideoSponsorTime (Old submission method)", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 for missing params", (done: Done) => {
-        fetch(`${getbaseURL()
-        }/api/postVideoSponsorTimes?startTime=1&endTime=10&userID=${userID}`)
-            .then(async res => {
+    it("Should return 400 for missing params", (done) => {
+        client.post(endpoint, { params: { startTime: 1, endTime: 10, userID }})
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
