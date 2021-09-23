@@ -1,14 +1,12 @@
-import fetch from "node-fetch";
 import { config } from "../../src/config";
 import { getHash } from "../../src/utils/getHash";
-import { Done, postJSON } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { db } from "../../src/databases/databases";
 import { ImportMock } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
 import { YouTubeApiMock } from "../youtubeMock";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
@@ -38,7 +36,17 @@ describe("postSkipSegments", () => {
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
 
-    const endpoint = `${getbaseURL()}/api/skipSegments`;
+    const endpoint = "/api/skipSegments";
+    const postSkipSegmentJSON = (data: Record<string, any>) => client({
+        method: "POST",
+        url: endpoint,
+        data
+    });
+    const postSkipSegmentParam = (params: Record<string, any>) => client({
+        method: "POST",
+        url: endpoint,
+        params
+    });
 
     before(() => {
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
@@ -81,10 +89,14 @@ describe("postSkipSegments", () => {
         db.prepare("run", insertVipUserQuery, [getHash(submitVIPuser)]);
     });
 
-    it("Should be able to submit a single time (Params method)", (done: Done) => {
+    it("Should be able to submit a single time (Params method)", (done) => {
         const videoID = "dQw4w9WgXcR";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=2&endTime=10&userID=${submitUserOne}&category=sponsor`, {
-            method: "POST"
+        postSkipSegmentParam({
+            videoID,
+            startTime: 2,
+            endTime: 10,
+            userID: submitUserOne,
+            category: "sponsor"
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -100,18 +112,15 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single time (JSON method)", (done: Done) => {
+    it("Should be able to submit a single time (JSON method)", (done) => {
         const videoID = "dQw4w9WgXcF";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -128,19 +137,16 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single time with an action type (JSON method)", (done: Done) => {
+    it("Should be able to submit a single time with an action type (JSON method)", (done) => {
         const videoID = "dQw4w9WgXcV";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                    actionType: "mute"
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+                actionType: "mute"
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -157,19 +163,16 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should not be able to submit an intro with mute action type (JSON method)", (done: Done) => {
+    it("Should not be able to submit an intro with mute action type (JSON method)", (done) => {
         const videoID = "dQw4w9WgXpQ";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [0, 10],
-                    category: "intro",
-                    actionType: "mute"
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "intro",
+                actionType: "mute"
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 400);
@@ -180,19 +183,16 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single time with a duration from the YouTube API (JSON method)", (done: Done) => {
+    it("Should be able to submit a single time with a duration from the YouTube API (JSON method)", (done) => {
         const videoID = "dQw4w9WgXZX";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                videoDuration: 100,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            videoDuration: 100,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -209,19 +209,16 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single time with a precise duration close to the one from the YouTube API (JSON method)", (done: Done) => {
+    it("Should be able to submit a single time with a precise duration close to the one from the YouTube API (JSON method)", (done) => {
         const videoID = "dQw4w9WgXZH";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                videoDuration: 4980.20,
-                segments: [{
-                    segment: [1, 10],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            videoDuration: 4980.20,
+            segments: [{
+                segment: [1, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -239,19 +236,16 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single time with a duration in the body (JSON method)", (done: Done) => {
+    it("Should be able to submit a single time with a duration in the body (JSON method)", (done) => {
         const videoID = "noDuration";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                videoDuration: 100,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            videoDuration: 100,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -275,17 +269,14 @@ describe("postSkipSegments", () => {
             VALUES(?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "sponsor"]);
 
         try {
-            const res = await fetch(endpoint, {
-                ...postJSON,
-                body: JSON.stringify({
-                    userID: submitUserOne,
-                    videoID,
-                    videoDuration: 100,
-                    segments: [{
-                        segment: [1, 10],
-                        category: "sponsor",
-                    }],
-                }),
+            const res = await postSkipSegmentJSON({
+                userID: submitUserOne,
+                videoID,
+                videoDuration: 100,
+                segments: [{
+                    segment: [1, 10],
+                    category: "sponsor",
+                }],
             });
             assert.strictEqual(res.status, 200);
             const lockCategoriesRow = await db.prepare("get", `SELECT * from "lockCategories" WHERE videoID = ?`, [videoID]);
@@ -309,10 +300,16 @@ describe("postSkipSegments", () => {
         }
     });
 
-    it("Should still not be allowed if youtube thinks duration is 0", (done: Done) => {
+    it("Should still not be allowed if youtube thinks duration is 0", (done) => {
         const videoID= "noDuration";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=30&endTime=10000&userID=${submitUserThree}&category=sponsor`, {
-            method: "POST",
+        postSkipSegmentJSON({
+            userID: submitUserThree,
+            videoID,
+            videoDuration: 100,
+            segments: [{
+                segment: [30, 10000],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 403);
@@ -321,19 +318,16 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single time under a different service (JSON method)", (done: Done) => {
+    it("Should be able to submit a single time under a different service (JSON method)", (done) => {
         const videoID = "dQw4w9WgXcG";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                service: "PeerTube",
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            service: "PeerTube",
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -351,18 +345,15 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("VIP submission should start locked", (done: Done) => {
+    it("VIP submission should start locked", (done) => {
         const videoID = "vipuserIDSubmission";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitVIPuser,
-                videoID,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitVIPuser,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -379,21 +370,18 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit multiple times (JSON method)", (done: Done) => {
+    it("Should be able to submit multiple times (JSON method)", (done) => {
         const videoID = "dQw4w9WgXcT";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [3, 10],
-                    category: "sponsor",
-                }, {
-                    segment: [30, 60],
-                    category: "intro",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [3, 10],
+                category: "sponsor",
+            }, {
+                segment: [30, 60],
+                category: "intro",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -413,27 +401,24 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     }).timeout(5000);
 
-    it("Should allow multiple times if total is under 80% of video(JSON method)", (done: Done) => {
+    it("Should allow multiple times if total is under 80% of video(JSON method)", (done) => {
         const videoID = "L_jWHffIx5E";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [3, 3000],
-                    category: "sponsor",
-                }, {
-                    segment: [3002, 3050],
-                    category: "intro",
-                }, {
-                    segment: [45, 100],
-                    category: "interaction",
-                }, {
-                    segment: [99, 170],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [3, 3000],
+                category: "sponsor",
+            }, {
+                segment: [3002, 3050],
+                category: "intro",
+            }, {
+                segment: [45, 100],
+                category: "interaction",
+            }, {
+                segment: [99, 170],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -461,27 +446,24 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     }).timeout(5000);
 
-    it("Should reject multiple times if total is over 80% of video (JSON method)", (done: Done) => {
+    it("Should reject multiple times if total is over 80% of video (JSON method)", (done) => {
         const videoID = "n9rIGdXnSJc";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [0, 2000],
-                    category: "interaction",
-                }, {
-                    segment: [3000, 4000],
-                    category: "sponsor",
-                }, {
-                    segment: [1500, 2750],
-                    category: "sponsor",
-                }, {
-                    segment: [4050, 4750],
-                    category: "intro",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 2000],
+                category: "interaction",
+            }, {
+                segment: [3000, 4000],
+                category: "sponsor",
+            }, {
+                segment: [1500, 2750],
+                category: "sponsor",
+            }, {
+                segment: [4050, 4750],
+                category: "intro",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 403);
@@ -492,24 +474,21 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     }).timeout(5000);
 
-    it("Should reject multiple times if total is over 80% of video including previosuly submitted times(JSON method)", (done: Done) => {
+    it("Should reject multiple times if total is over 80% of video including previosuly submitted times(JSON method)", (done) => {
         const videoID = "80percent_video";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: [2000, 4000],
-                    category: "sponsor",
-                }, {
-                    segment: [1500, 2750],
-                    category: "sponsor",
-                }, {
-                    segment: [4050, 4750],
-                    category: "sponsor",
-                }],
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [2000, 4000],
+                category: "sponsor",
+            }, {
+                segment: [1500, 2750],
+                category: "sponsor",
+            }, {
+                segment: [4050, 4750],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 403);
@@ -533,10 +512,14 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     }).timeout(5000);
 
-    it("Should be accepted if a non-sponsor is less than 1 second", (done: Done) => {
+    it("Should be accepted if a non-sponsor is less than 1 second", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=30&endTime=30.5&userID=${submitUserTwo}&category=intro`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 30,
+            endTime: 30.5,
+            userID: submitUserTwo,
+            category: "intro"
         })
             .then(res => {
                 assert.strictEqual(res.status, 200);
@@ -545,10 +528,14 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be rejected if segment starts and ends at the same time", (done: Done) => {
+    it("Should be rejected if segment starts and ends at the same time", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=90&endTime=90&userID=${submitUserTwo}&category=intro`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 90,
+            endTime: 90,
+            userID: submitUserTwo,
+            category: "intro"
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -557,10 +544,14 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be accepted if highlight segment starts and ends at the same time", (done: Done) => {
+    it("Should be accepted if highlight segment starts and ends at the same time", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=30&endTime=30&userID=${submitUserTwo}&category=poi_highlight`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 30,
+            endTime: 30,
+            userID: submitUserTwo,
+            category: "poi_highlight"
         })
             .then(res => {
                 assert.strictEqual(res.status, 200);
@@ -569,10 +560,14 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be rejected if highlight segment doesn't start and end at the same time", (done: Done) => {
+    it("Should be rejected if highlight segment doesn't start and end at the same time", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=30&endTime=30.5&userID=${submitUserTwo}&category=poi_highlight`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 30,
+            endTime: 30.5,
+            userID: submitUserTwo,
+            category: "poi_highlight"
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -581,10 +576,13 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be rejected if a sponsor is less than 1 second", (done: Done) => {
+    it("Should be rejected if a sponsor is less than 1 second", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=30&endTime=30.5&userID=${submitUserTwo}`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 30,
+            endTime: 30.5,
+            userID: submitUserTwo
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -593,45 +591,50 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be rejected if over 80% of the video", (done: Done) => {
+    it("Should be rejected if over 80% of the video", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=30&endTime=1000000&userID=${submitUserTwo}&category=sponsor`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 30,
+            endTime: 1000000,
+            userID: submitUserTwo,
+            category: "sponsor"
         })
-            .then( async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be rejected if NB's predicted probability is <70%.", (done: Done) => {
+    it("Should be rejected if NB's predicted probability is <70%.", (done) => {
         const videoID = "LevkAjUE6d4";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=40&endTime=60&userID=${submitUserTwo}&category=sponsor`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 40,
+            endTime: 60,
+            userID: submitUserTwo,
+            category: "sponsor"
         })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be rejected with custom message if user has to many active warnings", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: warnUser01,
-                videoID: warnVideoID,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+    it("Should be rejected with custom message if user has to many active warnings", (done) => {
+        postSkipSegmentJSON({
+            userID: warnUser01,
+            videoID: warnVideoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 403);
-                const errorMessage = await res.text();
+                const errorMessage = res.data;
                 const reason = "Reason01";
                 const expected = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
                 + " that are not malicious, and we just want to clarify the rules. "
@@ -644,97 +647,85 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be accepted if user has some active warnings", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: warnUser02,
-                videoID: warnVideoID,
-                segments: [{
-                    segment: [50, 60],
-                    category: "sponsor",
-                }],
-            }),
+    it("Should be accepted if user has some active warnings", (done) => {
+        postSkipSegmentJSON({
+            userID: warnUser02,
+            videoID: warnVideoID,
+            segments: [{
+                segment: [50, 60],
+                category: "sponsor",
+            }],
         })
-            .then(async res => {
+            .then(res => {
                 if (res.status === 200) {
                     done(); // success
                 } else {
-                    const body = await res.text();
-                    done(`Status code was ${res.status} ${body}`);
+                    done(`Status code was ${res.status} ${res.data}`);
                 }
             })
             .catch(err => done(err));
     });
 
-    it("Should be accepted if user has some warnings removed", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: warnUser03,
-                videoID: warnVideoID,
-                segments: [{
-                    segment: [53, 60],
-                    category: "sponsor",
-                }],
-            }),
+    it("Should be accepted if user has some warnings removed", (done) => {
+        postSkipSegmentJSON({
+            userID: warnUser03,
+            videoID: warnVideoID,
+            segments: [{
+                segment: [53, 60],
+                category: "sponsor",
+            }],
         })
-            .then(async res => {
+            .then(res => {
                 if (res.status === 200) {
                     done(); // success
                 } else {
-                    const body = await res.text();
-                    done(`Status code was ${res.status} ${body}`);
+                    done(`Status code was ${res.status} ${res.data}`);
                 }
             })
             .catch(err => done(err));
     });
 
-    it("Should return 400 for missing params (Params method)", (done: Done) => {
-        fetch(`${endpoint}?startTime=9&endTime=10&userID=${submitUserOne}`, {
-            method: "POST",
+    it("Should return 400 for missing params (Params method)", (done) => {
+        postSkipSegmentParam({
+            startTime: 9,
+            endTime: 10,
+            userID: submitUserOne
         })
-            .then(async res => {
+            .then(res => {
                 if (res.status === 400) done();
                 else done(true);
             })
             .catch(err => done(err));
     });
 
-    it("Should be rejected with default message if user has to many active warnings", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: warnUser01,
-                videoID: warnVideoID,
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-            }),
+    it("Should be rejected with default message if user has to many active warnings", (done) => {
+        postSkipSegmentJSON({
+            userID: warnUser01,
+            videoID: warnVideoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
         })
             .then(async res => {
                 assert.strictEqual(res.status, 403);
-                const errorMessage = await res.text();
+                const errorMessage = res.data;
                 assert.notStrictEqual(errorMessage, "");
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should return 400 for missing params (JSON method) 1", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                segments: [{
-                    segment: [9, 10],
-                    category: "sponsor",
-                }, {
-                    segment: [31, 60],
-                    category: "intro",
-                }],
-            }),
+    it("Should return 400 for missing params (JSON method) 1", (done) => {
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            segments: [{
+                segment: [9, 10],
+                category: "sponsor",
+            }, {
+                segment: [31, 60],
+                category: "intro",
+            }],
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -742,13 +733,10 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
-    it("Should return 400 for missing params (JSON method) 2", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID: badInputVideoID,
-            }),
+    it("Should return 400 for missing params (JSON method) 2", (done) => {
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID: badInputVideoID,
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -756,54 +744,17 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
-    it("Should return 400 for missing params (JSON method) 3", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID: badInputVideoID,
-                segments: [{
-                    segment: [0],
-                    category: "sponsor",
-                }, {
-                    segment: [31, 60],
-                    category: "intro",
-                }],
-            }),
-        })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-    it("Should return 400 for missing params (JSON method) 4", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID: badInputVideoID,
-                segments: [{
-                    segment: [9, 10],
-                }, {
-                    segment: [31, 60],
-                    category: "intro",
-                }],
-            }),
-        })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-    it("Should return 400 for missing params (JSON method) 5", (done: Done) => {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID: badInputVideoID,
-            }),
+    it("Should return 400 for missing params (JSON method) 3", (done) => {
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID: badInputVideoID,
+            segments: [{
+                segment: [0],
+                category: "sponsor",
+            }, {
+                segment: [31, 60],
+                category: "intro",
+            }],
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -812,73 +763,94 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 403 and custom reason for submiting in lockedCategory", async () => {
+    it("Should return 400 for missing params (JSON method) 4", (done) => {
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID: badInputVideoID,
+            segments: [{
+                segment: [9, 10],
+            }, {
+                segment: [31, 60],
+                category: "intro",
+            }],
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 for missing params (JSON method) 5", (done) => {
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID: badInputVideoID,
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 403 and custom reason for submiting in lockedCategory", (done) => {
         const videoID = "lockedVideo";
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason")
-            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "sponsor", "Custom Reason"]);
-
-        try {
-            const res = await fetch(endpoint, {
-                ...postJSON,
-                body: JSON.stringify({
-                    userID: submitUserOne,
-                    videoID,
-                    segments: [{
-                        segment: [1, 10],
-                        category: "sponsor",
-                    }],
-                }),
-            });
-
-            assert.strictEqual(res.status, 403);
-            assert.match(await res.text(), /Lock reason: /);
-            assert.match(await res.text(), /Custom Reason/);
-        } catch (e) {
-            return e;
-        }
+        db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason")
+            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "sponsor", "Custom Reason"])
+            .then(() => postSkipSegmentJSON({
+                userID: submitUserOne,
+                videoID,
+                segments: [{
+                    segment: [1, 10],
+                    category: "sponsor",
+                }],
+            }))
+            .then(res => {
+                assert.strictEqual(res.status, 403);
+                assert.match(res.data, /Lock reason: /);
+                assert.match(res.data, /Custom Reason/);
+                done();
+            })
+            .catch(err => done(err));
     });
 
-    it("Should return 403 for submiting in lockedCategory", async () => {
+    it("Should return 403 for submiting in lockedCategory", (done) => {
         const videoID = "lockedVideo1";
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") 
-            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "intro", ""]);
+        db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") 
+            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "intro", ""])
+            .then(() => postSkipSegmentJSON({
+                userID: submitUserOne,
+                videoID,
+                segments: [{
+                    segment: [1, 10],
+                    category: "intro",
+                }],
+            }))
+            .then(res => {
+                assert.strictEqual(res.status, 403);
+                assert.doesNotMatch(res.data, /Lock reason: /);
+                assert.doesNotMatch(res.data, /Custom Reason/);
+                done();
+            })
+            .catch(err => done(err));
+    });
 
-        try {
-            const res = await fetch(endpoint, {
-                ...postJSON,
-                body: JSON.stringify({
-                    userID: submitUserOne,
-                    videoID,
-                    segments: [{
-                        segment: [1, 10],
-                        category: "intro",
-                    }],
-                }),
-            });
-
-            assert.strictEqual(res.status, 403);
-            assert.doesNotMatch(await res.text(), /Lock reason: /);
-            assert.doesNotMatch(await res.text(), /Custom Reason/);
-        } catch (e) {
-            return e;
-        }
-    }).timeout(5000);
-
-    it("Should be able to submit with custom user-agent 1", (done: Done) => {
-        fetch(endpoint, {
+    it("Should be able to submit with custom user-agent 1", (done) => {
+        client({
+            url: endpoint,
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": "com.google.android.youtube/5.0"
             },
-            body: JSON.stringify({
+            data: {
                 userID: submitUserOne,
                 videoID: "userAgent-1",
                 segments: [{
                     segment: [0, 10],
                     category: "sponsor",
                 }],
-            }),
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -894,21 +866,19 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit with empty user-agent", (done: Done) => {
-        fetch(endpoint, {
+    it("Should be able to submit with empty user-agent", (done) => {
+        client({
+            url: endpoint,
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "User-Agent": ""
-            },
-            body: JSON.stringify({
+            data: {
                 userID: submitUserOne,
                 videoID: "userAgent-3",
                 segments: [{
                     segment: [0, 10],
                     category: "sponsor",
                 }],
-            }),
+                userAgent: "",
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -924,21 +894,15 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit with custom userAgent in body", (done: Done) => {
-        fetch(endpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID: "userAgent-4",
-                segments: [{
-                    segment: [0, 10],
-                    category: "sponsor",
-                }],
-                userAgent: "MeaBot/5.0"
-            }),
+    it("Should be able to submit with custom userAgent in body", (done) => {
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID: "userAgent-4",
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+            }],
+            userAgent: "MeaBot/5.0"
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -954,18 +918,15 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit with commas in timestamps", (done: Done) => {
+    it("Should be able to submit with commas in timestamps", (done) => {
         const videoID = "commas-1";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: ["0,2", "10,392"],
-                    category: "sponsor",
-                }]
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: ["0,2", "10,392"],
+                category: "sponsor",
+            }]
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -980,10 +941,14 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be rejected if a POI is at less than 1 second", (done: Done) => {
+    it("Should be rejected if a POI is at less than 1 second", (done) => {
         const videoID = "qqwerty";
-        fetch(`${endpoint}?videoID=${videoID}&startTime=0.5&endTime=0.5&category=poi_highlight&userID=${submitUserTwo}`, {
-            method: "POST",
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0.5,
+            endTime: 0.5,
+            category: "poi_highlight",
+            userID: submitUserTwo
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -992,18 +957,15 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should not be able to submit with colons in timestamps", (done: Done) => {
+    it("Should not be able to submit with colons in timestamps", (done) => {
         const videoID = "colon-1";
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                userID: submitUserOne,
-                videoID,
-                segments: [{
-                    segment: ["0:2.000", "3:10.392"],
-                    category: "sponsor",
-                }]
-            }),
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: ["0:2.000", "3:10.392"],
+                category: "sponsor",
+            }]
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);

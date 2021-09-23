@@ -1,10 +1,8 @@
-import fetch from "node-fetch";
-import { Done, postJSON } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { db } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import { IDatabase } from "../../src/databases/IDatabase";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
     const votes = 0,
@@ -34,7 +32,8 @@ async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string, expec
 describe("postPurgeAllSegments", function () {
     const privateVipUserID = "VIPUser-purgeAll";
     const vipUserID = getHash(privateVipUserID);
-    const endpoint = `${getbaseURL()}/api/purgeAllSegments`;
+    const endpoint = "/api/purgeAllSegments";
+    const postSegmentShift = (videoID: string, userID: string) => client.post(endpoint, { videoID, userID });
 
     before(async function () {
         // startTime and endTime get set in beforeEach for consistency
@@ -46,29 +45,17 @@ describe("postPurgeAllSegments", function () {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
     });
 
-    it("Reject non-VIP user", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegpurge01",
-                userID: "segshift_randomuser001",
-            }),
-        })
-            .then(async res => {
+    it("Reject non-VIP user", function (done) {
+        postSegmentShift("vsegpurge01", "segshift_randomuser001")
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Purge all segments success", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegpurge01",
-                userID: privateVipUserID,
-            }),
-        })
+    it("Purge all segments success", function (done) {
+        postSegmentShift("vsegpurge01", privateVipUserID)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 done(await dbSponsorTimesCompareExpect(db, "vsegpurge01", 1) || await dbSponsorTimesCompareExpect(db, "vseg-not-purged01", 0));
@@ -76,9 +63,9 @@ describe("postPurgeAllSegments", function () {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if missing body", function (done: Done) {
-        fetch(endpoint, { ...postJSON })
-            .then(async res => {
+    it("Should return 400 if missing body", function (done) {
+        client.post(endpoint, {})
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })

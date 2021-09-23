@@ -1,13 +1,20 @@
-import fetch from "node-fetch";
-import { postJSON } from  "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
+import { client } from "../utils/httpClient";
 import assert from "assert";
 
 describe("unBan", () => {
-    const endpoint = `${getbaseURL()}/api/shadowBanUser`;
+    const endpoint = "/api/shadowBanUser";
     const VIPuser = "VIPUser-unBan";
+    const postUnBan = (userID: string, adminUserID: string, enabled: boolean) => client({
+        url: endpoint,
+        method: "POST",
+        params: {
+            userID,
+            adminUserID,
+            enabled
+        }
+    });
     const videoIDUnBanCheck = (videoID: string, userID: string, status: number) => db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', [videoID, userID, status]);
     before(async () => {
         const insertShadowBannedUserQuery = 'INSERT INTO "shadowBannedUsers" VALUES(?)';
@@ -30,9 +37,7 @@ describe("unBan", () => {
 
     it("Should be able to unban a user and re-enable shadow banned segments", (done) => {
         const userID = "testMan-unBan";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuser}&enabled=false`, {
-            ...postJSON
-        })
+        postUnBan(userID, VIPuser, false)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await videoIDUnBanCheck("unBan-videoID-0", userID, 1);
@@ -44,9 +49,7 @@ describe("unBan", () => {
 
     it("Should be able to unban a user and re-enable shadow banned segments without lockCategories entrys", (done) => {
         const userID = "testWoman-unBan";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuser}&enabled=false`, {
-            ...postJSON
-        })
+        postUnBan(userID, VIPuser, false)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await videoIDUnBanCheck("unBan-videoID-1", userID, 1);
@@ -58,9 +61,7 @@ describe("unBan", () => {
 
     it("Should be able to unban a user and re-enable shadow banned segments with a mix of lockCategories entrys", (done) => {
         const userID = "testEntity-unBan";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuser}&enabled=false`, {
-            ...postJSON
-        })
+        postUnBan(userID, VIPuser, false)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?', [userID, 1]);

@@ -1,17 +1,15 @@
-import fetch from "node-fetch";
 import { db } from "../../src/databases/databases";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { Category } from "../../src/types/segments.model";
+import { client } from "../utils/httpClient";
 
 describe("shadowBanUser", () => {
-    const endpoint = `${getbaseURL()}/api/shadowBanUser`;
     const getShadowBan = (userID: string) => db.prepare("get", `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
     const getShadowBanSegments = (userID: string, status: number) => db.prepare("all", `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
     const getShadowBanSegmentCategory = (userID: string, status: number): Promise<{shadowHidden: number, category: Category}[]> => db.prepare("all", `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
 
+    const endpoint = "/api/shadowBanUser";
     const VIPuserID = "shadow-ban-vip";
 
     before(async () => {
@@ -36,10 +34,15 @@ describe("shadowBanUser", () => {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
     });
 
-    it("Should be able to ban user and hide submissions", (done: Done) => {
+    it("Should be able to ban user and hide submissions", (done) => {
         const userID = "shadowBanned";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -52,10 +55,17 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to unban user without unhiding submissions", (done: Done) => {
+    it("Should be able to unban user without unhiding submissions", (done) => {
         const userID = "shadowBanned";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}&enabled=false&unHideOldSubmissions=false`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: false,
+                unHideOldSubmissions: false,
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -68,10 +78,16 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to ban user and hide submissions from only some categories", (done: Done) => {
+    it("Should be able to ban user and hide submissions from only some categories", (done) => {
         const userID = "shadowBanned2";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}&categories=["sponsor"]`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                categories: `["sponsor"]`
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -85,10 +101,16 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to unban user and unhide submissions", (done: Done) => {
+    it("Should be able to unban user and unhide submissions", (done) => {
         const userID = "shadowBanned2";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}&enabled=false`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: false,
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -101,10 +123,17 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to unban user and unhide some submissions", (done: Done) => {
+    it("Should be able to unban user and unhide some submissions", (done) => {
         const userID = "shadowBanned3";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}&enabled=false&categories=["sponsor"]`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: false,
+                categories: `["sponsor"]`
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -118,10 +147,18 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should get 409 when re-shadowbanning user", (done: Done) => {
+    it("Should get 409 when re-shadowbanning user", (done) => {
         const userID = "shadowBanned4";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}&enabled=true&categories=["sponsor"]&unHideOldSubmissions=false`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: false
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 409);
@@ -135,10 +172,18 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to re-shadowban user to hide old submissions", (done: Done) => {
+    it("Should be able to re-shadowban user to hide old submissions", (done) => {
         const userID = "shadowBanned4";
-        fetch(`${endpoint}?userID=${userID}&adminUserID=${VIPuserID}&enabled=true&categories=["sponsor"]&unHideOldSubmissions=true`, {
-            method: "POST"
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true
+            }
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);

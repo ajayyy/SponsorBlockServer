@@ -1,10 +1,8 @@
-import fetch from "node-fetch";
-import { Done, postJSON } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { db } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import { IDatabase } from "../../src/databases/IDatabase";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 describe("segmentShift", function () {
     // functions
@@ -42,7 +40,12 @@ describe("segmentShift", function () {
     // constants
     const privateVipUserID = "VIPUser-segmentShift";
     const vipUserID = getHash(privateVipUserID);
-    const endpoint = `${getbaseURL()}/api/segmentShift`;
+    const endpoint = "/api/segmentShift";
+    const postSegmentShift = async (data: Record<string, any>) => client({
+        method: "POST",
+        url: endpoint,
+        data,
+    });
 
     before(async function () {
         // startTime and endTime get set in beforeEach for consistency
@@ -61,15 +64,12 @@ describe("segmentShift", function () {
         await dbSponsorTimesSetByUUID(db, "vsegshifttest01uuid04", 120, 140);
     });
 
-    it("Reject none VIP user", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegshift01",
-                userID: "segshift_randomuser001",
-                startTime: 20,
-                endTime: 30,
-            }),
+    it("Reject non VIP user", (done) => {
+        postSegmentShift({
+            videoID: "vsegshift01",
+            userID: "segshift_randomuser001",
+            startTime: 20,
+            endTime: 30,
         })
             .then(async res => {
                 assert.strictEqual(res.status, 403);
@@ -78,15 +78,12 @@ describe("segmentShift", function () {
             .catch(err => done(err));
     });
 
-    it("Shift is outside segments", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegshift01",
-                userID: privateVipUserID,
-                startTime: 20,
-                endTime: 30,
-            }),
+    it("Shift is outside segments", (done) => {
+        postSegmentShift({
+            videoID: "vsegshift01",
+            userID: privateVipUserID,
+            startTime: 20,
+            endTime: 30,
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -112,15 +109,12 @@ describe("segmentShift", function () {
             .catch(err => done(err));
     });
 
-    it("Shift is inside segment", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegshift01",
-                userID: privateVipUserID,
-                startTime: 65,
-                endTime: 75,
-            }),
+    it("Shift is inside segment", (done) => {
+        postSegmentShift({
+            videoID: "vsegshift01",
+            userID: privateVipUserID,
+            startTime: 65,
+            endTime: 75,
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -146,15 +140,12 @@ describe("segmentShift", function () {
             .catch(err => done(err));
     });
 
-    it("Shift is overlaping startTime of segment", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegshift01",
-                userID: privateVipUserID,
-                startTime: 32,
-                endTime: 42,
-            }),
+    it("Shift is overlaping startTime of segment", (done) => {
+        postSegmentShift({
+            videoID: "vsegshift01",
+            userID: privateVipUserID,
+            startTime: 32,
+            endTime: 42,
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -180,15 +171,12 @@ describe("segmentShift", function () {
             .catch(err => done(err));
     });
 
-    it("Shift is overlaping endTime of segment", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegshift01",
-                userID: privateVipUserID,
-                startTime: 85,
-                endTime: 95,
-            }),
+    it("Shift is overlaping endTime of segment", (done) => {
+        postSegmentShift({
+            videoID: "vsegshift01",
+            userID: privateVipUserID,
+            startTime: 85,
+            endTime: 95,
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
@@ -214,15 +202,12 @@ describe("segmentShift", function () {
             .catch(err => done(err));
     });
 
-    it("Shift is overlaping segment", function (done: Done) {
-        fetch(endpoint, {
-            ...postJSON,
-            body: JSON.stringify({
-                videoID: "vsegshift01",
-                userID: privateVipUserID,
-                startTime: 35,
-                endTime: 55,
-            }),
+    it("Shift is overlaping segment", (done) => {
+        postSegmentShift({
+            videoID: "vsegshift01",
+            userID: privateVipUserID,
+            startTime: 35,
+            endTime: 55,
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);

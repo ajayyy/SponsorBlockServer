@@ -1,9 +1,7 @@
-import fetch from "node-fetch";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 const adminPrivateUserID = "testUserId";
 const user00PrivateUserID = "setUsername_00";
@@ -52,7 +50,7 @@ function wellFormatUserName(userName: string) {
     return userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 }
 
-async function testUserNameChangelog(userID: string, newUserName: string, oldUserName: string, byAdmin: boolean, done: Done) {
+async function testUserNameChangelog(userID: string, newUserName: string, oldUserName: string, byAdmin: boolean, done: Mocha.Done) {
     const log = await getLastLogUserNameChange(userID);
     assert.strictEqual(newUserName, log.newUserName);
     assert.strictEqual(oldUserName, log.oldUserName);
@@ -60,8 +58,27 @@ async function testUserNameChangelog(userID: string, newUserName: string, oldUse
     return done();
 }
 
+const endpoint = "/api/setUsername";
+const postSetUserName = (userID: string, username: string) => client({
+    method: "POST",
+    url: endpoint,
+    params: {
+        userID,
+        username,
+    }
+});
+
+const postSetUserNameAdmin = (userID: string, username: string, adminUserID: string) => client({
+    method: "POST",
+    url: endpoint,
+    params: {
+        userID,
+        username,
+        adminUserID,
+    }
+});
+
 describe("setUsername", () => {
-    const endpoint = `${getbaseURL()}/api/setUsername`;
     before(async () => {
         await addUsername(getHash(user01PrivateUserID), username01, 0);
         await addUsername(getHash(user02PrivateUserID), username02, 0);
@@ -72,157 +89,147 @@ describe("setUsername", () => {
         await addUsername(getHash(user07PrivateUserID), username07, 1);
     });
 
-    it("Should be able to set username that has never been set", (done: Done) => {
-        fetch(`${endpoint}?userID=${user00PrivateUserID}&username=${username00}`, {
-            method: "POST",
-        })
+    it("Should be able to set username that has never been set", (done) => {
+        postSetUserName(user00PrivateUserID, username00)
             .then(async res => {
+                console.log(res.data);
                 const usernameInfo = await getUsernameInfo(getHash(user00PrivateUserID));
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(usernameInfo.userName, username00);
                 assert.notStrictEqual(usernameInfo.locked, 1, "username should not be locked");
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it("Should return 200", (done: Done) => {
-        fetch(`${endpoint}?userID=${user01PrivateUserID}&username=Changed%20Username`, {
-            method: "POST",
-        })
+    it("Should return 200", (done) => {
+        const username = "Changed%20Username";
+        postSetUserName(user01PrivateUserID, username)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                testUserNameChangelog(user01PrivateUserID, decodeURIComponent("Changed%20Username"), username01, false, done);
+                testUserNameChangelog(user01PrivateUserID, username, username01, false, done);
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it('Should return 400 for missing param "userID"', (done: Done) => {
-        fetch(`${endpoint}?username=MyUsername`, {
+    it('Should return 400 for missing param "userID"', (done) => {
+        client({
             method: "POST",
+            url: endpoint,
+            data: {
+                userName: "MyUsername"
+            }
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it('Should return 400 for missing param "username"', (done: Done) => {
-        fetch(`${endpoint}?userID=test`, {
+    it('Should return 400 for missing param "username"', (done) => {
+        client({
             method: "POST",
+            url: endpoint,
+            data: {
+                userID: "test"
+            }
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it('Should return 400 for "username" longer then 64 characters', (done: Done) => {
+    it('Should return 400 for "username" longer then 64 characters', (done) => {
         const username65 = "0000000000000000000000000000000000000000000000000000000000000000X";
-        fetch(`${endpoint}?userID=test&username=${encodeURIComponent(username65)}`, {
-            method: "POST",
-        })
+        postSetUserName("test", username65)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it('Should not change username if it contains "discord"', (done: Done) => {
+    it('Should not change username if it contains "discord"', (done) => {
         const newUsername = "discord.me";
-        fetch(`${endpoint}?userID=${user02PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
+        postSetUserName(user02PrivateUserID, newUsername)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const userNameInfo = await getUsernameInfo(getHash(user02PrivateUserID));
                 assert.notStrictEqual(userNameInfo.userName, newUsername);
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it("Should be able to change username", (done: Done) => {
+    it("Should be able to change username", (done) => {
         const newUsername = "newUsername";
-        fetch(`${endpoint}?userID=${user03PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
+        postSetUserName(user03PrivateUserID, newUsername)
             .then(async () => {
                 const usernameInfo = await getUsernameInfo(getHash(user03PrivateUserID));
                 assert.strictEqual(usernameInfo.userName, newUsername, "Username should change");
                 assert.notStrictEqual(usernameInfo.locked, 1, "Username should not be locked");
                 testUserNameChangelog(user03PrivateUserID, newUsername, username03, false, done);
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it("Should not be able to change locked username", (done: Done) => {
+    it("Should not be able to change locked username", (done) => {
         const newUsername = "newUsername";
-        fetch(`${endpoint}?userID=${user04PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
+        postSetUserName(user04PrivateUserID, newUsername)
             .then(async () => {
                 const usernameInfo = await getUsernameInfo(getHash(user04PrivateUserID));
                 assert.notStrictEqual(usernameInfo.userName, newUsername, "Username should not be changed");
                 assert.strictEqual(usernameInfo.locked, 1, "username should be locked");
                 done();
             })
-            .catch((err) => done(`couldn't call endpoint: ${err}`));
+            .catch((err) => done(err));
     });
 
-    it("Should filter out unicode control characters", (done: Done) => {
+    it("Should filter out unicode control characters", (done) => {
         const newUsername = "This\nUsername+has\tInvalid+Characters";
-        fetch(`${endpoint}?userID=${user05PrivateUserID}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
+        postSetUserName(user05PrivateUserID, newUsername)
             .then(async () => {
                 const usernameInfo = await getUsernameInfo(getHash(user05PrivateUserID));
                 assert.notStrictEqual(usernameInfo.userName, newUsername, "Username should not contain control characters");
                 testUserNameChangelog(user05PrivateUserID, wellFormatUserName(newUsername), username05, false, done);
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it("Incorrect adminUserID should return 403", (done: Done) => {
+    it("Incorrect adminUserID should return 403", (done) => {
         const newUsername = "New Username";
-        fetch(`${endpoint}?adminUserID=invalidAdminID&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
-            .then(async res => {
+        postSetUserNameAdmin(getHash(user06PrivateUserID), newUsername,"invalidAdminID")
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it("Admin should be able to change username", (done: Done) => {
+    it("Admin should be able to change username", (done) => {
         const newUsername = "New Username";
-        fetch(`${endpoint}?adminUserID=${adminPrivateUserID}&userID=${getHash(user06PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
+        postSetUserNameAdmin(getHash(user06PrivateUserID), newUsername, adminPrivateUserID)
             .then(async () => {
                 const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
                 assert.strictEqual(usernameInfo.userName, newUsername, "username should be changed");
                 assert.strictEqual(usernameInfo.locked, 1, "Username should be locked");
                 testUserNameChangelog(user06PrivateUserID, newUsername, username06, true, done);
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 
-    it("Admin should be able to change locked username", (done: Done) => {
+    it("Admin should be able to change locked username", (done) => {
         const newUsername = "New Username";
-        fetch(`${endpoint}?adminUserID=${adminPrivateUserID}&userID=${getHash(user07PrivateUserID)}&username=${encodeURIComponent(newUsername)}`, {
-            method: "POST",
-        })
+        postSetUserNameAdmin(getHash(user07PrivateUserID), newUsername, adminPrivateUserID)
             .then(async () => {
                 const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
                 assert.strictEqual(usernameInfo.userName, newUsername, "Username should be changed");
                 assert.strictEqual(usernameInfo.locked, 1, "Username should be locked");
                 testUserNameChangelog(user07PrivateUserID, newUsername, username07, true, done);
             })
-            .catch(() => done(`couldn't call endpoint`));
+            .catch((err) => done(err));
     });
 });
