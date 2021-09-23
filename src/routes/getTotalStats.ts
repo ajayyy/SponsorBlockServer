@@ -1,8 +1,8 @@
 import {db} from "../databases/databases";
 import {config} from "../config";
 import {Request, Response} from "express";
-import fetch from "node-fetch";
 import {Logger} from "../utils/logger";
+import axios from "axios";
 
 // A cache of the number of chrome web store users
 let chromeUsersCache = 0;
@@ -44,10 +44,9 @@ export async function getTotalStats(req: Request, res: Response): Promise<void> 
 
 function updateExtensionUsers() {
     if (config.userCounterURL) {
-        fetch(`${config.userCounterURL}/api/v1/userCount`)
-            .then(res => res.json())
-            .then(data => {
-                apiUsersCache = Math.max(apiUsersCache, data.userCount);
+        axios.get(`${config.userCounterURL}/api/v1/userCount`)
+            .then(res => {
+                apiUsersCache = Math.max(apiUsersCache, res.data.userCount);
             })
             .catch(() => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
     }
@@ -55,13 +54,12 @@ function updateExtensionUsers() {
     const mozillaAddonsUrl = "https://addons.mozilla.org/api/v3/addons/addon/sponsorblock/";
     const chromeExtensionUrl = "https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone";
 
-    fetch(mozillaAddonsUrl)
-        .then(res => res.json())
-        .then(data => {
-            firefoxUsersCache = data.average_daily_users;
-            fetch(chromeExtensionUrl)
-                .then(res => res.text())
-                .then(body => {
+    axios.get(mozillaAddonsUrl)
+        .then(res => {
+            firefoxUsersCache = res.data.average_daily_users;
+            axios.get(chromeExtensionUrl)
+                .then(res => {
+                    const body = res.data;
                     // 2021-01-05
                     // [...]<span><meta itemprop="interactionCount" content="UserDownloads:100.000+"/><meta itemprop="opera[...]
                     const matchingString = '"UserDownloads:';

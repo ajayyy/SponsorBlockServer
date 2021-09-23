@@ -91,7 +91,6 @@ describe("getLockReason", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const data = await res.json();
-                console.log(data);
                 const expected = [
                     { category: "sponsor", locked: 1, reason: "sponsor-reason" },
                     { category: "interaction", locked: 1, reason: "interaction-reason" },
