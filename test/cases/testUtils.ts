@@ -2,7 +2,7 @@ import assert from "assert";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 describe("Test utils ", () => {
-    it("objectContain", async () => {
+    it("objectContain", () => {
         assert(partialDeepEquals(
             {
                 name: "John Wick",

@@ -1,11 +1,9 @@
-import fetch from "node-fetch";
-import { Done } from "../utils/utils";
-import { getbaseURL } from "../utils/getBaseURL";
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
-const endpoint = `${getbaseURL()}/api/lockReason`;
+const endpoint = "/api/lockReason";
 
 describe("getLockReason", () => {
     before(async () => {
@@ -28,71 +26,65 @@ describe("getLockReason", () => {
         else return `Version isn't greater than 20. Version is ${version}`;
     });
 
-    it("Should be able to get single reason", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLockReason&category=sponsor`)
-            .then(async res => {
+    it("Should be able to get single reason", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", category: "sponsor" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [
                     { category: "sponsor", locked: 1, reason: "sponsor-reason" }
                 ];
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to get empty locks", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLockReason&category=intro`)
-            .then(async res => {
+    it("Should be able to get empty locks", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", category: "intro" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [
                     { category: "intro", locked: 0, reason: "" }
                 ];
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("should get multiple locks with array", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLockReason&categories=["intro","sponsor"]`)
-            .then(async res => {
+    it("should get multiple locks with array", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", categories: `["intro","sponsor"]` } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [
                     { category: "sponsor", locked: 1, reason: "sponsor-reason" },
                     { category: "intro", locked: 0, reason: "" }
                 ];
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("should get multiple locks with repeated category", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLockReason&category=interaction&category=music_offtopic&category=intro`)
-            .then(async res => {
+    it("should get multiple locks with repeated category", (done) => {
+        client.get(`${endpoint}?videoID=getLockReason&category=interaction&category=music_offtopic&category=intro`)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [
                     { category: "interaction", locked: 1, reason: "interaction-reason" },
                     { category: "music_offtopic", locked: 1, reason: "nonmusic-reason" },
                     { category: "intro", locked: 0, reason: "" }
                 ];
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("should return all categories if none specified", (done: Done) => {
-        fetch(`${endpoint}?videoID=getLockReason`)
-            .then(async res => {
+    it("should return all categories if none specified", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
-                console.log(data);
                 const expected = [
                     { category: "sponsor", locked: 1, reason: "sponsor-reason" },
                     { category: "interaction", locked: 1, reason: "interaction-reason" },
@@ -103,14 +95,14 @@ describe("getLockReason", () => {
                     { category: "outro", locked: 0, reason: "" },
                     { category: "poi_highlight", locked: 0, reason: "" }
                 ];
-                assert.deepStrictEqual(data, expected);
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("should return 400 if no videoID specified", (done: Done) => {
-        fetch(endpoint)
+    it("should return 400 if no videoID specified", (done) => {
+        client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

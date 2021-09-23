@@ -311,7 +311,7 @@ describe("postSkipSegments", () => {
                 category: "sponsor",
             }],
         })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })
@@ -632,7 +632,7 @@ describe("postSkipSegments", () => {
                 category: "sponsor",
             }],
         })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 const errorMessage = res.data;
                 const reason = "Reason01";
@@ -707,7 +707,7 @@ describe("postSkipSegments", () => {
                 category: "sponsor",
             }],
         })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 const errorMessage = res.data;
                 assert.notStrictEqual(errorMessage, "");

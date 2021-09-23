@@ -1,12 +1,8 @@
 import { config } from "../../src/config";
 import axios, { AxiosRequestConfig } from "axios";
 
-export function getbaseURL(): string {
-    return `http://localhost:${config.port}`;
-}
-
-export const defaultConfig: AxiosRequestConfig = {
-    baseURL: getbaseURL(),
+const defaultConfig: AxiosRequestConfig = {
+    baseURL: `http://localhost:${config.port}`,
     validateStatus: (status) => status < 500
 };
 

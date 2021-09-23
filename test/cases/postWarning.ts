@@ -90,7 +90,7 @@ describe("postWarning", () => {
 
     it("Should return 400 if missing body", (done) => {
         client.post(endpoint, {})
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })

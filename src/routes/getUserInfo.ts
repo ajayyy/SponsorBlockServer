@@ -116,7 +116,7 @@ const objSwitch = (cases: cases) => (defaultCase: string) => (key: string) =>
 const functionSwitch = (cases: cases) => (defaultCase: string) => (key: string) =>
     executeIfFunction(objSwitch(cases)(defaultCase)(key));
 
-const dbGetValue = async (userID: HashedUserID, property: string): Promise<string|SegmentUUID|number> => {
+const dbGetValue = (userID: HashedUserID, property: string): Promise<string|SegmentUUID|number> => {
     return functionSwitch({
         userID,
         userName: dbGetUsername(userID),

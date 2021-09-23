@@ -34,14 +34,14 @@ async function getUsernameInfo(userID: string): Promise<{ userName: string, lock
     return row;
 }
 
-async function addLogUserNameChange(userID: string, newUserName: string, oldUserName = "") {
+function addLogUserNameChange(userID: string, newUserName: string, oldUserName = "") {
     privateDB.prepare("run",
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedAt", "updatedByAdmin") VALUES(?, ?, ?, ?, ?)`,
         [getHash(userID), newUserName, oldUserName, new Date().getTime(), + true]
     );
 }
 
-async function getLastLogUserNameChange(userID: string) {
+function getLastLogUserNameChange(userID: string) {
     return privateDB.prepare("get", `SELECT * FROM "userNameLogs" WHERE "userID" = ? ORDER BY "updatedAt" DESC LIMIT 1`, [getHash(userID)]);
 }
 
@@ -105,7 +105,7 @@ describe("setUsername", () => {
     it("Should return 200", (done) => {
         const username = "Changed%20Username";
         postSetUserName(user01PrivateUserID, username)
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 200);
                 testUserNameChangelog(user01PrivateUserID, username, username01, false, done);
             })

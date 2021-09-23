@@ -41,7 +41,7 @@ describe("segmentShift", function () {
     const privateVipUserID = "VIPUser-segmentShift";
     const vipUserID = getHash(privateVipUserID);
     const endpoint = "/api/segmentShift";
-    const postSegmentShift = async (data: Record<string, any>) => client({
+    const postSegmentShift = (data: Record<string, any>) => client({
         method: "POST",
         url: endpoint,
         data,
@@ -71,7 +71,7 @@ describe("segmentShift", function () {
             startTime: 20,
             endTime: 30,
         })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })

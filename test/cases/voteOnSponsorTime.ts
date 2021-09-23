@@ -310,7 +310,7 @@ describe("voteOnSponsorTime", () => {
     it("Should not be able to category-vote on an invalid UUID submission", (done) => {
         const UUID = "invalid-uuid";
         postVoteCategory("randomID3", UUID, "intro")
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
@@ -356,7 +356,7 @@ describe("voteOnSponsorTime", () => {
     it("Should not be able to upvote a segment (Too many warning)", (done) => {
         const UUID = "warnvote-uuid-0";
         postVote("warn-voteuser01", UUID, 1)
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })

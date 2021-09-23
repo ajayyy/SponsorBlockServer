@@ -274,7 +274,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
     }
 }
 
-async function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
+function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
     if (config.newLeafURLs !== null) {
         return YouTubeAPI.listVideos(videoID, ignoreCache);
     } else {

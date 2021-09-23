@@ -12,6 +12,7 @@ export class Sqlite implements IDatabase {
     {
     }
 
+    // eslint-disable-next-line require-await
     async prepare(type: QueryType, query: string, params: any[] = []): Promise<any[]> {
         // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
         const preparedQuery = this.db.prepare(query);
@@ -30,6 +31,7 @@ export class Sqlite implements IDatabase {
         }
     }
 
+    // eslint-disable-next-line require-await
     async init(): Promise<void> {
         // Make dirs if required
         if (!fs.existsSync(path.join(this.config.dbPath, "../"))) {

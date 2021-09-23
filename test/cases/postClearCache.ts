@@ -35,7 +35,7 @@ describe("postClearCache", () => {
 
     it("Should get 403 as non-vip", (done) => {
         postClearCache(regularUser, "clear-test")
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
             })
@@ -44,7 +44,7 @@ describe("postClearCache", () => {
 
     it("Should give 400 with missing videoID", (done) => {
         client.post(endpoint, { params: { userID: VIPUser } })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })
@@ -53,7 +53,7 @@ describe("postClearCache", () => {
 
     it("Should give 400 with missing userID", (done) => {
         client.post(endpoint, { params: { videoID: "clear-test" } })
-            .then(async res => {
+            .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
             })

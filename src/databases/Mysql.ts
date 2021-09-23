@@ -10,6 +10,7 @@ export class Mysql implements IDatabase {
     constructor(private config: unknown) {
     }
 
+    // eslint-disable-next-line require-await
     async init(): Promise<void> {
         this.connection = new MysqlInterface(this.config);
     }
