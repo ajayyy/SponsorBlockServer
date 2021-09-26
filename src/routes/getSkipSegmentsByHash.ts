@@ -59,7 +59,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
         return res.status(400).send("Bad parameter: requiredSegments (invalid JSON)");
     }
 
-    const service = getService(req.query.service, req.body.service);
+    const service: Service = getService(req.query.service, req.body.service);
 
     // filter out none string elements, only flat array with strings is valid
     categories = categories.filter((item: any) => typeof item === "string");

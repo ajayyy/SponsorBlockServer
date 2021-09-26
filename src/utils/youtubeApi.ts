@@ -35,12 +35,12 @@ export class YouTubeAPI {
                     Logger.warn(`NewLeaf API Error for ${videoID}: ${data.error}`);
                     return { err: data.error, data: null };
                 }
-
-                DiskCache.set(cacheKey, JSON.stringify(data))
+                const apiResult = data as APIVideoData;
+                DiskCache.set(cacheKey, JSON.stringify(apiResult))
                     .catch((err: any) => Logger.warn(err))
                     .then(() => Logger.debug(`YouTube API: video information cache set for: ${videoID}`));
 
-                return { err: false, data };
+                return { err: false, data: apiResult };
             } else {
                 return { err: result.statusText, data: null };
             }
