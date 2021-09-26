@@ -461,8 +461,8 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: string
 
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
-        // Don't use cache if we don't know the video duraton, or the client claims that it has changed
-        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDurationParam || videoDurationChanged(videoDurationParam));
+        // Don't use cache if we don't know the video duration, or the client claims that it has changed
+        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDurationParam || previousSubmissions.length === 0 || videoDurationChanged(videoDurationParam));
     }
     const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
     if (!videoDurationParam || (apiVideoDuration && Math.abs(videoDurationParam - apiVideoDuration) > 2)) {
