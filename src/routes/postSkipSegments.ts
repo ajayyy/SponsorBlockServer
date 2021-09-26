@@ -240,7 +240,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
             &segments=${nbString.substring(0, nbString.length - 1)}`);
         if (!response.ok) return false;
 
-        const nbPredictions = await response.json();
+        const nbPredictions = await response.json() as Record<string, any>;
         let nbDecision = false;
         let predictionIdx = 0; //Keep track because only sponsor categories were submitted
         for (let i = 0; i < segments.length; i++) {
