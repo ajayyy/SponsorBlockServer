@@ -10,7 +10,7 @@ services:
       - ./database-export/:/opt/exports # To make this work, run chmod 777 ./database-exports
     ports:
       - 5432:5432
-    restart: unless-stopped
+    restart: always
   redis:
     container_name: redis
     image: redis
@@ -19,11 +19,11 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 32773:6379
-    restart: unless-stopped
+    restart: always
   newleaf:
     image: abeltramo/newleaf:latest
     container_name: newleaf
-    restart: unless-stopped
+    restart: always
     ports:
       - 3241:3000
     volumes:
