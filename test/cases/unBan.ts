@@ -1,10 +1,21 @@
-import fetch from "node-fetch";
-import * as utils from  "../utils";
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
+import { client } from "../utils/httpClient";
 import assert from "assert";
 
 describe("unBan", () => {
+    const endpoint = "/api/shadowBanUser";
+    const VIPuser = "VIPUser-unBan";
+    const postUnBan = (userID: string, adminUserID: string, enabled: boolean) => client({
+        url: endpoint,
+        method: "POST",
+        params: {
+            userID,
+            adminUserID,
+            enabled
+        }
+    });
+    const videoIDUnBanCheck = (videoID: string, userID: string, status: number) => db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', [videoID, userID, status]);
     before(async () => {
         const insertShadowBannedUserQuery = 'INSERT INTO "shadowBannedUsers" VALUES(?)';
         await db.prepare("run", insertShadowBannedUserQuery, ["testMan-unBan"]);
@@ -12,10 +23,10 @@ describe("unBan", () => {
         await db.prepare("run", insertShadowBannedUserQuery, ["testEntity-unBan"]);
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash("VIPUser-unBan")]);
+        await db.prepare("run", insertVipUserQuery, [getHash(VIPuser)]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES(?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("VIPUser-unBan"), "unBan-videoID-1", "sponsor"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash(VIPuser), "unBan-videoID-1", "sponsor"]);
 
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-0", 1, 11, 2, "unBan-uuid-0", "testMan-unBan", 0, 50, "sponsor", 1, getHash("unBan-videoID-0", 1)]);
@@ -25,16 +36,11 @@ describe("unBan", () => {
     });
 
     it("Should be able to unban a user and re-enable shadow banned segments", (done) => {
-        fetch(`${utils.getbaseURL()
-        }/api/shadowBanUser?userID=testMan-unBan&adminUserID=VIPUser-unBan&enabled=false`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
+        const userID = "testMan-unBan";
+        postUnBan(userID, VIPuser, false)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ["unBan-videoID-0", "testMan-unBan", 1]);
+                const result = await videoIDUnBanCheck("unBan-videoID-0", userID, 1);
                 assert.strictEqual(result.length, 0);
                 done();
             })
@@ -42,16 +48,11 @@ describe("unBan", () => {
     });
 
     it("Should be able to unban a user and re-enable shadow banned segments without lockCategories entrys", (done) => {
-        fetch(`${utils.getbaseURL()
-        }/api/shadowBanUser?userID=testWoman-unBan&adminUserID=VIPUser-unBan&enabled=false`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
+        const userID = "testWoman-unBan";
+        postUnBan(userID, VIPuser, false)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "videoID" = ? AND "userID" = ? AND "shadowHidden" = ?', ["unBan-videoID-1", "testWoman-unBan", 1]);
+                const result = await videoIDUnBanCheck("unBan-videoID-1", userID, 1);
                 assert.strictEqual(result.length, 1);
                 done();
             })
@@ -59,16 +60,11 @@ describe("unBan", () => {
     });
 
     it("Should be able to unban a user and re-enable shadow banned segments with a mix of lockCategories entrys", (done) => {
-        fetch(`${utils.getbaseURL()
-        }/api/shadowBanUser?userID=testEntity-unBan&adminUserID=VIPUser-unBan&enabled=false`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
+        const userID = "testEntity-unBan";
+        postUnBan(userID, VIPuser, false)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const result = await db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?', ["testEntity-unBan", 1]);
+                const result = await db.prepare("all", 'SELECT * FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?', [userID, 1]);
                 assert.strictEqual(result.length, 1);
                 done();
             })

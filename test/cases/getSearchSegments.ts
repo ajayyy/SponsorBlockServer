@@ -1,42 +1,42 @@
-import fetch from "node-fetch";
-import {db} from "../../src/databases/databases";
-import {Done, getbaseURL} from "../utils";
+import { db } from "../../src/databases/databases";
+import { client } from "../utils/httpClient";
 import assert from "assert";
 
 describe("getSearchSegments", () => {
+    const endpoint = "/api/searchSegments";
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "views", "locked", "hidden", "shadowHidden", "timeSubmitted", "UUID", "userID", "category", "actionType") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["searchTest0", 0, 1,    2, 0,   0, 0, 0, 1, "search-normal", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest0", 0, 2,    -2, 0,  0, 0, 0, 2, "search-downvote", "testman", "selfpromo", "skip",]);
-        await db.prepare("run", query, ["searchTest0", 0, 3,    1, 0,   1, 0, 0, 3, "search-locked", "testman", "interaction", "skip"]);
-        await db.prepare("run", query, ["searchTest0", 0, 4,    1, 0,   0, 1, 0, 4, "search-hidden", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest0", 0, 5,    1, 0,   0, 0, 1, 5, "search-shadowhidden", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest1", 1, 2,    1, 5,   0, 0, 0, 6, "search-lowview", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest1", 1, 3,    1, 50,  0, 0, 0, 7, "search-highview", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest2", 1, 4,    -1, 0,  0, 0, 0, 8, "search-lowvote", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest2", 2, 3,    0, 0,   0, 0, 0, 9, "search-zerovote", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest2", 2, 4,    50, 0,  0, 0, 0, 10, "search-highvote", "testman", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest0", 0, 1,    2, 0,   0, 0, 0, 1, "search-normal",        "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest0", 0, 2,    -2, 0,  0, 0, 0, 2, "search-downvote",      "searchTestUser", "selfpromo", "skip",]);
+        await db.prepare("run", query, ["searchTest0", 0, 3,    1, 0,   1, 0, 0, 3, "search-locked",        "searchTestUser", "interaction", "skip"]);
+        await db.prepare("run", query, ["searchTest0", 0, 4,    1, 0,   0, 1, 0, 4, "search-hidden",        "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest0", 0, 5,    1, 0,   0, 0, 1, 5, "search-shadowhidden",  "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest1", 1, 2,    1, 5,   0, 0, 0, 6, "search-lowview",       "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest1", 1, 3,    1, 50,  0, 0, 0, 7, "search-highview",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest2", 1, 4,    -1, 0,  0, 0, 0, 8, "search-lowvote",       "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest2", 2, 3,    0, 0,   0, 0, 0, 9, "search-zerovote",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest2", 2, 4,    50, 0,  0, 0, 0, 10, "search-highvote",     "searchTestUser", "sponsor", "skip"]);
         // page
-        await db.prepare("run", query, ["searchTest4", 3, 4,    1, 0,   0, 0, 0, 10, "search-page1-1", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 5,    1, 0,   0, 0, 0, 11, "search-page1-2", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 6,    1, 0,   0, 0, 0, 12, "search-page1-3", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 7,    1, 0,   0, 0, 0, 13, "search-page1-4", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 8,    1, 0,   0, 0, 0, 14, "search-page1-5", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 9,    1, 0,   0, 0, 0, 15, "search-page1-6", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 10,   1, 0,   0, 0, 0, 16, "search-page1-7", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 11,   1, 0,   0, 0, 0, 17, "search-page1-8", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 12,   1, 0,   0, 0, 0, 18, "search-page1-9", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 13,   1, 0,   0, 0, 0, 19, "search-page1-10", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 14,   1, 0,   0, 0, 0, 20, "search-page2-1", "testman", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 15,   1, 0,   0, 0, 0, 21, "search-page2-2", "testman", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 4,    1, 0,   0, 0, 0, 10, "search-page1-1",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 5,    1, 0,   0, 0, 0, 11, "search-page1-2",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 6,    1, 0,   0, 0, 0, 12, "search-page1-3",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 7,    1, 0,   0, 0, 0, 13, "search-page1-4",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 8,    1, 0,   0, 0, 0, 14, "search-page1-5",       "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 9,    1, 0,   0, 0, 0, 15, "search-page1-6",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 10,   1, 0,   0, 0, 0, 16, "search-page1-7",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 11,   1, 0,   0, 0, 0, 17, "search-page1-8",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 12,   1, 0,   0, 0, 0, 18, "search-page1-9",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 13,   1, 0,   0, 0, 0, 19, "search-page1-10",     "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 14,   1, 0,   0, 0, 0, 20, "search-page2-1",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 15,   1, 0,   0, 0, 0, 21, "search-page2-2",      "searchTestUser", "sponsor", "skip"]);
         return;
     });
 
-    it("Should be able to show all segments under searchTest0", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0`)
-            .then(async res => {
+    it("Should be able to show all segments under searchTest0", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 5);
                 assert.strictEqual(data.page, 0);
@@ -50,11 +50,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter by category", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&category=selfpromo`)
-            .then(async res => {
+    it("Should be able to filter by category", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", category: "selfpromo" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 1);
                 assert.strictEqual(data.page, 0);
@@ -64,11 +64,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter by category", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&category=selfpromo`)
-            .then(async res => {
+    it("Should be able to filter by category", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", category: "selfpromo" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 1);
                 assert.strictEqual(data.page, 0);
@@ -78,11 +78,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter by lock status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&locked=false`)
-            .then(async res => {
+    it("Should be able to filter by lock status", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", locked: false } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 4);
                 assert.strictEqual(data.page, 0);
@@ -95,11 +95,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter by hide status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&hidden=false`)
-            .then(async res => {
+    it("Should be able to filter by hide status", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", hidden: false } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 4);
                 assert.strictEqual(data.page, 0);
@@ -112,11 +112,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter by ignored status", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest0&ignored=false`)
-            .then(async res => {
+    it("Should be able to filter by ignored status", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", ignored: false } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 3);
                 assert.strictEqual(data.page, 0);
@@ -128,11 +128,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter segments by min views", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest1&minViews=6`)
-            .then(async res => {
+    it("Should be able to filter segments by min views", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest1", minViews: 6 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 1);
                 assert.strictEqual(data.page, 0);
@@ -142,11 +142,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter segments by max views", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest1&maxViews=10`)
-            .then(async res => {
+    it("Should be able to filter segments by max views", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest1", maxViews: 10 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 1);
                 assert.strictEqual(data.page, 0);
@@ -156,11 +156,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter segments by min and max views", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest1&maxViews=10&minViews=1`)
-            .then(async res => {
+    it("Should be able to filter segments by min and max views", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest1", maxViews: 10, minViews: 1 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 1);
                 assert.strictEqual(data.page, 0);
@@ -170,11 +170,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter segments by min votes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest2&minVotes=0`)
-            .then(async res => {
+    it("Should be able to filter segments by min votes", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest2", minVotes: 0 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 2);
                 assert.strictEqual(data.page, 0);
@@ -185,11 +185,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter segments by max votes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest2&maxVotes=10`)
-            .then(async res => {
+    it("Should be able to filter segments by max votes", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest2", maxVotes: 10 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 2);
                 assert.strictEqual(data.page, 0);
@@ -200,11 +200,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to filter segments by both min and max votes", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest2&maxVotes=10&minVotes=0`)
-            .then(async res => {
+    it("Should be able to filter segments by both min and max votes", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest2", maxVotes: 10, minVotes: 0 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 1);
                 assert.strictEqual(data.page, 0);
@@ -214,11 +214,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get first page of results", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest4`)
-            .then(async res => {
+    it("Should be able to get first page of results", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 12);
                 assert.strictEqual(data.page, 0);
@@ -237,11 +237,11 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get second page of results", (done: Done) => {
-        fetch(`${getbaseURL()}/api/searchSegments?videoID=searchTest4&page=1`)
-            .then(async res => {
+    it("Should be able to get second page of results", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", page: 1 } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const segments = data.segments;
                 assert.strictEqual(data.segmentCount, 12);
                 assert.strictEqual(data.page, 1);

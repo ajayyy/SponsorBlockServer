@@ -1,5 +1,5 @@
-import {Logger} from "../utils/logger";
-import {IDatabase, QueryType} from "./IDatabase";
+import { Logger } from "../utils/logger";
+import { IDatabase, QueryType } from "./IDatabase";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import MysqlInterface from "sync-mysql";
@@ -10,6 +10,7 @@ export class Mysql implements IDatabase {
     constructor(private config: unknown) {
     }
 
+    // eslint-disable-next-line require-await
     async init(): Promise<void> {
         this.connection = new MysqlInterface(this.config);
     }

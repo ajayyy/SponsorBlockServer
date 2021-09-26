@@ -1,4 +1,4 @@
-import {NextFunction, Request, Response} from "express";
+import { NextFunction, Request, Response } from "express";
 
 export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
     res.header("Access-Control-Allow-Origin", "*");

@@ -1,4 +1,4 @@
-import {getHash} from "./getHash";
+import { getHash } from "./getHash";
 import { HashedValue } from "../types/hash.model";
 import { ActionType, VideoID } from "../types/segments.model";
 import { UserID } from "../types/user.model";

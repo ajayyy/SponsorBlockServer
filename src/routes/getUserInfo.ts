@@ -1,12 +1,12 @@
-import {db} from "../databases/databases";
-import {getHash} from "../utils/getHash";
-import {isUserVIP} from "../utils/isUserVIP";
-import {Request, Response} from "express";
-import {Logger} from "../utils/logger";
+import { db } from "../databases/databases";
+import { getHash } from "../utils/getHash";
+import { isUserVIP } from "../utils/isUserVIP";
+import { Request, Response } from "express";
+import { Logger } from "../utils/logger";
 import { HashedUserID, UserID } from "../types/user.model";
 import { getReputation } from "../utils/reputation";
 import { SegmentUUID } from "../types/segments.model";
-import {config} from "../config";
+import { config } from "../config";
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
@@ -116,7 +116,7 @@ const objSwitch = (cases: cases) => (defaultCase: string) => (key: string) =>
 const functionSwitch = (cases: cases) => (defaultCase: string) => (key: string) =>
     executeIfFunction(objSwitch(cases)(defaultCase)(key));
 
-const dbGetValue = async (userID: HashedUserID, property: string): Promise<string|SegmentUUID|number> => {
+const dbGetValue = (userID: HashedUserID, property: string): Promise<string|SegmentUUID|number> => {
     return functionSwitch({
         userID,
         userName: dbGetUsername(userID),

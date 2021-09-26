@@ -1,18 +1,20 @@
-import fetch from "node-fetch";
-import {db} from "../../src/databases/databases";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
+import { client } from "../utils/httpClient";
+
+const endpoint = "/api/getVideoSponsorTimes";
+const getOldSponsorTime = (videoID: string) => client.get(endpoint, { params: { videoID } });
 
 describe("getVideoSponsorTime (Old get method)", () => {
     before(async () => {
-        const insertSponsorTimes = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSponsorTimes, ["old-testtesttest", 1, 11, 2, "uuid-0", "testman", 0, 50, "sponsor", 0, getHash("old-testtesttest", 1)]);
-        await db.prepare("run", insertSponsorTimes, ["old-testtesttest,test", 1, 11, 2, "uuid-1", "testman", 0, 50, "sponsor", 0, getHash("old-testtesttest,test", 1)]);
+        const insertSponsorTimes = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime0",      1, 11, 2, "oldGetSponsorTime00", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0]);
+        await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime1,test", 1, 11, 2, "oldGetSponsorTime01", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0]);
     });
 
-    it("Should be able to get a time", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=old-testtesttest`)
+    it("Should be able to get a time", (done) => {
+        getOldSponsorTime("oldGetSponsorTime0")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -20,8 +22,8 @@ describe("getVideoSponsorTime (Old get method)", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 404 if no segment found", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=notarealvideo`)
+    it("Should return 404 if no segment found", (done) => {
+        getOldSponsorTime("notarealvideo")
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -30,8 +32,8 @@ describe("getVideoSponsorTime (Old get method)", () => {
     });
 
 
-    it("Should be possible to send unexpected query parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=old-testtesttest&fakeparam=hello`)
+    it("Should be possible to send unexpected query parameters", (done) => {
+        client.get(endpoint, { params: { videoID: "oldGetSponsorTime0", fakeparam: "hello" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 done();
@@ -39,30 +41,28 @@ describe("getVideoSponsorTime (Old get method)", () => {
             .catch(() => done("couldn't callendpoint"));
     });
 
-    it("Should be able send a comma in a query param", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=old-testtesttest,test`)
-            .then(async res => {
+    it("Should be able send a comma in a query param", (done) => {
+        getOldSponsorTime("oldGetSponsorTime1,test")
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = {
-                    UUIDs: ["uuid-1"],
+                    UUIDs: ["oldGetSponsorTime01"],
                 };
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to get the correct time", (done: Done) => {
-        fetch(`${getbaseURL()}/api/getVideoSponsorTimes?videoID=old-testtesttest`)
-            .then(async res => {
+    it("Should be able to get the correct time", (done) => {
+        getOldSponsorTime("oldGetSponsorTime0")
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = {
                     sponsorTimes: [[1, 11]],
-                    UUIDs: ["uuid-0"]
+                    UUIDs: ["oldGetSponsorTime00"]
                 };
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));

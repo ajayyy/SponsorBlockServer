@@ -1,6 +1,7 @@
 import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model";
 
 export class YouTubeApiMock {
+    // eslint-disable-next-line require-await
     static async listVideos(videoID: string): Promise<APIVideoInfo> {
         const obj = {
             id: videoID

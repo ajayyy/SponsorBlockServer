@@ -1,5 +1,5 @@
 import express from "express";
-import {config} from "../src/config";
+import { config } from "../src/config";
 import { Server } from "http";
 
 const app = express();

@@ -56,7 +56,7 @@ export class Postgres implements IDatabase {
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
         try {
-            const queryResult = await this.pool.query({text: query, values: params});
+            const queryResult = await this.pool.query({ text: query, values: params });
 
             switch (type) {
                 case "get": {

@@ -1,6 +1,6 @@
-import {db} from "../databases/databases";
-import {Request, Response} from "express";
-import {UserID} from "../types/user.model";
+import { db } from "../databases/databases";
+import { Request, Response } from "express";
+import { UserID } from "../types/user.model";
 
 function getFuzzyUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     // escape [_ % \] to avoid ReDOS

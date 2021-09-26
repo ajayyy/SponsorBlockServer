@@ -1,4 +1,4 @@
-import {db} from "../databases/databases";
+import { db } from "../databases/databases";
 
 /**
  * Returns true if the user is considered trustworthy. This happens after a user has made 5 submissions and has less than 60% downvoted submissions
