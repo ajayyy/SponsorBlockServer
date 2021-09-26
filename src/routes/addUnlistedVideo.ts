@@ -1,4 +1,4 @@
-import {Request, Response} from "express";
+import { Request, Response } from "express";
 import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
 

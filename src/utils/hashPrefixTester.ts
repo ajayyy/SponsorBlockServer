@@ -1,4 +1,4 @@
-import {config} from "../config";
+import { config } from "../config";
 
 const minimumPrefix = config.minimumPrefix || "3";
 const maximumPrefix = config.maximumPrefix || "32"; // Half the hash.

@@ -1,9 +1,8 @@
 import assert from "assert";
-
-import { partialDeepEquals } from "../utils";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 describe("Test utils ", () => {
-    it("objectContain", async () => {
+    it("objectContain", () => {
         assert(partialDeepEquals(
             {
                 name: "John Wick",
@@ -16,8 +15,8 @@ describe("Test utils ", () => {
             false
         ), "Did not match empty expect");
         assert(partialDeepEquals(
-            [{a: [1,2,3]}, {a: [1,2]}],
-            [{a: [1,2,3]}, {a: [1,2]}]
+            [{ a: [1,2,3] }, { a: [1,2] }],
+            [{ a: [1,2,3] }, { a: [1,2] }]
         ), "Did not match same arrays");
         assert(partialDeepEquals(
             {

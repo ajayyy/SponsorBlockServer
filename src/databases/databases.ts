@@ -1,8 +1,8 @@
-import {config} from "../config";
-import {Sqlite} from "./Sqlite";
-import {Mysql} from "./Mysql";
-import {Postgres} from "./Postgres";
-import {IDatabase} from "./IDatabase";
+import { config } from "../config";
+import { Sqlite } from "./Sqlite";
+import { Mysql } from "./Mysql";
+import { Postgres } from "./Postgres";
+import { IDatabase } from "./IDatabase";
 
 
 let db: IDatabase;

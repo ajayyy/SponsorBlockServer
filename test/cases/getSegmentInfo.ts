@@ -1,8 +1,7 @@
-import fetch from "node-fetch";
-import {db} from "../../src/databases/databases";
-import {Done, getbaseURL, partialDeepEquals} from "../utils";
-import {getHash} from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
+import { client } from "../utils/httpClient";
 
 const ENOENTID =        "0".repeat(64);
 const upvotedID =       `a${"0".repeat(63)}`;
@@ -26,181 +25,175 @@ const userAgents = {
     blank: ""
 };
 
+const endpoint = "/api/segmentInfo";
+const singleUUIDLookup = (UUID: string) => client.get(endpoint, { params: { UUID } });
+
 describe("getSegmentInfo", () => {
     before(async () => {
         const insertQuery = `INSERT INTO 
             "sponsorTimes"("videoID", "startTime", "endTime", "votes", "locked",
-            "UUID", "userID", "timeSubmitted", "views", "category", "service",
-            "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "userAgent") 
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        await db.prepare("run", insertQuery, ["upvoted", 1, 10, 2, 0, upvotedID, "testman", 0, 50, "sponsor", "YouTube", 100, 0, 0, getHash("upvoted", 1), userAgents.vanced]);
-        await db.prepare("run", insertQuery, ["downvoted", 1, 10, -2, 0, downvotedID, "testman", 0, 50, "sponsor", "YouTube", 120, 0, 0, getHash("downvoted", 1), userAgents.meabot]);
-        await db.prepare("run", insertQuery, ["locked-up", 1, 10, 2, 1, lockedupID, "testman", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("locked-up", 1), userAgents.mpv]);
-        await db.prepare("run", insertQuery, ["infvotes", 1, 10, 100000, 0, infvotesID, "testman", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("infvotes", 1), userAgents.nodesb]);
-        await db.prepare("run", insertQuery, ["hidden", 1, 10, 2, 0, hiddenID, "testman", 0, 50, "sponsor", "YouTube", 140, 1, 0, getHash("hidden", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["shadowhidden", 1, 10, 2, 0, shadowhiddenID, "testman", 0, 50, "sponsor", "YouTube", 140, 0, 1, getHash("shadowhidden", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["locked-down", 1, 10, -2, 1, lockeddownID, "testman", 0, 50, "sponsor", "YouTube", 200, 0, 0, getHash("locked-down", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["oldID", 1, 10, 1, 0, oldID, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("oldID", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["filler", 1, 2, 1, 0, fillerID1, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["filler", 2, 3, 1, 0, fillerID2, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["filler", 3, 4, 1, 0, fillerID3, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["filler", 4, 5, 1, 0, fillerID4, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
-        await db.prepare("run", insertQuery, ["filler", 5, 6, 1, 0, fillerID5, "testman", 0, 50, "sponsor", "YouTube", 300, 0, 0, getHash("filler", 1), userAgents.blank]);
+            "UUID", "userID", "timeSubmitted", "views", "hidden", "shadowHidden", "userAgent") 
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await db.prepare("run", insertQuery, ["segmentInfoUpvoted", 1, 10, 2, 0, upvotedID,             "segmentInfoUser", 0, 50, 0, 0, userAgents.vanced]);
+        await db.prepare("run", insertQuery, ["segmentInfoDownvoted", 1, 10, -2, 0, downvotedID,        "segmentInfoUser", 0, 50, 0, 0, userAgents.meabot]);
+        await db.prepare("run", insertQuery, ["segmentInfoLockedup", 1, 10, 2, 1, lockedupID,           "segmentInfoUser", 0, 50, 0, 0, userAgents.mpv]);
+        await db.prepare("run", insertQuery, ["segmentInfoInfvotes", 1, 10, 100000, 0, infvotesID,      "segmentInfoUser", 0, 50, 0, 0, userAgents.nodesb]);
+        await db.prepare("run", insertQuery, ["segmentInfoHidden", 1, 10, 2, 0, hiddenID,               "segmentInfoUser", 0, 50, 1, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoShadowhidden", 1, 10, 2, 0, shadowhiddenID,   "segmentInfoUser", 0, 50, 0, 1, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoLockedown", 1, 10, -2, 1, lockeddownID,       "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoOldID", 1, 10, 1, 0, oldID,                   "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoUpvoted", 1, 2, 1, 0, fillerID1,              "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoFiller", 2, 3, 1, 0, fillerID2,               "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoFiller", 3, 4, 1, 0, fillerID3,               "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoFiller", 4, 5, 1, 0, fillerID4,               "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
+        await db.prepare("run", insertQuery, ["segmentInfoFiller", 5, 6, 1, 0, fillerID5,               "segmentInfoUser", 0, 50, 0, 0, userAgents.blank]);
     });
 
-    it("Should be able to retreive upvoted segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${upvotedID}`)
-            .then(async res => {
+    it("Should be able to retreive upvoted segment", (done) => {
+        singleUUIDLookup(upvotedID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2,
                     userAgent: userAgents.vanced,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive downvoted segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${downvotedID}`)
-            .then(async res => {
+    it("Should be able to retreive downvoted segment", (done) => {
+        singleUUIDLookup(downvotedID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "downvoted",
+                    videoID: "segmentInfoDownvoted",
                     votes: -2,
                     userAgent: userAgents.meabot,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive locked up segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${lockedupID}`)
-            .then(async res => {
+    it("Should be able to retreive locked up segment", (done) => {
+        singleUUIDLookup(lockedupID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "locked-up",
+                    videoID: "segmentInfoLockedup",
                     locked: 1,
                     votes: 2,
                     userAgent: userAgents.mpv,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive infinite vote segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${infvotesID}`)
-            .then(async res => {
+    it("Should be able to retreive infinite vote segment", (done) => {
+        singleUUIDLookup(infvotesID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "infvotes",
+                    videoID: "segmentInfoInfvotes",
                     votes: 100000,
                     userAgent: userAgents.nodesb,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive shadowhidden segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${shadowhiddenID}`)
-            .then(async res => {
+    it("Should be able to retreive shadowhidden segment", (done) => {
+        singleUUIDLookup(shadowhiddenID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "shadowhidden",
+                    videoID: "segmentInfoShadowhidden",
                     shadowHidden: 1,
                     userAgent: userAgents.blank,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive locked down segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${lockeddownID}`)
-            .then(async res => {
+    it("Should be able to retreive locked down segment", (done) => {
+        singleUUIDLookup(lockeddownID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "locked-down",
+                    videoID: "segmentInfoLockedown",
                     locked: 1,
                     votes: -2,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive hidden segment", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${hiddenID}`)
-            .then(async res => {
+    it("Should be able to retreive hidden segment", (done) => {
+        singleUUIDLookup(hiddenID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "hidden",
+                    videoID: "segmentInfoHidden",
                     hidden: 1,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive segment with old ID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${oldID}`)
-            .then(async res => {
+    it("Should be able to retreive segment with old ID", (done) => {
+        singleUUIDLookup(oldID)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "oldID",
+                    videoID: "segmentInfoOldID",
                     votes: 1,
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive single segment in array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}"]`)
-            .then(async res => {
+    it("Should be able to retreive single segment in array", (done) => {
+        client.get(endpoint, { params: { UUIDs: `["${upvotedID}"]` } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2,
                 }];
                 assert.strictEqual(data.length, 1);
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive multiple segments in array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}", "${downvotedID}"]`)
-            .then(async res => {
+    it("Should be able to retreive multiple segments in array", (done) => {
+        client.get(endpoint, { params: { UUIDs: `["${upvotedID}", "${downvotedID}"]` } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2,
                 }, {
-                    videoID: "downvoted",
+                    videoID: "segmentInfoDownvoted",
                     votes: -2,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
@@ -210,13 +203,13 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should be possible to send unexpected query parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${upvotedID}&fakeparam=hello&category=sponsor`)
-            .then(async res => {
+    it("Should be possible to send unexpected query parameters", (done) => {
+        client.get(endpoint, { params: { UUID: upvotedID, fakeparam: "hello", category: "sponsor" } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
@@ -225,8 +218,8 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if array passed to UUID", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=["${upvotedID}", "${downvotedID}"]`)
+    it("Should return 400 if array passed to UUID", (done) => {
+        client.get(`${endpoint}?UUID=["${upvotedID}", "${downvotedID}"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -234,8 +227,8 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if bad array passed to UUIDs", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=[not-quoted,not-quoted]`)
+    it("Should return 400 if bad array passed to UUIDs", (done) => {
+        client.get(`${endpoint}?UUIDs=[not-quoted,not-quoted]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -243,8 +236,8 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if bad UUID passed", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=notarealuuid`)
+    it("Should return 400 if bad UUID passed", (done) => {
+        client.get(`${endpoint}?UUID=notarealuuid`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -252,8 +245,8 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if bad UUIDs passed in array", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["notarealuuid", "anotherfakeuuid"]`)
+    it("Should return 400 if bad UUIDs passed in array", (done) => {
+        client.get(`${endpoint}?UUIDs=["notarealuuid", "anotherfakeuuid"]`)
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -261,13 +254,13 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should return good UUID when mixed with bad UUIDs", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}", "anotherfakeuuid"]`)
-            .then(async res => {
+    it("Should return good UUID when mixed with bad UUIDs", (done) => {
+        client.get(`${endpoint}?UUIDs=["${upvotedID}", "anotherfakeuuid"]`)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
@@ -277,53 +270,52 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should cut off array at 10", function(done: Done) {
+    it("Should cut off array at 10", function(done) {
         this.timeout(10000);
         const filledIDArray = `["${upvotedID}", "${downvotedID}", "${lockedupID}", "${shadowhiddenID}", "${lockeddownID}", "${hiddenID}", "${fillerID1}", "${fillerID2}", "${fillerID3}", "${fillerID4}", "${fillerID5}"]`;
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=${filledIDArray}`)
-            .then(async res => {
+        client.get(endpoint, { params: { UUIDs: filledIDArray } })
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 assert.strictEqual(data.length, 10);
-                assert.strictEqual(data[0].videoID, "upvoted");
+                assert.strictEqual(data[0].videoID, "segmentInfoUpvoted");
                 assert.strictEqual(data[0].votes, 2);
-                assert.strictEqual(data[9].videoID, "filler");
+                assert.strictEqual(data[9].videoID, "segmentInfoFiller");
                 assert.strictEqual(data[9].UUID, fillerID4);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should not duplicate reponses", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUIDs=["${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${downvotedID}"]`)
-            .then(async res => {
+    it("Should not duplicate reponses", (done) => {
+        client.get(`${endpoint}?UUIDs=["${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${upvotedID}", "${downvotedID}"]`)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
-                assert.strictEqual(data.length, 2);
+                assert.strictEqual(res.data.length, 2);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should return 400 if UUID not found", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${ENOENTID}`)
+    it("Should return 400 if UUID not found", (done) => {
+        client.get(endpoint, { params: { UUID: ENOENTID } })
             .then(res => {
-                if (res.status !== 400) done(`non 400 respone code: ${res.status}`);
+                if (res.status !== 400) done(`non 400 response code: ${res.status}`);
                 else done(); // pass
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to retreive multiple segments with multiple parameters", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${upvotedID}&UUID=${downvotedID}`)
-            .then(async res => {
+    it("Should be able to retreive multiple segments with multiple parameters", (done) => {
+        client.get(`${endpoint}?UUID=${upvotedID}&UUID=${downvotedID}`)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
+                const data = res.data;
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2,
                 }, {
-                    videoID: "downvoted",
+                    videoID: "segmentInfoDownvoted",
                     votes: -2,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
@@ -333,16 +325,15 @@ describe("getSegmentInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should not parse repeated UUID if UUIDs present", (done: Done) => {
-        fetch(`${getbaseURL()}/api/segmentInfo?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=["${upvotedID}"]`)
-            .then(async res => {
+    it("Should not parse repeated UUID if UUIDs present", (done) => {
+        client.get(`${endpoint}?UUID=${downvotedID}&UUID=${lockedupID}&UUIDs=["${upvotedID}"]`)
+            .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = await res.json();
                 const expected = [{
-                    videoID: "upvoted",
+                    videoID: "segmentInfoUpvoted",
                     votes: 2
                 }];
-                assert.ok(partialDeepEquals(data, expected));
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));

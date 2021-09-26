@@ -1,10 +1,10 @@
-import {config} from "../config";
-import {Logger} from "../utils/logger";
-import {db, privateDB} from "../databases/databases";
-import {getHash} from "../utils/getHash";
-import {Request, Response} from "express";
+import { config } from "../config";
+import { Logger } from "../utils/logger";
+import { db, privateDB } from "../databases/databases";
+import { getHash } from "../utils/getHash";
+import { Request, Response } from "express";
 
-async function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
+function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
     return privateDB.prepare("run",
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedByAdmin", "updatedAt") VALUES(?, ?, ?, ?, ?)`,
         [userID, newUserName, oldUserName, + updatedByAdmin, new Date().getTime()]

@@ -1,5 +1,5 @@
-import {config} from "../config";
-import {Logger} from "./logger";
+import { config } from "../config";
+import { Logger } from "./logger";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import DiskCache from "./diskCache";
 import axios from "axios";
@@ -24,7 +24,7 @@ export class YouTubeAPI {
             }
         }
 
-        if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return {err: "NewLeaf URL not found", data: null};
+        if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return { err: "NewLeaf URL not found", data: null };
 
         try {
             const result = await axios.get(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`);
@@ -45,7 +45,7 @@ export class YouTubeAPI {
                 return { err: result.statusText, data: null };
             }
         } catch (err) {
-            return {err: err as string | boolean, data: null};
+            return { err: err as string | boolean, data: null };
         }
     }
 }

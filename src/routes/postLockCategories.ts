@@ -1,8 +1,8 @@
-import {Logger} from "../utils/logger";
-import {getHash} from "../utils/getHash";
-import {isUserVIP} from "../utils/isUserVIP";
-import {db} from "../databases/databases";
-import {Request, Response} from "express";
+import { Logger } from "../utils/logger";
+import { getHash } from "../utils/getHash";
+import { isUserVIP } from "../utils/isUserVIP";
+import { db } from "../databases/databases";
+import { Request, Response } from "express";
 import { VideoIDHash } from "../types/segments.model";
 
 export async function postLockCategories(req: Request, res: Response): Promise<string[]> {

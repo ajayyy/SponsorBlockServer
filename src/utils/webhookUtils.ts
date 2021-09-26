@@ -1,5 +1,5 @@
-import {config} from "../config";
-import {Logger} from "../utils/logger";
+import { config } from "../config";
+import { Logger } from "../utils/logger";
 import axios from "axios";
 
 function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {

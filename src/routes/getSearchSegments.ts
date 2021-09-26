@@ -10,7 +10,7 @@ type searchSegmentResponse = {
     segments: DBSegment[]
 };
 
-async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise<DBSegment[]> {
+function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise<DBSegment[]> {
     return db.prepare(
         "all",
         `SELECT "UUID", "timeSubmitted", "startTime", "endTime", "category", "actionType", "votes", "views", "locked", "hidden", "shadowHidden" FROM "sponsorTimes" 

@@ -1,4 +1,4 @@
-import {getSubmissionUUID} from "../../src/utils/getSubmissionUUID";
+import { getSubmissionUUID } from "../../src/utils/getSubmissionUUID";
 import assert from "assert";
 import { ActionType, VideoID } from "../../src/types/segments.model";
 import { UserID } from "../../src/types/user.model";

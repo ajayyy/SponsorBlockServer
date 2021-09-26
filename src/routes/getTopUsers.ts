@@ -1,7 +1,7 @@
-import {db} from "../databases/databases";
-import {createMemoryCache} from "../utils/createMemoryCache";
-import {config} from "../config";
-import {Request, Response} from "express";
+import { db } from "../databases/databases";
+import { createMemoryCache } from "../utils/createMemoryCache";
+import { config } from "../config";
+import { Request, Response } from "express";
 
 const MILLISECONDS_IN_MINUTE = 60000;
 const getTopUsersWithCache = createMemoryCache(generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);

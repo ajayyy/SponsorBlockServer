@@ -1,8 +1,8 @@
-import {db} from "../databases/databases";
-import {config} from "../config";
-import {Request, Response} from "express";
-import {Logger} from "../utils/logger";
+import { db } from "../databases/databases";
+import { config } from "../config";
+import { Request, Response } from "express";
 import axios from "axios";
+import { Logger } from "../utils/logger";
 
 // A cache of the number of chrome web store users
 let chromeUsersCache = 0;

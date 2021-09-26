@@ -1,12 +1,12 @@
 import Mocha from "mocha";
 import fs from "fs";
 import path from "path";
-import {config} from "../src/config";
-import {createServer} from "../src/app";
-import {createMockServer} from "./mocks";
-import {Logger} from "../src/utils/logger";
-import {initDb} from "../src/databases/databases";
-import {ImportMock} from "ts-mock-imports";
+import { config } from "../src/config";
+import { createServer } from "../src/app";
+import { createMockServer } from "./mocks";
+import { Logger } from "../src/utils/logger";
+import { initDb } from "../src/databases/databases";
+import { ImportMock } from "ts-mock-imports";
 import * as rateLimitMiddlewareModule from "../src/middleware/requestRateLimit";
 import rateLimit from "express-rate-limit";
 

@@ -13,7 +13,7 @@ import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
 
 
-async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = {shadowHiddenSegmentIPs: {}}): Promise<Segment[]> {
+async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1 && !segment.required) {
             return false; //too untrustworthy, just ignore it
@@ -56,7 +56,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
 
 async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[],
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
-    const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
+    const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: Segment[] = [];
 
     try {
@@ -89,7 +89,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
 
 async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[],
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
-    const cache: SegmentCache = {shadowHiddenSegmentIPs: {}};
+    const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
@@ -182,7 +182,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
         const weight = Math.exp(choice.votes * Math.max(1, choice.reputation + 1) + 3 + boost);
         totalWeight += Math.max(weight, 0);
 
-        return {...choice, weight};
+        return { ...choice, weight };
     });
 
     //iterate and find amountOfChoices choices
@@ -220,7 +220,7 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
     for (const segment of segments) {
         if (segment.startTime >= cursor) {
-            currentGroup = {segments: [], votes: 0, reputation: 0, locked: false, required: false};
+            currentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
             overlappingSegmentsGroups.push(currentGroup);
         }
 
