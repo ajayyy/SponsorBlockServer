@@ -240,7 +240,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
             &segments=${nbString.substring(0, nbString.length - 1)}`);
         if (!response.ok) return false;
 
-        const nbPredictions = await response.json();
+        const nbPredictions = await response.json() as Record<string, any>;
         let nbDecision = false;
         let predictionIdx = 0; //Keep track because only sponsor categories were submitted
         for (let i = 0; i < segments.length; i++) {
@@ -461,8 +461,8 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: string
 
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
-        // Don't use cache if we don't know the video duraton, or the client claims that it has changed
-        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDurationParam || videoDurationChanged(videoDurationParam));
+        // Don't use cache if we don't know the video duration, or the client claims that it has changed
+        apiVideoInfo = await getYouTubeVideoInfo(videoID, !videoDurationParam || previousSubmissions.length === 0 || videoDurationChanged(videoDurationParam));
     }
     const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
     if (!videoDurationParam || (apiVideoDuration && Math.abs(videoDurationParam - apiVideoDuration) > 2)) {

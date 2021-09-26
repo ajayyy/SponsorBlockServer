@@ -1,7 +1,7 @@
 import { hashPrefixTester } from "../utils/hashPrefixTester";
 import { getSegmentsByHash } from "./getSkipSegments";
 import { Request, Response } from "express";
-import { ActionType, Category, SegmentUUID, VideoIDHash } from "../types/segments.model";
+import { ActionType, Category, SegmentUUID, VideoIDHash, Service } from "../types/segments.model";
 import { getService } from "../utils/getService";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
@@ -59,7 +59,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
         return res.status(400).send("Bad parameter: requiredSegments (invalid JSON)");
     }
 
-    const service = getService(req.query.service, req.body.service);
+    const service: Service = getService(req.query.service, req.body.service);
 
     // filter out none string elements, only flat array with strings is valid
     categories = categories.filter((item: any) => typeof item === "string");

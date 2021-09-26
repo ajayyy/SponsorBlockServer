@@ -30,17 +30,17 @@ export class YouTubeAPI {
             const result = await fetch(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`, { method: "GET" });
 
             if (result.ok) {
-                const data = await result.json();
-                if (data.error) {
+                const data = await result.json() as (Record<string, any>);
+                if (data.error as Record<string, string>) {
                     Logger.warn(`NewLeaf API Error for ${videoID}: ${data.error}`);
                     return { err: data.error, data: null };
                 }
-
-                DiskCache.set(cacheKey, JSON.stringify(data))
+                const apiResult = data as APIVideoData;
+                DiskCache.set(cacheKey, JSON.stringify(apiResult))
                     .catch((err: any) => Logger.warn(err))
                     .then(() => Logger.debug(`YouTube API: video information cache set for: ${videoID}`));
 
-                return { err: false, data };
+                return { err: false, data: apiResult };
             } else {
                 return { err: result.statusText, data: null };
             }

@@ -56,7 +56,7 @@ function updateExtensionUsers() {
     const chromeExtensionUrl = "https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone";
 
     fetch(mozillaAddonsUrl)
-        .then(res => res.json())
+        .then(res => res.json() as Record<string, any>)
         .then(data => {
             firefoxUsersCache = data.average_daily_users;
             fetch(chromeExtensionUrl)
