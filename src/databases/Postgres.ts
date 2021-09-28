@@ -1,6 +1,6 @@
 import { Logger } from "../utils/logger";
 import { IDatabase, QueryType } from "./IDatabase";
-import { Client, Pool, types } from "pg";
+import { Client, Pool, PoolClient, types } from "pg";
 
 import fs from "fs";
 
@@ -55,10 +55,10 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
+        let client: PoolClient;
         try {
-            const client = await this.pool.connect();
+            client = await this.pool.connect();
             const queryResult = await client.query({ text: query, values: params });
-            client.release();
 
             switch (type) {
                 case "get": {
@@ -77,6 +77,8 @@ export class Postgres implements IDatabase {
             }
         } catch (err) {
             Logger.error(`prepare (postgres): ${err}`);
+        } finally {
+            client?.release();
         }
     }
 
