@@ -1,4 +1,4 @@
-import {db} from "../databases/databases";
+import { db } from "../databases/databases";
 import { HashedUserID } from "../types/user.model";
 
 export async function isUserVIP(userID: HashedUserID): Promise<boolean> {

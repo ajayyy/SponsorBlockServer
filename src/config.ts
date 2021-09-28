@@ -1,5 +1,5 @@
 import fs from "fs";
-import {SBSConfig} from "./types/config.model";
+import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;

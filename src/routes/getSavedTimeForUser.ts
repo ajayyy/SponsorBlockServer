@@ -1,7 +1,7 @@
-import {db} from "../databases/databases";
-import {Request, Response} from "express";
-import {getHash} from "../utils/getHash";
-import {config} from "../config";
+import { db } from "../databases/databases";
+import { Request, Response } from "express";
+import { getHash } from "../utils/getHash";
+import { config } from "../config";
 import { Logger } from "../utils/logger";
 
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;

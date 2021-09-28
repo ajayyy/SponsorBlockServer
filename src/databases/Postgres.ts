@@ -57,7 +57,7 @@ export class Postgres implements IDatabase {
 
         try {
             const client = await this.pool.connect();
-            const queryResult = await client.query({text: query, values: params});
+            const queryResult = await client.query({ text: query, values: params });
             client.release();
 
             switch (type) {

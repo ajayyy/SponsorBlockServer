@@ -1,6 +1,5 @@
 import { getService } from "../../src/utils/getService";
 import { Service } from "../../src/types/segments.model";
-
 import assert from "assert";
 
 describe("getService", () => {

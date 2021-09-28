@@ -1,9 +1,9 @@
-import {IDatabase, QueryType} from "./IDatabase";
-import Sqlite3, {Database, Database as SQLiteDatabase} from "better-sqlite3";
+import { IDatabase, QueryType } from "./IDatabase";
+import Sqlite3, { Database, Database as SQLiteDatabase } from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import {getHash} from "../utils/getHash";
-import {Logger} from "../utils/logger";
+import { getHash } from "../utils/getHash";
+import { Logger } from "../utils/logger";
 
 export class Sqlite implements IDatabase {
     private db: SQLiteDatabase;
@@ -12,6 +12,7 @@ export class Sqlite implements IDatabase {
     {
     }
 
+    // eslint-disable-next-line require-await
     async prepare(type: QueryType, query: string, params: any[] = []): Promise<any[]> {
         // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
         const preparedQuery = this.db.prepare(query);
@@ -30,13 +31,14 @@ export class Sqlite implements IDatabase {
         }
     }
 
+    // eslint-disable-next-line require-await
     async init(): Promise<void> {
         // Make dirs if required
         if (!fs.existsSync(path.join(this.config.dbPath, "../"))) {
             fs.mkdirSync(path.join(this.config.dbPath, "../"));
         }
 
-        this.db = new Sqlite3(this.config.dbPath, {readonly: this.config.readOnly, fileMustExist: !this.config.createDbIfNotExists});
+        this.db = new Sqlite3(this.config.dbPath, { readonly: this.config.readOnly, fileMustExist: !this.config.createDbIfNotExists });
 
         if (this.config.createDbIfNotExists && !this.config.readOnly && fs.existsSync(this.config.dbSchemaFileName)) {
             this.db.exec(Sqlite.processUpgradeQuery(fs.readFileSync(this.config.dbSchemaFileName).toString()));

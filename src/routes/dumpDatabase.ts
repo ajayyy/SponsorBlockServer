@@ -1,6 +1,6 @@
-import {db} from "../databases/databases";
-import {Logger} from "../utils/logger";
-import {Request, Response} from "express";
+import { db } from "../databases/databases";
+import { Logger } from "../utils/logger";
+import { Request, Response } from "express";
 import { config } from "../config";
 import util from "util";
 import fs from "fs";
