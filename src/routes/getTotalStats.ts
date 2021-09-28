@@ -1,7 +1,6 @@
 import { db } from "../databases/databases";
 import { config } from "../config";
 import { Request, Response } from "express";
-import fetch from "node-fetch";
 import axios from "axios";
 import { Logger } from "../utils/logger";
 
@@ -55,13 +54,12 @@ function updateExtensionUsers() {
     const mozillaAddonsUrl = "https://addons.mozilla.org/api/v3/addons/addon/sponsorblock/";
     const chromeExtensionUrl = "https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone";
 
-    fetch(mozillaAddonsUrl)
-        .then(res => res.json() as Record<string, any>)
-        .then(data => {
-            firefoxUsersCache = data.average_daily_users;
-            fetch(chromeExtensionUrl)
-                .then(res => res.text())
-                .then(body => {
+    axios.get(mozillaAddonsUrl)
+        .then(res => {
+            firefoxUsersCache = res.data.average_daily_users;
+            axios.get(chromeExtensionUrl)
+                .then(res => {
+                    const body = res.data;
                     // 2021-01-05
                     // [...]<span><meta itemprop="interactionCount" content="UserDownloads:100.000+"/><meta itemprop="opera[...]
                     const matchingString = '"UserDownloads:';
