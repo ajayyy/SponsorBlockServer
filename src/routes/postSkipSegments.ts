@@ -3,7 +3,6 @@ import { Logger } from "../utils/logger";
 import { db, privateDB } from "../databases/databases";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
 import { getSubmissionUUID } from "../utils/getSubmissionUUID";
-import fetch from "node-fetch";
 import { getHash } from "../utils/getHash";
 import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
@@ -20,6 +19,7 @@ import { UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
+import axios from "axios";
 
 type CheckResult = {
     pass: boolean,
@@ -80,28 +80,22 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
         // Then send a notification to discord
         if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
 
-        fetch(config.discordFirstTimeSubmissionsWebhookURL, {
-            method: "POST",
-            body: JSON.stringify({
-                "embeds": [{
-                    "title": data?.title,
-                    "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}`,
-                    "description": `Submission ID: ${UUID}\
-                        \n\nTimestamp: \
-                        ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
-                        \n\nCategory: ${segmentInfo.category}`,
-                    "color": 10813440,
-                    "author": {
-                        "name": userID,
-                    },
-                    "thumbnail": {
-                        "url": getMaxResThumbnail(data) || "",
-                    },
-                }],
-            }),
-            headers: {
-                "Content-Type": "application/json"
-            }
+        axios.post(config.discordFirstTimeSubmissionsWebhookURL, {
+            "embeds": [{
+                "title": data?.title,
+                "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}`,
+                "description": `Submission ID: ${UUID}\
+                    \n\nTimestamp: \
+                    ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
+                    \n\nCategory: ${segmentInfo.category}`,
+                "color": 10813440,
+                "author": {
+                    "name": userID,
+                },
+                "thumbnail": {
+                    "url": getMaxResThumbnail(data) || "",
+                },
+            }],
         })
             .then(res => {
                 if (res.status >= 400) {
@@ -136,28 +130,22 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
     // Send discord message
     if (config.discordNeuralBlockRejectWebhookURL === null) return;
 
-    fetch(config.discordNeuralBlockRejectWebhookURL, {
-        method: "POST",
-        body: JSON.stringify({
-            "embeds": [{
-                "title": ytData.items[0].snippet.title,
-                "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseFloat(startTime.toFixed(0)) - 2)}`,
-                "description": `**Submission ID:** ${UUID}\
-                    \n**Timestamp:** ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
-                    \n**Predicted Probability:** ${probability}\
-                    \n**Category:** ${category}\
-                    \n**Submitted by:** ${submittedBy}\
-                    \n**Total User Submissions:** ${submissionInfoRow.count}\
-                    \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}`,
-                "color": 10813440,
-                "thumbnail": {
-                    "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
-                },
-            }],
-        }),
-        headers: {
-            "Content-Type": "application/json"
-        }
+    axios.post(config.discordNeuralBlockRejectWebhookURL, {
+        "embeds": [{
+            "title": ytData.items[0].snippet.title,
+            "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseFloat(startTime.toFixed(0)) - 2)}`,
+            "description": `**Submission ID:** ${UUID}\
+                \n**Timestamp:** ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
+                \n**Predicted Probability:** ${probability}\
+                \n**Category:** ${category}\
+                \n**Submitted by:** ${submittedBy}\
+                \n**Total User Submissions:** ${submissionInfoRow.count}\
+                \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}`,
+            "color": 10813440,
+            "thumbnail": {
+                "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
+            },
+        }]
     })
         .then(res => {
             if (res.status >= 400) {
@@ -236,11 +224,11 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
         // Check NeuralBlock
         const neuralBlockURL = config.neuralBlockURL;
         if (!neuralBlockURL) return false;
-        const response = await fetch(`${neuralBlockURL}/api/checkSponsorSegments?vid=${submission.videoID}
-            &segments=${nbString.substring(0, nbString.length - 1)}`);
-        if (!response.ok) return false;
+        const response = await axios.get(`${neuralBlockURL}/api/checkSponsorSegments?vid=${submission.videoID}
+            &segments=${nbString.substring(0, nbString.length - 1)}`, { validateStatus: () => true });
+        if (response.status !== 200) return false;
 
-        const nbPredictions = await response.json() as Record<string, any>;
+        const nbPredictions = response.data;
         let nbDecision = false;
         let predictionIdx = 0; //Keep track because only sponsor categories were submitted
         for (let i = 0; i < segments.length; i++) {
@@ -531,12 +519,9 @@ async function checkRateLimit(userID:string, videoID: VideoID, timeSubmitted: nu
 }
 
 function proxySubmission(req: Request) {
-    fetch(`${config.proxySubmission}/api/skipSegments?userID=${req.query.userID}&videoID=${req.query.videoID}`, {
-        method: "POST",
-        body: req.body,
-    })
-        .then(async res => {
-            Logger.debug(`Proxy Submission: ${res.status} (${(await res.text())})`);
+    axios.post(`${config.proxySubmission}/api/skipSegments?userID=${req.query.userID}&videoID=${req.query.videoID}`, req.body)
+        .then(res => {
+            Logger.debug(`Proxy Submission: ${res.status} (${res.data})`);
         })
         .catch(() => {
             Logger.error("Proxy Submission: Failed to make call");

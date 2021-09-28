@@ -1,8 +1,8 @@
-import fetch from "node-fetch";
 import { config } from "../config";
 import { Logger } from "./logger";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import DiskCache from "./diskCache";
+import axios from "axios";
 
 export class YouTubeAPI {
     static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {
@@ -27,11 +27,11 @@ export class YouTubeAPI {
         if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return { err: "NewLeaf URL not found", data: null };
 
         try {
-            const result = await fetch(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`, { method: "GET" });
+            const result = await axios.get(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`);
 
-            if (result.ok) {
-                const data = await result.json() as (Record<string, any>);
-                if (data.error as Record<string, string>) {
+            if (result.status === 200) {
+                const data = result.data;
+                if (data.error) {
                     Logger.warn(`NewLeaf API Error for ${videoID}: ${data.error}`);
                     return { err: data.error, data: null };
                 }

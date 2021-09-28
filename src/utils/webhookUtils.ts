@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { Logger } from "../utils/logger";
-import fetch from "node-fetch";
+import axios from "axios";
 
 function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
@@ -37,9 +37,10 @@ function dispatchEvent(scope: string, data: Record<string, unknown>): void {
         const scopes = webhook.scopes || [];
         if (!scopes.includes(scope.toLowerCase())) return;
 
-        fetch(webhookURL, {
+        axios.request({
+            url: webhookURL,
             method: "POST",
-            body: JSON.stringify(data),
+            data,
             headers: {
                 "Authorization": authKey,
                 "Event-Type": scope, // Maybe change this in the future?
