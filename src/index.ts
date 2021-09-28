@@ -6,6 +6,10 @@ import { startAllCrons } from "./cronjob";
 import { getCommit } from "./utils/getCommit";
 
 async function init() {
+    process.on("unhandledRejection", (error: any) => {
+        console.dir(error.stack);
+    });
+
     await initDb();
     (global as any).HEADCOMMIT = config.mode === "development" ? "development"
         : config.mode === "test" ? "test"
