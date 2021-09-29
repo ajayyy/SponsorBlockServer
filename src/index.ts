@@ -8,6 +8,7 @@ import { getCommit } from "./utils/getCommit";
 async function init() {
     process.on("unhandledRejection", (error: any) => {
         console.dir(error?.stack);
+        process.exit(1);
     });
 
     await initDb();
