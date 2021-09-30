@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "../databases/databases";
+import { getService } from "../utils/getService";
 import { Logger } from "../utils/logger";
 
 /**
@@ -14,6 +15,7 @@ export function addUnlistedVideo(req: Request, res: Response): Response {
     const year = req.body.year || 0;
     const views = req.body.views || 0;
     const channelID = req.body.channelID || "Unknown";
+    const service = getService(req.body.service);
 
     if (videoID === undefined || typeof(videoID) !== "string" || videoID.length !== 11) {
         return res.status(400).send("Invalid parameters");
@@ -21,7 +23,7 @@ export function addUnlistedVideo(req: Request, res: Response): Response {
 
     try {
         const timeSubmitted = Date.now();
-        db.prepare("run", `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted") values (?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted]);
+        db.prepare("run", `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted", "service") values (?, ?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted, service]);
     } catch (err) {
         Logger.error(err as string);
         return res.sendStatus(500);

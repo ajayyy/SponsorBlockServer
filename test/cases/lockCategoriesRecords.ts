@@ -23,18 +23,18 @@ describe("lockCategoriesRecords", () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [lockVIPUserHash]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "sponsor", "reason-1"]);
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "intro", "reason-1"]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason", "service") VALUES (?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "sponsor", "reason-1", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "intro", "reason-1", "YouTube"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id-1", "sponsor", "reason-2"]);
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id-1", "intro", "reason-2"]);
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "lockCategoryVideo", "sponsor", "reason-3"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id-1", "sponsor", "reason-2", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id-1", "intro", "reason-2", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "lockCategoryVideo", "sponsor", "reason-3", "YouTube"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "sponsor", "reason-4"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "sponsor", "reason-4", "YouTube"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "sponsor", "reason-5"]);
-        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "intro", "reason-5"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "sponsor", "reason-5", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "intro", "reason-5", "YouTube"]);
     });
 
     it("Should update the database version when starting the application", async () => {

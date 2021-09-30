@@ -38,7 +38,7 @@ export async function getReputation(userID: UserID): Promise<number> {
                         c."category" = "a"."category" LIMIT 1) 
                 AND EXISTS (
                     SELECT * FROM "lockCategories" as l 
-                    WHERE l."videoID" = "a"."videoID" AND l."category" = "a"."category" LIMIT 1)
+                    WHERE l."videoID" = "a"."videoID" AND l."service" = "a"."service" AND l."category" = "a"."category" LIMIT 1)
                 THEN 1 ELSE 0 END) AS "mostUpvotedInLockedVideoSum"
         FROM "sponsorTimes" as "a" WHERE "userID" = ?`, [userID, weekAgo, pastDate, userID]) as Promise<ReputationDBResult>;
 
