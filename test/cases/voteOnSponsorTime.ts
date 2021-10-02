@@ -12,6 +12,7 @@ const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 const vipUser = "VIPUser";
 const randomID2 = "randomID2";
+const categoryChangeUser = "category-change-user";
 
 describe("voteOnSponsorTime", () => {
     before(async () => {
@@ -19,34 +20,43 @@ describe("voteOnSponsorTime", () => {
         const warnVip01Hash = getHash("warn-vip01");
         const warnUser01Hash = getHash("warn-voteuser01");
         const warnUser02Hash = getHash("warn-voteuser02");
+        const categoryChangeUserHash = getHash(categoryChangeUser);
         const MILLISECONDS_IN_HOUR = 3600000;
         const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
 
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "hidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, "vote-uuid-0", "testman", 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 2, "vote-uuid-1", "testman", 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, "vote-uuid-1.5", "testman", 0, 50, "outro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, "vote-uuid-1.6", "testman", 0, 50, "interaction", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest3", 20, 33, 10, "vote-uuid-2", "testman", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest,test", 1, 11, 100, "vote-uuid-3", "testman", 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 1, 11, 2, "vote-uuid-4", "testman", 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, "vote-uuid-5", "testman", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, "vote-uuid-5_1", "testman", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, "vote-uuid-6", "testman", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, "vote-uuid-7", "testman", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, "vote-uuid-9", getHash(randomID2), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, "vote-uuid-10", getHash("randomID3"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, "vote-uuid-11", getHash("randomID4"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["own-submission-video", 1, 11, 500, "own-submission-uuid", getHash("own-submission-id"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["not-own-submission-video", 1, 11, 500, "not-own-submission-uuid", getHash("somebody-else-id"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["incorrect-category", 1, 11, 500, "incorrect-category", getHash("somebody-else-id"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["incorrect-category-change", 1, 11, 500, "incorrect-category-change", getHash("somebody-else-id"), 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, "warnvote-uuid-0", "testman", 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, "no-sponsor-segments-uuid-0", "no-sponsor-segments", 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, "no-sponsor-segments-uuid-1", "no-sponsor-segments", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["segment-locking-video", 1, 11, 2, "segment-locking-uuid-1", "segment-locking-user", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["segment-hidden-video", 1, 11, 2, "segment-hidden-uuid-1", "segment-hidden-user", 0, 50, "intro", 0, 1]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "hidden") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "vote-uuid-0", "testman", 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 2, 0, "vote-uuid-1", "testman", 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.5", "testman", 0, 50, "outro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.6", "testman", 0, 50, "interaction", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest3", 20, 33, 10, 0, "vote-uuid-2", "testman", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest,test", 1, 11, 100, 0, "vote-uuid-3", "testman", 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 1, 11, 2, 0, "vote-uuid-4", "testman", 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5", "testman", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5_1", "testman", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, 0, "vote-uuid-6", "testman", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, 0, "vote-uuid-7", "testman", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-9", getHash(randomID2), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-10", getHash("randomID3"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-11", getHash("randomID4"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["own-submission-video", 1, 11, 500, 0, "own-submission-uuid", getHash("own-submission-id"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["not-own-submission-video", 1, 11, 500, 0, "not-own-submission-uuid", getHash("somebody-else-id"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["incorrect-category", 1, 11, 500, 0, "incorrect-category", getHash("somebody-else-id"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["incorrect-category-change", 1, 11, 500, 0, "incorrect-category-change", getHash("somebody-else-id"), 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "warnvote-uuid-0", "testman", 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-0", "no-sponsor-segments", 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-1", "no-sponsor-segments", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["segment-locking-video", 1, 11, 2, 0, "segment-locking-uuid-1", "segment-locking-user", 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["segment-hidden-video", 1, 11, 2, 0, "segment-hidden-uuid-1", "segment-hidden-user", 0, 50, "intro", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 22, 0, 0, "category-change-uuid-1", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 22, 0, 1, "category-change-uuid-2", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 22, 0, 0, "category-change-uuid-3", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-4", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 13, 0, 0, "category-change-uuid-5", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 12, 0, 1, "category-change-uuid-6", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 14, 0, 0, "category-change-uuid-7", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -62,7 +72,9 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash(vipUser)]);
         await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
 
-        await db.prepare("run", 'INSERT INTO "lockCategories" ("videoID", "userID", "category") VALUES (?, ?, ?)', ["no-sponsor-segments-video", "someUser", "sponsor"]);
+        const insertlockCategoriesQuerry = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "reason") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertlockCategoriesQuerry, ["no-sponsor-segments-video", "someUser", "sponsor", ""]);
+        await db.prepare("run", insertlockCategoriesQuerry, ["category-change-test-1", "someUser", "preview", ""]); // sponsor should stay unlocked
     });
     // constants
     const endpoint = "/api/voteOnSponsorTime";
@@ -172,7 +184,7 @@ describe("voteOnSponsorTime", () => {
             .catch(err => done(err));
     });
 
-    it("should be able to completely downvote your own segment", (done) => {
+    it("should be able to completely downvote your own segment (segment unlocked)", (done) => {
         const UUID = "own-submission-uuid";
         postVote("own-submission-id", UUID, 0)
             .then(async res => {
@@ -238,7 +250,7 @@ describe("voteOnSponsorTime", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to change your vote for a category and it should add your vote to the database", (done) => {
+    it("Should be able to change your vote for a category and it should add your vote to the database(segment unlocked, nextCatgeory unlocked)", (done) => {
         const UUID = "vote-uuid-4";
         postVoteCategory(randomID2, UUID, "outro")
             .then(async res => {
@@ -280,7 +292,7 @@ describe("voteOnSponsorTime", () => {
         });
     });
 
-
+    /*
     it("VIP should be able to vote for a category and it should immediately change", (done) => {
         const UUID = "vote-uuid-5";
         postVoteCategory(vipUser, UUID, "outro")
@@ -294,7 +306,7 @@ describe("voteOnSponsorTime", () => {
             })
             .catch(err => done(err));
     });
-
+// old test
     it("Submitter should be able to vote for a category and it should immediately change", (done) => {
         const UUID = "vote-uuid-5_1";
         postVoteCategory("testman", UUID, "outro")
@@ -305,7 +317,138 @@ describe("voteOnSponsorTime", () => {
                 done();
             })
             .catch(err => done(err));
+    });*/
+
+    it("Submitter should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, notVip)", (done) => {
+        const userID = categoryChangeUser;
+        const UUID = "category-change-uuid-1";
+        const category = "sponsor";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                console.log(row.category)
+                assert.strictEqual(row.category, category); 
+                done();
+            })
+            .catch(err => done(err));
     });
+
+    it("Submitter's vote on the category should not work (segment locked, nextCatgeory unlocked, notVip)", (done) => {
+        const userID = categoryChangeUser;
+        const UUID = "category-change-uuid-2";
+        const category = "sponsor";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                console.log(row.category)
+                assert.strictEqual(row.category, "intro");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Submitter's vote on the category should not work (segment unlocked, nextCatgeory locked, notVip)", (done) => {
+        const userID = categoryChangeUser;
+        const UUID = "category-change-uuid-3";
+        const category = "preview";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                console.log(row.category)
+                assert.strictEqual(row.category, "intro");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Submitter's vote on the category should not work (segment locked, nextCatgeory locked, notVip)", (done) => {
+        const userID = categoryChangeUser;
+        const UUID = "category-change-uuid-4";
+        const category = "preview";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                console.log(row.category)
+                assert.strictEqual(row.category, "intro");
+                done();
+            })
+            .catch(err => done(err));
+    });
+//adjbaelrfkbfjgöäkldfgölkndfgölfdngöfkdln
+    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", (done) => {
+        const userID = vipUser;
+        const UUID = "category-change-uuid-5";
+        const category = "sponsor";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                assert.strictEqual(row.category, category);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory unlocked, Vip)", (done) => {
+        const userID = vipUser;
+        const UUID = "category-change-uuid-6";
+        const category = "sponsor";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                assert.strictEqual(row.category, category);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory locked, Vip)", (done) => {
+        const userID = vipUser;
+        const UUID = "category-change-uuid-7";
+        const category = "preview";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                assert.strictEqual(row.category, category);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory locked, Vip)", (done) => {
+        const userID = vipUser;
+        const UUID = "category-change-uuid-8";
+        const category = "preview";
+        postVoteCategory(userID, UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                assert.strictEqual(row.category, category);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     it("Should not be able to category-vote on an invalid UUID submission", (done) => {
         const UUID = "invalid-uuid";
