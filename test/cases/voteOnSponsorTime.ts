@@ -33,7 +33,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest,test", 1, 11, 100, 0, "vote-uuid-3", "testman", 0, 50, "sponsor", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 1, 11, 2, 0, "vote-uuid-4", "testman", 0, 50, "sponsor", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5", "testman", 0, 50, "intro", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5_1", "testman", 0, 50, "intro", 0, 0]);
+        //await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5_1", getHash("testman"), 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, 0, "vote-uuid-6", "testman", 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, 0, "vote-uuid-7", "testman", 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", 0, 0]);
@@ -292,33 +292,6 @@ describe("voteOnSponsorTime", () => {
         });
     });
 
-    /*
-    it("VIP should be able to vote for a category and it should immediately change", (done) => {
-        const UUID = "vote-uuid-5";
-        postVoteCategory(vipUser, UUID, "outro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                const row2 = await db.prepare("get", `SELECT votes FROM "categoryVotes" WHERE "UUID" = ? and category = ?`, [UUID, "outro"]);
-                assert.strictEqual(row.category, "outro");
-                assert.strictEqual(row2.votes, 500);
-                done();
-            })
-            .catch(err => done(err));
-    });
-// old test
-    it("Submitter should be able to vote for a category and it should immediately change", (done) => {
-        const UUID = "vote-uuid-5_1";
-        postVoteCategory("testman", UUID, "outro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory("vote-uuid-5");
-                assert.strictEqual(row.category, "outro");
-                done();
-            })
-            .catch(err => done(err));
-    });*/
-
     it("Submitter should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, notVip)", (done) => {
         const userID = categoryChangeUser;
         const UUID = "category-change-uuid-1";
@@ -327,7 +300,7 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category)
+                console.log(row.category);
                 assert.strictEqual(row.category, category); 
                 done();
             })
@@ -342,7 +315,7 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category)
+                console.log(row.category);
                 assert.strictEqual(row.category, "intro");
                 done();
             })
@@ -357,7 +330,6 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category)
                 assert.strictEqual(row.category, "intro");
                 done();
             })
@@ -372,7 +344,6 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category)
                 assert.strictEqual(row.category, "intro");
                 done();
             })
