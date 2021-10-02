@@ -33,7 +33,6 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest,test", 1, 11, 100, 0, "vote-uuid-3", "testman", 0, 50, "sponsor", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 1, 11, 2, 0, "vote-uuid-4", "testman", 0, 50, "sponsor", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5", "testman", 0, 50, "intro", 0, 0]);
-        //await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5_1", getHash("testman"), 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, 0, "vote-uuid-6", "testman", 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, 0, "vote-uuid-7", "testman", 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", 0, 0]);

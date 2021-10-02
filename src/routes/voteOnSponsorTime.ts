@@ -186,7 +186,6 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
     // Ignore vote if the segment is locked
     if (!isVIP && videoInfo.locked === 1) {
-        console.log("dalfäkjsdöfbsdfoöjasdökjb");
         return res.sendStatus(200);
     }
 
