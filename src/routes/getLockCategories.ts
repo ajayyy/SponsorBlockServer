@@ -12,7 +12,7 @@ export async function getLockCategories(req: Request, res: Response): Promise<Re
         //invalid request
         return res.sendStatus(400);
     }
-    console.log(service);
+
     try {
         // Get existing lock categories markers
         const row = await db.prepare("all", 'SELECT "category", "reason" from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]) as {category: Category, reason: string}[];
