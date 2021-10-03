@@ -348,7 +348,6 @@ describe("voteOnSponsorTime", () => {
             })
             .catch(err => done(err));
     });
-//adjbaelrfkbfjgöäkldfgölkndfgölfdngöfkdln
     it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", (done) => {
         const userID = vipUser;
         const UUID = "category-change-uuid-5";
