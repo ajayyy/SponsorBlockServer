@@ -177,7 +177,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     }
 
     // Ignore vote if the next category is locked
-    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "category" = ?`, [videoInfo.videoID, category]);
+    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [videoInfo.videoID, videoInfo.service, category]);
     if (nextCategoryLocked && !isVIP) {
         return res.sendStatus(200);
     }
