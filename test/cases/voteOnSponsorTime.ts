@@ -300,7 +300,7 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
                 console.log(row.category);
-                assert.strictEqual(row.category, category); 
+                assert.strictEqual(row.category, category);
                 done();
             })
             .catch(err => done(err));
@@ -348,6 +348,7 @@ describe("voteOnSponsorTime", () => {
             })
             .catch(err => done(err));
     });
+    
     it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", (done) => {
         const userID = vipUser;
         const UUID = "category-change-uuid-5";
@@ -403,22 +404,7 @@ describe("voteOnSponsorTime", () => {
             })
             .catch(err => done(err));
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
     it("Should not be able to category-vote on an invalid UUID submission", (done) => {
         const UUID = "invalid-uuid";
         postVoteCategory("randomID3", UUID, "intro")
