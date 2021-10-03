@@ -57,7 +57,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
             //find all previous submissions and unhide them
             if (unHideOldSubmissions) {
                 const segmentsToIgnore = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st
-                    JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category WHERE "st"."userID" = ?`
+                    JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category AND "st"."service" = "ns"."service" WHERE "st"."userID" = ?`
                 , [userID])).map((item: {UUID: string}) => item.UUID);
                 const allSegments = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
                     .map((item: {UUID: string}) => item.UUID);
@@ -120,7 +120,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
 async function unHideSubmissions(categories: string[], userID: UserID) {
     await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                     AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
-                    "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
+                    "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
 
     // clear cache for all old videos
     (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]))

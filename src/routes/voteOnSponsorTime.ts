@@ -162,8 +162,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         return res.sendStatus(finalResponse.finalStatus);
     }
 
-    const videoInfo = (await db.prepare("get", `SELECT "category", "videoID", "hashedVideoID", "service", "userID" FROM "sponsorTimes" WHERE "UUID" = ?`,
-        [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID};
+    const videoInfo = (await db.prepare("get", `SELECT "category", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
+        [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
     if (!videoInfo) {
         // Submission doesn't exist
         return res.status(400).send("Submission doesn't exist.");
@@ -174,6 +174,17 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     }
     if (getCategoryActionType(category) !== CategoryActionType.Skippable) {
         return res.status(400).send("Cannot vote for this category");
+    }
+
+    // Ignore vote if the next category is locked
+    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [videoInfo.videoID, videoInfo.service, category]);
+    if (nextCategoryLocked && !isVIP) {
+        return res.sendStatus(200);
+    }
+
+    // Ignore vote if the segment is locked
+    if (!isVIP && videoInfo.locked === 1) {
+        return res.sendStatus(200);
     }
 
     const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category]);
@@ -290,7 +301,8 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     if (!isVIP && type != 1) {
         const isSegmentLocked = async () => !!(await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked;
         const isVideoLocked = async () => !!(await db.prepare("get", `SELECT "lockCategories".category from "lockCategories" left join "sponsorTimes"
-            on ("lockCategories"."videoID" = "sponsorTimes"."videoID" and "lockCategories".category = "sponsorTimes".category)
+            on ("lockCategories"."videoID" = "sponsorTimes"."videoID" and 
+            "lockCategories"."service" = "sponsorTimes"."service" and "lockCategories".category = "sponsorTimes".category)
             where "UUID" = ?`, [UUID]));
 
         if (await isSegmentLocked() || await isVideoLocked()) {
@@ -424,7 +436,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             //oldIncrementAmount will be zero is row is null
             await db.prepare("run", `UPDATE "sponsorTimes" SET "${columnName}" = "${columnName}" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
-                // Unide and Lock this submission
+                // Unhide and Lock this submission
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0, "shadowHidden" = 0 WHERE "UUID" = ?', [UUID]);
 
                 // Reset video duration in case that caused it to be hidden
