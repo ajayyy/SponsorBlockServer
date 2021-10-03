@@ -168,7 +168,7 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
 //   false for a pass - it was confusing and lead to this bug - any use of this function in
 //   the future could have the same problem.
 async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
-    submission: { videoID: VideoID; userID: UserID; segments: IncomingSegment[] }) {
+    submission: { videoID: VideoID; userID: UserID; segments: IncomingSegment[], service: Service }) {
     if (apiVideoInfo) {
         const { err, data } = apiVideoInfo;
         if (err) return false;
@@ -238,7 +238,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
                     const startTime = parseFloat(segments[i].segment[0]);
                     const endTime = parseFloat(segments[i].segment[1]);
 
-                    const UUID = getSubmissionUUID(submission.videoID, segments[i].actionType, submission.userID, startTime, endTime);
+                    const UUID = getSubmissionUUID(submission.videoID, segments[i].actionType, submission.userID, startTime, endTime, submission.service);
                     // Send to Discord
                     // Note, if this is too spammy. Consider sending all the segments as one Webhook
                     sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
@@ -407,7 +407,8 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
 async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, isVIP: boolean, service:string, apiVideoInfo: APIVideoInfo, decreaseVotes: number): Promise<CheckResult & { decreaseVotes: number; } > {
     // Auto moderator check
     if (!isVIP && service == Service.YouTube) {
-        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, { userID, videoID, segments });//startTime, endTime, category: segments[i].category});
+        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, { userID, videoID, segments, service });//startTime, endTime, category: segments[i].category});
+
         if (autoModerateResult == "Rejected based on NeuralBlock predictions.") {
             // If NB automod rejects, the submission will start with -2 votes.
             // Note, if one submission is bad all submissions will be affected.
@@ -431,8 +432,8 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
     };
 }
 
-async function updateDataIfVideoDurationChange(videoID: VideoID, service: string, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
-    let lockedCategoryList = await db.prepare("all", 'SELECT category, reason from "lockCategories" where "videoID" = ?', [videoID]);
+async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
+    let lockedCategoryList = await db.prepare("all", 'SELECT category, reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
@@ -465,7 +466,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: string
             await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
         }
         lockedCategoryList = [];
-        deleteLockCategories(videoID, null);
+        deleteLockCategories(videoID, null, service);
     }
 
     return {
@@ -478,7 +479,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: string
 // Disable max submissions for now
 // Disable IP ratelimiting for now
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function checkRateLimit(userID:string, videoID: VideoID, timeSubmitted: number, hashedIP: string, options: {
+async function checkRateLimit(userID:string, videoID: VideoID, service: Service, timeSubmitted: number, hashedIP: string, options: {
     enableCheckByIP: boolean;
     enableCheckByUserID: boolean;
 } = {
@@ -489,7 +490,7 @@ async function checkRateLimit(userID:string, videoID: VideoID, timeSubmitted: nu
 
     if (options.enableCheckByIP) {
         //check to see if this ip has submitted too many sponsors today
-        const rateLimitCheckRow = await privateDB.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ?`, [hashedIP, videoID, yesterday]);
+        const rateLimitCheckRow = await privateDB.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "hashedIP" = ? AND "videoID" = ? AND "timeSubmitted" > ? AND "service" = ?`, [hashedIP, videoID, yesterday, service]);
 
         if (rateLimitCheckRow.count >= 10) {
             //too many sponsors for the same video from the same ip address
@@ -613,7 +614,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         //get current time
         const timeSubmitted = Date.now();
 
-        // const rateLimitCheckResult = checkRateLimit(userID, videoID, timeSubmitted, hashedIP);
+        // const rateLimitCheckResult = checkRateLimit(userID, videoID, service, timeSubmitted, hashedIP);
         // if (!rateLimitCheckResult.pass) {
         //     return res.status(rateLimitCheckResult.errorCode).send(rateLimitCheckResult.errorMessage);
         // }
@@ -635,7 +636,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            const UUID = getSubmissionUUID(videoID, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]));
+            const UUID = getSubmissionUUID(videoID, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
             const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;
@@ -648,7 +649,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 );
 
                 //add to private db as well
-                await privateDB.prepare("run", `INSERT INTO "sponsorTimes" VALUES(?, ?, ?)`, [videoID, hashedIP, timeSubmitted]);
+                await privateDB.prepare("run", `INSERT INTO "sponsorTimes" VALUES(?, ?, ?, ?)`, [videoID, hashedIP, timeSubmitted, service]);
 
                 // Clear redis cache for this video
                 QueryCacher.clearVideoCache({
