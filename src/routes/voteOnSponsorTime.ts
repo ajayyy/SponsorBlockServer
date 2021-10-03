@@ -178,10 +178,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
     // Ignore vote if the next category is locked
     const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "category" = ?`, [videoInfo.videoID, category]);
-    if (nextCategoryLocked) {
-        if (!isVIP) {
-            return res.sendStatus(200);
-        } // In an else statement, add a warning in the future for VIPs, that the next category is locked
+    if (nextCategoryLocked && !isVIP) {
+        return res.sendStatus(200);
     }
 
     // Ignore vote if the segment is locked
