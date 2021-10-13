@@ -56,7 +56,7 @@ export function createServer(callback: () => void): Server {
     router.use("/api/", apiCspMiddleware);
     router.use(express.json());
 
-    if (config.userCounterURL) app.use(userCounter);
+    if (config.userCounterURL) router.use(userCounter);
 
     // Setup pretty JSON
     if (config.mode === "development") app.set("json spaces", 2);
