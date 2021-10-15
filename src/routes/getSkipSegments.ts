@@ -51,6 +51,8 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
         actionType: chosenSegment.actionType,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
         UUID: chosenSegment.UUID,
+        locked: chosenSegment.locked,
+        votes: chosenSegment.votes,
         videoDuration: chosenSegment.videoDuration
     }));
 }

@@ -7,11 +7,11 @@ describe("getSkipSegments", () => {
     const endpoint = "/api/skipSegments";
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["getSkipSegmentID0", 1, 11, 2, 0, "uuid01", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0]);
+        await db.prepare("run", query, ["getSkipSegmentID0", 1, 11, 1, 0, "uuid01", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0]);
         await db.prepare("run", query, ["getSkipSegmentID0", 12, 14, 2, 0, "uuid02", "testman", 0, 50, "sponsor", "mute", "YouTube", 100, 0, 0]);
         await db.prepare("run", query, ["getSkipSegmentID0", 20, 33, 2, 0, "uuid03", "testman", 0, 50, "intro", "skip", "YouTube", 101, 0, 0]);
         await db.prepare("run", query, ["getSkipSegmentID1", 1, 11, 2, 0, "uuid10", "testman", 0, 50, "sponsor", "skip", "PeerTube", 120, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID2", 1, 11, 2, 0, "uuid20", "testman", 0, 50, "sponsor", "skip", "YouTube", 140, 0, 0]);
+        await db.prepare("run", query, ["getSkipSegmentID2", 1, 11, 2, 1, "uuid20", "testman", 0, 50, "sponsor", "skip", "YouTube", 140, 0, 0]);
         await db.prepare("run", query, ["getSkipSegmentID3", 1, 11, 2, 0, "uuid30", "testman", 0, 50, "sponsor", "skip", "YouTube", 200, 0, 0]);
         await db.prepare("run", query, ["getSkipSegmentID3", 7, 22, -3, 0, "uuid31", "testman", 0, 50, "sponsor", "skip", "YouTube", 300, 0, 0]);
         await db.prepare("run", query, ["getSkipSegmentMultiple", 1, 11, 2, 0, "uuid40", "testman", 0, 50, "intro", "skip", "YouTube", 400, 0, 0]);
@@ -36,6 +36,8 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(data[0].segment[1], 11);
                 assert.strictEqual(data[0].category, "sponsor");
                 assert.strictEqual(data[0].UUID, "uuid01");
+                assert.strictEqual(data[0].votes, 1);
+                assert.strictEqual(data[0].locked, 0);
                 assert.strictEqual(data[0].videoDuration, 100);
                 done();
             })
@@ -283,6 +285,8 @@ describe("getSkipSegments", () => {
                     segment: [1, 11],
                     category: "sponsor",
                     UUID: "uuid20",
+                    votes: 2,
+                    locked: 1
                 }];
                 assert.ok(partialDeepEquals(data, expected));
                 done();
