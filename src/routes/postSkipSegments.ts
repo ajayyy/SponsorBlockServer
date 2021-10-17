@@ -651,6 +651,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 //add to private db as well
                 await privateDB.prepare("run", `INSERT INTO "sponsorTimes" VALUES(?, ?, ?, ?)`, [videoID, hashedIP, timeSubmitted, service]);
 
+                await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published", "genreUrl") 
+                    SELECT ?, ?, ?, ?, ?
+                    WHERE NOT EXISTS (SELECT 1 FROM "videoInfo" WHERE "videoID" = ?)`, [
+                    videoID, apiVideoInfo?.data?.authorId || "", apiVideoInfo?.data?.title || "", apiVideoInfo?.data?.published || 0, apiVideoInfo?.data?.genreUrl || "", videoID]);
+
                 // Clear redis cache for this video
                 QueryCacher.clearVideoCache({
                     videoID,

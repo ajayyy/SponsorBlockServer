@@ -35,6 +35,7 @@ describe("postSkipSegments", () => {
     const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabaseVideoInfo = (videoID: string) => db.prepare("get", `SELECT * FROM "videoInfo" WHERE "videoID" = ?`, [videoID]);
 
     const endpoint = "/api/skipSegments";
     const postSkipSegmentJSON = (data: Record<string, any>) => client({
@@ -107,6 +108,17 @@ describe("postSkipSegments", () => {
                     category: "sponsor",
                 };
                 assert.ok(partialDeepEquals(row, expected));
+
+                const videoInfo = await queryDatabaseVideoInfo(videoID);
+                const expectedVideoInfo = {
+                    videoID,
+                    title: "Example Title",
+                    channelID: "ExampleChannel",
+                    published: 123,
+                    genreUrl: ""
+                };
+                assert.ok(partialDeepEquals(videoInfo, expectedVideoInfo));
+
                 done();
             })
             .catch(err => done(err));

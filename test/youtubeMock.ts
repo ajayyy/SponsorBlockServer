@@ -35,6 +35,8 @@ export class YouTubeApiMock {
                 err: null,
                 data: {
                     title: "Example Title",
+                    authorId: "ExampleChannel",
+                    published: 123,
                     lengthSeconds: 4980,
                     videoThumbnails: [
                         {
