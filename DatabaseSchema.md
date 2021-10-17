@@ -127,6 +127,21 @@
 | -- | :--: |
 | shadowBannedUsers_index | userID |
 
+### videoInfo  
+
+| Name | Type | |
+| -- | :--: | -- |
+| videoID | TEXT | not null |
+| channelID | TEXT | not null |
+| title | TEXT | not null |
+| published | REAL | not null |
+| genreUrl | TEXT | not null |
+
+| index | field |
+| -- | :--: |
+| videoInfo_videoID | timeSubmitted |
+| videoInfo_channelID | userID |
+
 ### unlistedVideos  
 
 | Name | Type | |
