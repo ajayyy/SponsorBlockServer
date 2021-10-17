@@ -71,3 +71,14 @@ CREATE INDEX IF NOT EXISTS "shadowBannedUsers_index"
     ON public."shadowBannedUsers" USING btree
     ("userID" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+-- videoInfo
+CREATE INDEX IF NOT EXISTS "videoInfo_videoID"
+    ON public."videoInfo" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "videoInfo_channelID"
+    ON public."videoInfo" USING btree
+    ("channelID" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
