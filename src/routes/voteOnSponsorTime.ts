@@ -114,7 +114,7 @@ async function sendWebhooks(voteData: VoteData) {
                 axios.post(webhookURL, {
                     "embeds": [{
                         "title": data?.title,
-                        "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}`,
+                        "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}#requiredSegment=${voteData.UUID}`,
                         "description": `**${voteData.row.votes} Votes Prior | \
                             ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
                             Views**\n\n**Submission ID:** ${voteData.UUID}\
