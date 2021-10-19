@@ -83,7 +83,7 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
         axios.post(config.discordFirstTimeSubmissionsWebhookURL, {
             "embeds": [{
                 "title": data?.title,
-                "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}#requiredSegment=${UUID}`,
+                "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}s#requiredSegment=${UUID}`,
                 "description": `Submission ID: ${UUID}\
                     \n\nTimestamp: \
                     ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
