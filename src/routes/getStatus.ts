@@ -1,6 +1,7 @@
 import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
+import os from "os";
 
 export async function getStatus(req: Request, res: Response): Promise<Response> {
     const startTime = Date.now();
@@ -14,8 +15,9 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             db: Number(dbVersion),
             startTime,
             processTime: Date.now() - startTime,
+            loadavg: os.loadavg().slice(1) // only return 5 & 15 minute load average
         };
-        return value ? res.send(String(statusValues[value])) : res.send(statusValues);
+        return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
     } catch (err) {
         Logger.error(err as string);
         return res.sendStatus(500);

@@ -19,6 +19,7 @@ describe("getStatus", () => {
                 assert.strictEqual(data.db, Number(dbVersion));
                 assert.ok(data.startTime);
                 assert.ok(data.processTime >= 0);
+                assert.ok(data.loadavg.length == 2);
                 done();
             })
             .catch(err => done(err));
@@ -70,6 +71,18 @@ describe("getStatus", () => {
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data) >= 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get loadavg only", (done) => {
+        client.get(`${endpoint}/loadavg`)
+            .then(res => {
+                console.log(res.data);
+                assert.strictEqual(res.status, 200);
+                assert.ok(Number(res.data[0]) >= 0);
+                assert.ok(Number(res.data[1]) >= 0);
                 done();
             })
             .catch(err => done(err));
