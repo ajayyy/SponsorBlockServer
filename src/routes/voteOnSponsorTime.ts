@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
+import { APIVideoInfo } from "../types/youtubeApi.model";
 import { db, privateDB } from "../databases/databases";
 import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
 import { getFormattedTime } from "../utils/getFormattedTime";
@@ -9,7 +10,7 @@ import { getIP } from "../utils/getIP";
 import { getHash } from "../utils/getHash";
 import { config } from "../config";
 import { UserID } from "../types/user.model";
-import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
+import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration } from "../types/segments.model";
 import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
@@ -46,6 +47,30 @@ interface VoteData {
     incrementAmount: number;
     oldIncrementAmount: number;
     finalResponse: FinalResponse;
+}
+
+function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
+    if (config.newLeafURLs !== null) {
+        return YouTubeAPI.listVideos(videoID, ignoreCache);
+    } else {
+        return null;
+    }
+}
+
+const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
+
+async function checkVideoDurationChange(UUID: SegmentUUID) {
+    const { videoDuration, videoID, service } = await db.prepare("get", `select "videoDuration", "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
+    let apiVideoInfo: APIVideoInfo = null;
+    if (service == Service.YouTube) {
+        // don't use cache since we have no information about the video length
+        apiVideoInfo = await getYouTubeVideoInfo(videoID);
+    }
+    const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
+    if (videoDurationChanged(videoDuration, apiVideoDuration)) {
+        Logger.info(`Video duration changed for ${videoID} from ${videoDuration} to ${apiVideoDuration}`);
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ? WHERE "UUID" = ?`, [apiVideoDuration, UUID]);
+    }
 }
 
 async function sendWebhooks(voteData: VoteData) {
@@ -436,6 +461,8 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             //oldIncrementAmount will be zero is row is null
             await db.prepare("run", `UPDATE "sponsorTimes" SET "${columnName}" = "${columnName}" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
+                // check for video duration change
+                await checkVideoDurationChange(UUID);
                 // Unhide and Lock this submission
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0, "shadowHidden" = 0 WHERE "UUID" = ?', [UUID]);
 
