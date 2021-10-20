@@ -299,7 +299,6 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category);
                 assert.strictEqual(row.category, category);
                 done();
             })
@@ -314,7 +313,6 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category);
                 assert.strictEqual(row.category, "intro");
                 done();
             })

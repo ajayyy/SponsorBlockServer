@@ -79,7 +79,6 @@ describe("getStatus", () => {
     it("Should be able to get loadavg only", (done) => {
         client.get(`${endpoint}/loadavg`)
             .then(res => {
-                console.log(res.data);
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data[0]) >= 0);
                 assert.ok(Number(res.data[1]) >= 0);
