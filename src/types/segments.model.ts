@@ -64,6 +64,7 @@ export interface DBSegment {
     hashedVideoID: VideoIDHash;
     timeSubmitted: number;
     userAgent: string;
+    service: Service;
 }
 
 export interface OverlappingSegmentGroup {
