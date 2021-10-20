@@ -60,8 +60,7 @@ function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<API
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
 
 async function checkVideoDurationChange(UUID: SegmentUUID) {
-    const row = await db.prepare("get", `select "videoDuration", "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
-    const { videoDuration, videoID, service } = row;
+    const { videoDuration, videoID, service } = await db.prepare("get", `select "videoDuration", "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
