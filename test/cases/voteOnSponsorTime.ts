@@ -99,7 +99,6 @@ describe("voteOnSponsorTime", () => {
 
     const getSegmentVotes = (UUID: string) => db.prepare("get", `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
     const getSegmentCategory = (UUID: string) => db.prepare("get", `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-    const getVideoDuration = (UUID: string) => db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]).then(row => row.videoDuration);
 
     it("Should be able to upvote a segment", (done) => {
         const UUID = "vote-uuid-0";
@@ -570,8 +569,8 @@ describe("voteOnSponsorTime", () => {
         postVote(vipUser, UUID, 1)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const newDuration = await getVideoDuration(UUID);
-                assert.strictEqual(newDuration, 500);
+                const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+                assert.strictEqual(videoDuration, 500);
                 done();
             });
     });
