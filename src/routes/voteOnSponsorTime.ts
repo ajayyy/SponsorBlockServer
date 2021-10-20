@@ -57,11 +57,10 @@ function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<API
     }
 }
 
-const videoDurationChanged = (segmentDuration: number, APIDuration: number) => APIDuration > 0 && Math.abs(APIDuration - segmentDuration) < 2;
+const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
 
 async function checkVideoDurationChange(UUID: SegmentUUID) {
-    const { videoDuration, videoID, service } = await db.prepare("get", `select videoDuration, videoID, service from "sponsorTImes" where "UUID" = ?`, [UUID]);
-
+    const { videoDuration, videoID, service } = await db.prepare("get", `select videoDuration, videoID, service from "sponsorTimes" where "UUID" = ?`, [UUID]);
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
@@ -70,7 +69,7 @@ async function checkVideoDurationChange(UUID: SegmentUUID) {
     const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${videoDuration} to ${apiVideoDuration}`);
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ?, WHERE "UUID" = ?`, [apiVideoDuration, UUID]);
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ? WHERE "UUID" = ?`, [apiVideoDuration, UUID]);
     }
 }
 
@@ -463,7 +462,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             await db.prepare("run", `UPDATE "sponsorTimes" SET "${columnName}" = "${columnName}" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
                 // check for video duration change
-                checkVideoDurationChange(UUID);
+                await checkVideoDurationChange(UUID);
                 // Unhide and Lock this submission
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0, "shadowHidden" = 0 WHERE "UUID" = ?', [UUID]);
 

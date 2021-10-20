@@ -30,6 +30,23 @@ export class YouTubeApiMock {
                     ]
                 } as APIVideoData
             };
+        } else if (obj.id === "duration-update") {
+            return {
+                err: null,
+                data: {
+                    title: "Example Title",
+                    lengthSeconds: 500,
+                    videoThumbnails: [
+                        {
+                            quality: "maxres",
+                            url: "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                            second__originalUrl:"https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png",
+                            width: 1280,
+                            height: 720
+                        },
+                    ]
+                } as APIVideoData
+            };
         } else {
             return {
                 err: null,

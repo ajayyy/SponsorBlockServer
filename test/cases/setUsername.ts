@@ -92,7 +92,6 @@ describe("setUsername", () => {
     it("Should be able to set username that has never been set", (done) => {
         postSetUserName(user00PrivateUserID, username00)
             .then(async res => {
-                console.log(res.data);
                 const usernameInfo = await getUsernameInfo(getHash(user00PrivateUserID));
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(usernameInfo.userName, username00);
