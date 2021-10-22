@@ -3,7 +3,6 @@ import { Sqlite } from "./Sqlite";
 import { Mysql } from "./Mysql";
 import { Postgres } from "./Postgres";
 import { IDatabase } from "./IDatabase";
-import { readdirSync } from "fs";
 
 let db: IDatabase;
 let privateDB: IDatabase;
@@ -69,12 +68,13 @@ async function initDb(): Promise<void> {
         (db as Sqlite).attachDatabase(config.privateDB, "privateDB");
     }
 
-    if (config.mode === "mirror") {
-        readdirSync("/mirror").forEach(async file => {
-            const fileName = file.slice(0,-4);
-            const filePath = `/mirror/${file}`;
-            await db.prepare("run", `COPY "${fileName}" FROM '${filePath}' WITH (FORMAT CSV, HEADER true);`);
-        });
+    if (config.mode === "mirror" && db instanceof Postgres) {
+        const tables = config?.dumpDatabase?.tables ?? [];
+        const tableNames = tables.map(table => table.name);
+        for (const table of tableNames) {
+            const filePath = `${config?.dumpDatabase?.postgresExportPath}/${table}.csv`;
+            await db.prepare("run", `COPY "${table}" FROM '${filePath}' WITH (FORMAT CSV, HEADER true);`);
+        }
     }
 }
 
