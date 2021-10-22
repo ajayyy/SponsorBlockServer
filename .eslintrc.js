@@ -19,7 +19,7 @@ module.exports = {
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "indent": ["warn", 4, { "SwitchCase": 1 }],
-        "newline-before-return": "error",
+        "newline-before-return": "warn",
         "no-multiple-empty-lines": ["error", { max: 2, maxEOF: 0 }],
         "no-self-assign": "off",
         "no-trailing-spaces": "warn",
