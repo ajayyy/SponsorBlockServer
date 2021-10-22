@@ -1,0 +1,65 @@
+{
+    "port": 8080,
+    "mockPort": 8081,
+    "globalSalt": "testSalt",
+    "adminUserID": "4bdfdc9cddf2c7d07a8a87b57bf6d25389fb75d1399674ee0e0938a6a60f4c3b",
+    "newLeafURLs": ["placeholder"],
+    "discordReportChannelWebhookURL": "http://127.0.0.1:8081/ReportChannelWebhook",
+    "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/FirstTimeSubmissionsWebhook",
+    "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/CompletelyIncorrectReportWebhook",
+    "discordNeuralBlockRejectWebhookURL": "http://127.0.0.1:8081/NeuralBlockRejectWebhook",
+    "neuralBlockURL": "http://127.0.0.1:8081/NeuralBlock",
+    "behindProxy": true,
+    "postgres": {
+        "user": "ci_db_user",
+        "password": "ci_db_pass",
+        "host": "bf.mchang.icu",
+        "port": 5432
+    },
+    "createDatabaseIfNotExist": true,
+    "schemaFolder": "./databases",
+    "dbSchema": "./databases/_sponsorTimes.db.sql",
+    "privateDBSchema": "./databases/_private.db.sql",
+    "mode": "test",
+    "readOnly": false,
+    "webhooks": [
+        {
+            "url": "http://127.0.0.1:8081/CustomWebhook",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
+        }, {
+            "url": "http://127.0.0.1:8081/FailedWebhook",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
+        }, {
+            "url": "http://127.0.0.1:8099/WrongPort",
+            "key": "superSecretKey",
+            "scopes": [
+                "vote.up",
+                "vote.down"
+            ]
+        }
+    ],
+    "categoryList": ["sponsor", "selfpromo", "interaction",  "intro", "outro", "preview", "music_offtopic", "poi_highlight"],
+    "maxNumberOfActiveWarnings": 3,
+    "hoursAfterWarningExpires": 24,
+    "rateLimit": {
+        "vote": {
+          "windowMs": 900000,
+          "max": 20,
+          "message": "Too many votes, please try again later",
+          "statusCode": 429
+        },
+        "view": {
+          "windowMs": 900000,
+          "max": 20,
+          "statusCode": 200
+        }
+    }
+}

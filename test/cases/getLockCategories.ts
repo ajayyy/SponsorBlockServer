@@ -2,6 +2,7 @@ import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { mixedDeepEquals } from "../utils/partialDeepEquals";
 const endpoint = "/api/lockCategories";
 const getLockCategories = (videoID: string) => client.get(endpoint, { params: { videoID } });
 const getLockCategoriesWithService = (videoID: string, service: string) => client.get(endpoint, { params: { videoID, service } });
@@ -12,13 +13,13 @@ describe("getLockCategories", () => {
         await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesVIP")]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason", "service") VALUES (?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock1", "sponsor", "1-short", "YouTube"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock1", "interaction", "1-longer-reason", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory1", "sponsor", "1-short", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory1", "interaction", "1-longer-reason", "YouTube"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock2", "preview", "2-reason", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory2", "preview", "2-reason", "YouTube"]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock3", "nonmusic", "3-reason", "PeerTube"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLock3", "sponsor", "3-reason", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory3", "nonmusic", "3-reason", "PeerTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory3", "sponsor", "3-reason", "YouTube"]);
     });
 
     it("Should update the database version when starting the application", async () => {
@@ -27,7 +28,7 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get multiple locks", (done) => {
-        getLockCategories("getLock1")
+        getLockCategories("getLockCategory1")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -37,14 +38,14 @@ describe("getLockCategories", () => {
                     ],
                     reason: "1-longer-reason"
                 };
-                assert.deepStrictEqual(res.data, expected);
+                assert.ok(mixedDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
     it("Should be able to get single locks", (done) => {
-        getLockCategories("getLock2")
+        getLockCategories("getLockCategory2")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -60,7 +61,7 @@ describe("getLockCategories", () => {
     });
 
     it("should return 404 if no lock exists", (done) => {
-        getLockCategories("getLockNull")
+        getLockCategories("getLockCategoryNull")
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
@@ -78,7 +79,7 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get multiple locks with service", (done) => {
-        getLockCategoriesWithService("getLock1", "YouTube")
+        getLockCategoriesWithService("getLockCategory1", "YouTube")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -88,14 +89,14 @@ describe("getLockCategories", () => {
                     ],
                     reason: "1-longer-reason"
                 };
-                assert.deepStrictEqual(res.data, expected);
+                assert.ok(mixedDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
     });
 
     it("Should be able to get single locks with service", (done) => {
-        getLockCategoriesWithService("getLock3", "PeerTube")
+        getLockCategoriesWithService("getLockCategory3", "PeerTube")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -111,7 +112,7 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get single locks with service", (done) => {
-        getLockCategoriesWithService("getLock3", "Youtube")
+        getLockCategoriesWithService("getLockCategory3", "Youtube")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
@@ -127,7 +128,7 @@ describe("getLockCategories", () => {
     });
 
     it("should return result from Youtube service if service not match", (done) => {
-        getLockCategoriesWithService("getLock3", "Dailymotion")
+        getLockCategoriesWithService("getLockCategory3", "Dailymotion")
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
