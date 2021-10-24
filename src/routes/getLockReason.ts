@@ -43,7 +43,6 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
         const row = await db.prepare("all", 'SELECT "category", "reason", "userID" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, reason: string, userID: string }[];
         // map to object array
         const locks = [];
-        const lockedCategories = [] as string[];
         const userIDs = new Set();
         // get all locks for video, check if requested later
         for (const lock of row) {
@@ -54,7 +53,6 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
                 userID: lock?.userID || "",
                 userName: "",
             } as lockArray);
-            lockedCategories.push(lock.category);
             userIDs.add(lock.userID);
         }
         // all userName from userIDs
