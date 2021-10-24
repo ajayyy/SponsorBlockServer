@@ -184,7 +184,7 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
         res.sendStatus(404);
     }
 
-    await queueDump();
+    if (req.query.generate !== "false") await queueDump();
 }
 
 function updateQueueTime(): void {
