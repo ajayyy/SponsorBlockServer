@@ -6,7 +6,6 @@ import { getSubmissionUUID } from "../utils/getSubmissionUUID";
 import { getHash } from "../utils/getHash";
 import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
-import { isUserTrustworthy } from "../utils/isUserTrustworthy";
 import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
 import { ActionType, Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
@@ -622,13 +621,6 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
 
-        let shadowBanned = shadowBanRow.userCount;
-
-        if (!(await isUserTrustworthy(userID))) {
-            //hide this submission as this user is untrustworthy
-            shadowBanned = 1;
-        }
-
         const startingVotes = 0 + decreaseVotes;
         const reputation = await getReputation(userID);
 
@@ -644,7 +636,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
                     ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent")
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanned, hashedVideoID, userAgent
+                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, 0, hashedVideoID, userAgent
                 ],
                 );
 
