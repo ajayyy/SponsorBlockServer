@@ -38,5 +38,6 @@ CREATE TABLE IF NOT EXISTS "config" (
 );
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
+CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
 
 COMMIT;
