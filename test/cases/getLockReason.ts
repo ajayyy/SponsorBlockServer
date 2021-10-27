@@ -5,19 +5,33 @@ import { client } from "../utils/httpClient";
 
 const endpoint = "/api/lockReason";
 
+const vipUserName1 = "getLockReason-vipUserName_1";
+const vipUserID1 = getHash("getLockReason-vipUserID_1");
+const vipUserName2 = "getLockReason-vipUserName_2";
+const vipUserID2 = getHash("getLockReason-vipUserID_2");
+
 describe("getLockReason", () => {
     before(async () => {
-        const vipUserID = "getLockReasonVIP";
-        const vipUserHash = getHash(vipUserID);
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [vipUserHash]);
-        await db.prepare("run", insertVipUserQuery, [vipUserHash]);
+        await db.prepare("run", insertVipUserQuery, [vipUserID1]);
+        await db.prepare("run", insertVipUserQuery, [vipUserID2]);
+
+        const insertVipUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1]);
+        await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [vipUserHash, "getLockReason", "sponsor", "sponsor-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserHash, "getLockReason", "interaction", "interaction-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserHash, "getLockReason", "preview", "preview-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserHash, "getLockReason", "music_offtopic", "nonmusic-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "sponsor", "sponsor-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "interaction", "interaction-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "preview", "preview-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "music_offtopic", "nonmusic-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "outro", "outro-reason"]);
+    });
+
+    after(async () => {
+        const deleteUserNameQuery = 'DELETE FROM "userNames" WHERE  "userID" = ? AND  "userName" = ? LIMIT 1';
+        await db.prepare("run", deleteUserNameQuery, [vipUserID1, vipUserName1]);
+        await db.prepare("run", deleteUserNameQuery, [vipUserID2, vipUserName2]);
     });
 
     it("Should update the database version when starting the application", async () => {
@@ -31,7 +45,7 @@ describe("getLockReason", () => {
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [
-                    { category: "sponsor", locked: 1, reason: "sponsor-reason" }
+                    { category: "sponsor", locked: 1, reason: "sponsor-reason", userID: vipUserID1, userName: vipUserName1 }
                 ];
                 assert.deepStrictEqual(res.data, expected);
                 done();
@@ -44,7 +58,7 @@ describe("getLockReason", () => {
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [
-                    { category: "intro", locked: 0, reason: "" }
+                    { category: "intro", locked: 0, reason: "", userID: "", userName: "" }
                 ];
                 assert.deepStrictEqual(res.data, expected);
                 done();
@@ -53,12 +67,13 @@ describe("getLockReason", () => {
     });
 
     it("should get multiple locks with array", (done) => {
-        client.get(endpoint, { params: { videoID: "getLockReason", categories: `["intro","sponsor"]` } })
+        client.get(endpoint, { params: { videoID: "getLockReason", categories: `["intro","sponsor","outro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [
-                    { category: "sponsor", locked: 1, reason: "sponsor-reason" },
-                    { category: "intro", locked: 0, reason: "" }
+                    { category: "intro", locked: 0, reason: "", userID: "", userName: "" },
+                    { category: "sponsor", locked: 1, reason: "sponsor-reason", userID: vipUserID1, userName: vipUserName1 },
+                    { category: "outro", locked: 1, reason: "outro-reason", userID: vipUserID2, userName: vipUserName2 }
                 ];
                 assert.deepStrictEqual(res.data, expected);
                 done();
@@ -71,9 +86,9 @@ describe("getLockReason", () => {
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [
-                    { category: "interaction", locked: 1, reason: "interaction-reason" },
-                    { category: "music_offtopic", locked: 1, reason: "nonmusic-reason" },
-                    { category: "intro", locked: 0, reason: "" }
+                    { category: "interaction", locked: 1, reason: "interaction-reason", userID: vipUserID1, userName: vipUserName1  },
+                    { category: "music_offtopic", locked: 1, reason: "nonmusic-reason", userID: vipUserID1, userName: vipUserName1  },
+                    { category: "intro", locked: 0, reason: "", userID: "", userName: "" }
                 ];
                 assert.deepStrictEqual(res.data, expected);
                 done();
@@ -86,14 +101,14 @@ describe("getLockReason", () => {
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [
-                    { category: "sponsor", locked: 1, reason: "sponsor-reason" },
-                    { category: "interaction", locked: 1, reason: "interaction-reason" },
-                    { category: "preview", locked: 1, reason: "preview-reason" },
-                    { category: "music_offtopic", locked: 1, reason: "nonmusic-reason" },
-                    { category: "selfpromo", locked: 0, reason: "" },
-                    { category: "intro", locked: 0, reason: "" },
-                    { category: "outro", locked: 0, reason: "" },
-                    { category: "poi_highlight", locked: 0, reason: "" }
+                    { category: "sponsor", locked: 1, reason: "sponsor-reason", userID: vipUserID1, userName: vipUserName1 },
+                    { category: "selfpromo", locked: 0, reason: "", userID: "", userName: "" },
+                    { category: "interaction", locked: 1, reason: "interaction-reason", userID: vipUserID1, userName: vipUserName1 },
+                    { category: "intro", locked: 0, reason: "", userID: "", userName: "" },
+                    { category: "outro", locked: 1, reason: "outro-reason", userID: vipUserID2, userName: vipUserName2 },
+                    { category: "preview", locked: 1, reason: "preview-reason", userID: vipUserID1, userName: vipUserName1 },
+                    { category: "music_offtopic", locked: 1, reason: "nonmusic-reason", userID: vipUserID1, userName: vipUserName1 },
+                    { category: "poi_highlight", locked: 0, reason: "", userID: "", userName: "" }
                 ];
                 assert.deepStrictEqual(res.data, expected);
                 done();

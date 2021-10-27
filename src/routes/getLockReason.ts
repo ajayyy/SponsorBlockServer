@@ -8,7 +8,9 @@ const possibleCategoryList = config.categoryList;
 interface lockArray {
     category: Category;
     locked: number,
-    reason: string
+    reason: string,
+    userID: string,
+    userName: string,
 }
 
 export async function getLockReason(req: Request, res: Response): Promise<Response> {
@@ -38,31 +40,49 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
 
     try {
         // Get existing lock categories markers
-        const row = await db.prepare("all", 'SELECT "category", "reason" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, reason: string}[];
+        const row = await db.prepare("all", 'SELECT "category", "reason", "userID" from "lockCategories" where "videoID" = ?', [videoID]) as {category: Category, reason: string, userID: string }[];
         // map to object array
         const locks = [];
-        const lockedCategories = [] as string[];
+        const userIDs = new Set();
         // get all locks for video, check if requested later
         for (const lock of row) {
             locks.push({
                 category: lock.category,
                 locked: 1,
-                reason: lock.reason
+                reason: lock.reason,
+                userID: lock?.userID || "",
+                userName: "",
             } as lockArray);
-            lockedCategories.push(lock.category);
+            userIDs.add(lock.userID);
         }
-        // add empty locks for categories requested but not locked
-        const noLockCategories = searchCategories.filter(x => !lockedCategories.includes(x));
-        for (const noLock of noLockCategories) {
-            locks.push({
-                category: noLock,
-                locked: 0,
-                reason: ""
-            } as lockArray);
+        // all userName from userIDs
+        const userNames = await db.prepare(
+            "all",
+            `SELECT "userName", "userID" FROM "userNames" WHERE "userID" IN (${Array.from("?".repeat(userIDs.size)).join()}) LIMIT ?`,
+            [...userIDs, userIDs.size]
+        ) as { userName: string, userID: string }[];
+
+        const results = [];
+        for (const category of searchCategories)  {
+            const lock = locks.find(l => l.category === category);
+            if (lock?.userID) {
+                // mapping userName to locks
+                const user = userNames.find(u => u.userID === lock.userID);
+                lock.userName = user?.userName || "";
+                results.push(lock);
+            } else {
+                // add empty locks for categories requested but not locked
+                results.push({
+                    category,
+                    locked: 0,
+                    reason: "",
+                    userID: "",
+                    userName: "",
+                } as lockArray);
+            }
         }
-        // return real and fake locks that were requested
-        const filtered = locks.filter(lock => searchCategories.includes(lock.category));
-        return res.send(filtered);
+
+        return res.send(results);
     } catch (err) {
         Logger.error(err as string);
         return res.sendStatus(500);
