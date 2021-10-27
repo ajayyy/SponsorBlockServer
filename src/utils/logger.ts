@@ -79,6 +79,7 @@ class Logger {
         if (levelStr.length === 4) {
             levelStr += " ";  // ensure logs are aligned
         }
+        // eslint-disable-next-line no-console
         console.log(colors.Dim, `${levelStr} ${new Date().toISOString()}: `, color, str, colors.Reset);
     }
 }

@@ -7,6 +7,7 @@ import { getCommit } from "./utils/getCommit";
 
 async function init() {
     process.on("unhandledRejection", (error: any) => {
+        // eslint-disable-next-line no-console
         console.dir(error?.stack);
         process.exit(1);
     });
