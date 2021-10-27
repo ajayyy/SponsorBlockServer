@@ -35,7 +35,7 @@ services:
     ports:
       - 873:873
     volumes:
-      - ./rsync/rsync.conf:/etc/rsync.conf
+      - ./rsync/rsyncd.conf:/etc/rsyncd.conf
       - ./database-export/:/mirror
 
 volumes:
