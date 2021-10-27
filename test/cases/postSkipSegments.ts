@@ -1,6 +1,6 @@
 import { config } from "../../src/config";
 import { getHash } from "../../src/utils/getHash";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+import { partialDeepEquals, arrayDeepEquals } from "../utils/partialDeepEquals";
 import { db } from "../../src/databases/databases";
 import { ImportMock } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -29,7 +29,7 @@ describe("postSkipSegments", () => {
 
     const submitUserOneHash = getHash(submitUserOne);
     const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
-    const warnVideoID = "dQw4w9WgXcF";
+    const warnVideoID = "postSkip2";
     const badInputVideoID = "dQw4w9WgXcQ";
 
     const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
@@ -91,7 +91,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit a single time (Params method)", (done) => {
-        const videoID = "dQw4w9WgXcR";
+        const videoID = "postSkip1";
         postSkipSegmentParam({
             videoID,
             startTime: 2,
@@ -125,7 +125,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit a single time (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXcF";
+        const videoID = "postSkip2";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -150,7 +150,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit a single time with an action type (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXcV";
+        const videoID = "postSkip3";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -176,7 +176,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should not be able to submit an intro with mute action type (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXpQ";
+        const videoID = "postSkip4";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -196,7 +196,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit a single time with a duration from the YouTube API (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXZX";
+        const videoID = "postSkip5";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -222,7 +222,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit a single time with a precise duration close to the one from the YouTube API (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXZH";
+        const videoID = "postSkip6";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -331,7 +331,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit a single time under a different service (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXcG";
+        const videoID = "postSkip7";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -383,7 +383,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should be able to submit multiple times (JSON method)", (done) => {
-        const videoID = "dQw4w9WgXcT";
+        const videoID = "postSkip11";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -407,14 +407,14 @@ describe("postSkipSegments", () => {
                     endTime: 60,
                     category: "intro"
                 }];
-                assert.deepStrictEqual(rows, expected);
+                assert.ok(arrayDeepEquals(rows, expected));
                 done();
             })
             .catch(err => done(err));
     }).timeout(5000);
 
     it("Should allow multiple times if total is under 80% of video(JSON method)", (done) => {
-        const videoID = "L_jWHffIx5E";
+        const videoID = "postSkip9";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -452,7 +452,7 @@ describe("postSkipSegments", () => {
                     endTime: 170,
                     category: "sponsor"
                 }];
-                assert.deepStrictEqual(rows, expected);
+                assert.ok(arrayDeepEquals(rows, expected));
                 done();
             })
             .catch(err => done(err));
@@ -505,20 +505,20 @@ describe("postSkipSegments", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 403);
                 const expected = [{
-                    category: "sponsor",
-                    startTime: 2000,
-                    endTime: 4000
+                    category: "interaction",
+                    startTime: 0,
+                    endTime: 1000
                 }, {
-                    category: "sponsor",
-                    startTime: 1500,
-                    endTime: 2750
+                    category: "interaction",
+                    startTime: 1001,
+                    endTime: 1005
                 }, {
-                    category: "sponsor",
-                    startTime: 4050,
-                    endTime: 4750
+                    category: "interaction",
+                    startTime: 0,
+                    endTime: 5000
                 }];
-                const rows = await queryDatabase(videoID);
-                assert.notDeepStrictEqual(rows, expected);
+                const rows = await db.prepare("all", `SELECT "category", "startTime", "endTime" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+                assert.ok(arrayDeepEquals(rows, expected));
                 done();
             })
             .catch(err => done(err));

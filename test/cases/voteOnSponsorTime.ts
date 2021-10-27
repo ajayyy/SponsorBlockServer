@@ -56,6 +56,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 12, 0, 1, "category-change-uuid-6", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 14, 0, 0, "category-change-uuid-7", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-update", 1, 10, 0, 0, "duration-update-uuid-1", "testman", 0, 0, "intro", 0, 0]);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -299,7 +300,6 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category);
                 assert.strictEqual(row.category, category);
                 done();
             })
@@ -314,7 +314,6 @@ describe("voteOnSponsorTime", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
-                console.log(row.category);
                 assert.strictEqual(row.category, "intro");
                 done();
             })
@@ -348,7 +347,7 @@ describe("voteOnSponsorTime", () => {
             })
             .catch(err => done(err));
     });
-    
+
     it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", (done) => {
         const userID = vipUser;
         const UUID = "category-change-uuid-5";
@@ -404,7 +403,7 @@ describe("voteOnSponsorTime", () => {
             })
             .catch(err => done(err));
     });
-    
+
     it("Should not be able to category-vote on an invalid UUID submission", (done) => {
         const UUID = "invalid-uuid";
         postVoteCategory("randomID3", UUID, "intro")
@@ -563,5 +562,16 @@ describe("voteOnSponsorTime", () => {
                 done();
             })
             .catch(err => done(err));
+    });
+
+    it("Should be able to update stored videoDuration with VIP upvote", (done) => {
+        const UUID = "duration-update-uuid-1";
+        postVote(vipUser, UUID, 1)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+                assert.strictEqual(videoDuration, 500);
+                done();
+            });
     });
 });
