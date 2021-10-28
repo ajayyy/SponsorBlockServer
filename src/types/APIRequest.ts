@@ -4,10 +4,12 @@ import { Category, VideoID } from "./segments.model";
 
 export interface APIRequest extends Request {
     query: {
+        videoID: VideoID;
         userID: UserID | HashedUserID;
         adminUserID: string;
         enabled: string;
         generate: "true" | "false";
+        service: "youtube" | "vimeo";
     },
     body: {
         videoID: null | VideoID,
