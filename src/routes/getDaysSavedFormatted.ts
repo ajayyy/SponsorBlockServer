@@ -1,7 +1,8 @@
 import { db } from "../databases/databases";
-import { Request, Response } from "express";
+import { Response } from "express";
+import { APIRequest } from "../types/APIRequest";
 
-export async function getDaysSavedFormatted(req: Request, res: Response): Promise<Response> {
+export async function getDaysSavedFormatted(_req: APIRequest, res: Response): Promise<Response> {
     const row = await db.prepare("get", 'SELECT SUM(("endTime" - "startTime") / 60 / 60 / 24 * "views") as "daysSaved" from "sponsorTimes" where "shadowHidden" != 1', []);
 
     if (row !== undefined) {
