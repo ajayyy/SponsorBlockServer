@@ -1,6 +1,6 @@
 import { HashedUserID, UserID } from "./user.model";
 import { Request } from "express";
-import { Category, VideoID } from "./segments.model";
+import { Category, VideoID, VideoIDHash } from "./segments.model";
 
 export interface APIRequest extends Request {
     query: {
@@ -10,6 +10,9 @@ export interface APIRequest extends Request {
         enabled: string;
         generate: "true" | "false";
         service: "youtube" | "vimeo";
+    },
+    params: {
+        prefix: VideoIDHash;
     },
     body: {
         videoID: null | VideoID,
