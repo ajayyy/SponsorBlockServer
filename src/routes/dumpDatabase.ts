@@ -118,6 +118,12 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             Then, you can download the csv files below, or use the links returned from the JSON request. 
             A dump will also be triggered by making a request to one of these urls.
 
+            <h3>Keeping your dump up to date</h3>
+
+            If you want a live dump, please do not continually fetch this url. 
+            Please instead use the <a href="https://github.com/mchangrh/sb-mirror">sb-mirror</a> project.
+            This can automatically fetch new data and will not require a redownload each time, saving bandwith.
+
             <h3>Links</h3>
             <table>
                 <thead>
