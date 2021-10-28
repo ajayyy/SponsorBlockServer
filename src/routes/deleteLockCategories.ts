@@ -27,11 +27,11 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
     } = req;
 
     // Check input data is valid
-    if (!videoID ||
-        !userID ||
-        !categories ||
-        !Array.isArray(categories) ||
-        categories.length === 0
+    if (!videoID
+        || !userID
+        || !categories
+        || !Array.isArray(categories)
+        || categories.length === 0
     ) {
         return res.status(400).json({
             message: "Bad Format",
