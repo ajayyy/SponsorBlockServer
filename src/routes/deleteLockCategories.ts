@@ -1,21 +1,12 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { getHash } from "../utils/getHash";
 import { db } from "../databases/databases";
 import { Category, Service, VideoID } from "../types/segments.model";
-import { UserID } from "../types/user.model";
 import { getService } from "../utils/getService";
+import { APIRequest } from "../types/APIRequest";
 
-interface DeleteLockCategoriesRequest extends Request {
-    body: {
-        categories: Category[];
-        service: string;
-        userID: UserID;
-        videoID: VideoID;
-    };
-}
-
-export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequest, res: Response): Promise<Response> {
+export async function deleteLockCategoriesEndpoint(req: APIRequest, res: Response): Promise<Response> {
     // Collect user input data
     const {
         body: {

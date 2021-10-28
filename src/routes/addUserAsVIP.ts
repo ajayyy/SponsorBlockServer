@@ -1,19 +1,13 @@
 import { getHash } from "../utils/getHash";
 import { db } from "../databases/databases";
 import { config } from "../config";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { HashedUserID } from "../types/user.model";
+import { APIRequest } from "../types/APIRequest";
 
-interface AddUserAsVIPRequest extends Request {
-    query: {
-        userID: HashedUserID;
-        adminUserID: string;
-        enabled: string;
-    }
-}
+export async function addUserAsVIP(req: APIRequest, res: Response): Promise<Response> {
 
-export async function addUserAsVIP(req: AddUserAsVIPRequest, res: Response): Promise<Response> {
     const { query: { userID, adminUserID } } = req;
 
     const enabled = req.query?.enabled === "true";
@@ -32,7 +26,7 @@ export async function addUserAsVIP(req: AddUserAsVIPRequest, res: Response): Pro
     }
 
     // check to see if this user is already a vip
-    const userIsVIP = await isUserVIP(userID);
+    const userIsVIP = await isUserVIP(userID as HashedUserID);
 
     if (enabled && !userIsVIP) {
         // add them to the vip list

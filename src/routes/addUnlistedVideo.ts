@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { db } from "../databases/databases";
+import { APIRequest } from "../types/APIRequest";
 import { getService } from "../utils/getService";
 import { Logger } from "../utils/logger";
 
@@ -10,7 +11,7 @@ import { Logger } from "../utils/logger";
  * https://support.google.com/youtube/answer/9230970
  */
 
-export async function addUnlistedVideo(req: Request, res: Response): Promise<Response> {
+export async function addUnlistedVideo(req: APIRequest, res: Response): Promise<Response> {
     const {
         body: {
             videoID = null,

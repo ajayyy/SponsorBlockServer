@@ -1,11 +1,12 @@
 import { Logger } from "../utils/logger";
 import { getHash } from "../utils/getHash";
 import { isUserVIP } from "../utils/isUserVIP";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { HashedUserID, UserID } from "../types/user.model";
+import { APIRequest } from "../types/APIRequest";
 
-export async function getIsUserVIP(req: Request, res: Response): Promise<Response> {
-    const userID = req.query.userID as UserID;
+export async function getIsUserVIP(req: APIRequest, res: Response): Promise<Response> {
+    const userID = req.query.userID;
 
     if (userID == undefined) {
         //invalid request
