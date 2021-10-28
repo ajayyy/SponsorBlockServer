@@ -2,7 +2,7 @@ import { Logger } from "../utils/logger";
 import { getHash } from "../utils/getHash";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Response } from "express";
-import { HashedUserID, UserID } from "../types/user.model";
+import { HashedUserID } from "../types/user.model";
 import { APIRequest } from "../types/APIRequest";
 
 export async function getIsUserVIP(req: APIRequest, res: Response): Promise<Response> {
@@ -18,12 +18,14 @@ export async function getIsUserVIP(req: APIRequest, res: Response): Promise<Resp
 
     try {
         const vipState = await isUserVIP(hashedUserID);
+
         return res.status(200).json({
             hashedUserID: hashedUserID,
             vip: vipState,
         });
     } catch (err) {
         Logger.error(err as string);
-        return res.sendStatus(500);
     }
+
+    return res.sendStatus(500);
 }
