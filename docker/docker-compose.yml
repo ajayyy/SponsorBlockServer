@@ -28,6 +28,15 @@ services:
       - 3241:3000
     volumes:
       - ./newleaf/configuration.py:/workdir/configuration.py
+  rsync:
+    image: mchangrh/rsync:latest
+    container_name: rsync
+    restart: always
+    ports:
+      - 873:873
+    volumes:
+      - ./rsync/rsyncd.conf:/etc/rsyncd.conf
+      - ./database-export/:/mirror
 
 volumes:
   database-data:
