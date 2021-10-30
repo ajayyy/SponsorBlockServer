@@ -620,7 +620,6 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
-
         const startingVotes = 0 + decreaseVotes;
         const reputation = await getReputation(userID);
 
@@ -636,7 +635,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
                     ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent")
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, 0, hashedVideoID, userAgent
+                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanRow.userCount, hashedVideoID, userAgent
                 ],
                 );
 

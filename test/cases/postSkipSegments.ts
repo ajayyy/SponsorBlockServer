@@ -26,11 +26,14 @@ describe("postSkipSegments", () => {
     const warnUser03Hash = getHash(warnUser03);
     const warnUser04 = "warn-user04-qwertyuiopasdfghjklzxcvbnm";
     const warnUser04Hash = getHash(warnUser04);
+    const banUser01 = "ban-user01-loremipsumdolorsitametconsectetur";
+    const banUser01Hash = getHash(banUser01);
 
     const submitUserOneHash = getHash(submitUserOne);
     const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
     const warnVideoID = "postSkip2";
     const badInputVideoID = "dQw4w9WgXcQ";
+    const shadowBanVideoID = "postSkipBan";
 
     const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
@@ -88,6 +91,9 @@ describe("postSkipSegments", () => {
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         db.prepare("run", insertVipUserQuery, [getHash(submitVIPuser)]);
+
+        // ban user
+        db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, [banUser01Hash]);
     });
 
     it("Should be able to submit a single time (Params method)", (done) => {
@@ -981,6 +987,30 @@ describe("postSkipSegments", () => {
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should automatically shadowban segments if user is banned", (done) => {
+        const videoID = shadowBanVideoID;
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 10,
+            category: "sponsor",
+            userID: banUser01
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "shadowHidden", "userID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    shadowHidden: 1,
+                    userID: banUser01Hash
+                };
+                assert.deepStrictEqual(row, expected);
                 done();
             })
             .catch(err => done(err));
