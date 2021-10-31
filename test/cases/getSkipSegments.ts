@@ -39,6 +39,7 @@ describe("getSkipSegments", () => {
                 assert.strictEqual(data[0].votes, 1);
                 assert.strictEqual(data[0].locked, 0);
                 assert.strictEqual(data[0].videoDuration, 100);
+                assert.strictEqual(data[0].userID, "testman");
                 done();
             })
             .catch(err => done(err));
