@@ -271,73 +271,36 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
     );
 }
 
-function splitPercentOverlap(groups: OverlappingSegmentGroup[], percent: number): OverlappingSegmentGroup[] {
-    const result: OverlappingSegmentGroup[] = [];
-    for (const group of groups) {
-        const segmentsLeftToCheck = [...group.segments];
-        while (segmentsLeftToCheck.length > 0) {
-            const currentGroup: OverlappingSegmentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
+function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegmentGroup[] {
+    return groups.flatMap((group) => {
+        const result: OverlappingSegmentGroup[] = [];
+        group.segments.forEach((segment) => {
+            const bestGroup = result.find((group) => {
+                // At least one segment in the group must have high % overlap or the same action type
+                return group.segments.some((compareSegment) => {
+                    const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
+                    const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
+                    const overlapPercent = overlap / overallDuration;
+                    return (segment.actionType === compareSegment.actionType && segment.actionType !== ActionType.Chapter)
+                        || overlapPercent >= 0.6
+                        || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
+                });
+            });
 
-            const currentSegment = segmentsLeftToCheck.shift();
-            // TODO: extract out this part to be more generic
-            currentGroup.segments.push(currentSegment);
-            currentGroup.votes += currentSegment.votes;
-            currentGroup.reputation += currentSegment.reputation;
-            currentGroup.locked ||= currentSegment.locked;
-            currentGroup.required ||= currentSegment.required;
-
-            const currentDuration = currentSegment.endTime - currentSegment.startTime;
-            for (const [index, compareSegment] of segmentsLeftToCheck.entries()) {
-                const compareDuration = compareSegment.endTime - compareSegment.startTime;
-                const overlap = Math.min(currentSegment.endTime, compareSegment.endTime) - Math.max(currentSegment.startTime, compareSegment.startTime);
-                const overlapPercent = overlap / Math.max(currentDuration, compareDuration);
-                if (overlapPercent >= percent) {
-                    currentGroup.segments.push(currentSegment);
-                    currentGroup.votes += compareSegment.votes;
-                    currentGroup.reputation += compareSegment.reputation;
-                    currentGroup.locked ||= compareSegment.locked;
-                    currentGroup.required ||= compareSegment.required;
-                    segmentsLeftToCheck.splice(index, 1);
-                }
+            if (bestGroup) {
+                bestGroup.segments.push(segment);
+                bestGroup.votes += segment.votes;
+                bestGroup.reputation += segment.reputation;
+                bestGroup.locked ||= segment.locked;
+                bestGroup.required ||= segment.required;
+            } else {
+                result.push({ segments: [segment], votes: segment.votes, reputation: segment.reputation, locked: segment.locked, required: segment.required });
             }
+        });
 
-            result.push(currentGroup);
-        }
-    }
-
-    return result;
+        return result;
+    });
 }
-
-// function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegmentGroup[] {
-//     return groups.flatMap((group) => {
-//         const result: OverlappingSegmentGroup[] = [];
-//         group.segments.forEach((segment) => {
-//             const bestGroup = result.find((group) => {
-//                 // At least one segment in the group must have high % overlap or the same action type
-//                 return group.segments.some((compareSegment) => {
-//                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
-//                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
-//                     const overlapPercent = overlap / overallDuration;
-//                     return (segment.actionType === compareSegment.actionType && segment.actionType !== ActionType.Chapter)
-//                         || overlapPercent >= 0.6
-//                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
-//                 });
-//             });
-
-//             if (bestGroup) {
-//                 bestGroup.segments.push(segment);
-//                 bestGroup.votes += segment.votes;
-//                 bestGroup.reputation += segment.reputation;
-//                 bestGroup.locked ||= segment.locked;
-//                 bestGroup.required ||= segment.required;
-//             } else {
-//                 result.push({ segments: [segment], votes: segment.votes, reputation: segment.reputation, locked: segment.locked, required: segment.required });
-//             }
-//         });
-
-//         return result;
-//     });
-// }
 
 /**
  *
