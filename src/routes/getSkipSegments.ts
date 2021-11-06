@@ -281,7 +281,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
                     const overlapPercent = overlap / overallDuration;
-                    return (segment.actionType === compareSegment.actionType && segment.actionType !== ActionType.Chapter)
+                    return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.actionType !== ActionType.Chapter)
                         || overlapPercent >= 0.6
                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
                 });
