@@ -37,6 +37,7 @@ describe("postSkipSegments", () => {
 
     const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabaseChapter = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType", "description" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseVideoInfo = (videoID: string) => db.prepare("get", `SELECT * FROM "videoInfo" WHERE "videoID" = ?`, [videoID]);
 
@@ -181,6 +182,34 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should be able to submit a single chapter (JSON method)", (done) => {
+        const videoID = "postSkipChapter1";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "chapter",
+                actionType: "chapter",
+                description: "This is a chapter"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabaseChapter(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    category: "chapter",
+                    actionType: "chapter",
+                    description: "This is a chapter"
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should not be able to submit an intro with mute action type (JSON method)", (done) => {
         const videoID = "postSkip4";
         postSkipSegmentJSON({
@@ -190,6 +219,46 @@ describe("postSkipSegments", () => {
                 segment: [0, 10],
                 category: "intro",
                 actionType: "mute"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await queryDatabaseActionType(videoID);
+                assert.strictEqual(row, undefined);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to submit a chapter with skip action type (JSON method)", (done) => {
+        const videoID = "postSkipChapter2";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "chapter",
+                actionType: "skip"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await queryDatabaseActionType(videoID);
+                assert.strictEqual(row, undefined);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to submit a sponsor with a description (JSON method)", (done) => {
+        const videoID = "postSkipChapter3";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+                description: "This is a sponsor"
             }],
         })
             .then(async res => {
