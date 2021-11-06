@@ -1,39 +1,39 @@
 import { getHash } from "../utils/getHash";
 import { db } from "../databases/databases";
 import { config } from "../config";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { HashedUserID } from "../types/user.model";
+import { APIRequest } from "../types/APIRequest";
 
+export async function addUserAsVIP(req: APIRequest, res: Response): Promise<Response> {
 
-export async function addUserAsVIP(req: Request, res: Response): Promise<Response> {
-    const userID = req.query.userID as HashedUserID;
-    let adminUserIDInput = req.query.adminUserID as string;
+    const { query: { userID, adminUserID } } = req;
 
-    const enabled = req.query.enabled === undefined
-        ? false
-        : req.query.enabled === "true";
+    const enabled = req.query?.enabled === "true";
 
-    if (userID == undefined || adminUserIDInput == undefined) {
-        //invalid request
+    if (!userID || !adminUserID) {
+        // invalid request
         return res.sendStatus(400);
     }
 
-    //hash the userID
-    adminUserIDInput = getHash(adminUserIDInput);
+    // hash the userID
+    const adminUserIDInput = getHash(adminUserID);
 
     if (adminUserIDInput !== config.adminUserID) {
-        //not authorized
+        // not authorized
         return res.sendStatus(403);
     }
 
-    //check to see if this user is already a vip
-    const userIsVIP = await isUserVIP(userID);
+    // check to see if this user is already a vip
+    const userIsVIP = await isUserVIP(userID as HashedUserID);
 
     if (enabled && !userIsVIP) {
-        //add them to the vip list
+        // add them to the vip list
         await db.prepare("run", 'INSERT INTO "vipUsers" VALUES(?)', [userID]);
-    } else if (!enabled && userIsVIP) {
+    }
+
+    if (!enabled && userIsVIP) {
         //remove them from the shadow ban list
         await db.prepare("run", 'DELETE FROM "vipUsers" WHERE "userID" = ?', [userID]);
     }

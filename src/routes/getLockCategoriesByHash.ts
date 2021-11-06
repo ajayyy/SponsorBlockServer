@@ -1,15 +1,9 @@
 import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { hashPrefixTester } from "../utils/hashPrefixTester";
 import { Category, VideoID, VideoIDHash } from "../types/segments.model";
-
-interface LockResultByHash {
-    videoID: VideoID,
-    hash: VideoIDHash,
-    reason: string,
-    categories: Category[]
-}
+import { APIRequest } from "../types/APIRequest";
 
 interface DBLock {
     videoID: VideoID,
@@ -18,39 +12,47 @@ interface DBLock {
     reason: string,
 }
 
-const mergeLocks = (source: DBLock[]) => {
-    const dest: LockResultByHash[] = [];
-    for (const obj of source) {
+interface LockResultByHash extends Omit<DBLock, "category"> {
+    categories: Category[];
+}
+
+const mergeLocks = (source: DBLock[]) : LockResultByHash[]=> {
+    const dest: { [videoID: VideoID]: LockResultByHash } = {};
+    for (const { videoID, reason, hash, category } of source) {
         // videoID already exists
-        const destMatch = dest.find(s => s.videoID === obj.videoID);
-        if (destMatch) {
+        if (videoID in dest) {
             // override longer reason
-            if (obj.reason?.length > destMatch.reason?.length) destMatch.reason = obj.reason;
+            const destMatch = dest[videoID];
+            destMatch.reason = (reason?.length > destMatch.reason?.length) ? reason : destMatch.reason;
             // push to categories
-            destMatch.categories.push(obj.category);
+            destMatch.categories.push(category);
         } else {
-            dest.push({
-                videoID: obj.videoID,
-                hash: obj.hash,
-                reason: obj.reason,
-                categories: [obj.category]
-            });
+            dest[videoID] = {
+                videoID,
+                hash,
+                reason,
+                categories: [category]
+            };
         }
     }
-    return dest;
+
+    return Object.values(dest);
 };
 
-export async function getLockCategoriesByHash(req: Request, res: Response): Promise<Response> {
-    let hashPrefix = req.params.prefix as VideoIDHash;
+export async function getLockCategoriesByHash(req: APIRequest, res: Response): Promise<Response> {
+    let { params: { prefix: hashPrefix } }= req;
     if (!hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
-    hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
+    hashPrefix = hashPrefix.toLowerCase() as APIRequest["params"]["prefix"];
 
     try {
         // Get existing lock categories markers
         const lockedRows = await db.prepare("all", 'SELECT "videoID", "hashedVideoID" as "hash", "category", "reason" from "lockCategories" where "hashedVideoID" LIKE ?', [`${hashPrefix}%`]) as DBLock[];
-        if (lockedRows.length === 0 || !lockedRows[0]) return res.sendStatus(404);
+        if (lockedRows.length === 0) {
+            return res.sendStatus(404);
+        }
+
         // merge all locks
         return res.send(mergeLocks(lockedRows));
     } catch (err) {

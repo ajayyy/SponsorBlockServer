@@ -1,10 +1,11 @@
 import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { config } from "../config";
 import util from "util";
 import fs from "fs";
 import path from "path";
+import { APIRequest } from "../types/APIRequest";
 const unlink = util.promisify(fs.unlink);
 
 const ONE_MINUTE = 1000 * 60;
@@ -95,7 +96,7 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
     });
 }
 
-export default async function dumpDatabase(req: Request, res: Response, showPage: boolean): Promise<void> {
+export default async function dumpDatabase(_req: APIRequest, res: Response, showPage: boolean): Promise<void> {
     if (!config?.dumpDatabase?.enabled) {
         res.status(404).send("Database dump is disabled");
         return;
@@ -170,7 +171,7 @@ async function getDbVersion(): Promise<number> {
     return row.value;
 }
 
-export async function redirectLink(req: Request, res: Response): Promise<void> {
+export async function redirectLink(req: APIRequest, res: Response): Promise<void> {
     if (!config?.dumpDatabase?.enabled) {
         res.status(404).send("Database dump is disabled");
         return;

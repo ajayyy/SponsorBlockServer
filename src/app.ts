@@ -42,6 +42,7 @@ import { getUserStats } from "./routes/getUserStats";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
+import { APIRequest } from "./types/APIRequest";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -183,8 +184,8 @@ function setupRoutes(router: Router) {
     router.get("/api/lockReason", getLockReason);
 
     if (config.postgres) {
-        router.get("/database", (req, res) => dumpDatabase(req, res, true));
-        router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
+        router.get("/database", (req, res) => dumpDatabase(req as APIRequest, res, true));
+        router.get("/database.json", (req, res) => dumpDatabase(req as APIRequest, res, false));
         router.get("/database/*", redirectLink);
     } else {
         router.get("/database.db", function (req: Request, res: Response) {
