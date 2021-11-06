@@ -44,6 +44,7 @@
 | shadowHidden | INTEGER | not null |
 | hashedVideoID | TEXT | not null, default '', sha256 |
 | userAgent | TEXT | not null, default '' |
+| description | TEXT | not null, default '' |
 
 | index | field |
 | -- | :--: |
