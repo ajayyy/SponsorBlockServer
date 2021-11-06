@@ -67,6 +67,7 @@ export interface DBSegment {
     timeSubmitted: number;
     userAgent: string;
     service: Service;
+    description: string;
 }
 
 export interface OverlappingSegmentGroup {

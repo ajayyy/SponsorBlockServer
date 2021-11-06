@@ -45,7 +45,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
 
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
-    const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? 32 : 1;
+    const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? Infinity : 1;
     return (await chooseSegments(filteredSegments, maxSegments)).map((chosenSegment) => ({
         category: chosenSegment.category,
         actionType: chosenSegment.actionType,
@@ -55,6 +55,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
         votes: chosenSegment.votes,
         videoDuration: chosenSegment.videoDuration,
         userID: chosenSegment.userID,
+        description: chosenSegment.description
     }));
 }
 
@@ -139,7 +140,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted" FROM "sponsorTimes"
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
@@ -155,7 +156,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "timeSubmitted" FROM "sponsorTimes" 
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
             [videoID, service]
         ) as Promise<DBSegment[]>;
@@ -219,7 +220,7 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
     //2. If a segment starts after the end of the currentGroup (> cursor), no other segment will ever fall
     //   inside that group (because they're sorted) so we can create a new one
-    const overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
+    let overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
     for (const segment of segments) {
@@ -261,12 +262,82 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
         group.reputation = group.reputation / group.segments.length;
     });
 
+    overlappingSegmentsGroups = splitPercentOverlap(overlappingSegmentsGroups);
+
     //if there are too many groups, find the best ones
     return getWeightedRandomChoice(overlappingSegmentsGroups, max).map(
         //randomly choose 1 good segment per group and return them
         group => getWeightedRandomChoice(group.segments, 1)[0],
     );
 }
+
+function splitPercentOverlap(groups: OverlappingSegmentGroup[], percent: number): OverlappingSegmentGroup[] {
+    const result: OverlappingSegmentGroup[] = [];
+    for (const group of groups) {
+        const segmentsLeftToCheck = [...group.segments];
+        while (segmentsLeftToCheck.length > 0) {
+            const currentGroup: OverlappingSegmentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
+
+            const currentSegment = segmentsLeftToCheck.shift();
+            // TODO: extract out this part to be more generic
+            currentGroup.segments.push(currentSegment);
+            currentGroup.votes += currentSegment.votes;
+            currentGroup.reputation += currentSegment.reputation;
+            currentGroup.locked ||= currentSegment.locked;
+            currentGroup.required ||= currentSegment.required;
+
+            const currentDuration = currentSegment.endTime - currentSegment.startTime;
+            for (const [index, compareSegment] of segmentsLeftToCheck.entries()) {
+                const compareDuration = compareSegment.endTime - compareSegment.startTime;
+                const overlap = Math.min(currentSegment.endTime, compareSegment.endTime) - Math.max(currentSegment.startTime, compareSegment.startTime);
+                const overlapPercent = overlap / Math.max(currentDuration, compareDuration);
+                if (overlapPercent >= percent) {
+                    currentGroup.segments.push(currentSegment);
+                    currentGroup.votes += compareSegment.votes;
+                    currentGroup.reputation += compareSegment.reputation;
+                    currentGroup.locked ||= compareSegment.locked;
+                    currentGroup.required ||= compareSegment.required;
+                    segmentsLeftToCheck.splice(index, 1);
+                }
+            }
+
+            result.push(currentGroup);
+        }
+    }
+
+    return result;
+}
+
+// function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegmentGroup[] {
+//     return groups.flatMap((group) => {
+//         const result: OverlappingSegmentGroup[] = [];
+//         group.segments.forEach((segment) => {
+//             const bestGroup = result.find((group) => {
+//                 // At least one segment in the group must have high % overlap or the same action type
+//                 return group.segments.some((compareSegment) => {
+//                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
+//                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
+//                     const overlapPercent = overlap / overallDuration;
+//                     return (segment.actionType === compareSegment.actionType && segment.actionType !== ActionType.Chapter)
+//                         || overlapPercent >= 0.6
+//                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
+//                 });
+//             });
+
+//             if (bestGroup) {
+//                 bestGroup.segments.push(segment);
+//                 bestGroup.votes += segment.votes;
+//                 bestGroup.reputation += segment.reputation;
+//                 bestGroup.locked ||= segment.locked;
+//                 bestGroup.required ||= segment.required;
+//             } else {
+//                 result.push({ segments: [segment], votes: segment.votes, reputation: segment.reputation, locked: segment.locked, required: segment.required });
+//             }
+//         });
+
+//         return result;
+//     });
+// }
 
 /**
  *
