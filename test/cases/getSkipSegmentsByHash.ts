@@ -37,6 +37,10 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["longMuteVid-hash", 30, 35, 2, "longMuteVid-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
         await db.prepare("run", query, ["longMuteVid-hash", 2, 80, 2, "longMuteVid-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
         await db.prepare("run", query, ["longMuteVid-hash", 3, 78, 2, "longMuteVid-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-2-hash", 1, 15, 2, "longMuteVid-2-hash-1", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 30, 35, 2, "longMuteVid-2-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 2, 80, 2, "longMuteVid-2-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 3, 78, 2, "longMuteVid-2-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
     });
 
     it("Should be able to get a 200", (done) => {
@@ -429,6 +433,47 @@ describe("getSkipSegmentsByHash", () => {
 
                 assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
                 assert.strictEqual(data[0].segments.length, 3);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get mute segment with small skip segment in middle (2)", (done) => {
+        client.get(`${endpoint}/ab0c?actionType=skip&actionType=mute`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        UUID: "longMuteVid-2-hash-1",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-2-hash-2",
+                        actionType: "skip"
+                    }]
+                }];
+                const expected2 = [{
+                    segments: [{
+                        UUID: "longMuteVid-2-hash-3",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-2-hash-2",
+                        actionType: "skip"
+                    }]
+                }];
+                const expected3 = [{
+                    segments: [{
+                        UUID: "longMuteVid-2-hash-4",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-2-hash-2",
+                        actionType: "skip"
+                    }]
+                }];
+
+                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2) || partialDeepEquals(data, expected3));
+                assert.strictEqual(data[0].segments.length, 2);
                 done();
             })
             .catch(err => done(err));
