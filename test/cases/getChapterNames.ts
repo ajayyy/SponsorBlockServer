@@ -15,13 +15,13 @@ if (db instanceof Postgres) {
 
         before(async () => {
             const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-            await db.prepare("run", query, [chapterNamesVid1, 60, 80, 2, 0, "chapterVid-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Weird name"]);
-            await db.prepare("run", query, [chapterNamesVid1, 70, 75, 2, 0, "chapterVid-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "A different one"]);
-            await db.prepare("run", query, [chapterNamesVid1, 71, 76, 2, 0, "chapterVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Something else"]);
+            await db.prepare("run", query, [chapterNamesVid1, 60, 80, 2, 0, "chapterNamesVid-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Weird name"]);
+            await db.prepare("run", query, [chapterNamesVid1, 70, 75, 2, 0, "chapterNamesVid-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "A different one"]);
+            await db.prepare("run", query, [chapterNamesVid1, 71, 76, 2, 0, "chapterNamesVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Something else"]);
 
-            await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID") 
-                SELECT ?, ?`, [
-                chapterNamesVid1, chapterChannelID
+            await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published", "genreUrl") 
+                SELECT ?, ?, ?, ?, ?`, [
+                chapterNamesVid1, chapterChannelID, "", 0, ""
             ]);
         });
 
