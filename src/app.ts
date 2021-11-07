@@ -42,6 +42,7 @@ import { getUserStats } from "./routes/getUserStats";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
+import { getChapterNames } from "./routes/getChapterNames";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -171,6 +172,9 @@ function setupRoutes(router: Router) {
 
     // get all segments that match a search
     router.get("/api/searchSegments", getSearchSegments);
+
+    // autocomplete chapter names
+    router.get("/api/chapterNames", getChapterNames);
 
     // get status
     router.get("/api/status/:value", getStatus);

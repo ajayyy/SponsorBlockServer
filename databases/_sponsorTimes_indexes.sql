@@ -25,6 +25,11 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_videoID"
     ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST, category COLLATE pg_catalog."default" ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST)
     TABLESPACE pg_default;
 
+CREATE INDEX IF NOT EXISTS "sponsorTimes_description_gin"
+    ON public."sponsorTimes" USING gin
+    ("description" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
+    TABLESPACE pg_default;
+
 -- userNames
 
 CREATE INDEX IF NOT EXISTS "userNames_userID"
