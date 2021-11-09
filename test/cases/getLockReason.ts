@@ -108,6 +108,7 @@ describe("getLockReason", () => {
                     { category: "outro", locked: 1, reason: "outro-reason", userID: vipUserID2, userName: vipUserName2 },
                     { category: "preview", locked: 1, reason: "preview-reason", userID: vipUserID1, userName: vipUserName1 },
                     { category: "music_offtopic", locked: 1, reason: "nonmusic-reason", userID: vipUserID1, userName: vipUserName1 },
+                    { category: "filler", locked: 0, reason: "", userID: "", userName: "" },
                     { category: "poi_highlight", locked: 0, reason: "", userID: "", userName: "" },
                     { category: "chapter", locked: 0, reason: "", userID: "", userName: "" }
                 ];
