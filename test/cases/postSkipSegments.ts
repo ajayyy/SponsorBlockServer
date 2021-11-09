@@ -181,14 +181,14 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should not be able to submit an intro with mute action type (JSON method)", (done) => {
+    it("Should not be able to submit an music_offtopic with mute action type (JSON method)", (done) => {
         const videoID = "postSkip4";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
             segments: [{
                 segment: [0, 10],
-                category: "intro",
+                category: "music_offtopic",
                 actionType: "mute"
             }],
         })
