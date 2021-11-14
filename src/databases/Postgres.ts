@@ -68,7 +68,7 @@ export class Postgres implements IDatabase {
                 }
                 case "all": {
                     const values = queryResult.rows;
-                    Logger.debug(`result (postgres): ${values}`);
+                    Logger.debug(`result (postgres): ${JSON.stringify(values)}`);
                     return values;
                 }
                 case "run": {

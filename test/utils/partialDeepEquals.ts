@@ -14,8 +14,7 @@ export const partialDeepEquals = (actual: Record<string, any>, expected: Record<
                 if (print) printActualExpected(actual, expected);
                 return false;
             }
-        }
-        else if (actual?.[key] !== value) {
+        } else if (actual?.[key] !== value) {
             if (print) printActualExpected(actual, expected);
             return false;
         }

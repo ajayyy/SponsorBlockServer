@@ -16,20 +16,31 @@ describe("getSkipSegmentsByHash", () => {
     const getSegmentsByHash0Hash = "fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910";
     const requiredSegmentVidHash = "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61";
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-02", "testman", 0, 50, "sponsor", "skip", "PeerTube", 0, 0, getSegmentsByHash0Hash]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 20, 30, 2, "getSegmentsByHash-03", "testman", 100, 150, "intro", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 40, 50, 2, "getSegmentsByHash-04", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getSegmentsByHash0Hash]);
-        await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash"]);
-        await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b"]);
-        await db.prepare("run", query, ["onlyHidden", 60, 70, 2, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3"]);
-        await db.prepare("run", query, ["highlightVid", 60, 60, 2, "highlightVid-1", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1)]);
-        await db.prepare("run", query, ["highlightVid", 70, 70, 2, "highlightVid-2", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1)]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, "requiredSegmentVid-4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-02", "testman", 0, 50, "sponsor", "skip", "PeerTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-0", 20, 30, 2, "getSegmentsByHash-03", "testman", 100, 150, "intro", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-0", 40, 50, 2, "getSegmentsByHash-04", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash", ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b", ""]);
+        await db.prepare("run", query, ["onlyHidden", 60, 70, 2, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3", ""]);
+        await db.prepare("run", query, ["highlightVid", 60, 60, 2, "highlightVid-1", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+        await db.prepare("run", query, ["highlightVid", 70, 70, 2, "highlightVid-2", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, "requiredSegmentVid-4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["chapterVid-hash", 60, 80, 2, "chapterVid-hash-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 1"]); //7258
+        await db.prepare("run", query, ["chapterVid-hash", 70, 75, 2, "chapterVid-hash-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 2"]); //7258
+        await db.prepare("run", query, ["chapterVid-hash", 71, 76, 2, "chapterVid-hash-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 3"]); //7258
+        await db.prepare("run", query, ["longMuteVid-hash", 40, 45, 2, "longMuteVid-hash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-hash", 30, 35, 2, "longMuteVid-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-hash", 2, 80, 2, "longMuteVid-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-hash", 3, 78, 2, "longMuteVid-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-2-hash", 1, 15, 2, "longMuteVid-2-hash-1", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 30, 35, 2, "longMuteVid-2-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 2, 80, 2, "longMuteVid-2-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 3, 78, 2, "longMuteVid-2-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
     });
 
     it("Should be able to get a 200", (done) => {
@@ -352,6 +363,117 @@ describe("getSkipSegmentsByHash", () => {
                     }]
                 }];
                 assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get overlapping chapter segments if very different", (done) => {
+        client.get(`${endpoint}/7258?category=chapter&actionType=chapter`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        UUID: "chapterVid-hash-1",
+                        description: "Chapter 1"
+                    }, {
+                        UUID: "chapterVid-hash-2",
+                        description: "Chapter 2"
+                    }]
+                }];
+                const expected2 = [{
+                    segments: [{
+                        UUID: "chapterVid-hash-1",
+                        description: "Chapter 1"
+                    }, {
+                        UUID: "chapterVid-hash-3",
+                        description: "Chapter 3"
+                    }]
+                }];
+
+                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
+                assert.strictEqual(data[0].segments.length, 2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get mute segment with small skip segment in middle", (done) => {
+        client.get(`${endpoint}/6613?actionType=skip&actionType=mute`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        UUID: "longMuteVid-hash-3",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-hash-2",
+                        actionType: "skip"
+                    }, {
+                        UUID: "longMuteVid-hash-1",
+                        actionType: "skip"
+                    }]
+                }];
+                const expected2 = [{
+                    segments: [{
+                        UUID: "longMuteVid-hash-4",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-hash-2",
+                        actionType: "skip"
+                    }, {
+                        UUID: "longMuteVid-hash-1",
+                        actionType: "skip"
+                    }]
+                }];
+
+                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
+                assert.strictEqual(data[0].segments.length, 3);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get mute segment with small skip segment in middle (2)", (done) => {
+        client.get(`${endpoint}/ab0c?actionType=skip&actionType=mute`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        UUID: "longMuteVid-2-hash-1",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-2-hash-2",
+                        actionType: "skip"
+                    }]
+                }];
+                const expected2 = [{
+                    segments: [{
+                        UUID: "longMuteVid-2-hash-3",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-2-hash-2",
+                        actionType: "skip"
+                    }]
+                }];
+                const expected3 = [{
+                    segments: [{
+                        UUID: "longMuteVid-2-hash-4",
+                        actionType: "mute"
+                    }, {
+                        UUID: "longMuteVid-2-hash-2",
+                        actionType: "skip"
+                    }]
+                }];
+
+                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2) || partialDeepEquals(data, expected3));
+                assert.strictEqual(data[0].segments.length, 2);
                 done();
             })
             .catch(err => done(err));

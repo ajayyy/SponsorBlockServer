@@ -6,23 +6,26 @@ import { client } from "../utils/httpClient";
 describe("getSkipSegments", () => {
     const endpoint = "/api/skipSegments";
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["getSkipSegmentID0", 1, 11, 1, 0, "uuid01", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID0", 12, 14, 2, 0, "uuid02", "testman", 0, 50, "sponsor", "mute", "YouTube", 100, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID0", 20, 33, 2, 0, "uuid03", "testman", 0, 50, "intro", "skip", "YouTube", 101, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID1", 1, 11, 2, 0, "uuid10", "testman", 0, 50, "sponsor", "skip", "PeerTube", 120, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID2", 1, 11, 2, 1, "uuid20", "testman", 0, 50, "sponsor", "skip", "YouTube", 140, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID3", 1, 11, 2, 0, "uuid30", "testman", 0, 50, "sponsor", "skip", "YouTube", 200, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID3", 7, 22, -3, 0, "uuid31", "testman", 0, 50, "sponsor", "skip", "YouTube", 300, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentMultiple", 1, 11, 2, 0, "uuid40", "testman", 0, 50, "intro", "skip", "YouTube", 400, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentMultiple", 20, 33, 2, 0, "uuid41", "testman", 0, 50, "intro", "skip", "YouTube", 500, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentLocked", 20, 33, 2, 1, "uuid50", "testman", 0, 50, "intro", "skip", "YouTube", 230, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentLocked", 20, 34, 100000, 0, "uuid51", "testman", 0, 50, "intro", "skip", "YouTube", 190, 0, 0]);
-        await db.prepare("run", query, ["getSkipSegmentID6", 20, 34, 100000, 0, "uuid60", "testman", 0, 50, "sponsor", "skip", "YouTube", 190, 1, 0]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, 0, "requiredSegmentVid1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, 0, "requiredSegmentVid4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ["getSkipSegmentID0", 1, 11, 1, 0, "uuid01", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID0", 12, 14, 2, 0, "uuid02", "testman", 0, 50, "sponsor", "mute", "YouTube", 100, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID0", 20, 33, 2, 0, "uuid03", "testman", 0, 50, "intro", "skip", "YouTube", 101, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID1", 1, 11, 2, 0, "uuid10", "testman", 0, 50, "sponsor", "skip", "PeerTube", 120, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID2", 1, 11, 2, 1, "uuid20", "testman", 0, 50, "sponsor", "skip", "YouTube", 140, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID3", 1, 11, 2, 0, "uuid30", "testman", 0, 50, "sponsor", "skip", "YouTube", 200, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID3", 7, 22, -3, 0, "uuid31", "testman", 0, 50, "sponsor", "skip", "YouTube", 300, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentMultiple", 1, 11, 2, 0, "uuid40", "testman", 0, 50, "intro", "skip", "YouTube", 400, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentMultiple", 20, 33, 2, 0, "uuid41", "testman", 0, 50, "intro", "skip", "YouTube", 500, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentLocked", 20, 33, 2, 1, "uuid50", "testman", 0, 50, "intro", "skip", "YouTube", 230, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentLocked", 20, 34, 100000, 0, "uuid51", "testman", 0, 50, "intro", "skip", "YouTube", 190, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID6", 20, 34, 100000, 0, "uuid60", "testman", 0, 50, "sponsor", "skip", "YouTube", 190, 1, 0, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, 0, "requiredSegmentVid1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, 0, "requiredSegmentVid4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
+        await db.prepare("run", query, ["chapterVid", 60, 80, 2, 0, "chapterVid-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 1"]);
+        await db.prepare("run", query, ["chapterVid", 70, 75, 2, 0, "chapterVid-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 2"]);
+        await db.prepare("run", query, ["chapterVid", 71, 76, 2, 0, "chapterVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 3"]);
         return;
     });
 
@@ -383,6 +386,33 @@ describe("getSkipSegments", () => {
                     UUID: required3,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get overlapping chapter segments if very different", (done) => {
+        client.get(`${endpoint}?videoID=chapterVid&category=chapter&actionType=chapter`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 2);
+                const expected = [{
+                    UUID: "chapterVid-1",
+                    description: "Chapter 1"
+                }, {
+                    UUID: "chapterVid-2",
+                    description: "Chapter 2"
+                }];
+                const expected2 = [{
+                    UUID: "chapterVid-1",
+                    description: "Chapter 1"
+                }, {
+                    UUID: "chapterVid-3",
+                    description: "Chapter 3"
+                }];
+
+                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
                 done();
             })
             .catch(err => done(err));
