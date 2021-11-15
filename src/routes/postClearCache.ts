@@ -39,7 +39,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
     }
 
     try {
-        QueryCacher.clearVideoCache({
+        QueryCacher.clearSegmentCache({
             videoID,
             hashedVideoID,
             service
