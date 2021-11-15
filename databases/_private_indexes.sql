@@ -23,3 +23,10 @@ CREATE INDEX IF NOT EXISTS "categoryVotes_UUID"
     ON public."categoryVotes" USING btree
     ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST, "userID" COLLATE pg_catalog."default" ASC NULLS LAST, "hashedIP" COLLATE pg_catalog."default" ASC NULLS LAST, category COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+-- ratings
+
+CREATE INDEX IF NOT EXISTS "ratings_videoID"
+    ON public."ratings" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST, "userID" COLLATE pg_catalog."default" ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST)
+    TABLESPACE pg_default;

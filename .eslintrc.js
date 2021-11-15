@@ -27,6 +27,6 @@ module.exports = {
         "indent": ["warn", 4, { "SwitchCase": 1 }],
         "object-curly-spacing": ["warn", "always"],
         "require-await": "warn",
-        "no-console": "error"
+        "no-console": "warn"
     },
 };

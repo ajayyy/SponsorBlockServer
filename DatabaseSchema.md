@@ -185,6 +185,22 @@
 | hashedVideoID | TEXT | not null, default '', sha256 |
 | userAgent | TEXT | not null, default '' |
 
+### ratings  
+
+| Name | Type | |
+| -- | :--: | -- |
+| videoID | TEXT | not null |
+| service | TEXT | not null, default 'YouTube' |
+| type | INTEGER | not null |
+| count | INTEGER | not null |
+| hashedVideoID | TEXT | not null |
+
+| index | field |
+| -- | :--: |
+| ratings_hashedVideoID_gin | hashedVideoID |
+| ratings_hashedVideoID | hashedVideoID, service |
+| ratings_videoID | videoID, service |
+
 # Private 
 
 [vote](#vote)  
@@ -239,3 +255,18 @@
 | -- | :--: | -- |
 | key | TEXT | not null |
 | value | TEXT | not null |
+
+### ratings  
+
+| Name | Type | |
+| -- | :--: | -- |
+| videoID | TEXT | not null |
+| service | TEXT | not null, default 'YouTube' |
+| userID | TEXT | not null |
+| type | INTEGER | not null |
+| timeSubmitted | INTEGER | not null |
+| hashedIP | TEXT | not null |
+
+| index | field |
+| -- | :--: |
+| ratings_videoID | videoID, service, userID, timeSubmitted |

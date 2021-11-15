@@ -15,6 +15,6 @@ export function getIP(req: Request): IPAddress {
         case "X-Real-IP":
             return req.headers["x-real-ip"] as IPAddress;
         default:
-            return req.connection.remoteAddress as IPAddress;
+            return (req.connection?.remoteAddress || req.socket?.remoteAddress) as IPAddress;
     }
 }

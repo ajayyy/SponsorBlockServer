@@ -58,6 +58,12 @@ addDefaults(config, {
             statusCode: 200,
             message: "Too many views, please try again later",
         },
+        rate: {
+            windowMs: 900000,
+            max: 20,
+            statusCode: 200,
+            message: "Success",
+        }
     },
     userCounterURL: null,
     newLeafURLs: null,

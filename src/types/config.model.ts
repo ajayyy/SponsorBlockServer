@@ -34,6 +34,7 @@ export interface SBSConfig {
     rateLimit: {
         vote: RateLimitConfig;
         view: RateLimitConfig;
+        rate: RateLimitConfig;
     };
     mysql?: any;
     privateMysql?: any;
