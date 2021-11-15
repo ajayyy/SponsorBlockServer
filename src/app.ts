@@ -45,6 +45,7 @@ import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
 import { postRating } from "./routes/ratings/postRating";
 import { getRating } from "./routes/ratings/getRating";
+import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -193,6 +194,7 @@ function setupRoutes(router: Router) {
     // ratings
     router.get("/api/ratings/rate/:prefix", getRating);
     router.post("/api/ratings/rate", postRateEndpoints);
+    router.post("/api/ratings/clearCache", ratingPostClearCache);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));

@@ -8,6 +8,7 @@ import { getIP } from "../../utils/getIP";
 import { getService } from "../../utils/getService";
 import { RatingType, RatingTypes } from "../../types/ratings.model";
 import { config } from "../../config";
+import { QueryCacher } from "../../utils/queryCacher";
 
 export async function postRating(req: Request, res: Response): Promise<Response> {
     const privateUserID = req.body.userID as UserID;
@@ -34,26 +35,26 @@ export async function postRating(req: Request, res: Response): Promise<Response>
             // Undo the vote
             await db.prepare("run", `UPDATE "ratings" SET "count" = "count" - 1 WHERE "videoID" = ? AND "service" = ? AND type = ?`, [videoID, service, type]);
             await privateDB.prepare("run", `DELETE FROM "ratings" WHERE "videoID" = ? AND "service" = ? AND "type" = ? AND "userID" = ?`, [videoID, service, type, hashedUserID]);
-
-            return res.sendStatus(200);
         } else if (existingVote.count === 0 && enabled) {
             // Make sure there hasn't been another vote from this IP
             const existingIPVote = (await privateDB.prepare("get", `SELECT count(*) as "count" FROM "ratings" WHERE "videoID" = ? AND "service" = ? AND "type" = ? AND "hashedIP" = ?`, [videoID, service, type, hashedIP]))
                 .count > 0;
-            if (!existingIPVote) {
-                // Check if general rating already exists, if so increase it
-                const rating = await db.prepare("get", `SELECT count(*) as "count" FROM "ratings" WHERE "videoID" = ? AND "service" = ? AND type = ?`, [videoID, service, type]);
-                if (rating.count > 0) {
-                    await db.prepare("run", `UPDATE "ratings" SET "count" = "count" + 1 WHERE "videoID" = ? AND "service" = ? AND type = ?`, [videoID, service, type]);
-                } else {
-                    await db.prepare("run", `INSERT INTO "ratings" ("videoID", "service", "type", "count", "hashedVideoID") VALUES (?, ?, ?, 1, ?)`, [videoID, service, type, hashedVideoID]);
-                }
-
-                // Create entry in privateDB
-                await privateDB.prepare("run", `INSERT INTO "ratings" ("videoID", "service", "type", "userID", "timeSubmitted", "hashedIP") VALUES (?, ?, ?, ?, ?, ?)`, [videoID, service, type, hashedUserID, Date.now(), hashedIP]);
+            if (existingIPVote) { // if exisiting vote, exit early instead
+                return res.sendStatus(200);
             }
-        }
+            // Check if general rating already exists, if so increase it
+            const rating = await db.prepare("get", `SELECT count(*) as "count" FROM "ratings" WHERE "videoID" = ? AND "service" = ? AND type = ?`, [videoID, service, type]);
+            if (rating.count > 0) {
+                await db.prepare("run", `UPDATE "ratings" SET "count" = "count" + 1 WHERE "videoID" = ? AND "service" = ? AND type = ?`, [videoID, service, type]);
+            } else {
+                await db.prepare("run", `INSERT INTO "ratings" ("videoID", "service", "type", "count", "hashedVideoID") VALUES (?, ?, ?, 1, ?)`, [videoID, service, type, hashedVideoID]);
+            }
 
+            // Create entry in privateDB
+            await privateDB.prepare("run", `INSERT INTO "ratings" ("videoID", "service", "type", "userID", "timeSubmitted", "hashedIP") VALUES (?, ?, ?, ?, ?, ?)`, [videoID, service, type, hashedUserID, Date.now(), hashedIP]);
+        }
+        // clear rating cache
+        QueryCacher.clearRatingCache({ hashedVideoID, service });
         return res.sendStatus(200);
     } catch (err) {
         Logger.error(err as string);
