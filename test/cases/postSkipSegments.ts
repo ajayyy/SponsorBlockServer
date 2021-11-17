@@ -26,14 +26,18 @@ describe("postSkipSegments", () => {
     const warnUser03Hash = getHash(warnUser03);
     const warnUser04 = "warn-user04-qwertyuiopasdfghjklzxcvbnm";
     const warnUser04Hash = getHash(warnUser04);
+    const banUser01 = "ban-user01-loremipsumdolorsitametconsectetur";
+    const banUser01Hash = getHash(banUser01);
 
     const submitUserOneHash = getHash(submitUserOne);
     const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
     const warnVideoID = "postSkip2";
     const badInputVideoID = "dQw4w9WgXcQ";
+    const shadowBanVideoID = "postSkipBan";
 
     const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabaseChapter = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType", "description" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseVideoInfo = (videoID: string) => db.prepare("get", `SELECT * FROM "videoInfo" WHERE "videoID" = ?`, [videoID]);
 
@@ -88,6 +92,9 @@ describe("postSkipSegments", () => {
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         db.prepare("run", insertVipUserQuery, [getHash(submitVIPuser)]);
+
+        // ban user
+        db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, [banUser01Hash]);
     });
 
     it("Should be able to submit a single time (Params method)", (done) => {
@@ -175,15 +182,83 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should not be able to submit an intro with mute action type (JSON method)", (done) => {
+    it("Should be able to submit a single chapter (JSON method)", (done) => {
+        const videoID = "postSkipChapter1";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "chapter",
+                actionType: "chapter",
+                description: "This is a chapter"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabaseChapter(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    category: "chapter",
+                    actionType: "chapter",
+                    description: "This is a chapter"
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to submit an music_offtopic with mute action type (JSON method)", (done) => {
         const videoID = "postSkip4";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
             segments: [{
                 segment: [0, 10],
-                category: "intro",
+                category: "music_offtopic",
                 actionType: "mute"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await queryDatabaseActionType(videoID);
+                assert.strictEqual(row, undefined);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to submit a chapter with skip action type (JSON method)", (done) => {
+        const videoID = "postSkipChapter2";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "chapter",
+                actionType: "skip"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await queryDatabaseActionType(videoID);
+                assert.strictEqual(row, undefined);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to submit a sponsor with a description (JSON method)", (done) => {
+        const videoID = "postSkipChapter3";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "sponsor",
+                description: "This is a sponsor"
             }],
         })
             .then(async res => {
@@ -981,6 +1056,30 @@ describe("postSkipSegments", () => {
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should automatically shadowban segments if user is banned", (done) => {
+        const videoID = shadowBanVideoID;
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 10,
+            category: "sponsor",
+            userID: banUser01
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "shadowHidden", "userID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    shadowHidden: 1,
+                    userID: banUser01Hash
+                };
+                assert.deepStrictEqual(row, expected);
                 done();
             })
             .catch(err => done(err));

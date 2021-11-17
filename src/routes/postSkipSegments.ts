@@ -299,7 +299,7 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     return CHECK_PASS;
 }
 
-function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): CheckResult {
+function checkInvalidFields(videoID: VideoID, userID: UserID, segments: IncomingSegment[]): CheckResult {
     const invalidFields = [];
     const errors = [];
     if (typeof videoID !== "string") {
@@ -319,6 +319,12 @@ function checkInvalidFields(videoID: any, userID: any, segments: Array<any>): Ch
         if ((typeof startTime === "string" && startTime.includes(":")) ||
             (typeof endTime === "string" && endTime.includes(":"))) {
             invalidFields.push("segment time");
+        }
+
+        if (typeof segmentPair.description !== "string"
+                || (segmentPair.description.length > 60 && segmentPair.actionType === ActionType.Chapter)
+                || (segmentPair.description.length !== 0 && segmentPair.actionType !== ActionType.Chapter)) {
+            invalidFields.push("segment description");
         }
     }
 
@@ -541,7 +547,8 @@ function preprocessInput(req: Request) {
         segments = [{
             segment: [req.query.startTime as string, req.query.endTime as string],
             category: req.query.category as Category,
-            actionType: (req.query.actionType as ActionType) ?? ActionType.Skip
+            actionType: (req.query.actionType as ActionType) ?? ActionType.Skip,
+            description: req.query.description as string || "",
         }];
     }
     // Add default action type
@@ -550,6 +557,7 @@ function preprocessInput(req: Request) {
             segment.actionType = ActionType.Skip;
         }
 
+        segment.description ??= "";
         segment.segment = segment.segment.map((time) => typeof segment.segment[0] === "string" ? time?.replace(",", ".") : time);
     });
 
@@ -620,7 +628,6 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
-
         const startingVotes = 0 + decreaseVotes;
         const reputation = await getReputation(userID);
 
@@ -634,9 +641,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0, segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, 0, hashedVideoID, userAgent
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                    videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0
+                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanRow.userCount, hashedVideoID, userAgent, segmentInfo.description
                 ],
                 );
 
@@ -649,7 +657,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                     videoID, apiVideoInfo?.data?.authorId || "", apiVideoInfo?.data?.title || "", apiVideoInfo?.data?.published || 0, apiVideoInfo?.data?.genreUrl || "", videoID]);
 
                 // Clear redis cache for this video
-                QueryCacher.clearVideoCache({
+                QueryCacher.clearSegmentCache({
                     videoID,
                     hashedVideoID,
                     service,

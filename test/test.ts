@@ -32,19 +32,21 @@ async function init() {
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
 
-    const testDir = "./test/cases";
+    const testDirs = ["./test/cases", "./test/cases/ratings"];
 
     // Add each .ts file to the mocha instance
-    fs.readdirSync(testDir)
-        .filter((file) =>
-            // Only keep the .ts files
-            file.substr(-3) === ".ts"
-        )
-        .forEach(function(file) {
-            mocha.addFile(
-                path.join(testDir, file)
-            );
-        });
+    testDirs.forEach(testDir => {
+        fs.readdirSync(testDir)
+            .filter((file) =>
+                // Only keep the .ts files
+                file.substr(-3) === ".ts"
+            )
+            .forEach(function(file) {
+                mocha.addFile(
+                    path.join(testDir, file)
+                );
+            });
+    });
 
     const mockServer = createMockServer(() => {
         Logger.info("Started mock HTTP Server");

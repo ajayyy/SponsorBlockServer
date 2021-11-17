@@ -25,6 +25,11 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_videoID"
     ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST, category COLLATE pg_catalog."default" ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST)
     TABLESPACE pg_default;
 
+CREATE INDEX IF NOT EXISTS "sponsorTimes_description_gin"
+    ON public."sponsorTimes" USING gin
+    ("description" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
+    TABLESPACE pg_default;
+
 -- userNames
 
 CREATE INDEX IF NOT EXISTS "userNames_userID"
@@ -81,4 +86,21 @@ CREATE INDEX IF NOT EXISTS "videoInfo_videoID"
 CREATE INDEX IF NOT EXISTS "videoInfo_channelID"
     ON public."videoInfo" USING btree
     ("channelID" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+-- ratings
+
+CREATE INDEX IF NOT EXISTS "ratings_hashedVideoID_gin"
+    ON public."ratings" USING gin
+    ("hashedVideoID" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "ratings_hashedVideoID"
+    ON public."ratings" USING btree
+    ("hashedVideoID" COLLATE pg_catalog."default" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "ratings_videoID"
+    ON public."ratings" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;

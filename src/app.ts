@@ -42,6 +42,10 @@ import { getUserStats } from "./routes/getUserStats";
 import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
+import { getChapterNames } from "./routes/getChapterNames";
+import { postRating } from "./routes/ratings/postRating";
+import { getRating } from "./routes/ratings/getRating";
+import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -73,9 +77,11 @@ function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
+    const postRateEndpoints: RequestHandler[] = [postRating];
     if (config.rateLimit) {
         if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote, voteGetUserID));
         if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
+        if (config.rateLimit.rate) postRateEndpoints.unshift(rateLimitMiddleware(config.rateLimit.rate));
     }
 
     //add the get function
@@ -172,6 +178,9 @@ function setupRoutes(router: Router) {
     // get all segments that match a search
     router.get("/api/searchSegments", getSearchSegments);
 
+    // autocomplete chapter names
+    router.get("/api/chapterNames", getChapterNames);
+
     // get status
     router.get("/api/status/:value", getStatus);
     router.get("/api/status", getStatus);
@@ -181,6 +190,11 @@ function setupRoutes(router: Router) {
     router.get("/api/userStats", getUserStats);
 
     router.get("/api/lockReason", getLockReason);
+
+    // ratings
+    router.get("/api/ratings/rate/:prefix", getRating);
+    router.post("/api/ratings/rate", postRateEndpoints);
+    router.post("/api/ratings/clearCache", ratingPostClearCache);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));

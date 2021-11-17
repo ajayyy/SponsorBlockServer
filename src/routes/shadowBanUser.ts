@@ -68,7 +68,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
                     // collect list for unshadowbanning
                     (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" = 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
                         .forEach((videoInfo: {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID}) => {
-                            QueryCacher.clearVideoCache(videoInfo);
+                            QueryCacher.clearSegmentCache(videoInfo);
                         }
                         );
 
@@ -125,6 +125,6 @@ async function unHideSubmissions(categories: string[], userID: UserID) {
     // clear cache for all old videos
     (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]))
         .forEach((videoInfo: { category: Category; videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID: UserID; }) => {
-            QueryCacher.clearVideoCache(videoInfo);
+            QueryCacher.clearSegmentCache(videoInfo);
         });
 }

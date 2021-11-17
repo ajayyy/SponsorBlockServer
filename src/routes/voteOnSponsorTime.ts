@@ -267,7 +267,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         }
     }
 
-    QueryCacher.clearVideoCache(videoInfo);
+    QueryCacher.clearSegmentCache(videoInfo);
 
     return res.sendStatus(finalResponse.finalStatus);
 }
@@ -473,7 +473,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
             }
 
-            QueryCacher.clearVideoCache(videoInfo);
+            QueryCacher.clearSegmentCache(videoInfo);
         }
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({

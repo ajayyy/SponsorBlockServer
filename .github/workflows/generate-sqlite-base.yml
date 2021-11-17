@@ -1,0 +1,23 @@
+name: create-sqlite-base
+on:
+  push:
+    paths:
+      - databases/**
+
+jobs:
+  make-base-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: npm install
+      - name: Set config
+        run: |
+          echo '{"mode": "init-db-and-exit"}' > config.json
+      - name: Run Server
+        timeout-minutes: 10
+        run: npm start
+      - uses: actions/upload-artifact@v2
+        with:
+          name: SponsorTimesDB.db
+          path: databases/sponsorTimes.db

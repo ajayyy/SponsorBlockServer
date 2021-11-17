@@ -28,6 +28,6 @@ module.exports = {
         "quotes": ["warn", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
         "require-await": "warn",
         "semi": "warn",
-        "no-console": "error"
+        "no-console": "warn"
     },
 };

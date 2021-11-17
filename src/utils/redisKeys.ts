@@ -16,3 +16,10 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
 export function reputationKey(userID: UserID): string {
     return `reputation.user.${userID}`;
 }
+
+export function ratingHashKey(hashPrefix: VideoIDHash, service: Service): string {
+    hashPrefix = hashPrefix.substring(0, 4) as VideoIDHash;
+    if (hashPrefix.length !== 4) Logger.warn(`Redis rating hash-prefix key is not length 4! ${hashPrefix}`);
+
+    return `rating.${service}.${hashPrefix}`;
+}
