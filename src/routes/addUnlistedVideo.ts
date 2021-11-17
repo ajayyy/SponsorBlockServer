@@ -10,24 +10,33 @@ import { Logger } from "../utils/logger";
  * https://support.google.com/youtube/answer/9230970
  */
 
-export function addUnlistedVideo(req: Request, res: Response): Response {
-    const videoID = req.body.videoID;
-    const year = req.body.year || 0;
-    const views = req.body.views || 0;
-    const channelID = req.body.channelID || "Unknown";
-    const service = getService(req.body.service);
+export async function addUnlistedVideo(req: Request, res: Response): Promise<Response> {
+    const {
+        body: {
+            videoID = null,
+            year = 0,
+            views = 0,
+            channelID = "Unknown",
+            service
+        }
+    } = req;
 
-    if (videoID === undefined || typeof(videoID) !== "string" || videoID.length !== 11) {
+    if (typeof(videoID) !== "string" || videoID.length !== 11) {
         return res.status(400).send("Invalid parameters");
     }
 
     try {
         const timeSubmitted = Date.now();
-        db.prepare("run", `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted", "service") values (?, ?, ?, ?, ?, ?)`, [videoID, year, views, channelID, timeSubmitted, service]);
+        await db.prepare(
+            "run",
+            `INSERT INTO "unlistedVideos" ("videoID", "year", "views", "channelID", "timeSubmitted", "service") values (?, ?, ?, ?, ?, ?)`,
+            [videoID, year, views, channelID, timeSubmitted, getService(service)]
+        );
+
+        return res.sendStatus(200);
     } catch (err) {
         Logger.error(err as string);
-        return res.sendStatus(500);
     }
 
-    return res.sendStatus(200);
+    return res.sendStatus(500);
 }
