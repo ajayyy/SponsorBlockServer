@@ -92,7 +92,7 @@ CREATE INDEX IF NOT EXISTS "videoInfo_channelID"
 
 CREATE INDEX IF NOT EXISTS "ratings_hashedVideoID_gin"
     ON public."ratings" USING gin
-    ("hashedVideoID" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
+    ("hashedVideoID" COLLATE pg_catalog."default" gin_trgm_ops)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "ratings_hashedVideoID"
