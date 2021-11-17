@@ -1,12 +1,12 @@
-import { Logger } from "../utils/logger";
-import { HashedUserID, UserID } from "../types/user.model";
-import { getHash } from "../utils/getHash";
+import { Logger } from "../../utils/logger";
+import { HashedUserID, UserID } from "../../types/user.model";
+import { getHash } from "../../utils/getHash";
 import { Request, Response } from "express";
-import { Service, VideoID } from "../types/segments.model";
-import { QueryCacher } from "../utils/queryCacher";
-import { isUserVIP } from "../utils/isUserVIP";
-import { VideoIDHash } from "../types/segments.model";
-import { getService } from "../utils/getService";
+import { Service, VideoID } from "../../types/segments.model";
+import { QueryCacher } from "../../utils/queryCacher";
+import { isUserVIP } from "../../utils/isUserVIP";
+import { VideoIDHash } from "../../types/segments.model";
+import { getService } from "../..//utils/getService";
 
 export async function postClearCache(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
@@ -39,8 +39,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
     }
 
     try {
-        QueryCacher.clearSegmentCache({
-            videoID,
+        QueryCacher.clearRatingCache({
             hashedVideoID,
             service
         });

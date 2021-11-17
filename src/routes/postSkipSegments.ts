@@ -657,7 +657,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                     videoID, apiVideoInfo?.data?.authorId || "", apiVideoInfo?.data?.title || "", apiVideoInfo?.data?.published || 0, apiVideoInfo?.data?.genreUrl || "", videoID]);
 
                 // Clear redis cache for this video
-                QueryCacher.clearVideoCache({
+                QueryCacher.clearSegmentCache({
                     videoID,
                     hashedVideoID,
                     service,

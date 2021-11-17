@@ -33,12 +33,12 @@ export async function getRating(req: Request, res: Response): Promise<Response> 
                     : [req.query.type]
                 : [RatingType.Upvote, RatingType.Downvote];
         if (!Array.isArray(types)) {
-            return res.status(400).send("Categories parameter does not match format requirements.");
+            return res.status(400).send("Types parameter does not match format requirements.");
         }
 
         types = types.map((type) => parseInt(type as unknown as string, 10));
     } catch(error) {
-        return res.status(400).send("Bad parameter: categories (invalid JSON)");
+        return res.status(400).send("Bad parameter: types (invalid JSON)");
     }
 
     const service: Service = getService(req.query.service, req.body.service);
@@ -53,20 +53,15 @@ export async function getRating(req: Request, res: Response): Promise<Response> 
                 type: rating.type,
                 count: rating.count
             }));
-
-        if (ratings) {
-            res.status(200);
-        } else {
-            res.status(404);
-        }
-        return res.send(ratings ?? []);
+        return res.status((ratings.length) ? 200 : 404)
+            .send(ratings ?? []);
     } catch (err) {
         Logger.error(err as string);
         return res.sendStatus(500);
     }
 }
 
-async function getRatings(hashPrefix: VideoIDHash, service: Service): Promise<DBRating[]> {
+function getRatings(hashPrefix: VideoIDHash, service: Service): Promise<DBRating[]> {
     const fetchFromDB = () => db
         .prepare(
             "all",
@@ -74,9 +69,7 @@ async function getRatings(hashPrefix: VideoIDHash, service: Service): Promise<DB
             [`${hashPrefix}%`, service]
         ) as Promise<DBRating[]>;
 
-    if (hashPrefix.length === 4) {
-        return await QueryCacher.get(fetchFromDB, ratingHashKey(hashPrefix, service));
-    }
-
-    return fetchFromDB();
+    return (hashPrefix.length === 4)
+        ? QueryCacher.get(fetchFromDB, ratingHashKey(hashPrefix, service))
+        : fetchFromDB();
 }
