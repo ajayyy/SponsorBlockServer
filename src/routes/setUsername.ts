@@ -1,7 +1,7 @@
 import { config } from "../config";
 import { Logger } from "../utils/logger";
 import { db, privateDB } from "../databases/databases";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
 
 function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
@@ -34,7 +34,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
 
     if (adminUserIDInput != undefined) {
         //this is the admin controlling the other users account, don't hash the controling account's ID
-        adminUserIDInput = getHash(adminUserIDInput);
+        adminUserIDInput = await getHashCache(adminUserIDInput);
 
         if (adminUserIDInput != config.adminUserID) {
             //they aren't the admin
@@ -42,7 +42,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         }
     } else {
         //hash the userID
-        userID = getHash(userID);
+        userID = await getHashCache(userID);
     }
 
     try {

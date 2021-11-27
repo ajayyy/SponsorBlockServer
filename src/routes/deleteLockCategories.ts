@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { db } from "../databases/databases";
 import { Category, Service, VideoID } from "../types/segments.model";
 import { UserID } from "../types/user.model";
@@ -39,7 +39,7 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
     }
 
     // Check if user is VIP
-    const hashedUserID = getHash(userID);
+    const hashedUserID = await getHashCache(userID);
     const userIsVIP = await isUserVIP(hashedUserID);
 
     if (!userIsVIP) {

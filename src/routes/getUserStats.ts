@@ -1,5 +1,5 @@
 import { db } from "../databases/databases";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
 import { HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
@@ -78,7 +78,7 @@ async function dbGetUsername(userID: HashedUserID) {
 
 export async function getUserStats(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
-    const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
+    const hashedUserID: HashedUserID = userID ? await getHashCache(userID) : req.query.publicUserID as HashedUserID;
     const fetchCategoryStats = req.query.fetchCategoryStats == "true";
     const fetchActionTypeStats = req.query.fetchActionTypeStats == "true";
 

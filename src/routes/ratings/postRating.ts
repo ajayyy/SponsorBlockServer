@@ -1,5 +1,6 @@
 import { db, privateDB } from "../../databases/databases";
 import { getHash } from "../../utils/getHash";
+import { getHashCache } from "../../utils/getHashCache";
 import { Logger } from "../../utils/logger";
 import { Request, Response } from "express";
 import { HashedUserID, UserID } from "../../types/user.model";
@@ -25,7 +26,7 @@ export async function postRating(req: Request, res: Response): Promise<Response>
     }
 
     const hashedIP: HashedIP = getHash(getIP(req) + config.globalSalt as IPAddress, 1);
-    const hashedUserID: HashedUserID = getHash(privateUserID);
+    const hashedUserID: HashedUserID = await getHashCache(privateUserID);
     const hashedVideoID = getHash(videoID, 1);
 
     try {

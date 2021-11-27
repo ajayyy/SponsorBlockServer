@@ -1,5 +1,5 @@
 import { Logger } from "../utils/logger";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
 import { HashedUserID, UserID } from "../types/user.model";
@@ -18,7 +18,7 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
     }
 
     //hash the userID
-    const hashedUserID: HashedUserID = getHash(userID);
+    const hashedUserID: HashedUserID = await getHashCache(userID);
 
     try {
         const vipState = await isUserVIP(hashedUserID);
@@ -30,7 +30,7 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
 
         await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "videoID" = ?`, [videoID]);
 
-        const hashedVideoID: VideoIDHash = getHash(videoID, 1);
+        const hashedVideoID: VideoIDHash = await getHashCache(videoID, 1);
         QueryCacher.clearSegmentCache({
             videoID,
             hashedVideoID,

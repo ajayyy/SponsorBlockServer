@@ -1,6 +1,6 @@
 import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { Logger } from "../utils/logger";
 
 export async function getViewsForUser(req: Request, res: Response): Promise<Response> {
@@ -12,7 +12,7 @@ export async function getViewsForUser(req: Request, res: Response): Promise<Resp
     }
 
     //hash the userID
-    userID = getHash(userID);
+    userID = await getHashCache(userID);
 
     try {
         const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);

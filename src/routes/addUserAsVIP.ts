@@ -1,4 +1,4 @@
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { db } from "../databases/databases";
 import { config } from "../config";
 import { Request, Response } from "express";
@@ -24,7 +24,7 @@ export async function addUserAsVIP(req: AddUserAsVIPRequest, res: Response): Pro
     }
 
     // hash the userID
-    const adminUserIDInput = getHash(adminUserID);
+    const adminUserIDInput = await getHashCache(adminUserID);
 
     if (adminUserIDInput !== config.adminUserID) {
         // not authorized

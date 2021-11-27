@@ -1,5 +1,6 @@
 import { getIP } from "../utils/getIP";
 import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import rateLimit from "express-rate-limit";
 import { RateLimitConfig } from "../types/config.model";
 import { Request } from "express";
@@ -17,7 +18,7 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (r
             return getHash(getIP(req), 1);
         },
         handler: async (req, res, next) => {
-            if (getUserID === undefined || !await isUserVIP(getHash(getUserID(req)))) {
+            if (getUserID === undefined || !await isUserVIP(await getHashCache(getUserID(req)))) {
                 return res.status(limitConfig.statusCode).send(limitConfig.message);
             } else {
                 return next();

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { db } from "../databases/databases";
 
 const ACTION_NONE = Symbol("none");
@@ -64,7 +64,7 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
     }
 
     // Check if user is VIP
-    userID = getHash(userID);
+    userID = await getHashCache(userID);
     const userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {

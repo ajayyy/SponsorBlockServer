@@ -1,6 +1,6 @@
 import { Logger } from "../utils/logger";
 import { HashedUserID, UserID } from "../types/user.model";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
 import { Service, VideoID } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
@@ -28,9 +28,9 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
     }
 
     // hash the userID as early as possible
-    const hashedUserID: HashedUserID = getHash(userID);
+    const hashedUserID: HashedUserID = await getHashCache(userID);
     // hash videoID
-    const hashedVideoID: VideoIDHash = getHash(videoID, 1);
+    const hashedVideoID: VideoIDHash = await getHashCache(videoID, 1);
 
     // Ensure user is a VIP
     if (!(await isUserVIP(hashedUserID))){

@@ -1,5 +1,5 @@
 import { db } from "../databases/databases";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 
@@ -12,7 +12,7 @@ export async function getUsername(req: Request, res: Response): Promise<Response
     }
 
     //hash the userID
-    userID = getHash(userID);
+    userID = await getHashCache(userID);
 
     try {
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);

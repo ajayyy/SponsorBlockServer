@@ -1,5 +1,6 @@
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { UserID } from "../types/user.model";
+import { HashedValue } from "../types/hash.model";
 import { Logger } from "./logger";
 
 export function skipSegmentsKey(videoID: VideoID, service: Service): string {
@@ -22,4 +23,10 @@ export function ratingHashKey(hashPrefix: VideoIDHash, service: Service): string
     if (hashPrefix.length !== 4) Logger.warn(`Redis rating hash-prefix key is not length 4! ${hashPrefix}`);
 
     return `rating.${service}.${hashPrefix}`;
+}
+
+export function userHashKey(userID: HashedValue): string {
+    if (userID.length !== 64) Logger.warn(`Redis userHash key is not length 64! ${userID}`);
+
+    return `user.${userID}`;
 }
