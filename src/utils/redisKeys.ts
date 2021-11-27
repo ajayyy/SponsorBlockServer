@@ -25,8 +25,8 @@ export function ratingHashKey(hashPrefix: VideoIDHash, service: Service): string
     return `rating.${service}.${hashPrefix}`;
 }
 
-export function userHashKey(userID: HashedValue): string {
-    if (userID.length !== 64) Logger.warn(`Redis userHash key is not length 64! ${userID}`);
+export function shaHashKey(singleIter: HashedValue): string {
+    if (singleIter.length !== 64) Logger.warn(`Redis sha.hash key is not length 64! ${singleIter}`);
 
-    return `user.${userID}`;
+    return `sha.hash.${singleIter}`;
 }
