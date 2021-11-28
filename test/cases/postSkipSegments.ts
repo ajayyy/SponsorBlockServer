@@ -1084,4 +1084,20 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should return 400 if videoID is empty", (done) => {
+        const videoID = null as string;
+        postSkipSegmentParam({
+            videoID,
+            startTime: 1,
+            endTime: 5,
+            category: "sponsor",
+            userID: submitUserTwo
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

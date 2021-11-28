@@ -302,7 +302,7 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
 function checkInvalidFields(videoID: VideoID, userID: UserID, segments: IncomingSegment[]): CheckResult {
     const invalidFields = [];
     const errors = [];
-    if (typeof videoID !== "string") {
+    if (typeof videoID !== "string" || videoID?.length == 0) {
         invalidFields.push("videoID");
     }
     if (typeof userID !== "string" || userID?.length < 30) {
