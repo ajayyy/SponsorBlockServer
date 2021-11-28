@@ -21,7 +21,7 @@ describe("getSearchSegments", () => {
         await db.prepare("run", query, ["searchTest4", 3, 5,    1, 0,   0, 0, 0, 11, "search-page1-2",      "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 6,    1, 0,   0, 0, 0, 12, "search-page1-3",      "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 7,    1, 0,   0, 0, 0, 13, "search-page1-4",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 8,    1, 0,   0, 0, 0, 14, "search-page1-5",       "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 8,    1, 0,   0, 0, 0, 14, "search-page1-5",      "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 9,    1, 0,   0, 0, 0, 15, "search-page1-6",      "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 10,   1, 0,   0, 0, 0, 16, "search-page1-7",      "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 11,   1, 0,   0, 0, 0, 17, "search-page1-8",      "searchTestUser", "sponsor", "skip"]);
@@ -29,6 +29,8 @@ describe("getSearchSegments", () => {
         await db.prepare("run", query, ["searchTest4", 3, 13,   1, 0,   0, 0, 0, 19, "search-page1-10",     "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 14,   1, 0,   0, 0, 0, 20, "search-page2-1",      "searchTestUser", "sponsor", "skip"]);
         await db.prepare("run", query, ["searchTest4", 3, 15,   1, 0,   0, 0, 0, 21, "search-page2-2",      "searchTestUser", "sponsor", "skip"]);
+        // test all values
+        await db.prepare("run", query, ["searchTest5", 0, 10,   1, 1,   1, 0, 0, 22, "search-values",       "searchTestUser", "filler", "mute"]);
         return;
     });
 
@@ -247,6 +249,35 @@ describe("getSearchSegments", () => {
                 assert.strictEqual(data.page, 1);
                 assert.strictEqual(segments[0].UUID, "search-page2-1");
                 assert.strictEqual(segments[1].UUID, "search-page2-2");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return all wanted values from searchTest5", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest5" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 1);
+                assert.strictEqual(data.page, 0);
+                const segment0 = segments[0];
+                const expected = {
+                    UUID: "search-values",
+                    timeSubmitted: 22,
+                    startTime: 0,
+                    endTime: 10,
+                    category: "filler",
+                    actionType: "mute",
+                    votes: 1,
+                    views: 1,
+                    locked: 1,
+                    hidden: 0,
+                    shadowHidden: 0,
+                    userID: "searchTestUser"
+                };
+                assert.deepStrictEqual(segment0, expected);
                 done();
             })
             .catch(err => done(err));
