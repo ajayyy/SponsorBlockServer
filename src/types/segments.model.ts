@@ -2,7 +2,7 @@ import { HashedValue } from "./hash.model";
 import { SBRecord } from "./lib.model";
 import { UserID } from "./user.model";
 
-export type SegmentUUID = string  & { __segmentUUIDBrand: unknown };
+export type SegmentUUID = string & { __segmentUUIDBrand: unknown };
 export type VideoID = string & { __videoIDBrand: unknown };
 export type VideoDuration = number & { __videoDurationBrand: unknown };
 export type Category = ("sponsor" | "selfpromo" | "interaction" | "intro" | "outro" | "preview" | "music_offtopic" | "poi_highlight" | "chapter") & { __categoryBrand: unknown };
