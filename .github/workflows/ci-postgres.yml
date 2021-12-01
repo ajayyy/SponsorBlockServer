@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
       - name: Build the docker-compose stack
         env:
           PG_USER: ci_db_user
@@ -16,7 +16,6 @@ jobs:
         run: docker-compose -f docker/docker-compose-ci.yml up -d
       - name: Check running containers
         run: docker ps
-      - uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
       - name: Run Tests
         env:
           TEST_POSTGRES: true
