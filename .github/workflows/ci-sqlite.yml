@@ -8,11 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Initialization
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - run: npm install
-
+      - uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
       - name: Run Tests
         timeout-minutes: 5
         run: npm test

@@ -16,8 +16,7 @@ jobs:
         run: docker-compose -f docker/docker-compose-ci.yml up -d
       - name: Check running containers
         run: docker ps
-      - uses: actions/setup-node@v2
-      - run: npm install
+      - uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
       - name: Run Tests
         env:
           TEST_POSTGRES: true

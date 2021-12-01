@@ -8,9 +8,7 @@ jobs:
   make-base-db:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - run: npm install
+      - uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
       - name: Set config
         run: |
           echo '{"mode": "init-db-and-exit"}' > config.json
