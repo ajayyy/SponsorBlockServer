@@ -39,9 +39,7 @@ async function getAndSplit<T, U>(fetchFromDB: (values: U[]) => Promise<Array<T>>
                     value,
                     result: JSON.parse(reply)
                 };
-            } catch (e) {
-                // eslint-disable-next-line no-console
-            }
+            } catch (e) { } //eslint-disable-line no-empty
         }
 
         return {
