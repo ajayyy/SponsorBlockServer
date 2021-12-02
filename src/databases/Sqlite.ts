@@ -15,7 +15,7 @@ export class Sqlite implements IDatabase {
     // eslint-disable-next-line require-await
     async prepare(type: QueryType, query: string, params: any[] = []): Promise<any[]> {
         // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
-        const preparedQuery = this.db.prepare(query);
+        const preparedQuery = this.db.prepare(Sqlite.processQuery(query));
 
         switch (type) {
             case "get": {
@@ -53,6 +53,10 @@ export class Sqlite implements IDatabase {
             Sqlite.upgradeDB(this.db, this.config.fileNamePrefix, this.config.dbSchemaFolder);
         }
 
+        this.db.function("regexp", { deterministic: true }, (regex: string, str: string) => {
+            return str.match(regex) ? 1 : 0;
+        });
+
         // Enable WAL mode checkpoint number
         if (this.config.enableWalCheckpointNumber) {
             this.db.exec("PRAGMA journal_mode=WAL;");
@@ -65,6 +69,10 @@ export class Sqlite implements IDatabase {
 
     attachDatabase(database: string, attachAs: string): void {
         this.db.prepare(`ATTACH ? as ${attachAs}`).run(database);
+    }
+
+    private static processQuery(query: string): string {
+        return query.replace(/ ~\* /g, " REGEXP ");
     }
 
     private static upgradeDB(db: Database, fileNamePrefix: string, schemaFolder: string) {
