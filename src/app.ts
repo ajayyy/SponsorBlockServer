@@ -193,6 +193,7 @@ function setupRoutes(router: Router) {
 
     // ratings
     router.get("/api/ratings/rate/:prefix", getRating);
+    router.get("/api/ratings/rate", getRating);
     router.post("/api/ratings/rate", postRateEndpoints);
     router.post("/api/ratings/clearCache", ratingPostClearCache);
 
