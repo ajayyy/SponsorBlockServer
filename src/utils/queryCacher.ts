@@ -70,8 +70,6 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
                 newResults[keyGenerator(value)] ??= [];
             }
 
-            console.log(newResults);
-
             for (const key in newResults) {
                 redis.setAsync(key, JSON.stringify(newResults[key]));
             }
