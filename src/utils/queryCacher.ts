@@ -27,7 +27,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 /**
  * Gets from redis for all specified values and splits the result before adding it to redis cache
  */
-async function getAndSplit<T, U>(fetchFromDB: (values: U[]) => Promise<Array<T>>, keyGenerator: (value: U) => string, splitKey: string, values: U[]): Promise<Array<T>> {
+async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Promise<Array<T>>, keyGenerator: (value: U) => string, splitKey: string, values: U[]): Promise<Array<T>> {
     const cachedValues = await Promise.all(values.map(async (value) => {
         const key = keyGenerator(value);
         const { err, reply } = await redis.getAsync(key);
@@ -49,24 +49,36 @@ async function getAndSplit<T, U>(fetchFromDB: (values: U[]) => Promise<Array<T>>
         };
     }));
 
-    const data = await fetchFromDB(
-        cachedValues.filter((cachedValue) => cachedValue.result === null)
-            .map((cachedValue) => cachedValue.value));
+    const valuesToBeFetched = cachedValues.filter((cachedValue) => cachedValue.result === null)
+        .map((cachedValue) => cachedValue.value);
 
-    new Promise(() => {
-        const newResults: Record<string, T[]> = {};
-        for (const item of data) {
-            const key = (item as unknown as Record<string, string>)[splitKey];
-            newResults[key] ??= [];
-            newResults[key].push(item);
-        }
+    let data: Array<T> = [];
+    if (valuesToBeFetched.length > 0) {
+        data = await fetchFromDB(valuesToBeFetched);
 
-        for (const key in newResults) {
-            redis.setAsync(keyGenerator(key as unknown as U), JSON.stringify(newResults[key]));
-        }
-    });
+        new Promise(() => {
+            const newResults: Record<string, T[]> = {};
+            for (const item of data) {
+                const splitValue = (item as unknown as Record<string, string>)[splitKey];
+                const key = keyGenerator(splitValue as unknown as U);
+                newResults[key] ??= [];
+                newResults[key].push(item);
+            }
 
-    return data.concat(cachedValues.map((cachedValue) => cachedValue.result).filter((result) => result !== null));
+            for (const value of valuesToBeFetched) {
+                // If it wasn't in the result, cache it as blank
+                newResults[keyGenerator(value)] ??= [];
+            }
+
+            console.log(newResults);
+
+            for (const key in newResults) {
+                redis.setAsync(key, JSON.stringify(newResults[key]));
+            }
+        });
+    }
+
+    return data.concat(...(cachedValues.map((cachedValue) => cachedValue.result).filter((result) => result !== null) || []));
 }
 
 function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }): void {
