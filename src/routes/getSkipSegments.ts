@@ -71,7 +71,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
         const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await getSegmentsFromDBByVideoID(videoID, service))
             .filter((segment: DBSegment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType))
             .reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
-                if (requiredSegments.includes(segment.UUID)) segment.required = true;
+                if (filterRequiredSegments(segment.UUID, requiredSegments)) segment.required = true;
 
                 acc[segment.category] ??= [];
                 acc[segment.category].push(segment);
@@ -110,7 +110,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                     hash: segment.hashedVideoID,
                     segmentPerCategory: {}
                 };
-                if (requiredSegments.includes(segment.UUID)) segment.required = true;
+                if (filterRequiredSegments(segment.UUID, requiredSegments)) segment.required = true;
 
                 acc[segment.videoID].segmentPerCategory[segment.category] ??= [];
                 acc[segment.videoID].segmentPerCategory[segment.category].push(segment);
@@ -372,6 +372,13 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
 
     return segments;
 }
+
+const filterRequiredSegments = (UUID: SegmentUUID, requiredSegments: SegmentUUID[]): boolean => {
+    for (const search of requiredSegments) {
+        if (search === UUID || UUID.indexOf(search) == 0) return true;
+    }
+    return false;
+};
 
 async function endpoint(req: Request, res: Response): Promise<Response> {
     try {
