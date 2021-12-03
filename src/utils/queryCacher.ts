@@ -20,6 +20,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     const data = await fetchFromDB();
 
     redis.setAsync(key, JSON.stringify(data));
+
     return data;
 }
 
