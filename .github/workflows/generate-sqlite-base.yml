@@ -5,10 +5,10 @@ on:
       - databases/**
 
 jobs:
+  uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
   make-base-db:
     runs-on: ubuntu-latest
     steps:
-      - uses: ajayyy/SponsorBlockServer/.github/workflows/node-setup.yml@master
       - name: Set config
         run: |
           echo '{"mode": "init-db-and-exit"}' > config.json
