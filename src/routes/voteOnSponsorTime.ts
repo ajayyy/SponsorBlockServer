@@ -7,7 +7,7 @@ import { db, privateDB } from "../databases/databases";
 import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { getIP } from "../utils/getIP";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
 import { UserID } from "../types/user.model";
 import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration } from "../types/segments.model";
@@ -292,8 +292,8 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     }
 
     //hash the userID
-    const nonAnonUserID = getHash(paramUserID);
-    const userID = getHash(paramUserID + UUID);
+    const nonAnonUserID = await getHashCache(paramUserID);
+    const userID = await getHashCache(paramUserID + UUID);
 
     // To force a non 200, change this early
     const finalResponse: FinalResponse = {
@@ -308,7 +308,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     const ip = getIP(req);
 
     //hash the ip 5000 times so no one can get it from the database
-    const hashedIP: HashedIP = getHash((ip + config.globalSalt) as IPAddress);
+    const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);
 
     //check if this user is on the vip list
     const isVIP = await isUserVIP(nonAnonUserID);

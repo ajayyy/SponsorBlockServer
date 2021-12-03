@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { db } from "../databases/databases";
 import { isUserVIP } from "../utils/isUserVIP";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
 
@@ -25,7 +25,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     // exit early if no body passed in
     if (!req.body.userID && !req.body.issuerUserID) return res.status(400).json({ "message": "Missing parameters" });
     // Collect user input data
-    const issuerUserID: HashedUserID = getHash(<UserID> req.body.issuerUserID);
+    const issuerUserID: HashedUserID = await getHashCache(<UserID> req.body.issuerUserID);
     const userID: UserID = req.body.userID;
     const issueTime = new Date().getTime();
     const enabled: boolean = req.body.enabled ?? true;

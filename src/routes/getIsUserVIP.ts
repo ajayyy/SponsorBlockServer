@@ -1,5 +1,5 @@
 import { Logger } from "../utils/logger";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
 import { HashedUserID, UserID } from "../types/user.model";
@@ -13,7 +13,7 @@ export async function getIsUserVIP(req: Request, res: Response): Promise<Respons
     }
 
     //hash the userID
-    const hashedUserID: HashedUserID = getHash(userID);
+    const hashedUserID: HashedUserID = await getHashCache(userID);
 
     try {
         const vipState = await isUserVIP(hashedUserID);

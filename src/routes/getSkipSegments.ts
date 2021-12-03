@@ -5,7 +5,7 @@ import { skipSegmentsHashKey, skipSegmentsKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
 import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getCategoryActionType } from "../utils/categoryInfo";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
@@ -33,10 +33,10 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
         }
 
         //if this isn't their ip, don't send it to them
-        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some((shadowHiddenSegment) => {
+        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(async (shadowHiddenSegment) => {
             if (cache.userHashedIP === undefined) {
                 //hash the IP only if it's strictly necessary
-                cache.userHashedIP = getHash((getIP(req) + config.globalSalt) as IPAddress);
+                cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
             }
 
             return shadowHiddenSegment.hashedIP === cache.userHashedIP;

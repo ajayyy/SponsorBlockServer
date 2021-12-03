@@ -1,5 +1,5 @@
 import { Logger } from "../utils/logger";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { isUserVIP } from "../utils/isUserVIP";
 import { db } from "../databases/databases";
 import { Request, Response } from "express";
@@ -28,7 +28,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     }
 
     // Check if user is VIP
-    userID = getHash(userID);
+    userID = await getHashCache(userID);
     const userIsVIP = await isUserVIP(userID);
 
     if (!userIsVIP) {
@@ -62,7 +62,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     });
 
     // calculate hash of videoID
-    const hashedVideoID: VideoIDHash = getHash(videoID, 1);
+    const hashedVideoID: VideoIDHash = await getHashCache(videoID, 1);
 
     // create database entry
     for (const category of categoriesToMark) {

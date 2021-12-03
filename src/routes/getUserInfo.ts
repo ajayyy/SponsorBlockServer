@@ -1,5 +1,5 @@
 import { db } from "../databases/databases";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
@@ -134,7 +134,7 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
 
 async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
-    const hashedUserID: HashedUserID = userID ? getHash(userID) : req.query.publicUserID as HashedUserID;
+    const hashedUserID: HashedUserID = userID ? await getHashCache(userID) : req.query.publicUserID as HashedUserID;
     const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];

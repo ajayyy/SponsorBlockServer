@@ -4,6 +4,7 @@ import { db, privateDB } from "../databases/databases";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
 import { getSubmissionUUID } from "../utils/getSubmissionUUID";
 import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { dispatchEvent } from "../utils/webhookUtils";
@@ -580,7 +581,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     //hash the userID
-    userID = getHash(userID);
+    userID = await getHashCache(userID);
 
     const userWarningCheckResult = await checkUserActiveWarning(userID);
     if (!userWarningCheckResult.pass) {
@@ -615,7 +616,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const newSegments = [];
 
     //hash the ip 5000 times so no one can get it from the database
-    const hashedIP = getHash(getIP(req) + config.globalSalt);
+    const hashedIP = await getHashCache(getIP(req) + config.globalSalt);
 
     try {
         //get current time

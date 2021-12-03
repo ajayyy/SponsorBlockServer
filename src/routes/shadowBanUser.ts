@@ -1,5 +1,5 @@
 import { db } from "../databases/databases";
-import { getHash } from "../utils/getHash";
+import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
 import { config } from "../config";
 import { Category, Service, VideoID, VideoIDHash } from "../types/segments.model";
@@ -28,7 +28,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     }
 
     //hash the userID
-    const adminUserID = getHash(adminUserIDInput);
+    const adminUserID = await getHashCache(adminUserIDInput);
 
     const isVIP = await isUserVIP(adminUserID);
     if (!isVIP) {
