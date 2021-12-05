@@ -31,7 +31,7 @@ const licenseHeader = `<p>The API and database follow <a href="https://creativec
 
 const tables = config?.dumpDatabase?.tables ?? [];
 const MILLISECONDS_BETWEEN_DUMPS = config?.dumpDatabase?.minTimeBetweenMs ?? ONE_MINUTE;
-const appExportPath = config?.dumpDatabase?.appExportPath ?? "./docker/database-export";
+export const appExportPath = config?.dumpDatabase?.appExportPath ?? "./docker/database-export";
 const postgresExportPath = config?.dumpDatabase?.postgresExportPath ?? "/opt/exports";
 const tableNames = tables.map(table => table.name);
 
@@ -182,15 +182,16 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
 
     const file = latestDumpFiles.find((value) => `/database/${value.tableName}.csv` === req.path);
 
-    updateQueueTime();
-
     if (file) {
         res.redirect(`/download/${file.fileName}`);
     } else {
         res.sendStatus(404);
     }
 
-    if (req.query.generate !== "false") await queueDump();
+    if (req.query.generate !== "false"){
+        updateQueueTime();
+        await queueDump();
+    }
 }
 
 function updateQueueTime(): void {

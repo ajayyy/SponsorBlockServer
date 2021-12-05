@@ -27,7 +27,7 @@ import { loggerMiddleware } from "./middleware/logger";
 import { corsMiddleware } from "./middleware/cors";
 import { apiCspMiddleware } from "./middleware/apiCsp";
 import { rateLimitMiddleware } from "./middleware/requestRateLimit";
-import dumpDatabase, { redirectLink } from "./routes/dumpDatabase";
+import dumpDatabase, { appExportPath, redirectLink } from "./routes/dumpDatabase";
 import { endpoint as getSegmentInfo } from "./routes/getSegmentInfo";
 import { postClearCache } from "./routes/postClearCache";
 import { addUnlistedVideo } from "./routes/addUnlistedVideo";
@@ -46,6 +46,7 @@ import { getChapterNames } from "./routes/getChapterNames";
 import { postRating } from "./routes/ratings/postRating";
 import { getRating } from "./routes/ratings/getRating";
 import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
+import path from "path";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -201,6 +202,7 @@ function setupRoutes(router: Router) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
         router.get("/database/*", redirectLink);
+        router.use("/download", express.static(appExportPath));
     } else {
         router.get("/database.db", function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", { root: "./" });
