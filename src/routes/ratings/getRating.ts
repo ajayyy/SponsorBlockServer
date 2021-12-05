@@ -32,7 +32,8 @@ export async function getRating(req: Request, res: Response): Promise<Response> 
     } catch(error) {
         return res.status(400).send("Bad parameter: hashPrefixes (invalid JSON)");
     }
-    if (hashPrefixes.some((hashPrefix) => !hashPrefix || !hashPrefixTester(hashPrefix))) {
+    if (hashPrefixes.length === 0 || hashPrefixes.length > 75
+            || hashPrefixes.some((hashPrefix) => !hashPrefix || !hashPrefixTester(hashPrefix))) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
 
