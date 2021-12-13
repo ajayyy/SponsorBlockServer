@@ -32,15 +32,15 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
                 [videoID, segment.timeSubmitted, service]) as { hashedIP: HashedIP }[];
         }
 
-        //if this isn't their ip, don't send it to them
-        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(async (shadowHiddenSegment) => {
-            if (cache.userHashedIP === undefined) {
-                //hash the IP only if it's strictly necessary
-                cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
-            }
+        const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
 
-            return shadowHiddenSegment.hashedIP === cache.userHashedIP;
-        }) ?? false;
+        if (ipList?.length > 0 && cache.userHashedIP === undefined) {
+            //hash the IP only if it's strictly necessary
+            cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
+        }
+        //if this isn't their ip, don't send it to them
+        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
+            (shadowHiddenSegment) => shadowHiddenSegment.hashedIP === cache.userHashedIP) ?? false;
     }));
 
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
