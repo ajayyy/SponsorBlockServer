@@ -282,4 +282,70 @@ describe("getSearchSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should be able to get with custom limit", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: 2 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments.length, 2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get with custom limit(2) and page(2)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: 2, page: 2 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 2);
+                assert.strictEqual(segments.length, 2);
+                assert.strictEqual(segments[0].UUID, "search-page1-5");
+                assert.strictEqual(segments[1].UUID, "search-page1-6");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get sorted result (desc)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", sortBy: "endTime", sortDir: "desc" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page2-2");
+                assert.strictEqual(segments[1].UUID, "search-page2-1");
+                assert.strictEqual(segments[2].UUID, "search-page1-10");
+                assert.strictEqual(segments[3].UUID, "search-page1-9");
+                assert.strictEqual(segments[4].UUID, "search-page1-8");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get sorted result (asc)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", sortBy: "endTime" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page1-1");
+                assert.strictEqual(segments[1].UUID, "search-page1-2");
+                assert.strictEqual(segments[2].UUID, "search-page1-3");
+                assert.strictEqual(segments[3].UUID, "search-page1-4");
+                assert.strictEqual(segments[4].UUID, "search-page1-5");
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

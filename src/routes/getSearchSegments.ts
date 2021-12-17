@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { db } from "../databases/databases";
-import { ActionType, Category, DBSegment, Service, VideoID } from "../types/segments.model";
+import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "../types/segments.model";
 import { getService } from "../utils/getService";
-const segmentsPerPage = 10;
+const maxSegmentsPerPage = 100;
 
 type searchSegmentResponse = {
     segmentCount: number,
@@ -17,6 +17,22 @@ function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise
         WHERE "videoID" = ? AND "service" = ? ORDER BY "timeSubmitted"`,
         [videoID, service]
     ) as Promise<DBSegment[]>;
+}
+
+function getSortField<T extends string>(...value: T[]): SortableFields {
+    const fieldByName = Object.values(SortableFields).reduce((acc, fieldName) => {
+        acc[fieldName.toLowerCase()] = fieldName;
+
+        return acc;
+    }, {} as Record<string, SortableFields>);
+
+    for (const name of value) {
+        if (name?.trim().toLowerCase() in fieldByName) {
+            return fieldByName[name.trim().toLowerCase()];
+        }
+    }
+
+    return SortableFields.timeSubmitted;
 }
 
 /**
@@ -64,6 +80,10 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
 
     let page: number = req.query.page ?? req.body.page ?? 0;
     page = Number(page);
+    let limit: number = req.query.limit ?? req.body.limit ?? 10;
+    limit = Number(limit) > maxSegmentsPerPage ? maxSegmentsPerPage : Number(limit);
+    const sortBy: SortableFields = getSortField(req.query.sortBy, req.body.sortBy);
+    const sortDir: string = req.query.sortDir ?? req.body.sortDir ?? "asc";
 
     const minVotes: number = req.query.minVotes ?? req.body.minVotes ?? -3;
     const maxVotes: number = req.query.maxVotes ?? req.body.maxVotes ?? Infinity;
@@ -99,11 +119,11 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         return false;
     }
 
-    return filterSegments(segments, page, filters);
+    return filterSegments(segments, filters, page, limit, sortBy, sortDir);
 }
-function filterSegments(segments: DBSegment[], page: number, filters: Record<string, any>) {
-    const startIndex = 0+(page*segmentsPerPage);
-    const endIndex = segmentsPerPage+(page*segmentsPerPage);
+function filterSegments(segments: DBSegment[], filters: Record<string, any>, page: number, limit: number, sortBy: SortableFields, sortDir: string) {
+    const startIndex = 0+(page*limit);
+    const endIndex = limit+(page*limit);
     const filteredSegments = segments.filter((segment) =>
         !((segment.votes < filters.minVotes || segment.votes > filters.maxVotes)
             || (segment.views < filters.minViews || segment.views > filters.maxViews)
@@ -114,10 +134,27 @@ function filterSegments(segments: DBSegment[], page: number, filters: Record<str
         // return false if any of the conditions are met
         // return true if none of the conditions are met
     );
+
+    if (sortBy !== SortableFields.timeSubmitted) {
+        filteredSegments.sort((a,b) => {
+            const key = sortDir === "desc" ? 1 : -1;
+            if (a[sortBy] < b[sortBy]) {
+                return key;
+            }
+
+            if (a[sortBy] > b[sortBy]) {
+                return -key;
+            }
+
+            return 0;
+        });
+    }
+
     return {
         segmentCount: filteredSegments.length,
         page,
         segments: filteredSegments.slice(startIndex, endIndex)
+
     };
 }
 
