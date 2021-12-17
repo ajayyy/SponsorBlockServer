@@ -25,6 +25,7 @@
     "express-rate-limit": "^5.5.1",
     "pg": "^8.7.1",
     "redis": "^3.1.2",
+    "spdy": "^4.0.2",
     "sync-mysql": "^3.0.1"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@types/node": "^16.11.11",
     "@types/pg": "^8.6.1",
     "@types/redis": "^2.8.32",
+    "@types/spdy": "^3.4.5",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "eslint": "^8.3.0",

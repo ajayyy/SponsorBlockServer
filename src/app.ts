@@ -40,6 +40,7 @@ import { getStatus } from "./routes/getStatus";
 import { getLockReason } from "./routes/getLockReason";
 import { getUserStats } from "./routes/getUserStats";
 import ExpressPromiseRouter from "express-promise-router";
+import spdy from "spdy";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
@@ -66,12 +67,18 @@ export function createServer(callback: () => void): Server {
     // Setup pretty JSON
     if (config.mode === "development") app.set("json spaces", 2);
 
+    // spdy server if testing
+    //@ts-ignore
+    if (config.mode === "test") spdy.createServer({ spdy: { ssl: false } }, app).listen(config.spdyPort);
+
     // Set production mode
     app.set("env", config.mode || "production");
 
     setupRoutes(router);
 
-    return app.listen(config.port, callback);
+    // if spdy configured, use spdy server
+    const server = config.spdy ? spdy.createServer(config.spdy, app) : app;
+    return server.listen(config.port, callback);
 }
 
 function setupRoutes(router: Router) {

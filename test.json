@@ -1,6 +1,7 @@
 {
     "port": 8080,
     "mockPort": 8081,
+    "spdyPort": 8002,
     "globalSalt": "testSalt",
     "adminUserID": "4bdfdc9cddf2c7d07a8a87b57bf6d25389fb75d1399674ee0e0938a6a60f4c3b",
     "newLeafURLs": ["placeholder"],
