@@ -67,10 +67,6 @@ export function createServer(callback: () => void): Server {
     // Setup pretty JSON
     if (config.mode === "development") app.set("json spaces", 2);
 
-    // spdy server if testing
-    //@ts-ignore
-    if (config.mode === "test") spdy.createServer({ spdy: { ssl: false } }, app).listen(config.spdyPort);
-
     // Set production mode
     app.set("env", config.mode || "production");
 

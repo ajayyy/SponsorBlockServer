@@ -4,6 +4,7 @@ import path from "path";
 import { config } from "../src/config";
 import { createServer } from "../src/app";
 import { createMockServer } from "./mocks";
+import { createSpdyServer } from "./spdyServer";
 import { Logger } from "../src/utils/logger";
 import { initDb } from "../src/databases/databases";
 import { ImportMock } from "ts-mock-imports";
@@ -47,16 +48,19 @@ async function init() {
                 );
             });
     });
-
-    const mockServer = createMockServer(() => {
-        Logger.info("Started mock HTTP Server");
-        const server = createServer(() => {
-            Logger.info("Started main HTTP server");
-            // Run the tests.
-            mocha.run((failures) => {
-                mockServer.close();
-                server.close();
-                process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
+    const spdyServer = createSpdyServer(() => {
+        Logger.info("Started spdy HTTP/2 Server");
+        const mockServer = createMockServer(() => {
+            Logger.info("Started mock HTTP Server");
+            const server = createServer(() => {
+                Logger.info("Started main HTTP server");
+                // Run the tests.
+                mocha.run((failures) => {
+                    spdyServer.close();
+                    mockServer.close();
+                    server.close();
+                    process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
+                });
             });
         });
     });

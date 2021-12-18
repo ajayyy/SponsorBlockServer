@@ -1,39 +1,34 @@
-import assert from "assert";
 import { config } from "../../src/config";
-import spdy from "spdy";
-import https from "https";
+import assert from "assert";
+import superagent from "superagent";
+import { cert } from "../spdyServer";
 
-const agent = spdy.createAgent({
-    port: config.spdyPort,
-    spdy: {
-        ssl: false
-    }
-})
+describe("spdy test", () => {
+    // skip tests if no config.spdyPort
+    before(function () {
+        if (!config?.spdyPort) this.skip();
+    });
+    it("Should be able to get with HTTP/2", (done) => {
+        superagent
+            .get(`https://localhost:${config.spdyPort}/ping`)
+            .http2()
+            .ca(cert)
+            .end((err, res) => {
+                assert.strictEqual(res.status, 200);
+                assert.strictEqual(res.text, "pong");
+                if (err) assert.fail(err);
+                done();
+            });
+    });
 
-const options = {
-    host: "localhost",
-    port: config.spdyPort,
-    path: "/api/status",
-    agent: agent
-};
-
-describe("spdy getStatus", () => {
-    it("Should be able to get status", (done) => {
-        https.get(options, (res) => {
-            console.log(res);
-            /*
-            assert.strictEqual(res.status, 200);
-            const data = res.data;
-            assert.ok(data.uptime); // uptime should be greater than 1s
-            assert.strictEqual(data.commit, "test");
-            assert.strictEqual(data.db, Number(dbVersion));
-            assert.ok(data.startTime);
-            assert.ok(data.processTime >= 0);
-            assert.ok(data.loadavg.length == 2);
-            done();
-            */
-            agent.close();
-            done();
-        });
+    it("Should give error when fetching from HTTP/1 server", (done) => {
+        superagent
+            .get(`http://localhost:${config.port}/api/status`)
+            .http2()
+            .end((err, result) => {
+                if (result) assert.fail("Expecting error, not result");
+                assert.deepStrictEqual(err?.code, "ERR_HTTP2_ERROR");
+                done();
+            });
     });
 });
