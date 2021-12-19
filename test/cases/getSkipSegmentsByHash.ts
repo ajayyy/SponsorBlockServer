@@ -434,7 +434,7 @@ describe("getSkipSegmentsByHash", () => {
                     }]
                 }];
 
-                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
+                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2, false));
                 assert.strictEqual(data[0].segments.length, 3);
                 done();
             })
