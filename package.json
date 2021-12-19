@@ -8,6 +8,7 @@
     "dev": "nodemon",
     "dev:bash": "nodemon -x 'npm test ; npm start'",
     "postgres:docker": "docker run --rm -p 5432:5432 -e POSTGRES_USER=ci_db_user -e POSTGRES_PASSWORD=ci_db_pass postgres:alpine",
+    "redis:docker": "docker run --rm -p 6379:6379 redis:alpine",
     "start": "ts-node src/index.ts",
     "tsc": "tsc -p tsconfig.json",
     "lint": "eslint src test",
