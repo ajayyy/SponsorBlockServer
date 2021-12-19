@@ -313,6 +313,140 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should be able to get with over range page", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: 2, page: 2000 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 2000);
+                assert.strictEqual(segments.length, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get with invalid page (=-100)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", page: -100 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments.length, 10);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get with invalid page (=text)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", page: "hello" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments.length, 10);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be use default limit if invalid limit query (=0)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: 0 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page1-1");
+                assert.strictEqual(segments[1].UUID, "search-page1-2");
+                assert.strictEqual(segments[2].UUID, "search-page1-3");
+                assert.strictEqual(segments[3].UUID, "search-page1-4");
+                assert.strictEqual(segments[4].UUID, "search-page1-5");
+                assert.strictEqual(segments[5].UUID, "search-page1-6");
+                assert.strictEqual(segments[6].UUID, "search-page1-7");
+                assert.strictEqual(segments[7].UUID, "search-page1-8");
+                assert.strictEqual(segments[8].UUID, "search-page1-9");
+                assert.strictEqual(segments[9].UUID, "search-page1-10");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be use default limit if invalid limit query (=-100)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: -100 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page1-1");
+                assert.strictEqual(segments[1].UUID, "search-page1-2");
+                assert.strictEqual(segments[2].UUID, "search-page1-3");
+                assert.strictEqual(segments[3].UUID, "search-page1-4");
+                assert.strictEqual(segments[4].UUID, "search-page1-5");
+                assert.strictEqual(segments[5].UUID, "search-page1-6");
+                assert.strictEqual(segments[6].UUID, "search-page1-7");
+                assert.strictEqual(segments[7].UUID, "search-page1-8");
+                assert.strictEqual(segments[8].UUID, "search-page1-9");
+                assert.strictEqual(segments[9].UUID, "search-page1-10");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be use default limit if invalid limit query (=text)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: "hello" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page1-1");
+                assert.strictEqual(segments[1].UUID, "search-page1-2");
+                assert.strictEqual(segments[2].UUID, "search-page1-3");
+                assert.strictEqual(segments[3].UUID, "search-page1-4");
+                assert.strictEqual(segments[4].UUID, "search-page1-5");
+                assert.strictEqual(segments[5].UUID, "search-page1-6");
+                assert.strictEqual(segments[6].UUID, "search-page1-7");
+                assert.strictEqual(segments[7].UUID, "search-page1-8");
+                assert.strictEqual(segments[8].UUID, "search-page1-9");
+                assert.strictEqual(segments[9].UUID, "search-page1-10");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be use default limit if invalid limit query (=2000)", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", limit: 2000 } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page1-1");
+                assert.strictEqual(segments[1].UUID, "search-page1-2");
+                assert.strictEqual(segments[2].UUID, "search-page1-3");
+                assert.strictEqual(segments[3].UUID, "search-page1-4");
+                assert.strictEqual(segments[4].UUID, "search-page1-5");
+                assert.strictEqual(segments[5].UUID, "search-page1-6");
+                assert.strictEqual(segments[6].UUID, "search-page1-7");
+                assert.strictEqual(segments[7].UUID, "search-page1-8");
+                assert.strictEqual(segments[8].UUID, "search-page1-9");
+                assert.strictEqual(segments[9].UUID, "search-page1-10");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to get sorted result (desc)", (done) => {
         client.get(endpoint, { params: { videoID: "searchTest4", sortBy: "endTime", sortDir: "desc" } })
             .then(res => {
@@ -333,6 +467,24 @@ describe("getSearchSegments", () => {
 
     it("Should be able to get sorted result (asc)", (done) => {
         client.get(endpoint, { params: { videoID: "searchTest4", sortBy: "endTime" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 12);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-page1-1");
+                assert.strictEqual(segments[1].UUID, "search-page1-2");
+                assert.strictEqual(segments[2].UUID, "search-page1-3");
+                assert.strictEqual(segments[3].UUID, "search-page1-4");
+                assert.strictEqual(segments[4].UUID, "search-page1-5");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be use default sorted if invalid sort field", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest4", sortBy: "not exist", sortDir: "desc" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;

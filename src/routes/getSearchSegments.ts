@@ -3,6 +3,7 @@ import { db } from "../databases/databases";
 import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "../types/segments.model";
 import { getService } from "../utils/getService";
 const maxSegmentsPerPage = 100;
+const defaultSegmentsPerPage = 10;
 
 type searchSegmentResponse = {
     segmentCount: number,
@@ -33,6 +34,26 @@ function getSortField<T extends string>(...value: T[]): SortableFields {
     }
 
     return SortableFields.timeSubmitted;
+}
+
+function getLimit<T extends string>(value: T): number {
+    const limit = Number(value);
+    if (Number.isInteger(limit)
+        && limit >= 1
+        && limit <= maxSegmentsPerPage) {
+        return limit;
+    }
+
+    return defaultSegmentsPerPage;
+}
+
+function getPage<T extends string>(value: T): number {
+    const page = Number(value);
+    if (Number.isInteger(page) && page >= 0) {
+        return page;
+    }
+
+    return 0;
 }
 
 /**
@@ -78,10 +99,8 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
 
     const service = getService(req.query.service, req.body.service);
 
-    let page: number = req.query.page ?? req.body.page ?? 0;
-    page = Number(page);
-    let limit: number = req.query.limit ?? req.body.limit ?? 10;
-    limit = Number(limit) > maxSegmentsPerPage ? maxSegmentsPerPage : Number(limit);
+    const page: number = getPage(req.query.page ?? req.body.page);
+    const limit: number = getLimit(req.query.limit ?? req.body.limit);
     const sortBy: SortableFields = getSortField(req.query.sortBy, req.body.sortBy);
     const sortDir: string = req.query.sortDir ?? req.body.sortDir ?? "asc";
 
