@@ -20,6 +20,7 @@ const user06PrivateUserID = "setUsername_06";
 const username06 = "Username 06";
 const user07PrivateUserID = "setUsername_07";
 const username07 = "Username 07";
+const user08PrivateUserID = "setUsername_08";
 
 async function addUsername(userID: string, userName: string, locked = 0) {
     await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
@@ -230,5 +231,15 @@ describe("setUsername", () => {
                 testUserNameChangelog(user07PrivateUserID, newUsername, username07, true, done);
             })
             .catch((err) => done(err));
+    });
+
+    it("Should delete row if new username is same as publicID", (done) => {
+        const publicID = getHash(user08PrivateUserID);
+        postSetUserName(getHash(user08PrivateUserID), publicID)
+            .then(async () => {
+                const usernameInfo = await getUsernameInfo(getHash(user08PrivateUserID));
+                assert.strictEqual(usernameInfo, null);
+                done();
+            });
     });
 });
