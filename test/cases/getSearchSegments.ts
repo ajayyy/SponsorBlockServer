@@ -120,11 +120,10 @@ describe("getSearchSegments", () => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
                 const segments = data.segments;
-                assert.strictEqual(data.segmentCount, 3);
+                assert.strictEqual(data.segmentCount, 2);
                 assert.strictEqual(data.page, 0);
                 assert.strictEqual(segments[0].UUID, "search-normal");
-                assert.strictEqual(segments[1].UUID, "search-downvote");
-                assert.strictEqual(segments[2].UUID, "search-locked");
+                assert.strictEqual(segments[1].UUID, "search-locked");
                 done();
             })
             .catch(err => done(err));
