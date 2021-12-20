@@ -1,5 +1,5 @@
 import { db } from "../../src/databases/databases";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+import { partialDeepEquals, arrayPartialDeepEquals } from "../utils/partialDeepEquals";
 import { getHash } from "../../src/utils/getHash";
 import { ImportMock, } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -434,7 +434,7 @@ describe("getSkipSegmentsByHash", () => {
                     }]
                 }];
 
-                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
+                assert.ok(arrayPartialDeepEquals(data, expected) || arrayPartialDeepEquals(data, expected2));
                 assert.strictEqual(data[0].segments.length, 3);
                 done();
             })
