@@ -109,7 +109,7 @@ function filterSegments(segments: DBSegment[], page: number, filters: Record<str
             || (segment.views < filters.minViews || segment.views > filters.maxViews)
             || (!filters.locked && segment.locked)
             || (!filters.hidden && segment.hidden)
-            || (!filters.ignored && (segment.hidden || segment.shadowHidden))
+            || (!filters.ignored && ((segment.votes <= -2) || segment.hidden || segment.shadowHidden))
             || (filters.categories.length > 0 && !filters.categories.includes(segment.category)))
         // return false if any of the conditions are met
         // return true if none of the conditions are met
