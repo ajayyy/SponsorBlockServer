@@ -15,10 +15,11 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
             SUM(CASE WHEN "category" = 'intro' THEN 1 ELSE 0 END) as "categorySumIntro",
             SUM(CASE WHEN "category" = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
             SUM(CASE WHEN "category" = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
-            SUM(CASE WHEN "category" = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
-            SUM(CASE WHEN "category" = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
+            SUM(CASE WHEN "category" = 'selfpromo' THEN 1 ELSE 0 END) as "categorySumSelfpromo",
+            SUM(CASE WHEN "category" = 'music_offtopic' THEN 1 ELSE 0 END) as "categorySumMusicOfftopic",
             SUM(CASE WHEN "category" = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
-            SUM(CASE WHEN "category" = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",`;
+            SUM(CASE WHEN "category" = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",
+            SUM(CASE WHEN "category" = 'filler' THEN 1 ELSE 0 END) as "categorySumFiller",`;
     }
     if (fetchActionTypeStats) {
         additionalQuery += `
@@ -48,10 +49,11 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
                 intro: proxy.categorySumIntro,
                 outro: proxy.categorySumOutro,
                 interaction: proxy.categorySumInteraction,
-                selfpromo: proxy.categorySelfpromo,
-                music_offtopic: proxy.categoryMusicOfftopic,
+                selfpromo: proxy.categorySumSelfpromo,
+                music_offtopic: proxy.categorySumMusicOfftopic,
                 preview: proxy.categorySumPreview,
                 poi_highlight: proxy.categorySumHighlight,
+                filler: proxy.categorySumFiller,
             };
         }
         if (fetchActionTypeStats) {
