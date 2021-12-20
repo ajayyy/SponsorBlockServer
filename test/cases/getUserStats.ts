@@ -20,6 +20,7 @@ describe("getUserStats", () => {
         await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid7", getHash("getuserstats_user_01"), 7, 7, "music_offtopic", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 11, 11, 0, "getuserstatsuuid8", getHash("getuserstats_user_01"), 8, 8, "poi_highlight", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, -2, "getuserstatsuuid9", getHash("getuserstats_user_02"), 8, 2, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid10", getHash("getuserstats_user_01"), 8, 2, "filler", 0]);
 
     });
 
@@ -48,14 +49,15 @@ describe("getUserStats", () => {
                         preview: 1,
                         music_offtopic: 1,
                         poi_highlight: 1,
+                        filler: 1
                     },
                     actionTypeCount: {
                         mute: 0,
-                        skip: 8
+                        skip: 9
                     },
                     overallStats: {
-                        minutesSaved: 28,
-                        segmentCount: 8
+                        minutesSaved: 30,
+                        segmentCount: 9
                     }
                 };
                 assert.ok(partialDeepEquals(res.data, expected));
