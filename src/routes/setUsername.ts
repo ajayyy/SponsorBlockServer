@@ -70,7 +70,11 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         if (row?.userName !== undefined) {
             //already exists, update this row
             oldUserName = row.userName;
-            await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, userID]);
+            if (userName == userID && !locked) {
+                await db.prepare("run", `DELETE FROM "userNames" WHERE "userID" = ?`, [userID]);
+            } else {
+                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, userID]);
+            }
         } else {
             //add to the db
             await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [userID, userName, locked]);
