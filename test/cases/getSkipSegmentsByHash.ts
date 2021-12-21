@@ -33,7 +33,7 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, "requiredSegmentVid-4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
         await db.prepare("run", query, ["chapterVid-hash", 60, 80, 2, "chapterVid-hash-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 1"]); //7258
         await db.prepare("run", query, ["chapterVid-hash", 70, 75, 2, "chapterVid-hash-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 2"]); //7258
-        await db.prepare("run", query, ["chapterVid-hash", 71, 76, 2, "chapterVid-hash-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 3"]); //7258
+        await db.prepare("run", query, ["chapterVid-hash", 71, 75, 2, "chapterVid-hash-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 3"]); //7258
         await db.prepare("run", query, ["longMuteVid-hash", 40, 45, 2, "longMuteVid-hash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
         await db.prepare("run", query, ["longMuteVid-hash", 30, 35, 2, "longMuteVid-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
         await db.prepare("run", query, ["longMuteVid-hash", 2, 80, 2, "longMuteVid-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
