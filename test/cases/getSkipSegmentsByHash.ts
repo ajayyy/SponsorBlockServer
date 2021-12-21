@@ -16,34 +16,37 @@ describe("getSkipSegmentsByHash", () => {
     const getSegmentsByHash0Hash = "fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910";
     const requiredSegmentVidHash = "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61";
     const requiredSegmentHashVidHash = "17bf8d9090e050257772f8bff277293c29c7ce3b25eb969a8fae111a2434504d";
+    const differentCategoryVidHash = "7fac44d1ee3257ec7f18953e2b5f991828de6854ad57193d1027c530981a89c0";
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, "getSegmentsByHash-02", "testman", 0, 50, "sponsor", "skip", "PeerTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 20, 30, 2, "getSegmentsByHash-03", "testman", 100, 150, "intro", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 40, 50, 2, "getSegmentsByHash-04", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash", ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b", ""]);
-        await db.prepare("run", query, ["onlyHidden", 60, 70, 2, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3", ""]);
-        await db.prepare("run", query, ["highlightVid", 60, 60, 2, "highlightVid-1", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
-        await db.prepare("run", query, ["highlightVid", 70, 70, 2, "highlightVid-2", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, "requiredSegmentVid-4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
-        await db.prepare("run", query, ["chapterVid-hash", 60, 80, 2, "chapterVid-hash-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 1"]); //7258
-        await db.prepare("run", query, ["chapterVid-hash", 70, 75, 2, "chapterVid-hash-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 2"]); //7258
-        await db.prepare("run", query, ["chapterVid-hash", 71, 76, 2, "chapterVid-hash-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 3"]); //7258
-        await db.prepare("run", query, ["longMuteVid-hash", 40, 45, 2, "longMuteVid-hash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
-        await db.prepare("run", query, ["longMuteVid-hash", 30, 35, 2, "longMuteVid-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
-        await db.prepare("run", query, ["longMuteVid-hash", 2, 80, 2, "longMuteVid-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
-        await db.prepare("run", query, ["longMuteVid-hash", 3, 78, 2, "longMuteVid-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
-        await db.prepare("run", query, ["longMuteVid-2-hash", 1, 15, 2, "longMuteVid-2-hash-1", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["longMuteVid-2-hash", 30, 35, 2, "longMuteVid-2-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["longMuteVid-2-hash", 2, 80, 2, "longMuteVid-2-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["longMuteVid-2-hash", 3, 78, 2, "longMuteVid-2-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["requiredSegmentHashVid", 10, 20, -2, "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
-        await db.prepare("run", query, ["requiredSegmentHashVid", 20, 30, -2, "7e1ebc5194551d2d0a606d64f675e5a14952e4576b2959f8c9d51e316c14f8da", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, 0, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, 0, "getSegmentsByHash-02", "testman", 0, 50, "sponsor", "skip", "PeerTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-0", 20, 30, 2, 0, "getSegmentsByHash-03", "testman", 100, 150, "intro", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-0", 40, 50, 2, 0, "getSegmentsByHash-04", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, 0, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash", ""]);
+        await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, 0, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b", ""]);
+        await db.prepare("run", query, ["onlyHidden", 60, 70, 2, 0, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3", ""]);
+        await db.prepare("run", query, ["highlightVid", 60, 60, 2, 0, "highlightVid-1", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+        await db.prepare("run", query, ["highlightVid", 70, 70, 2, 0, "highlightVid-2", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, 0, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, 0, "requiredSegmentVid-4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
+        await db.prepare("run", query, ["chapterVid-hash", 60, 80, 2, 0, "chapterVid-hash-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 1"]); //7258
+        await db.prepare("run", query, ["chapterVid-hash", 70, 75, 2, 0, "chapterVid-hash-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 2"]); //7258
+        await db.prepare("run", query, ["chapterVid-hash", 71, 75, 2, 0, "chapterVid-hash-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, getHash("chapterVid-hash", 1), "Chapter 3"]); //7258
+        await db.prepare("run", query, ["longMuteVid-hash", 40, 45, 2, 0, "longMuteVid-hash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-hash", 30, 35, 2, 0, "longMuteVid-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-hash", 2, 80, 2, 0, "longMuteVid-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-hash", 3, 78, 2, 0, "longMuteVid-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
+        await db.prepare("run", query, ["longMuteVid-2-hash", 1, 15, 2, 0, "longMuteVid-2-hash-1", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 30, 35, 2, 0, "longMuteVid-2-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 2, 80, 2, 0, "longMuteVid-2-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["longMuteVid-2-hash", 3, 78, 2, 0, "longMuteVid-2-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+        await db.prepare("run", query, ["requiredSegmentHashVid", 10, 20, -2, 0, "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
+        await db.prepare("run", query, ["requiredSegmentHashVid", 20, 30, -2, 0, "7e1ebc5194551d2d0a606d64f675e5a14952e4576b2959f8c9d51e316c14f8da", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
+        await db.prepare("run", query, ["differentCategoryVid", 60, 70, 2, 0, "differentCategoryVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
+        await db.prepare("run", query, ["differentCategoryVid", 61, 70, 2, 1, "differentCategoryVid-2", "testman", 0, 50, "intro", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
     });
 
     it("Should be able to get a 200", (done) => {
@@ -436,6 +439,24 @@ describe("getSkipSegmentsByHash", () => {
 
                 assert.ok(arrayPartialDeepEquals(data, expected) || arrayPartialDeepEquals(data, expected2));
                 assert.strictEqual(data[0].segments.length, 3);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get only one segment when two categories are at the same time", (done) => {
+        client.get(`${endpoint}/7fac?categories=["sponsor","intro"]`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        category: "intro"
+                    }]
+                }];
+                assert.ok(partialDeepEquals(data, expected));
+                assert.strictEqual(data[0].segments.length, 1);
                 done();
             })
             .catch(err => done(err));

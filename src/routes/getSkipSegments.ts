@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
+import { partition } from "lodash"
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
-import { skipSegmentsHashKey, skipSegmentsKey } from "../utils/redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
 import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getCategoryActionType } from "../utils/categoryInfo";
@@ -13,7 +14,7 @@ import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
 
 
-async function prepareCategorySegments(req: Request, videoID: VideoID, category: Category, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }): Promise<Segment[]> {
+async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1 && !segment.required) {
             return false; //too untrustworthy, just ignore it
@@ -39,14 +40,16 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
             cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
         }
         //if this isn't their ip, don't send it to them
-        return cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
+        const shouldShadowHide = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
             (shadowHiddenSegment) => shadowHiddenSegment.hashedIP === cache.userHashedIP) ?? false;
+
+        if (shouldShadowHide) useCache = false;
+        return shouldShadowHide;
     }));
 
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
-    const maxSegments = getCategoryActionType(category) === CategoryActionType.Skippable ? Infinity : 1;
-    return (await chooseSegments(filteredSegments, maxSegments)).map((chosenSegment) => ({
+    return (await chooseSegments(videoID, service, filteredSegments, useCache)).map((chosenSegment) => ({
         category: chosenSegment.category,
         actionType: chosenSegment.actionType,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
@@ -62,28 +65,21 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, category:
 async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: Category[],
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
-    const segments: Segment[] = [];
 
     try {
         categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
         if (categories.length === 0) return null;
 
-        const segmentsByCategory: SBRecord<Category, DBSegment[]> = (await getSegmentsFromDBByVideoID(videoID, service))
-            .filter((segment: DBSegment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType))
-            .reduce((acc: SBRecord<Category, DBSegment[]>, segment: DBSegment) => {
+        const segments: DBSegment[] = (await getSegmentsFromDBByVideoID(videoID, service))
+            .map((segment: DBSegment) => {
                 if (filterRequiredSegments(segment.UUID, requiredSegments)) segment.required = true;
-
-                acc[segment.category] ??= [];
-                acc[segment.category].push(segment);
-
-                return acc;
+                return segment;
             }, {});
 
-        for (const [category, categorySegments] of Object.entries(segmentsByCategory)) {
-            segments.push(...(await prepareCategorySegments(req, videoID, category as Category, categorySegments, cache)));
-        }
+        const canUseCache = requiredSegments.length === 0;
+        const processedSegments: Segment[] = await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache);
 
-        return segments;
+        return processedSegments.filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
     } catch (err) {
         if (err) {
             Logger.error(err as string);
@@ -98,34 +94,37 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
     const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
-        type SegmentWithHashPerVideoID = SBRecord<VideoID, {hash: VideoIDHash, segmentPerCategory: SBRecord<Category, DBSegment[]>}>;
+        type SegmentWithHashPerVideoID = SBRecord<VideoID, { hash: VideoIDHash, segments: DBSegment[] }>;
 
         categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
         if (categories.length === 0) return null;
 
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await getSegmentsFromDBByHash(hashedVideoIDPrefix, service))
-            .filter((segment: DBSegment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType))
             .reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
                 acc[segment.videoID] = acc[segment.videoID] || {
                     hash: segment.hashedVideoID,
-                    segmentPerCategory: {}
+                    segments: []
                 };
                 if (filterRequiredSegments(segment.UUID, requiredSegments)) segment.required = true;
 
-                acc[segment.videoID].segmentPerCategory[segment.category] ??= [];
-                acc[segment.videoID].segmentPerCategory[segment.category].push(segment);
+                acc[segment.videoID].segments ??= [];
+                acc[segment.videoID].segments.push(segment);
 
                 return acc;
             }, {});
 
         for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
-            segments[videoID] = {
+            const data: VideoData = {
                 hash: videoData.hash,
                 segments: [],
             };
 
-            for (const [category, segmentPerCategory] of Object.entries(videoData.segmentPerCategory)) {
-                segments[videoID].segments.push(...(await prepareCategorySegments(req, videoID as VideoID, category as Category, segmentPerCategory, cache)));
+            const canUseCache = requiredSegments.length === 0;
+            data.segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
+                .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
+
+            if (data.segments.length > 0) {
+                segments[videoID] = data;
             }
         }
 
@@ -164,10 +163,11 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service));
 }
 
-//gets a weighted random choice from the choices array based on their `votes` property.
-//amountOfChoices specifies the maximum amount of choices to return, 1 or more.
-//choices are unique
-function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOfChoices: number): T[] {
+// Gets a weighted random choice from the choices array based on their `votes` property.
+// amountOfChoices specifies the maximum amount of choices to return, 1 or more.
+// Choices are unique
+// If a predicate is given, it will only filter choices following it, and will leave the rest in the list
+function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOfChoices: number, predicate?: (choice: T) => void): T[] {
     //trivial case: no need to go through the whole process
     if (amountOfChoices >= choices.length) {
         return choices;
@@ -179,7 +179,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 
     //assign a weight to each choice
     let totalWeight = 0;
-    const choicesWithWeights: TWithWeight[] = choices.map(choice => {
+    let choicesWithWeights: TWithWeight[] = choices.map(choice => {
         const boost = Math.min(choice.reputation, 4);
 
         //The 3 makes -2 the minimum votes before being ignored completely
@@ -190,8 +190,20 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
         return { ...choice, weight };
     });
 
+    let forceIncludedChoices: T[] = [];
+    if (predicate) {
+        const splitArray = partition(choicesWithWeights, predicate);
+        choicesWithWeights = splitArray[0];
+        forceIncludedChoices = splitArray[1];
+    }
+
+    // Nothing to filter for
+    if (amountOfChoices >= choicesWithWeights.length) {
+        return choices;
+    }
+
     //iterate and find amountOfChoices choices
-    const chosen = [];
+    const chosen = [...forceIncludedChoices];
     while (amountOfChoices-- > 0) {
         //weighted random draw of one element of choices
         const randomNumber = Math.random() * totalWeight;
@@ -210,11 +222,25 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
     return chosen;
 }
 
+async function chooseSegments(videoID: VideoID, service: Service, segments: DBSegment[], useCache: boolean): Promise<DBSegment[]> {
+    const fetchData = async () => await buildSegmentGroups(segments);
+
+    const groups = useCache
+        ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service))
+        : await fetchData();
+
+    // Filter for only 1 item for POI categories
+    return getWeightedRandomChoice(groups, 1, (choice) => getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI)
+        .map(//randomly choose 1 good segment per group and return them
+            group => getWeightedRandomChoice(group.segments, 1)[0]
+        );
+}
+
 //This function will find segments that are contained inside of eachother, called similar segments
 //Only one similar time will be returned, randomly generated based on the sqrt of votes.
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
-async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSegment[]> {
+async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
@@ -265,10 +291,7 @@ async function chooseSegments(segments: DBSegment[], max: number): Promise<DBSeg
     overlappingSegmentsGroups = splitPercentOverlap(overlappingSegmentsGroups);
 
     //if there are too many groups, find the best ones
-    return getWeightedRandomChoice(overlappingSegmentsGroups, max).map(
-        //randomly choose 1 good segment per group and return them
-        group => getWeightedRandomChoice(group.segments, 1)[0],
-    );
+    return overlappingSegmentsGroups;
 }
 
 function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegmentGroup[] {
@@ -277,12 +300,14 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
         group.segments.forEach((segment) => {
             const bestGroup = result.find((group) => {
                 // At least one segment in the group must have high % overlap or the same action type
+                // Since POI segments will always have 0 overlap, they will always be in their own groups
                 return group.segments.some((compareSegment) => {
                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
                     const overlapPercent = overlap / overallDuration;
-                    return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.actionType !== ActionType.Chapter)
-                        || overlapPercent >= 0.6
+                    return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.category == compareSegment.category && segment.actionType !== ActionType.Chapter)
+                        || (overlapPercent >= 0.6 && segment.actionType !== compareSegment.actionType && segment.category === compareSegment.category)
+                        || (overlapPercent >= 0.8 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category)
                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
                 });
             });
