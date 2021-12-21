@@ -278,6 +278,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
         cursor = Math.max(cursor, segment.endTime);
     }
 
+    overlappingSegmentsGroups = splitPercentOverlap(overlappingSegmentsGroups);
     overlappingSegmentsGroups.forEach((group) => {
         if (group.required) {
             // Required beats locked
@@ -288,8 +289,6 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
 
         group.reputation = group.reputation / group.segments.length;
     });
-
-    overlappingSegmentsGroups = splitPercentOverlap(overlappingSegmentsGroups);
 
     //if there are too many groups, find the best ones
     return overlappingSegmentsGroups;
@@ -306,9 +305,10 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
                     const overlapPercent = overlap / overallDuration;
-                    return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.category == compareSegment.category && segment.actionType !== ActionType.Chapter)
+                    return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.category === compareSegment.category && segment.actionType !== ActionType.Chapter)
                         || (overlapPercent >= 0.6 && segment.actionType !== compareSegment.actionType && segment.category === compareSegment.category)
-                        || (overlapPercent >= 0.8 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category)
+                        || (overlapPercent >= 0.8 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category
+                                && segment.category !== "music_offtopic" && compareSegment.category !== "music_offtopic")
                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
                 });
             });

@@ -17,6 +17,7 @@ describe("getSkipSegmentsByHash", () => {
     const requiredSegmentVidHash = "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61";
     const requiredSegmentHashVidHash = "17bf8d9090e050257772f8bff277293c29c7ce3b25eb969a8fae111a2434504d";
     const differentCategoryVidHash = "7fac44d1ee3257ec7f18953e2b5f991828de6854ad57193d1027c530981a89c0";
+    const nonMusicOverlapVidHash = "306151f778f9bfd19872b3ccfc83cbab37c4f370717436bfd85e0a624cd8ba3c";
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, 0, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
@@ -47,6 +48,8 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["requiredSegmentHashVid", 20, 30, -2, 0, "7e1ebc5194551d2d0a606d64f675e5a14952e4576b2959f8c9d51e316c14f8da", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
         await db.prepare("run", query, ["differentCategoryVid", 60, 70, 2, 0, "differentCategoryVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
         await db.prepare("run", query, ["differentCategoryVid", 61, 70, 2, 1, "differentCategoryVid-2", "testman", 0, 50, "intro", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
+        await db.prepare("run", query, ["nonMusicOverlapVid", 60, 70, 2, 0, "nonMusicOverlapVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
+        await db.prepare("run", query, ["nonMusicOverlapVid", 61, 70, 2, 1, "nonMusicOverlapVid-2", "testman", 0, 50, "music_offtopic", "skip", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
     });
 
     it("Should be able to get a 200", (done) => {
@@ -457,6 +460,26 @@ describe("getSkipSegmentsByHash", () => {
                 }];
                 assert.ok(partialDeepEquals(data, expected));
                 assert.strictEqual(data[0].segments.length, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get overlapping segments where one is non music and one is other", (done) => {
+        client.get(`${endpoint}/3061?categories=["sponsor","music_offtopic"]`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        category: "sponsor"
+                    }, {
+                        category: "music_offtopic"
+                    }]
+                }];
+                assert.ok(partialDeepEquals(data, expected));
+                assert.strictEqual(data[0].segments.length, 2);
                 done();
             })
             .catch(err => done(err));
