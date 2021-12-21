@@ -9,6 +9,7 @@ import { initDb } from "../src/databases/databases";
 import { ImportMock } from "ts-mock-imports";
 import * as rateLimitMiddlewareModule from "../src/middleware/requestRateLimit";
 import rateLimit from "express-rate-limit";
+import redis from "../src/utils/redis";
 
 async function init() {
     ImportMock.mockFunction(rateLimitMiddlewareModule, "rateLimitMiddleware", rateLimit({
@@ -56,6 +57,7 @@ async function init() {
             mocha.run((failures) => {
                 mockServer.close();
                 server.close();
+                redis.close(true);
                 process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
             });
         });

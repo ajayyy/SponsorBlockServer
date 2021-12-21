@@ -3,7 +3,7 @@ import { getHash } from "../../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../../utils/httpClient";
 import { AxiosResponse } from "axios";
-import { partialDeepEquals } from "../../utils/partialDeepEquals";
+import { partialDeepEquals, arrayPartialDeepEquals } from "../../utils/partialDeepEquals";
 
 const endpoint = "/api/ratings/rate";
 const getRating = (hash: string, params?: unknown): Promise<AxiosResponse> => client.get(`${endpoint}/${hash}`, { params });
@@ -58,6 +58,9 @@ describe("getRating", () => {
             .catch(err => done(err));
     });
 
+    /*
+    This test will fail if tests are already ran with redis. 
+    */
     it("Should be able to bulk fetch", (done) => {
         getBulkRating([videoOnePartialHash, videoTwoPartialHash])
             .then(res => {
@@ -80,7 +83,7 @@ describe("getRating", () => {
                     count: 10,
                     hash: videoOneIDHash,
                 }];
-                assert.ok(partialDeepEquals(res.data, expected));
+                assert.ok(arrayPartialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));

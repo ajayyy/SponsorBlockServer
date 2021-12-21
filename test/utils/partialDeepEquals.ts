@@ -22,6 +22,12 @@ export const partialDeepEquals = (actual: Record<string, any>, expected: Record<
     return true;
 };
 
+export const arrayPartialDeepEquals = (actual: Array<any>, expected: Array<any>): boolean => {
+    for (const value of expected)
+        if (!actual.some(a => partialDeepEquals(a, value, false))) return false;
+    return true;
+};
+
 export const arrayDeepEquals = (actual: Record<string, any>, expected: Record<string, any>, print = true): boolean => {
     if (actual.length !== expected.length) return false;
     let flag = true;

@@ -8,6 +8,7 @@ interface RedisSB {
     set(key: string, value: string, callback?: Callback<string | null>): void;
     setAsync?(key: string, value: string): Promise<{err: Error | null, reply: string | null}>;
     delAsync?(...keys: [string]): Promise<Error | null>;
+    close?(flush?: boolean): void;
 }
 
 let exportObject: RedisSB = {
@@ -29,6 +30,7 @@ if (config.redis) {
     exportObject.getAsync = (key) => new Promise((resolve) => client.get(key, (err, reply) => resolve({ err, reply })));
     exportObject.setAsync = (key, value) => new Promise((resolve) => client.set(key, value, (err, reply) => resolve({ err, reply })));
     exportObject.delAsync = (...keys) => new Promise((resolve) => client.del(keys, (err) => resolve(err)));
+    exportObject.close    = (flush) => client.end(flush);
 
     client.on("error", function(error) {
         Logger.error(error);
