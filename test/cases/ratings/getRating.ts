@@ -59,7 +59,7 @@ describe("getRating", () => {
     });
 
     /*
-    This test will fail if tests are already ran with redis. 
+    This test will fail if tests are already ran with redis.
     */
     it("Should be able to bulk fetch", (done) => {
         getBulkRating([videoOnePartialHash, videoTwoPartialHash])

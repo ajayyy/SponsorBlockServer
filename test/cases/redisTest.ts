@@ -25,8 +25,8 @@ describe("redis test", function() {
     it("Should not be able to get not stored value", (done) => {
         redis.getAsync(randKey2)
             .then(res => {
-                if (res.reply || res.err ) assert.fail("Value should not be found")
+                if (res.reply || res.err ) assert.fail("Value should not be found");
                 done();
             });
-    })
+    });
 });
