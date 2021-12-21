@@ -177,9 +177,17 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
         weight: number
     }
 
+    let forceIncludedChoices: T[] = [];
+    let filteredChoices = choices;
+    if (predicate) {
+        const splitArray = partition(choices, predicate);
+        filteredChoices = splitArray[0];
+        forceIncludedChoices = splitArray[1];
+    }
+
     //assign a weight to each choice
     let totalWeight = 0;
-    let choicesWithWeights: TWithWeight[] = choices.map(choice => {
+    const choicesWithWeights: TWithWeight[] = filteredChoices.map(choice => {
         const boost = Math.min(choice.reputation, 4);
 
         //The 3 makes -2 the minimum votes before being ignored completely
@@ -189,13 +197,6 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 
         return { ...choice, weight };
     });
-
-    let forceIncludedChoices: T[] = [];
-    if (predicate) {
-        const splitArray = partition(choicesWithWeights, predicate);
-        choicesWithWeights = splitArray[0];
-        forceIncludedChoices = splitArray[1];
-    }
 
     // Nothing to filter for
     if (amountOfChoices >= choicesWithWeights.length) {
