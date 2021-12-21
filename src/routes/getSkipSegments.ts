@@ -226,7 +226,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
     const fetchData = async () => await buildSegmentGroups(segments);
 
     const groups = useCache
-        ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service)) 
+        ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service))
         : await fetchData();
 
     // Filter for only 1 item for POI categories
@@ -307,7 +307,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
                     const overlapPercent = overlap / overallDuration;
                     return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.category == compareSegment.category && segment.actionType !== ActionType.Chapter)
                         || (overlapPercent >= 0.6 && segment.actionType !== compareSegment.actionType && segment.category === compareSegment.category)
-                        || (overlapPercent >= 0.9 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category)
+                        || (overlapPercent >= 0.8 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category)
                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
                 });
             });
