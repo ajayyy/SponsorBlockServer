@@ -1,12 +1,17 @@
 name: create-sqlite-base
+
 on:
   push:
+    branches:
+      - master
     paths:
       - databases/**
 
 jobs:
   make-base-db:
+    name: Generate SQLite base .db
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
