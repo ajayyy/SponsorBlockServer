@@ -28,7 +28,7 @@ function getSortField<T extends string>(...value: T[]): SortableFields {
     }, {} as Record<string, SortableFields>);
 
     for (const name of value) {
-        if (name?.trim().toLowerCase() in fieldByName) {
+        if (name?.trim()?.toLowerCase() in fieldByName) {
             return fieldByName[name.trim().toLowerCase()];
         }
     }
