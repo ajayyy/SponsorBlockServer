@@ -16,14 +16,16 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
 
     let additionalFields = "";
     if (categoryStatsEnabled) {
-        additionalFields += `SUM(CASE WHEN category = 'sponsor' THEN 1 ELSE 0 END) as "categorySponsor",
+        additionalFields += `
+            SUM(CASE WHEN category = 'sponsor' THEN 1 ELSE 0 END) as "categorySumSponsor",
             SUM(CASE WHEN category = 'intro' THEN 1 ELSE 0 END) as "categorySumIntro",
             SUM(CASE WHEN category = 'outro' THEN 1 ELSE 0 END) as "categorySumOutro",
             SUM(CASE WHEN category = 'interaction' THEN 1 ELSE 0 END) as "categorySumInteraction",
-            SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySelfpromo",
-            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categoryMusicOfftopic",
+            SUM(CASE WHEN category = 'selfpromo' THEN 1 ELSE 0 END) as "categorySumSelfpromo",
+            SUM(CASE WHEN category = 'music_offtopic' THEN 1 ELSE 0 END) as "categorySumMusicOfftopic",
             SUM(CASE WHEN category = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
-            SUM(CASE WHEN category = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight", `;
+            SUM(CASE WHEN category = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",
+            SUM(CASE WHEN category = 'filler' THEN 1 ELSE 0 END) as "categorySumFiller",`;
     }
 
     const rows = await db.prepare("all", `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
@@ -42,14 +44,15 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
         minutesSaved[i] = rows[i].minutesSaved;
         if (categoryStatsEnabled) {
             categoryStats[i] = [
-                rows[i].categorySponsor,
+                rows[i].categorySumSponsor,
                 rows[i].categorySumIntro,
                 rows[i].categorySumOutro,
                 rows[i].categorySumInteraction,
-                rows[i].categorySelfpromo,
-                rows[i].categoryMusicOfftopic,
+                rows[i].categorySumSelfpromo,
+                rows[i].categorySumMusicOfftopic,
                 rows[i].categorySumPreview,
-                rows[i].categorySumHighlight
+                rows[i].categorySumHighlight,
+                rows[i].categorySumFiller
             ];
         }
     }
