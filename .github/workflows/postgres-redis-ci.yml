@@ -1,10 +1,14 @@
-name: PostgreSQL CI
+name: PostgreSQL + Redis CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
-  build:
-    name: Run Tests with PostgreSQL
+  test:
+    name: Run Tests with PostgreSQL and Redis
     runs-on: ubuntu-latest
 
     steps:

@@ -1,6 +1,6 @@
 import redis from "../utils/redis";
 import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey } from "./redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { UserID } from "../types/user.model";
 
@@ -82,6 +82,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
 function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }): void {
     if (videoInfo) {
         redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
+        redis.delAsync(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service));
         redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
         if (videoInfo.userID) redis.delAsync(reputationKey(videoInfo.userID));
     }

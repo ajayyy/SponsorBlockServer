@@ -108,3 +108,11 @@ export interface LockCategory {
     videoID: VideoID,
     userID: UserID
 }
+
+export enum SortableFields {
+    timeSubmitted = "timeSubmitted",
+    startTime = "startTime",
+    endTime = "endTime",
+    votes = "votes",
+    views = "views",
+}
