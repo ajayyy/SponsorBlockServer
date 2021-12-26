@@ -462,12 +462,15 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
                 await privateDB.prepare("run", `INSERT INTO "votes" VALUES(?, ?, ?, ?)`, [UUID, userID, hashedIP, type]);
             }
 
+            const columnName = "votes";
+            /* unused
             let columnName = "";
             if (voteTypeEnum === voteTypes.normal) {
                 columnName = "votes";
             } else if (voteTypeEnum === voteTypes.incorrect) {
                 columnName = "incorrectVotes";
             }
+            */
 
             //update the vote count on this sponsorTime
             //oldIncrementAmount will be zero is row is null
