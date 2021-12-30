@@ -36,24 +36,23 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
         GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 20
         ORDER BY "${sortBy}" DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds]);
 
-    for (let i = 0; i < rows.length; i++) {
-        userNames[i] = rows[i].userName;
-
-        viewCounts[i] = rows[i].viewCount;
-        totalSubmissions[i] = rows[i].totalSubmissions;
-        minutesSaved[i] = rows[i].minutesSaved;
+    for (const row of rows) {
+        userNames.push(row.userName);
+        viewCounts.push(row.viewCount);
+        totalSubmissions.push(row.totalSubmissions);
+        minutesSaved.push(row.minutesSaved);
         if (categoryStatsEnabled) {
-            categoryStats[i] = [
-                rows[i].categorySumSponsor,
-                rows[i].categorySumIntro,
-                rows[i].categorySumOutro,
-                rows[i].categorySumInteraction,
-                rows[i].categorySumSelfpromo,
-                rows[i].categorySumMusicOfftopic,
-                rows[i].categorySumPreview,
-                rows[i].categorySumHighlight,
-                rows[i].categorySumFiller
-            ];
+            categoryStats.push([
+                row.categorySumSponsor,
+                row.categorySumIntro,
+                row.categorySumOutro,
+                row.categorySumInteraction,
+                row.categorySumSelfpromo,
+                row.categorySumMusicOfftopic,
+                row.categorySumPreview,
+                row.categorySumHighlight,
+                row.categorySumFiller,
+            ]);
         }
     }
 

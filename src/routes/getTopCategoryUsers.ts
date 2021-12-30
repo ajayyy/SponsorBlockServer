@@ -7,14 +7,20 @@ const MILLISECONDS_IN_MINUTE = 60000;
 const getTopCategoryUsersWithCache = createMemoryCache(generateTopCategoryUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
-async function generateTopCategoryUsersStats(sortBy: string, category: string) {
+interface DBSegment {
+    userName: string,
+    viewCount: number,
+    totalSubmissions: number,
+    minutesSaved: number,
+}
 
+async function generateTopCategoryUsersStats(sortBy: string, category: string) {
     const userNames = [];
     const viewCounts = [];
     const totalSubmissions = [];
     const minutesSaved = [];
 
-    const rows = await db.prepare("all", `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
+    const rows: DBSegment[] = await db.prepare("all", `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
         SUM(((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views") as "minutesSaved",
         SUM("votes") as "userVotes", COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
@@ -22,12 +28,11 @@ async function generateTopCategoryUsersStats(sortBy: string, category: string) {
         GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 20
         ORDER BY "${sortBy}" DESC LIMIT 100`, [category, maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds]);
 
-    for (let i = 0; i < rows.length; i++) {
-        userNames[i] = rows[i].userName;
-
-        viewCounts[i] = rows[i].viewCount;
-        totalSubmissions[i] = rows[i].totalSubmissions;
-        minutesSaved[i] = rows[i].minutesSaved;
+    for (const row of rows) {
+        userNames.push(row.userName);
+        viewCounts.push(row.viewCount);
+        totalSubmissions.push(row.totalSubmissions);
+        minutesSaved.push(row.minutesSaved);
     }
 
     return {
