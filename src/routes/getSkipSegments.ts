@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { partition } from "lodash"
+import { partition } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey } from "../utils/redisKeys";

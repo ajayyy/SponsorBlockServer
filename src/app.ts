@@ -47,7 +47,6 @@ import { postRating } from "./routes/ratings/postRating";
 import { getRating } from "./routes/ratings/getRating";
 import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
-import path from "path";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
