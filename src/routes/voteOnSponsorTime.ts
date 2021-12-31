@@ -322,7 +322,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
 
     //check if this user is on the vip list
     const videoID = await db.prepare("get", `select "videoID" from "sponsorTimes" where "UUID" = ?`, [UUID]);
-    const isTempVIP = await isUserTempVIP(nonAnonUserID, videoID);
+    const isTempVIP = await isUserTempVIP(nonAnonUserID, videoID?.videoID || null);
     const isVIP = await isUserVIP(nonAnonUserID) || isTempVIP;
 
     //check if user voting on own submission

@@ -47,6 +47,15 @@ export class YouTubeApiMock {
                     ]
                 } as APIVideoData
             };
+        } else if (obj.id === "channelid-convert") {
+            return {
+                err: null,
+                data: {
+                    title: "Video Lookup Title",
+                    author: "ChannelAuthor",
+                    authorId: "ChannelID"
+                } as APIVideoData
+            };
         } else {
             return {
                 err: null,
