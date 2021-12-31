@@ -9,11 +9,13 @@ import { getFormattedTime } from "../utils/getFormattedTime";
 import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
-import { UserID } from "../types/user.model";
+import { HashedUserID, UserID } from "../types/user.model";
 import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration } from "../types/segments.model";
 import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
+import redis from "../utils/redis";
+import { tempVIPKey } from "../utils/redisKeys";
 
 const voteTypes = {
     normal: 0,
@@ -37,6 +39,7 @@ interface VoteData {
     UUID: string;
     nonAnonUserID: string;
     voteTypeEnum: number;
+    isTempVIP: boolean;
     isVIP: boolean;
     isOwnSubmission: boolean;
     row: {
@@ -56,6 +59,13 @@ function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<API
         return null;
     }
 }
+
+const isUserTempVIP = async (nonAnonUserID: HashedUserID, videoID: VideoID): Promise<boolean> => {
+    const apiVideoInfo = await getYouTubeVideoInfo(videoID);
+    const channelID = apiVideoInfo?.data?.authorId;
+    const { err, reply } = await redis.getAsync(tempVIPKey(nonAnonUserID));
+    return err ? false : (reply == channelID);
+};
 
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
 
@@ -105,7 +115,7 @@ async function sendWebhooks(voteData: VoteData) {
             // Send custom webhooks
             dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
                 "user": {
-                    "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                    "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
                 },
                 "video": {
                     "id": submissionInfoRow.videoID,
@@ -153,7 +163,7 @@ async function sendWebhooks(voteData: VoteData) {
                         "author": {
                             "name": voteData.finalResponse?.webhookMessage ??
                                     voteData.finalResponse?.finalMessage ??
-                                    getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isVIP, voteData.isOwnSubmission),
+                                    getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
                         },
                         "thumbnail": {
                             "url": getMaxResThumbnail(data) || "",
@@ -311,7 +321,9 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);
 
     //check if this user is on the vip list
-    const isVIP = await isUserVIP(nonAnonUserID);
+    const videoID = await db.prepare("get", `select "videoID" from "sponsorTimes" where "UUID" = ?`, [UUID]);
+    const isTempVIP = await isUserTempVIP(nonAnonUserID, videoID);
+    const isVIP = await isUserVIP(nonAnonUserID) || isTempVIP;
 
     //check if user voting on own submission
     const isOwnSubmission = (await db.prepare("get", `SELECT "UUID" as "submissionCount" FROM "sponsorTimes" where "userID" = ? AND "UUID" = ?`, [nonAnonUserID, UUID])) !== undefined;
@@ -480,6 +492,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
                 UUID,
                 nonAnonUserID,
                 voteTypeEnum,
+                isTempVIP,
                 isVIP,
                 isOwnSubmission,
                 row: videoInfo,
