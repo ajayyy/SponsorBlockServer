@@ -45,7 +45,8 @@ import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
 import { postRating } from "./routes/ratings/postRating";
 import { getRating } from "./routes/ratings/getRating";
-import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
+import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache"
+import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
 
 export function createServer(callback: () => void): Server {
@@ -131,6 +132,7 @@ function setupRoutes(router: Router) {
     router.get("/api/getSavedTimeForUser", getSavedTimeForUser);
 
     router.get("/api/getTopUsers", getTopUsers);
+    router.get("/api/getTopCategoryUsers", getTopCategoryUsers);
 
     //send out totals
     //send the total submissions, total views and total minutes saved
