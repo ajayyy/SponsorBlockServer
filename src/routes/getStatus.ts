@@ -2,6 +2,7 @@ import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import os from "os";
+import redis from "../utils/redis";
 
 export async function getStatus(req: Request, res: Response): Promise<Response> {
     const startTime = Date.now();
@@ -9,13 +10,16 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
     value = Array.isArray(value) ? value[0] : value;
     try {
         const dbVersion = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
+        const numberRequests = await redis.increment("statusRequest");
+        const statusRequests = numberRequests?.replies?.[0];
         const statusValues: Record<string, any> = {
             uptime: process.uptime(),
             commit: (global as any).HEADCOMMIT || "unknown",
             db: Number(dbVersion),
             startTime,
             processTime: Date.now() - startTime,
-            loadavg: os.loadavg().slice(1) // only return 5 & 15 minute load average
+            loadavg: os.loadavg().slice(1), // only return 5 & 15 minute load average
+            statusRequests
         };
         return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
     } catch (err) {
