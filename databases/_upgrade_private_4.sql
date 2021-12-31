@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "ratings" (
 	"service"		TEXT NOT NULL default 'YouTube',
 	"type"			INTEGER NOT NULL,
 	"userID"		TEXT NOT NULL,
-    "timeSubmitted"	INTEGER NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL,
 	"hashedIP"		TEXT NOT NULL
 );
 

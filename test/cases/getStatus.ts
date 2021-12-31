@@ -1,6 +1,7 @@
 import assert from "assert";
 import { db } from "../../src/databases/databases";
 import { client } from "../utils/httpClient";
+import { config } from "../../src/config";
 let dbVersion: number;
 
 describe("getStatus", () => {
@@ -82,6 +83,29 @@ describe("getStatus", () => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data[0]) >= 0);
                 assert.ok(Number(res.data[1]) >= 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get statusRequests only", function (done) {
+        if (!config.redis) this.skip();
+        client.get(`${endpoint}/statusRequests`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                assert.ok(Number(res.data) > 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get status with statusRequests", function (done) {
+        if (!config.redis) this.skip();
+        client.get(endpoint)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.ok(data.statusRequests > 2);
                 done();
             })
             .catch(err => done(err));
