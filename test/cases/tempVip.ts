@@ -83,8 +83,8 @@ describe("tempVIP test", function() {
                 assert.ok(!result);
             })
             .then(async () => {
-                const row = await privateDB.prepare("get", "SELECT * FROM tempVipLog WHERE targetUserID = ?", [publicTempVIPOne]);
-                assert.ok(!row?.length);
+                const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
+                assert.ok(!row?.enabled);
                 done();
             })
             .catch(err => done(err));
@@ -108,8 +108,8 @@ describe("tempVIP test", function() {
                 assert.strictEqual(vip, "ChannelID");
                 assert.strictEqual(res.data, "Temp VIP added on channel ChannelAuthor");
                 // check privateDB
-                const row = await privateDB.prepare("get", "SELECT * FROM tempVipLog WHERE targetUserID = ?", [publicTempVIPOne]);
-                assert.ok(row);
+                const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
+                assert.ok(row.enabled);
                 done();
             })
             .catch(err => done(err));
