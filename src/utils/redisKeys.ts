@@ -1,15 +1,13 @@
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import { HashedUserID, UserID } from "../types/user.model";
 import { HashedValue } from "../types/hash.model";
 import { Logger } from "./logger";
 
-export function skipSegmentsKey(videoID: VideoID, service: Service): string {
-    return `segments.v3.${service}.videoID.${videoID}`;
-}
+export const skipSegmentsKey = (videoID: VideoID, service: Service): string =>
+    `segments.v3.${service}.videoID.${videoID}`;
 
-export function skipSegmentGroupsKey(videoID: VideoID, service: Service): string {
-    return `segments.groups.v2.${service}.videoID.${videoID}`;
-}
+export const skipSegmentGroupsKey = (videoID: VideoID, service: Service): string =>
+    `segments.groups.v2.${service}.videoID.${videoID}`;
 
 export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
     hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 4) as VideoIDHash;
@@ -18,9 +16,8 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
     return `segments.v3.${service}.${hashedVideoIDPrefix}`;
 }
 
-export function reputationKey(userID: UserID): string {
-    return `reputation.user.${userID}`;
-}
+export const reputationKey = (userID: UserID): string =>
+    `reputation.user.${userID}`;
 
 export function ratingHashKey(hashPrefix: VideoIDHash, service: Service): string {
     hashPrefix = hashPrefix.substring(0, 4) as VideoIDHash;
@@ -34,3 +31,6 @@ export function shaHashKey(singleIter: HashedValue): string {
 
     return `sha.hash.${singleIter}`;
 }
+
+export const tempVIPKey = (userID: HashedUserID): string =>
+    `vip.temp.${userID}`;

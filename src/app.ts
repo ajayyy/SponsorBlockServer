@@ -46,6 +46,7 @@ import { getChapterNames } from "./routes/getChapterNames";
 import { postRating } from "./routes/ratings/postRating";
 import { getRating } from "./routes/ratings/getRating";
 import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
+import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -117,6 +118,8 @@ function setupRoutes(router: Router) {
 
     //Endpoint used to make a user a VIP user with special privileges
     router.post("/api/addUserAsVIP", addUserAsVIP);
+    //Endpoint to add a user as a temporary VIP
+    router.post("/api/addUserAsTempVIP", addUserAsTempVIP);
 
     //Gets all the views added up for one userID
     //Useful to see how much one user has contributed

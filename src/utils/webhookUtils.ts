@@ -2,9 +2,11 @@ import { config } from "../config";
 import { Logger } from "../utils/logger";
 import axios from "axios";
 
-function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {
+function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
         return "self";
+    } else if (isTempVIP) {
+        return "temp vip";
     } else if (isVIP) {
         return "vip";
     } else if (submissionCount === 0) {
@@ -14,11 +16,13 @@ function getVoteAuthorRaw(submissionCount: number, isVIP: boolean, isOwnSubmissi
     }
 }
 
-function getVoteAuthor(submissionCount: number, isVIP: boolean, isOwnSubmission: boolean): string {
+function getVoteAuthor(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
     if (submissionCount === 0) {
         return "Report by New User";
     } else if (isOwnSubmission) {
         return "Report by Submitter";
+    } else if (isTempVIP) {
+        return "Report by Temp VIP";
     } else if (isVIP) {
         return "Report by VIP User";
     }

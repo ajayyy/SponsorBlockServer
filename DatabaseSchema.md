@@ -207,6 +207,7 @@
 [categoryVotes](#categoryVotes)  
 [sponsorTimes](#sponsorTimes)  
 [config](#config)  
+[tempVipLog](#tempVipLog)
 
 ### vote
 
@@ -270,3 +271,11 @@
 | index | field |
 | -- | :--: |
 | ratings_videoID | videoID, service, userID, timeSubmitted |
+
+### tempVipLog
+| Name | Type | |
+| -- | :--: | -- |
+| issuerUserID | TEXT | not null |
+| targetUserID | TEXT | not null |
+| enabled | BOOLEAN | not null |
+| updatedAt | INTEGER | not null |
