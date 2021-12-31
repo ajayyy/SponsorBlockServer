@@ -12,6 +12,10 @@
     "behindProxy": true,
     "db": ":memory:",
     "privateDB": ":memory:",
+    "redis": {
+        "host": "localhost",
+        "port": 6379
+    },
     "createDatabaseIfNotExist": true,
     "schemaFolder": "./databases",
     "dbSchema": "./databases/_sponsorTimes.db.sql",

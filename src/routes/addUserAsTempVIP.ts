@@ -37,7 +37,7 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
     const enabled = req.query?.enabled === "true";
     const channelVideoID = req.query?.channelVideoID as VideoID;
 
-    if (!userID || !adminUserID || !channelVideoID ) {
+    if ((!userID || !adminUserID || (!channelVideoID && enabled))) {
         // invalid request
         return res.sendStatus(400);
     }
@@ -57,15 +57,19 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
     }
 
     const startTime = Date.now();
-    const dayInSeconds = 86400;
-    const channelInfo = await getChannelInfo(channelVideoID);
 
-    await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
-    if (enabled) { // add to redis
+    if (enabled) {
+        const dayInSeconds = 86400;
+        const channelInfo = await getChannelInfo(channelVideoID);
+        if (!channelInfo?.id) {
+            return res.status(404).send(`No channel found for videoID ${channelVideoID}`);
+        }
         await redis.setAsyncEx(tempVIPKey(userID), channelInfo?.id, dayInSeconds);
-    } else { // delete key
-        await redis.delAsync(tempVIPKey(userID));
+        await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
+        return res.status(200).send(`Temp VIP added on channel ${channelInfo?.name}`);
     }
 
-    return res.sendStatus(200);
+    await redis.delAsync(tempVIPKey(userID));
+    await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
+    return res.status(200).send(`Temp VIP removed`);
 }
