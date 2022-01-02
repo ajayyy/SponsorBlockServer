@@ -305,7 +305,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
                     const overlapPercent = overlap / overallDuration;
-                    return (overlapPercent > 0 && segment.actionType === compareSegment.actionType && segment.category === compareSegment.category && segment.actionType !== ActionType.Chapter)
+                    return (overlapPercent >= 0.1 && segment.actionType === compareSegment.actionType && segment.category === compareSegment.category && segment.actionType !== ActionType.Chapter)
                         || (overlapPercent >= 0.6 && segment.actionType !== compareSegment.actionType && segment.category === compareSegment.category)
                         || (overlapPercent >= 0.95 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category
                                 && segment.category !== "music_offtopic" && compareSegment.category !== "music_offtopic")
