@@ -901,6 +901,26 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should return not be 403 when submitting with locked category but unlocked actionType", (done) => {
+        const videoID = "lockedVideo";
+        db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason")
+            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "sponsor", "Custom Reason"])
+            .then(() => postSkipSegmentJSON({
+                userID: submitUserOne,
+                videoID,
+                segments: [{
+                    segment: [1, 10],
+                    category: "sponsor",
+                    actionType: "mute"
+                }],
+            }))
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should return 403 for submiting in lockedCategory", (done) => {
         const videoID = "lockedVideo1";
         db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") 

@@ -357,7 +357,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
         }
 
         // Reject segment if it's in the locked categories list
-        const lockIndex = lockedCategoryList.findIndex(c => segments[i].category === c.category);
+        const lockIndex = lockedCategoryList.findIndex(c => segments[i].category === c.category && segments[i].actionType === c.actionType);
         if (!isVIP && lockIndex !== -1) {
             // TODO: Do something about the fradulent submission
             Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
@@ -439,7 +439,7 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
 }
 
 async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
-    let lockedCategoryList = await db.prepare("all", 'SELECT category, reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
+    let lockedCategoryList = await db.prepare("all", 'SELECT category, "actionType", reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
