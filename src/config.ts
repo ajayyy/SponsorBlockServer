@@ -21,8 +21,8 @@ addDefaults(config, {
     webhooks: [],
     categoryList: ["sponsor", "selfpromo", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight", "chapter"],
     categorySupport: {
-        sponsor: ["skip", "mute"],
-        selfpromo: ["skip", "mute"],
+        sponsor: ["skip", "mute", "full"],
+        selfpromo: ["skip", "mute", "full"],
         interaction: ["skip", "mute"],
         intro: ["skip", "mute"],
         outro: ["skip", "mute"],

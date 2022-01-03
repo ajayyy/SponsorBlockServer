@@ -1064,6 +1064,40 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should allow submitting full video sponsor", (done) => {
+        const videoID = "qqwerth";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 0,
+            category: "sponsor",
+            actionType: "full",
+            userID: submitUserTwo
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not allow submitting full video sponsor not at zero seconds", (done) => {
+        const videoID = "qqwerth";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 1,
+            category: "sponsor",
+            actionType: "full",
+            userID: submitUserTwo
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should not be able to submit with colons in timestamps", (done) => {
         const videoID = "colon-1";
         postSkipSegmentJSON({

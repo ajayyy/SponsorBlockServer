@@ -383,8 +383,10 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
 
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime)
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable
+                    && segments[i].actionType !== ActionType.Full && startTime === endTime)
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)
+                || (segments[i].actionType === ActionType.Full && (startTime !== 0 || endTime !== 0))) {
             //invalid request
             return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400 };
         }
@@ -394,7 +396,8 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
             return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400 };
         }
 
-        if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
+        if (!isVIP && segments[i].category === "sponsor" 
+                && segments[i].actionType !== ActionType.Full && Math.abs(startTime - endTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Sponsors must be longer than 1 second long", errorCode: 400 };
         }

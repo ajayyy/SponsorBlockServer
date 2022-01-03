@@ -13,7 +13,8 @@ export type HashedIP = IPAddress & HashedValue;
 export enum ActionType {
     Skip = "skip",
     Mute = "mute",
-    Chapter = "chapter"
+    Chapter = "chapter",
+    Full = "full"
 }
 
 // Uncomment as needed
