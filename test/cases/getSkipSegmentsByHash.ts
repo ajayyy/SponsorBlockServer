@@ -18,6 +18,7 @@ describe("getSkipSegmentsByHash", () => {
     const requiredSegmentHashVidHash = "17bf8d9090e050257772f8bff277293c29c7ce3b25eb969a8fae111a2434504d";
     const differentCategoryVidHash = "7fac44d1ee3257ec7f18953e2b5f991828de6854ad57193d1027c530981a89c0";
     const nonMusicOverlapVidHash = "306151f778f9bfd19872b3ccfc83cbab37c4f370717436bfd85e0a624cd8ba3c";
+    const fullCategoryVidHash = "278fa987eebfe07ae3a4a60cf0663989ad874dd0c1f0430831d63c2001567e6f";
     before(async () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, 0, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
@@ -50,6 +51,8 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["differentCategoryVid", 60, 70, 2, 1, "differentCategoryVid-2", "testman", 0, 50, "intro", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
         await db.prepare("run", query, ["nonMusicOverlapVid", 60, 70, 2, 0, "nonMusicOverlapVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
         await db.prepare("run", query, ["nonMusicOverlapVid", 60, 70, 2, 1, "nonMusicOverlapVid-2", "testman", 0, 50, "music_offtopic", "skip", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
+        await db.prepare("run", query, ["fullCategoryVid", 60, 70, 2, 0, "fullCategoryVid-1", "testman", 0, 50, "sponsor", "full", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
+        await db.prepare("run", query, ["fullCategoryVid", 60, 70, 2, 1, "fullCategoryVid-2", "testman", 0, 50, "selfpromo", "full", "YouTube", 0, 0, fullCategoryVidHash, ""]);
     });
 
     it("Should be able to get a 200", (done) => {
@@ -521,6 +524,19 @@ describe("getSkipSegmentsByHash", () => {
 
                 assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2) || partialDeepEquals(data, expected3));
                 assert.strictEqual(data[0].segments.length, 2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should only return one segment when fetching full video segments", (done) => {
+        client.get(`${endpoint}/278f`, { params: { category: ["sponsor", "selfpromo"], actionType: "full" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                assert.strictEqual(data[0].segments.length, 1);
+                assert.strictEqual(data[0].segments[0].category, "selfpromo");
                 done();
             })
             .catch(err => done(err));

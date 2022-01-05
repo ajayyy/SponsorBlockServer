@@ -231,7 +231,8 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
         : await fetchData();
 
     // Filter for only 1 item for POI categories
-    return getWeightedRandomChoice(groups, 1, (choice) => getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI)
+    return getWeightedRandomChoice(groups, 1, (choice) => choice.segments[0].actionType === ActionType.Full
+            || getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI)
         .map(//randomly choose 1 good segment per group and return them
             group => getWeightedRandomChoice(group.segments, 1)[0]
         );
@@ -300,7 +301,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
         group.segments.forEach((segment) => {
             const bestGroup = result.find((group) => {
                 // At least one segment in the group must have high % overlap or the same action type
-                // Since POI segments will always have 0 overlap, they will always be in their own groups
+                // Since POI and Full video segments will always have <= 0 overlap, they will always be in their own groups
                 return group.segments.some((compareSegment) => {
                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
