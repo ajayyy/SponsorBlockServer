@@ -4,16 +4,16 @@ import { HashedValue } from "../types/hash.model";
 import { Logger } from "./logger";
 
 export const skipSegmentsKey = (videoID: VideoID, service: Service): string =>
-    `segments.v3.${service}.videoID.${videoID}`;
+    `segments.v4.${service}.videoID.${videoID}`;
 
 export const skipSegmentGroupsKey = (videoID: VideoID, service: Service): string =>
-    `segments.groups.v2.${service}.videoID.${videoID}`;
+    `segments.groups.v3.${service}.videoID.${videoID}`;
 
 export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
     hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 4) as VideoIDHash;
     if (hashedVideoIDPrefix.length !== 4) Logger.warn(`Redis skip segment hash-prefix key is not length 4! ${hashedVideoIDPrefix}`);
 
-    return `segments.v3.${service}.${hashedVideoIDPrefix}`;
+    return `segments.v4.${service}.${hashedVideoIDPrefix}`;
 }
 
 export const reputationKey = (userID: UserID): string =>

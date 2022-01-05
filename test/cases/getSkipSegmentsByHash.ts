@@ -447,23 +447,25 @@ describe("getSkipSegmentsByHash", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get only one segment when two categories are at the same time", (done) => {
-        client.get(`${endpoint}/7fac?categories=["sponsor","intro"]`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        category: "intro"
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data[0].segments.length, 1);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    // This behavior was causing unintended consequence, uncommend when a solution is found
+    // https://discord.com/channels/603643120093233162/607338052221665320/928099684835274883
+    // it("Should be able to get only one segment when two categories are at the same time", (done) => {
+    //     client.get(`${endpoint}/7fac?categories=["sponsor","intro"]`)
+    //         .then(res => {
+    //             assert.strictEqual(res.status, 200);
+    //             const data = res.data;
+    //             assert.strictEqual(data.length, 1);
+    //             const expected = [{
+    //                 segments: [{
+    //                     category: "intro"
+    //                 }]
+    //             }];
+    //             assert.ok(partialDeepEquals(data, expected));
+    //             assert.strictEqual(data[0].segments.length, 1);
+    //             done();
+    //         })
+    //         .catch(err => done(err));
+    // });
 
     it("Should be able to get overlapping segments where one is non music and one is other", (done) => {
         client.get(`${endpoint}/3061?categories=["sponsor","music_offtopic"]`)

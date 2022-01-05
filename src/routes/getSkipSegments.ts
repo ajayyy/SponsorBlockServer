@@ -307,8 +307,6 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
                     const overlapPercent = overlap / overallDuration;
                     return (overlapPercent >= 0.1 && segment.actionType === compareSegment.actionType && segment.category === compareSegment.category && segment.actionType !== ActionType.Chapter)
                         || (overlapPercent >= 0.6 && segment.actionType !== compareSegment.actionType && segment.category === compareSegment.category)
-                        || (overlapPercent >= 0.95 && segment.actionType === compareSegment.actionType && segment.category !== compareSegment.category
-                                && segment.category !== "music_offtopic" && compareSegment.category !== "music_offtopic")
                         || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
                 });
             });
