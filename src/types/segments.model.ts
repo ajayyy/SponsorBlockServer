@@ -33,6 +33,9 @@ export interface IncomingSegment {
     actionType: ActionType;
     segment: string[];
     description?: string;
+
+    // Used to remove in pre-check stage
+    ignoreSegment?: boolean;
 }
 
 export interface Segment {

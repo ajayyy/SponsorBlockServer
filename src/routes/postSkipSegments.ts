@@ -9,17 +9,18 @@ import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
+import { ActionType, Category, CategoryActionType, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
-import { UserID } from "../types/user.model";
+import { HashedUserID, UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
+import { vote } from "./voteOnSponsorTime";
 
 type CheckResult = {
     pass: boolean,
@@ -343,7 +344,7 @@ function checkInvalidFields(videoID: VideoID, userID: UserID, segments: Incoming
     return CHECK_PASS;
 }
 
-async function checkEachSegmentValid(userID: string, videoID: VideoID,
+async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
     segments: IncomingSegment[], service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
@@ -399,14 +400,21 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
         if (!isVIP && segments[i].category === "sponsor" 
                 && segments[i].actionType !== ActionType.Full && Math.abs(startTime - endTime) < 1) {
             // Too short
-            return { pass: false, errorMessage: "Sponsors must be longer than 1 second long", errorCode: 400 };
+            return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
         }
 
         //check if this info has already been submitted before
-        const duplicateCheck2Row = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
+        const duplicateCheck2Row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "startTime" = ?
             and "endTime" = ? and "category" = ? and "actionType" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, videoID, service]);
-        if (duplicateCheck2Row.count > 0) {
-            return { pass: false, errorMessage: "Sponsors has already been submitted before.", errorCode: 409 };
+        if (duplicateCheck2Row) {
+            if (segments[i].actionType === ActionType.Full) {
+                // Forward as vote
+                vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
+                segments[i].ignoreSegment = true;
+                continue;
+            } else {
+                return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
+            }
         }
     }
 
@@ -576,15 +584,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     // eslint-disable-next-line prefer-const
-    let { videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
+    let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
-    const invalidCheckResult = checkInvalidFields(videoID, userID, segments);
+    const invalidCheckResult = checkInvalidFields(videoID, paramUserID, segments);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
 
     //hash the userID
-    userID = await getHashCache(userID);
+    const userID = await getHashCache(paramUserID);
 
     const userWarningCheckResult = await checkUserActiveWarning(userID);
     if (!userWarningCheckResult.pass) {
@@ -592,15 +600,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
-    //check if this user is on the vip list
     const isVIP = await isUserVIP(userID);
+    const rawIP = getIP(req);
 
     const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
     videoDuration = newData.videoDuration;
     const { lockedCategoryList, apiVideoInfo } = newData;
 
     // Check if all submissions are correct
-    const segmentCheckResult = await checkEachSegmentValid(userID, videoID, segments, service, isVIP, lockedCategoryList);
+    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, lockedCategoryList);
     if (!segmentCheckResult.pass) {
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
@@ -619,7 +627,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const newSegments = [];
 
     //hash the ip 5000 times so no one can get it from the database
-    const hashedIP = await getHashCache(getIP(req) + config.globalSalt);
+    const hashedIP = await getHashCache(rawIP + config.globalSalt);
 
     try {
         //get current time
@@ -636,6 +644,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
+            if (segmentInfo.ignoreSegment) continue;
+
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
