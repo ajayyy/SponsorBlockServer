@@ -16,6 +16,7 @@ describe("postSkipSegments", () => {
 // Constant and helpers
     const submitUserOne = `PostSkipUser1${".".repeat(18)}`;
     const submitUserTwo = `PostSkipUser2${".".repeat(18)}`;
+    const submitUserTwoHash = getHash(submitUserTwo);
     const submitUserThree = `PostSkipUser3${".".repeat(18)}`;
 
     const warnUser01 = "warn-user01-qwertyuiopasdfghjklzxcvbnm";
@@ -35,7 +36,7 @@ describe("postSkipSegments", () => {
     const badInputVideoID = "dQw4w9WgXcQ";
     const shadowBanVideoID = "postSkipBan";
 
-    const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "votes", "userID", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseChapter = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType", "description" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
@@ -54,10 +55,12 @@ describe("postSkipSegments", () => {
     });
 
     before(() => {
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 1001, 1005, 0, "80percent-uuid-1", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 5000, -2, "80percent-uuid-2", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", "skip", 0, "80percent_video"]);
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 1001, 1005, 0, "80percent-uuid-1", submitUserOneHash, 0, 0, "interaction", "skip", 0, "80percent_video"]);
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 5000, -2, "80percent-uuid-2", submitUserOneHash, 0, 0, "interaction", "skip", 0, "80percent_video"]);
+
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, "full_video_segment"]);
 
         const now = Date.now();
         const warnVip01Hash = getHash("warn-vip01-qwertyuiopasdfghjklzxcvbnm");
@@ -1074,8 +1077,45 @@ describe("postSkipSegments", () => {
             actionType: "full",
             userID: submitUserTwo
         })
-            .then(res => {
+            .then(async res => {
                 assert.strictEqual(res.status, 200);
+                const row = await queryDatabase(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 0,
+                    votes: 0,
+                    userID: submitUserTwoHash,
+                    category: "sponsor",
+                    actionType: "full"
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Submitting duplicate full video sponsor should count as an upvote", (done) => {
+        const videoID = "full_video_segment";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 0,
+            category: "sponsor",
+            actionType: "full",
+            userID: submitUserOne
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabase(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 0,
+                    votes: 1,
+                    userID: submitUserTwoHash,
+                    category: "sponsor",
+                    actionType: "full"
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));

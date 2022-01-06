@@ -409,7 +409,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         if (duplicateCheck2Row) {
             if (segments[i].actionType === ActionType.Full) {
                 // Forward as vote
-                vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
+                await vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
                 segments[i].ignoreSegment = true;
                 continue;
             } else {
