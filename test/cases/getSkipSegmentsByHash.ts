@@ -51,7 +51,7 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["differentCategoryVid", 60, 70, 2, 1, "differentCategoryVid-2", "testman", 0, 50, "intro", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
         await db.prepare("run", query, ["nonMusicOverlapVid", 60, 70, 2, 0, "nonMusicOverlapVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
         await db.prepare("run", query, ["nonMusicOverlapVid", 60, 70, 2, 1, "nonMusicOverlapVid-2", "testman", 0, 50, "music_offtopic", "skip", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
-        await db.prepare("run", query, ["fullCategoryVid", 60, 70, 2, 0, "fullCategoryVid-1", "testman", 0, 50, "sponsor", "full", "YouTube", 0, 0, nonMusicOverlapVidHash, ""]);
+        await db.prepare("run", query, ["fullCategoryVid", 60, 70, 2, 0, "fullCategoryVid-1", "testman", 0, 50, "sponsor", "full", "YouTube", 0, 0, fullCategoryVidHash, ""]);
         await db.prepare("run", query, ["fullCategoryVid", 60, 70, 2, 1, "fullCategoryVid-2", "testman", 0, 50, "selfpromo", "full", "YouTube", 0, 0, fullCategoryVidHash, ""]);
     });
 
