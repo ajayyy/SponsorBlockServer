@@ -204,7 +204,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 
     // Nothing to filter for
     if (amountOfChoices >= choicesWithWeights.length) {
-        return choices;
+        return [...forceIncludedChoices, ...filteredChoices];
     }
 
     //iterate and find amountOfChoices choices
