@@ -2,7 +2,7 @@ version: '3'
 services:
   database:
     container_name: database
-    image: postgres
+    image: postgres:13
     env_file: 
       - database.env
     volumes:
@@ -13,7 +13,7 @@ services:
     restart: always
   redis:
     container_name: redis
-    image: redis
+    image: redis:6.2
     command: /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
