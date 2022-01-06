@@ -85,6 +85,7 @@ export interface OverlappingSegmentGroup {
 export interface VotableObject {
     votes: number;
     reputation: number;
+    locked: boolean;
 }
 
 export interface VotableObjectWithWeight extends VotableObject {

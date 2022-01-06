@@ -183,6 +183,10 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
         const splitArray = partition(choices, predicate);
         filteredChoices = splitArray[0];
         forceIncludedChoices = splitArray[1];
+
+        if (filteredChoices.some((value) => value.locked)) {
+            filteredChoices = filteredChoices.filter((value) => value.locked);
+        }
     }
 
     //assign a weight to each choice
