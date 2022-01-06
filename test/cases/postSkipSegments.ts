@@ -56,12 +56,15 @@ describe("postSkipSegments", () => {
     });
 
     before(() => {
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", "skip", 0, "80percent_video"]);
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 1001, 1005, 0, "80percent-uuid-1", submitUserOneHash, 0, 0, "interaction", "skip", 0, "80percent_video"]);
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 5000, -2, "80percent-uuid-2", submitUserOneHash, 0, 0, "interaction", "skip", 0, "80percent_video"]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", "skip", 0, 0, "80percent_video"]);
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 1001, 1005, 0, "80percent-uuid-1", submitUserOneHash, 0, 0, "interaction", "skip", 0, 0, "80percent_video"]);
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 5000, -2, "80percent-uuid-2", submitUserOneHash, 0, 0, "interaction", "skip", 0, 0, "80percent_video"]);
 
-        db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, "full_video_segment"]);
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, 0, "full_video_segment"]);
+
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 0, 0, 0, "full-video-duration-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 123, 0, "full_video_duration_segment"]);
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 25, 30, 0, "full-video-duration-uuid-1", submitUserTwoHash, 0, 0, "sponsor", "skip", 123, 0, "full_video_duration_segment"]);
 
         const now = Date.now();
         const warnVip01Hash = getHash("warn-vip01-qwertyuiopasdfghjklzxcvbnm");
@@ -407,6 +410,39 @@ describe("postSkipSegments", () => {
                 done();
             })
             .catch(err => done(err));
+    });
+
+    it("Should be able to submit with a new duration, and not hide full video segments", async () => {
+        const videoID = "full_video_duration_segment";
+        const res = await postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            videoDuration: 100,
+            segments: [{
+                segment: [20, 30],
+                category: "sponsor",
+            }],
+        });
+        assert.strictEqual(res.status, 200);
+        const videoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "actionType", "videoDuration"
+            FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, [videoID]);
+        const hiddenVideoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration"
+            FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, [videoID]);
+        assert.strictEqual(videoRows.length, 2);
+        const expected = {
+            startTime: 20,
+            endTime: 30,
+            locked: 0,
+            category: "sponsor",
+            videoDuration: 100
+        };
+        assert.ok(partialDeepEquals(videoRows[1], expected));
+        const fullExpected = {
+            category: "sponsor",
+            actionType: "full"
+        };
+        assert.ok(partialDeepEquals(videoRows[0], fullExpected));
+        assert.strictEqual(hiddenVideoRows.length, 1);
     });
 
     it("Should be able to submit a single time under a different service (JSON method)", (done) => {

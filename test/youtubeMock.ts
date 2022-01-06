@@ -13,7 +13,7 @@ export class YouTubeApiMock {
             };
         }
 
-        if (obj.id === "noDuration") {
+        if (obj.id === "noDuration" || obj.id === "full_video_duration_segment") {
             return {
                 err: null,
                 data: {

@@ -457,6 +457,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
         FROM "sponsorTimes" 
         WHERE "videoID" = ? AND "service" = ? AND 
             "hidden" = 0 AND "shadowHidden" = 0 AND 
+            "actionType" != 'full' AND
             "votes" > -2 AND "videoDuration" != 0`,
         [videoID, service]
     ) as {videoDuration: VideoDuration, UUID: SegmentUUID}[];
