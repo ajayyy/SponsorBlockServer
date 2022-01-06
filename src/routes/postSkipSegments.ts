@@ -644,7 +644,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
-            if (segmentInfo.ignoreSegment) continue;
+            // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
+            if (segmentInfo.ignoreSegment
+                || (shadowBanRow.userCount && segmentInfo.actionType === ActionType.Full)) {
+                continue;
+            }
 
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before

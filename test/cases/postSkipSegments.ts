@@ -35,6 +35,7 @@ describe("postSkipSegments", () => {
     const warnVideoID = "postSkip2";
     const badInputVideoID = "dQw4w9WgXcQ";
     const shadowBanVideoID = "postSkipBan";
+    const shadowBanVideoID2 = "postSkipBan2";
 
     const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "votes", "userID", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
@@ -1174,6 +1175,25 @@ describe("postSkipSegments", () => {
                     userID: banUser01Hash
                 };
                 assert.deepStrictEqual(row, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not add full segments to database if user if shadowbanned", (done) => {
+        const videoID = shadowBanVideoID2;
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 0,
+            category: "sponsor",
+            actionType: "full",
+            userID: banUser01
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "shadowHidden", "userID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+                assert.strictEqual(row, undefined);
                 done();
             })
             .catch(err => done(err));
