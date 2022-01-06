@@ -397,7 +397,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
             return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400 };
         }
 
-        if (!isVIP && segments[i].category === "sponsor" 
+        if (!isVIP && segments[i].category === "sponsor"
                 && segments[i].actionType !== ActionType.Full && Math.abs(startTime - endTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
