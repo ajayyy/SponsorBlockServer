@@ -16,6 +16,7 @@ describe("postSkipSegments", () => {
 // Constant and helpers
     const submitUserOne = `PostSkipUser1${".".repeat(18)}`;
     const submitUserTwo = `PostSkipUser2${".".repeat(18)}`;
+    const submitUserTwoHash = getHash(submitUserTwo);
     const submitUserThree = `PostSkipUser3${".".repeat(18)}`;
 
     const warnUser01 = "warn-user01-qwertyuiopasdfghjklzxcvbnm";
@@ -34,8 +35,9 @@ describe("postSkipSegments", () => {
     const warnVideoID = "postSkip2";
     const badInputVideoID = "dQw4w9WgXcQ";
     const shadowBanVideoID = "postSkipBan";
+    const shadowBanVideoID2 = "postSkipBan2";
 
-    const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "votes", "userID", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseChapter = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType", "description" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
@@ -54,10 +56,15 @@ describe("postSkipSegments", () => {
     });
 
     before(() => {
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 1001, 1005, 0, "80percent-uuid-1", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
-        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 5000, -2, "80percent-uuid-2", submitUserOneHash, 0, 0, "interaction", 0, "80percent_video"]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 1000, 0, "80percent-uuid-0", submitUserOneHash, 0, 0, "interaction", "skip", 0, 0, "80percent_video"]);
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 1001, 1005, 0, "80percent-uuid-1", submitUserOneHash, 0, 0, "interaction", "skip", 0, 0, "80percent_video"]);
+        db.prepare("run", insertSponsorTimeQuery, ["80percent_video", 0, 5000, -2, "80percent-uuid-2", submitUserOneHash, 0, 0, "interaction", "skip", 0, 0, "80percent_video"]);
+
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, 0, "full_video_segment"]);
+
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 0, 0, 0, "full-video-duration-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 123, 0, "full_video_duration_segment"]);
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 25, 30, 0, "full-video-duration-uuid-1", submitUserTwoHash, 0, 0, "sponsor", "skip", 123, 0, "full_video_duration_segment"]);
 
         const now = Date.now();
         const warnVip01Hash = getHash("warn-vip01-qwertyuiopasdfghjklzxcvbnm");
@@ -403,6 +410,39 @@ describe("postSkipSegments", () => {
                 done();
             })
             .catch(err => done(err));
+    });
+
+    it("Should be able to submit with a new duration, and not hide full video segments", async () => {
+        const videoID = "full_video_duration_segment";
+        const res = await postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            videoDuration: 100,
+            segments: [{
+                segment: [20, 30],
+                category: "sponsor",
+            }],
+        });
+        assert.strictEqual(res.status, 200);
+        const videoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "actionType", "videoDuration"
+            FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 0`, [videoID]);
+        const hiddenVideoRows = await db.prepare("all", `SELECT "startTime", "endTime", "locked", "category", "videoDuration"
+            FROM "sponsorTimes" WHERE "videoID" = ? AND hidden = 1`, [videoID]);
+        assert.strictEqual(videoRows.length, 2);
+        const expected = {
+            startTime: 20,
+            endTime: 30,
+            locked: 0,
+            category: "sponsor",
+            videoDuration: 100
+        };
+        assert.ok(partialDeepEquals(videoRows[1], expected));
+        const fullExpected = {
+            category: "sponsor",
+            actionType: "full"
+        };
+        assert.ok(partialDeepEquals(videoRows[0], fullExpected));
+        assert.strictEqual(hiddenVideoRows.length, 1);
     });
 
     it("Should be able to submit a single time under a different service (JSON method)", (done) => {
@@ -901,6 +941,26 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should return not be 403 when submitting with locked category but unlocked actionType", (done) => {
+        const videoID = "lockedVideo";
+        db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason")
+            VALUES(?, ?, ?, ?)`, [getHash("VIPUser-lockCategories"), videoID, "sponsor", "Custom Reason"])
+            .then(() => postSkipSegmentJSON({
+                userID: submitUserOne,
+                videoID,
+                segments: [{
+                    segment: [1, 10],
+                    category: "sponsor",
+                    actionType: "mute"
+                }],
+            }))
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should return 403 for submiting in lockedCategory", (done) => {
         const videoID = "lockedVideo1";
         db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") 
@@ -1044,6 +1104,77 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should allow submitting full video sponsor", (done) => {
+        const videoID = "qqwerth";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 0,
+            category: "sponsor",
+            actionType: "full",
+            userID: submitUserTwo
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabase(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 0,
+                    votes: 0,
+                    userID: submitUserTwoHash,
+                    category: "sponsor",
+                    actionType: "full"
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Submitting duplicate full video sponsor should count as an upvote", (done) => {
+        const videoID = "full_video_segment";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 0,
+            category: "sponsor",
+            actionType: "full",
+            userID: submitUserOne
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabase(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 0,
+                    votes: 1,
+                    userID: submitUserTwoHash,
+                    category: "sponsor",
+                    actionType: "full"
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not allow submitting full video sponsor not at zero seconds", (done) => {
+        const videoID = "qqwerth";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 1,
+            category: "sponsor",
+            actionType: "full",
+            userID: submitUserTwo
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should not be able to submit with colons in timestamps", (done) => {
         const videoID = "colon-1";
         postSkipSegmentJSON({
@@ -1080,6 +1211,25 @@ describe("postSkipSegments", () => {
                     userID: banUser01Hash
                 };
                 assert.deepStrictEqual(row, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not add full segments to database if user if shadowbanned", (done) => {
+        const videoID = shadowBanVideoID2;
+        postSkipSegmentParam({
+            videoID,
+            startTime: 0,
+            endTime: 0,
+            category: "sponsor",
+            actionType: "full",
+            userID: banUser01
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await db.prepare("get", `SELECT "startTime", "endTime", "shadowHidden", "userID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+                assert.strictEqual(row, undefined);
                 done();
             })
             .catch(err => done(err));

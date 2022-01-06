@@ -9,17 +9,18 @@ import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, CategoryActionType, IncomingSegment, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
+import { ActionType, Category, CategoryActionType, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
-import { UserID } from "../types/user.model";
+import { HashedUserID, UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
+import { vote } from "./voteOnSponsorTime";
 
 type CheckResult = {
     pass: boolean,
@@ -238,7 +239,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
                     const startTime = parseFloat(segments[i].segment[0]);
                     const endTime = parseFloat(segments[i].segment[1]);
 
-                    const UUID = getSubmissionUUID(submission.videoID, segments[i].actionType, submission.userID, startTime, endTime, submission.service);
+                    const UUID = getSubmissionUUID(submission.videoID, segments[i].category, segments[i].actionType, submission.userID, startTime, endTime, submission.service);
                     // Send to Discord
                     // Note, if this is too spammy. Consider sending all the segments as one Webhook
                     sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
@@ -343,7 +344,7 @@ function checkInvalidFields(videoID: VideoID, userID: UserID, segments: Incoming
     return CHECK_PASS;
 }
 
-async function checkEachSegmentValid(userID: string, videoID: VideoID,
+async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
     segments: IncomingSegment[], service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
@@ -357,7 +358,7 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
         }
 
         // Reject segment if it's in the locked categories list
-        const lockIndex = lockedCategoryList.findIndex(c => segments[i].category === c.category);
+        const lockIndex = lockedCategoryList.findIndex(c => segments[i].category === c.category && segments[i].actionType === c.actionType);
         if (!isVIP && lockIndex !== -1) {
             // TODO: Do something about the fradulent submission
             Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
@@ -383,8 +384,10 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
 
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable && startTime === endTime)
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)) {
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable
+                    && segments[i].actionType !== ActionType.Full && startTime === endTime)
+                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)
+                || (segments[i].actionType === ActionType.Full && (startTime !== 0 || endTime !== 0))) {
             //invalid request
             return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400 };
         }
@@ -394,16 +397,24 @@ async function checkEachSegmentValid(userID: string, videoID: VideoID,
             return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400 };
         }
 
-        if (!isVIP && segments[i].category === "sponsor" && Math.abs(startTime - endTime) < 1) {
+        if (!isVIP && segments[i].category === "sponsor"
+                && segments[i].actionType !== ActionType.Full && Math.abs(startTime - endTime) < 1) {
             // Too short
-            return { pass: false, errorMessage: "Sponsors must be longer than 1 second long", errorCode: 400 };
+            return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
         }
 
         //check if this info has already been submitted before
-        const duplicateCheck2Row = await db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "startTime" = ?
+        const duplicateCheck2Row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "startTime" = ?
             and "endTime" = ? and "category" = ? and "actionType" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, videoID, service]);
-        if (duplicateCheck2Row.count > 0) {
-            return { pass: false, errorMessage: "Sponsors has already been submitted before.", errorCode: 409 };
+        if (duplicateCheck2Row) {
+            if (segments[i].actionType === ActionType.Full) {
+                // Forward as vote
+                await vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
+                segments[i].ignoreSegment = true;
+                continue;
+            } else {
+                return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
+            }
         }
     }
 
@@ -439,13 +450,14 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
 }
 
 async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
-    let lockedCategoryList = await db.prepare("all", 'SELECT category, reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
+    let lockedCategoryList = await db.prepare("all", 'SELECT category, "actionType", reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
         FROM "sponsorTimes" 
         WHERE "videoID" = ? AND "service" = ? AND 
             "hidden" = 0 AND "shadowHidden" = 0 AND 
+            "actionType" != 'full' AND
             "votes" > -2 AND "videoDuration" != 0`,
         [videoID, service]
     ) as {videoDuration: VideoDuration, UUID: SegmentUUID}[];
@@ -573,15 +585,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     // eslint-disable-next-line prefer-const
-    let { videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
+    let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
-    const invalidCheckResult = checkInvalidFields(videoID, userID, segments);
+    const invalidCheckResult = checkInvalidFields(videoID, paramUserID, segments);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
 
     //hash the userID
-    userID = await getHashCache(userID);
+    const userID = await getHashCache(paramUserID);
 
     const userWarningCheckResult = await checkUserActiveWarning(userID);
     if (!userWarningCheckResult.pass) {
@@ -589,15 +601,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
-    //check if this user is on the vip list
     const isVIP = await isUserVIP(userID);
+    const rawIP = getIP(req);
 
     const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
     videoDuration = newData.videoDuration;
     const { lockedCategoryList, apiVideoInfo } = newData;
 
     // Check if all submissions are correct
-    const segmentCheckResult = await checkEachSegmentValid(userID, videoID, segments, service, isVIP, lockedCategoryList);
+    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, lockedCategoryList);
     if (!segmentCheckResult.pass) {
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
@@ -616,7 +628,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const newSegments = [];
 
     //hash the ip 5000 times so no one can get it from the database
-    const hashedIP = await getHashCache(getIP(req) + config.globalSalt);
+    const hashedIP = await getHashCache(rawIP + config.globalSalt);
 
     try {
         //get current time
@@ -633,10 +645,16 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
+            // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
+            if (segmentInfo.ignoreSegment
+                || (shadowBanRow.userCount && segmentInfo.actionType === ActionType.Full)) {
+                continue;
+            }
+
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            const UUID = getSubmissionUUID(videoID, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
             const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;

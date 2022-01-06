@@ -13,7 +13,8 @@ export type HashedIP = IPAddress & HashedValue;
 export enum ActionType {
     Skip = "skip",
     Mute = "mute",
-    Chapter = "chapter"
+    Chapter = "chapter",
+    Full = "full"
 }
 
 // Uncomment as needed
@@ -32,6 +33,9 @@ export interface IncomingSegment {
     actionType: ActionType;
     segment: string[];
     description?: string;
+
+    // Used to remove in pre-check stage
+    ignoreSegment?: boolean;
 }
 
 export interface Segment {
@@ -81,6 +85,7 @@ export interface OverlappingSegmentGroup {
 export interface VotableObject {
     votes: number;
     reputation: number;
+    locked: boolean;
 }
 
 export interface VotableObjectWithWeight extends VotableObject {

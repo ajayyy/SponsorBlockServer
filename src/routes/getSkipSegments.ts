@@ -167,7 +167,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
 // amountOfChoices specifies the maximum amount of choices to return, 1 or more.
 // Choices are unique
 // If a predicate is given, it will only filter choices following it, and will leave the rest in the list
-function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOfChoices: number, predicate?: (choice: T) => void): T[] {
+function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOfChoices: number, filterLocked = false, predicate?: (choice: T) => void): T[] {
     //trivial case: no need to go through the whole process
     if (amountOfChoices >= choices.length) {
         return choices;
@@ -183,6 +183,10 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
         const splitArray = partition(choices, predicate);
         filteredChoices = splitArray[0];
         forceIncludedChoices = splitArray[1];
+
+        if (filterLocked && filteredChoices.some((value) => value.locked)) {
+            filteredChoices = filteredChoices.filter((value) => value.locked);
+        }
     }
 
     //assign a weight to each choice
@@ -200,7 +204,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 
     // Nothing to filter for
     if (amountOfChoices >= choicesWithWeights.length) {
-        return choices;
+        return [...forceIncludedChoices, ...filteredChoices];
     }
 
     //iterate and find amountOfChoices choices
@@ -230,11 +234,12 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
         ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service))
         : await fetchData();
 
-    // Filter for only 1 item for POI categories
-    return getWeightedRandomChoice(groups, 1, (choice) => getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI)
-        .map(//randomly choose 1 good segment per group and return them
-            group => getWeightedRandomChoice(group.segments, 1)[0]
-        );
+    // Filter for only 1 item for POI categories and Full video
+    let chosenGroups = getWeightedRandomChoice(groups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Full);
+    chosenGroups = getWeightedRandomChoice(chosenGroups, 1, true, (choice) => getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI);
+    return chosenGroups.map(//randomly choose 1 good segment per group and return them
+        group => getWeightedRandomChoice(group.segments, 1)[0]
+    );
 }
 
 //This function will find segments that are contained inside of eachother, called similar segments
@@ -300,7 +305,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
         group.segments.forEach((segment) => {
             const bestGroup = result.find((group) => {
                 // At least one segment in the group must have high % overlap or the same action type
-                // Since POI segments will always have 0 overlap, they will always be in their own groups
+                // Since POI and Full video segments will always have <= 0 overlap, they will always be in their own groups
                 return group.segments.some((compareSegment) => {
                     const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
                     const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);

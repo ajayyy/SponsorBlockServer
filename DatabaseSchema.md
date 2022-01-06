@@ -94,6 +94,7 @@
 | -- | :--: | -- |
 | videoID | TEXT | not null |
 | userID | TEXT | not null |
+| actionType | TEXT | not null, default 'skip' |
 | category | TEXT | not null |
 | hashedVideoID | TEXT | not null, default '' |
 | reason | TEXT | not null, default '' |

@@ -10,7 +10,7 @@ import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
 import { HashedUserID, UserID } from "../types/user.model";
-import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration } from "../types/segments.model";
+import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration, ActionType } from "../types/segments.model";
 import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
@@ -188,38 +188,38 @@ async function sendWebhooks(voteData: VoteData) {
 }
 
 async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, isOwnSubmission: boolean, category: Category
-    , hashedIP: HashedIP, finalResponse: FinalResponse, res: Response): Promise<Response> {
+    , hashedIP: HashedIP, finalResponse: FinalResponse): Promise<{ status: number, message?: string }> {
     // Check if they've already made a vote
     const usersLastVoteInfo = await privateDB.prepare("get", `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID]);
 
     if (usersLastVoteInfo?.category === category) {
         // Double vote, ignore
-        return res.sendStatus(finalResponse.finalStatus);
+        return { status: finalResponse.finalStatus };
     }
 
     const videoInfo = (await db.prepare("get", `SELECT "category", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
         [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
     if (!videoInfo) {
         // Submission doesn't exist
-        return res.status(400).send("Submission doesn't exist.");
+        return { status: 400, message: "Submission doesn't exist." };
     }
 
     if (!config.categoryList.includes(category)) {
-        return res.status(400).send("Category doesn't exist.");
+        return { status: 400, message: "Category doesn't exist." };
     }
     if (getCategoryActionType(category) !== CategoryActionType.Skippable) {
-        return res.status(400).send("Cannot vote for this category");
+        return { status: 400, message: "Cannot vote for this category" };
     }
 
     // Ignore vote if the next category is locked
     const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [videoInfo.videoID, videoInfo.service, category]);
     if (nextCategoryLocked && !isVIP) {
-        return res.sendStatus(200);
+        return { status: 200 };
     }
 
     // Ignore vote if the segment is locked
     if (!isVIP && videoInfo.locked === 1) {
-        return res.sendStatus(200);
+        return { status: 200 };
     }
 
     const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category]);
@@ -279,7 +279,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
     QueryCacher.clearSegmentCache(videoInfo);
 
-    return res.sendStatus(finalResponse.finalStatus);
+    return { status: finalResponse.finalStatus };
 }
 
 export function getUserID(req: Request): UserID {
@@ -289,16 +289,30 @@ export function getUserID(req: Request): UserID {
 export async function voteOnSponsorTime(req: Request, res: Response): Promise<Response> {
     const UUID = req.query.UUID as SegmentUUID;
     const paramUserID = getUserID(req);
-    let type = req.query.type !== undefined ? parseInt(req.query.type as string) : undefined;
+    const type = req.query.type !== undefined ? parseInt(req.query.type as string) : undefined;
     const category = req.query.category as Category;
+    const ip = getIP(req);
 
+    const result = await vote(ip, UUID, paramUserID, type, category);
+
+    const response = res.status(result.status);
+    if (result.message) {
+        return response.send(result.message);
+    } else if (result.json) {
+        return response.json(result.json);
+    } else {
+        return response.send();
+    }
+}
+
+export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID, type: number, category?: Category): Promise<{ status: number, message?: string, json?: unknown }> {
     if (UUID === undefined || paramUserID === undefined || (type === undefined && category === undefined)) {
         //invalid request
-        return res.sendStatus(400);
+        return { status: 400 };
     }
     if (paramUserID.length < 30 && config.mode !== "test") {
         // Ignore this vote, invalid
-        return res.sendStatus(200);
+        return { status: 200 };
     }
 
     //hash the userID
@@ -314,9 +328,6 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
         webhookMessage: null
     };
 
-    //x-forwarded-for if this server is behind a proxy
-    const ip = getIP(req);
-
     //hash the ip 5000 times so no one can get it from the database
     const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);
 
@@ -331,7 +342,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     // disallow vote types 10/11
     if (type === 10 || type === 11) {
         // no longer allow type 10/11 alternative votes
-        return res.sendStatus(400);
+        return { status: 400 };
     }
 
     // If not upvote
@@ -350,19 +361,20 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     }
 
     if (type === undefined && category !== undefined) {
-        return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, finalResponse, res);
+        return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, finalResponse);
     }
 
     if (type !== undefined && !isVIP && !isOwnSubmission) {
         // Check if upvoting hidden segment
-        const voteInfo = await db.prepare("get", `SELECT votes FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        const voteInfo = await db.prepare("get", `SELECT votes, "actionType" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as
+            { votes: number, actionType: ActionType };
 
-        if (voteInfo && voteInfo.votes <= -2) {
+        if (voteInfo && voteInfo.votes <= -2 && voteInfo.actionType !== ActionType.Full) {
             if (type == 1) {
-                return res.status(403).send("Not allowed to upvote segment with too many downvotes unless you are VIP.");
+                return { status: 403, message: "Not allowed to upvote segment with too many downvotes unless you are VIP." };
             } else if (type == 0) {
                 // Already downvoted enough, ignore
-                return res.sendStatus(200);
+                return { status: 200 };
             }
         }
     }
@@ -374,9 +386,9 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     ));
 
     if (warnings.length >= config.maxNumberOfActiveWarnings) {
-        return res.status(403).send("Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
-                                    "Could you please send a message in Discord or Matrix so we can further help you?" +
-                                    `${(warnings[0]?.reason?.length > 0 ? ` Warning reason: '${warnings[0].reason}'` : "")}`);
+        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
+            "Could you please send a message in Discord or Matrix so we can further help you?" +
+            `${(warnings[0]?.reason?.length > 0 ? ` Warning reason: '${warnings[0].reason}'` : "")}` };
     }
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
@@ -400,7 +412,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
             incrementAmount = 0;
         } else {
             //unrecongnised type of vote
-            return res.sendStatus(400);
+            return { status: 400 };
         }
         if (votesRow != undefined) {
             if (votesRow.type === 1) {
@@ -447,7 +459,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
 
         // Only change the database if they have made a submission before and haven't voted recently
         const ableToVote = isVIP
-            || (!(isOwnSubmission && incrementAmount > 0)
+            || (!(isOwnSubmission && incrementAmount > 0 && oldIncrementAmount >= 0)
                 && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
                 && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
                 && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
@@ -502,9 +514,9 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
                 finalResponse
             });
         }
-        return res.status(finalResponse.finalStatus).send(finalResponse.finalMessage ?? undefined);
+        return { status: finalResponse.finalStatus, message: finalResponse.finalMessage ?? undefined };
     } catch (err) {
         Logger.error(err as string);
-        return res.status(500).json({ error: "Internal error creating segment vote" });
+        return { status: 500, message: finalResponse.finalMessage ?? undefined, json: { error: "Internal error creating segment vote" } };
     }
 }
