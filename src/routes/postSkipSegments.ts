@@ -239,7 +239,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
                     const startTime = parseFloat(segments[i].segment[0]);
                     const endTime = parseFloat(segments[i].segment[1]);
 
-                    const UUID = getSubmissionUUID(submission.videoID, segments[i].actionType, submission.userID, startTime, endTime, submission.service);
+                    const UUID = getSubmissionUUID(submission.videoID, segments[i].category, segments[i].actionType, submission.userID, startTime, endTime, submission.service);
                     // Send to Discord
                     // Note, if this is too spammy. Consider sending all the segments as one Webhook
                     sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
@@ -654,7 +654,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            const UUID = getSubmissionUUID(videoID, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
             const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;
