@@ -40,7 +40,7 @@ async function init() {
         fs.readdirSync(testDir)
             .filter((file) =>
                 // Only keep the .ts files
-                file.substr(-3) === ".ts"
+                file.slice(-3) === ".ts"
             )
             .forEach(function(file) {
                 mocha.addFile(
