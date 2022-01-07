@@ -2,34 +2,36 @@ import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { ActionType } from "../../src/types/segments.model";
 
 const fakeHash = "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35";
 const endpoint = "/api/lockCategories";
-const getLockCategories = (hash: string) => client.get(`${endpoint}/${hash}`);
+const getLockCategories = (hash: string, actionTypes = [ActionType.Mute, ActionType.Skip]) => client.get(`${endpoint}/${hash}`, { params: { actionTypes } });
 
 describe("getLockCategoriesByHash", () => {
     before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesHashVIP")]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason", "hashedVideoID") VALUES (?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "sponsor", "1-reason-short", getHash("getLockHash1", 1)]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "interaction", "1-reason-longer", getHash("getLockHash1", 1)]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "hashedVideoID") VALUES (?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "sponsor", "1-reason-short", getHash("getLockHash1", 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "interaction", "1-reason-longer", getHash("getLockHash1", 1)]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash2", "preview", "2-reason", getHash("getLockHash2", 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash2", "skip", "preview", "2-reason", getHash("getLockHash2", 1)]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash3", "nonmusic", "3-reason", getHash("getLockHash3", 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash3", "skip", "nonmusic", "3-reason", getHash("getLockHash3", 1)]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-1", "outro", "fake1-reason", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "intro", "fake2-longer-reason", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "preview", "fake2-short", fakeHash]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-1", "mute", "outro", "fake1-reason", fakeHash]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "intro", "fake2-longer-reason", fakeHash]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "preview", "fake2-short", fakeHash]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "full", "sponsor", "fake2-notshown", fakeHash]);
     });
 
-    it("Database should be greater or equal to version 20", async () => {
+    it("Database should be greater or equal to version 29", async () => {
         const version = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
         assert(
-            version >= 20,
-            `Version isn't greater than 20. Version is ${version}`);
+            version >= 29,
+            `Version isn't greater than 29. Version is ${version}`);
     });
 
     it("Should be able to get multiple locks in one object", (done) => {
@@ -159,6 +161,24 @@ describe("getLockCategoriesByHash", () => {
         getLockCategories("")
             .then(res => {
                 assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get by actionType", (done) => {
+        getLockCategories(fakeHash.substring(0,5), [ActionType.Full])
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [{
+                    videoID: "fakehash-2",
+                    hash: fakeHash,
+                    categories: [
+                        "sponsor"
+                    ],
+                    reason: "fake2-notshown"
+                }];
+                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
