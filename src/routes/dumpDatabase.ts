@@ -122,7 +122,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
 
             If you want a live dump, please do not continually fetch this url. 
             Please instead use the <a href="https://github.com/mchangrh/sb-mirror">sb-mirror</a> project.
-            This can automatically fetch new data and will not require a redownload each time, saving bandwith.
+            This can automatically fetch new data and will not require a redownload each time, saving bandwidth.
 
             <h3>Links</h3>
             <table>
