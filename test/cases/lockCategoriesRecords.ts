@@ -1,7 +1,8 @@
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { LockCategory } from "../../src/types/segments.model";
+import { UserID } from "../../src/types/user.model";
+import { Category, VideoID } from "../../src/types/segments.model";
 import { client } from "../utils/httpClient";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 
@@ -12,6 +13,13 @@ const stringDeepEquals = (a: string[], b: string[]): boolean => {
     });
     return result;
 };
+
+interface LockCategory {
+    category: Category,
+    reason: string,
+    videoID: VideoID,
+    userID: UserID
+}
 
 const endpoint = "/api/lockCategories";
 const submitEndpoint = "/api/skipSegments";

@@ -2,6 +2,7 @@ import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 const endpoint = "/api/lockReason";
 
@@ -20,12 +21,13 @@ describe("getLockReason", () => {
         await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1]);
         await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "sponsor", "sponsor-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "interaction", "interaction-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "preview", "preview-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "music_offtopic", "nonmusic-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "outro", "outro-reason"]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason") VALUES (?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "sponsor", "sponsor-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "interaction", "interaction-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "preview", "preview-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "mute", "music_offtopic", "nonmusic-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "mute", "outro", "outro-reason"]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "full", "selfpromo", "selfpromo-reason"]);
     });
 
     after(async () => {
@@ -96,7 +98,7 @@ describe("getLockReason", () => {
             .catch(err => done(err));
     });
 
-    it("should return all categories if none specified", (done) => {
+    it("should return all skip + mute categories if none specified", (done) => {
         client.get(endpoint, { params: { videoID: "getLockReason" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
@@ -109,10 +111,8 @@ describe("getLockReason", () => {
                     { category: "preview", locked: 1, reason: "preview-reason", userID: vipUserID1, userName: vipUserName1 },
                     { category: "music_offtopic", locked: 1, reason: "nonmusic-reason", userID: vipUserID1, userName: vipUserName1 },
                     { category: "filler", locked: 0, reason: "", userID: "", userName: "" },
-                    { category: "poi_highlight", locked: 0, reason: "", userID: "", userName: "" },
-                    { category: "chapter", locked: 0, reason: "", userID: "", userName: "" }
                 ];
-                assert.deepStrictEqual(res.data, expected);
+                partialDeepEquals(res.data, expected, false);
                 done();
             })
             .catch(err => done(err));
@@ -122,6 +122,20 @@ describe("getLockReason", () => {
         client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should be able to get by actionType", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", actionTypes: ["full"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [
+                    { category: "selfpromo", locked: 1, reason: "sponsor-reason", userID: vipUserID2, userName: vipUserName2 },
+                    { category: "sponsor", locked: 0, reason: "", userID: "", userName: "" }
+                ];
+                partialDeepEquals(res.data, expected);
                 done();
             })
             .catch(err => done(err));

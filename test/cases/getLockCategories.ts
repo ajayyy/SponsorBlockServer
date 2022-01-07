@@ -171,7 +171,7 @@ describe("getLockCategories", () => {
                     reason: "1-longer-reason",
                     actionTypes: ["mute"]
                 };
-                assert.deepStrictEqual(res.data, expected);
+                mixedDeepEquals(res.data, expected);
                 done();
             })
             .catch(err => done(err));
@@ -190,7 +190,7 @@ describe("getLockCategories", () => {
                     reason: "3-longer-reason",
                     actionTypes
                 };
-                assert.deepStrictEqual(res.data, expected);
+                mixedDeepEquals(res.data, expected);
                 done();
             })
             .catch(err => done(err));

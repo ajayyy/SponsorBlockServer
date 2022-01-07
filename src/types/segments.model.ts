@@ -1,6 +1,6 @@
 import { HashedValue } from "./hash.model";
 import { SBRecord } from "./lib.model";
-import { UserID } from "./user.model";
+import { HashedUserID, UserID } from "./user.model";
 
 export type SegmentUUID = string & { __segmentUUIDBrand: unknown };
 export type VideoID = string & { __videoIDBrand: unknown };
@@ -107,11 +107,14 @@ export enum CategoryActionType {
     POI
 }
 
-export interface LockCategory {
-    category: Category,
-    reason: string,
+export interface DBLock {
     videoID: VideoID,
-    userID: UserID
+    userID: HashedUserID,
+    actionType: ActionType,
+    category: Category,
+    hashedVideoID: VideoIDHash,
+    reason: string,
+    service: Service,
 }
 
 export enum SortableFields {
