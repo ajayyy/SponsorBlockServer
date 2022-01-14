@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
@@ -197,11 +197,15 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         return { status: finalResponse.finalStatus };
     }
 
-    const videoInfo = (await db.prepare("get", `SELECT "category", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
-        [UUID])) as {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
+    const videoInfo = (await db.prepare("get", `SELECT "category", "actionType", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
+        [UUID])) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
     if (!videoInfo) {
         // Submission doesn't exist
         return { status: 400, message: "Submission doesn't exist." };
+    }
+
+    if (videoInfo.actionType === ActionType.Full) {
+        return { status: 400, message: "Not allowed to change category of a full video segment" };
     }
 
     if (!config.categoryList.includes(category)) {
