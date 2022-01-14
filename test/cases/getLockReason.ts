@@ -103,6 +103,7 @@ describe("getLockReason", () => {
                 const expected = [
                     { category: "sponsor", locked: 1, reason: "sponsor-reason", userID: vipUserID1, userName: vipUserName1 },
                     { category: "selfpromo", locked: 0, reason: "", userID: "", userName: "" },
+                    { category: "exclusive_access", locked: 0, reason: "", userID: "", userName: "" },
                     { category: "interaction", locked: 1, reason: "interaction-reason", userID: vipUserID1, userName: vipUserName1 },
                     { category: "intro", locked: 0, reason: "", userID: "", userName: "" },
                     { category: "outro", locked: 1, reason: "outro-reason", userID: vipUserID2, userName: vipUserName2 },
