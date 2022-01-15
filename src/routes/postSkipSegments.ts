@@ -366,12 +366,12 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 pass: false,
                 errorCode: 403,
                 errorMessage:
-                    `New submissions are not allowed for the following category: ` +
-                    `'${segments[i].category}'. A moderator has decided that no new segments are needed on this video and that all current segments of this category are timed perfectly.\n` +
-                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nLock reason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
+                    `Users have voted that new segments aren't needed for the following category: ` +
+                    `'${segments[i].category}'\n` +
+                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
-                    `\nIf you believe this is incorrect, please contact someone on discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
+                    `\nIf you believe this is incorrect, please contact someone on chat.sponsor.ajay.app, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
             };
         }
 
