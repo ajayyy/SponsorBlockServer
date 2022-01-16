@@ -1,4 +1,4 @@
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
