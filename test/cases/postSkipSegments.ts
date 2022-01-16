@@ -934,7 +934,7 @@ describe("postSkipSegments", () => {
             }))
             .then(res => {
                 assert.strictEqual(res.status, 403);
-                assert.match(res.data, /Lock reason: /);
+                assert.match(res.data, /Reason: /);
                 assert.match(res.data, /Custom Reason/);
                 done();
             })
