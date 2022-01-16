@@ -389,7 +389,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)
                 || (segments[i].actionType === ActionType.Full && (startTime !== 0 || endTime !== 0))) {
             //invalid request
-            return { pass: false, errorMessage: "One of your segments times are invalid (too short, startTime before endTime, etc.)", errorCode: 400 };
+            return { pass: false, errorMessage: "One of your segments times are invalid (too short, endTime before startTime, etc.)", errorCode: 400 };
         }
 
         // Check for POI segments before some seconds

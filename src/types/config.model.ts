@@ -28,6 +28,7 @@ export interface SBSConfig {
     readOnly: boolean;
     webhooks: WebhookConfig[];
     categoryList: string[];
+    categorySupport: Record<string, string[]>;
     getTopUsersCacheTimeMinutes: number;
     maxNumberOfActiveWarnings: number;
     hoursAfterWarningExpires: number;
