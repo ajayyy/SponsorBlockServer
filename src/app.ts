@@ -45,7 +45,7 @@ import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
 import { postRating } from "./routes/ratings/postRating";
 import { getRating } from "./routes/ratings/getRating";
-import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache"
+import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
 

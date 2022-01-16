@@ -10,22 +10,25 @@ import assert from "assert";
 // helpers
 const getSegment = (UUID: string) => db.prepare("get", `SELECT "votes", "locked", "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
 
-const permVIP = "tempVipPermOne";
-const publicPermVIP = getHash(permVIP) as HashedUserID;
+const permVIP1 = "tempVipPermOne";
+const publicPermVIP1 = getHash(permVIP1) as HashedUserID;
+const permVIP2 = "tempVipPermOne";
+const publicPermVIP2 = getHash(permVIP2) as HashedUserID;
+
 const tempVIPOne = "tempVipTempOne";
 const publicTempVIPOne = getHash(tempVIPOne) as HashedUserID;
 const UUID0 = "tempvip-uuid0";
 const UUID1 = "tempvip-uuid1";
 
 const tempVIPEndpoint = "/api/addUserAsTempVIP";
-const addTempVIP = (enabled: boolean) => client({
+const addTempVIP = (enabled: string, adminUserID: string, userID: HashedUserID, channelVideoID = "channelid-convert") => client({
     url: tempVIPEndpoint,
     method: "POST",
     params: {
-        userID: publicTempVIPOne,
-        adminUserID: permVIP,
-        channelVideoID: "channelid-convert",
-        enabled: enabled
+        userID,
+        adminUserID,
+        channelVideoID,
+        enabled
     }
 });
 const voteEndpoint = "/api/voteOnSponsorTime";
@@ -47,8 +50,8 @@ const postVoteCategory = (userID: string, UUID: string, category: string) => cli
         category
     }
 });
-const checkUserVIP = async () => {
-    const { reply } = await redis.getAsync(tempVIPKey(publicTempVIPOne));
+const checkUserVIP = async (publicID: HashedUserID) => {
+    const { reply } = await redis.getAsync(tempVIPKey(publicID));
     return reply;
 };
 
@@ -62,7 +65,8 @@ describe("tempVIP test", function() {
         await db.prepare("run", insertSponsorTimeQuery, ["otherchannel",        1, 9, 0, 1, UUID1, "testman", 0, 50, "sponsor", 0]);
 
 
-        await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP]);
+        await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP1]);
+        await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP2]);
         // clear redis if running consecutive tests
         await redis.delAsync(tempVIPKey(publicTempVIPOne));
     });
@@ -74,10 +78,14 @@ describe("tempVIP test", function() {
             });
     });
     it("User should not already be temp VIP", (done) => {
-        checkUserVIP()
+        checkUserVIP(publicTempVIPOne)
             .then(result => {
                 assert.ok(!result);
-                done(result);
+            })
+            .then(async () => {
+                const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
+                assert.ok(!row?.enabled);
+                done();
             })
             .catch(err => done(err));
     });
@@ -92,11 +100,16 @@ describe("tempVIP test", function() {
             .catch(err => done(err));
     });
     it("Should be able to add tempVIP", (done) => {
-        addTempVIP(true)
+        addTempVIP("true", permVIP1, publicTempVIPOne)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const vip = await checkUserVIP();
-                assert.ok(vip == "ChannelID");
+                // check redis
+                const vip = await checkUserVIP(publicTempVIPOne);
+                assert.strictEqual(vip, "ChannelID");
+                assert.strictEqual(res.data, "Temp VIP added on channel ChannelAuthor");
+                // check privateDB
+                const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
+                assert.ok(row.enabled);
                 done();
             })
             .catch(err => done(err));
@@ -134,11 +147,13 @@ describe("tempVIP test", function() {
             .catch(err => done(err));
     });
     it("Should be able to remove tempVIP prematurely", (done) => {
-        addTempVIP(false)
+        addTempVIP("false", permVIP1, publicTempVIPOne, null)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const vip = await checkUserVIP();
-                done(vip);
+                const vip = await checkUserVIP(publicTempVIPOne);
+                assert.strictEqual(res.data, "Temp VIP removed");
+                assert.ok(!vip, "Should be no listed channelID");
+                done();
             })
             .catch(err => done(err));
     });
@@ -158,6 +173,87 @@ describe("tempVIP test", function() {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegment(UUID1);
                 assert.strictEqual(row.category, "sponsor");
+                done();
+            })
+            .catch(err => done(err));
+    });
+    // error code testing
+    it("Should be able to add tempVIP after removal", (done) => {
+        addTempVIP("true", permVIP1, publicTempVIPOne)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const vip = await checkUserVIP(publicTempVIPOne);
+                assert.strictEqual(vip, "ChannelID");
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should not be able to add VIP without existing VIP (403)", (done) => {
+        const privateID = "non-vip-privateid";
+        addTempVIP("true", privateID, publicTempVIPOne)
+            .then(async res => {
+                assert.strictEqual(res.status, 403);
+                const vip = await checkUserVIP(getHash(privateID) as HashedUserID);
+                assert.ok(!vip, "Should be no listed channelID");
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should not be able to add permanant VIP as temporary VIP (409)", (done) => {
+        addTempVIP("true", permVIP1, publicPermVIP2)
+            .then(async res => {
+                assert.strictEqual(res.status, 409);
+                const vip = await checkUserVIP(publicPermVIP2);
+                assert.ok(!vip, "Should be no listed channelID");
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Temp VIP should not be able to add another Temp VIP (403)", (done) => {
+        const privateID = "non-vip-privateid";
+        const publicID = getHash(privateID) as HashedUserID;
+        addTempVIP("true", tempVIPOne, publicID)
+            .then(async res => {
+                assert.strictEqual(res.status, 403);
+                const vip = await checkUserVIP(publicID);
+                assert.ok(!vip, "Should be no listed channelID");
+                done();
+            })
+            .catch(err => done(err));
+    });
+    // error 40X testing
+    it("Should return 404 with invalid videoID", (done) => {
+        const privateID = "non-vip-privateid";
+        const publicID = getHash(privateID) as HashedUserID;
+        addTempVIP("true", permVIP1, publicID, "knownWrongID")
+            .then(async res => {
+                assert.strictEqual(res.status, 404);
+                const vip = await checkUserVIP(publicID);
+                assert.ok(!vip, "Should be no listed channelID");
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should return 400 with invalid userID", (done) => {
+        addTempVIP("true", permVIP1, "" as HashedUserID, "knownWrongID")
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should return 400 with invalid adminUserID", (done) => {
+        addTempVIP("true", "", publicTempVIPOne)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should return 400 with invalid channelID", (done) => {
+        addTempVIP("true", permVIP1, publicTempVIPOne, "")
+            .then(res => {
+                assert.strictEqual(res.status, 400);
                 done();
             })
             .catch(err => done(err));
