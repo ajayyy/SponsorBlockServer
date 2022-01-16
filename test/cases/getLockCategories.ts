@@ -178,8 +178,8 @@ describe("getLockCategories", () => {
     });
 
     it("Should be able to get skip, mute, full", (done) => {
-        const actionTypes = [...defaultActionTypes, "full"]
-        getLockCategories("getLockCategory3",actionTypes )
+        const actionTypes = [...defaultActionTypes, "full"];
+        getLockCategories("getLockCategory3", actionTypes)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
