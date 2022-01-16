@@ -19,27 +19,27 @@ interface DBLock {
     actionType: ActionType,
 }
 
-const mergeLocks = (source: DBLock[], actionTypes: ActionType[]) => {
-    const dest: LockResultByHash[] = [];
+const mergeLocks = (source: DBLock[], actionTypes: ActionType[]): LockResultByHash[] => {
+    const dest: { [videoID: VideoID]: LockResultByHash } = {};
     for (const obj of source) {
         if (!actionTypes.includes(obj.actionType)) continue;
         // videoID already exists
-        const destMatch = dest.find(s => s.videoID === obj.videoID);
-        if (destMatch) {
+        if (obj.videoID in dest) {
             // override longer reason
+            const destMatch = dest[obj.videoID];
             if (obj.reason?.length > destMatch.reason?.length) destMatch.reason = obj.reason;
             // push to categories
             destMatch.categories.push(obj.category);
         } else {
-            dest.push({
+            dest[obj.videoID] = {
                 videoID: obj.videoID,
                 hash: obj.hash,
                 reason: obj.reason,
                 categories: [obj.category]
-            });
+            };
         }
     }
-    return dest;
+    return Object.values(dest);
 };
 
 export async function getLockCategoriesByHash(req: Request, res: Response): Promise<Response> {
