@@ -28,9 +28,9 @@ export async function getReputation(userID: UserID): Promise<number> {
                 THEN 1 ELSE 0 END) AS "nonSelfDownvotedSubmissions",
             SUM(CASE WHEN "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "votedSum",
             SUM(locked) AS "lockedSum",
-            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
-            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions",
-            SUM(CASE WHEN "votes" > 0 
+            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "actionType" != 'full' AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
+            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "actionType" != 'full' AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions",
+            SUM(CASE WHEN "votes" > 0 AND "actionType" != 'full' 
                 AND NOT EXISTS (
                     SELECT * FROM "sponsorTimes" as c 
                     WHERE (c."votes" > "a"."votes" OR  c."locked" > "a"."locked") AND 
