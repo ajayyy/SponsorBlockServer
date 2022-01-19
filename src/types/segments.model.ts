@@ -14,7 +14,8 @@ export enum ActionType {
     Skip = "skip",
     Mute = "mute",
     Chapter = "chapter",
-    Full = "full"
+    Full = "full",
+    Poi = "poi"
 }
 
 // Uncomment as needed

@@ -28,8 +28,8 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, 0, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash", ""]);
         await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, 0, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b", ""]);
         await db.prepare("run", query, ["onlyHidden", 60, 70, 2, 0, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3", ""]);
-        await db.prepare("run", query, ["highlightVid", 60, 60, 2, 0, "highlightVid-1", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
-        await db.prepare("run", query, ["highlightVid", 70, 70, 2, 0, "highlightVid-2", "testman", 0, 50, "poi_highlight", "skip", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+        await db.prepare("run", query, ["highlightVid", 60, 60, 2, 0, "highlightVid-1", "testman", 0, 50, "poi_highlight", "poi", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+        await db.prepare("run", query, ["highlightVid", 70, 70, 2, 0, "highlightVid-2", "testman", 0, 50, "poi_highlight", "poi", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, 0, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
@@ -276,12 +276,28 @@ describe("getSkipSegmentsByHash", () => {
     });
 
     it("Should only return one segment when fetching highlight segments", (done) => {
+        client.get(`${endpoint}/c962`, { params: { category: "poi_highlight", actionType: "poi" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                assert.strictEqual(data[0].segments.length, 1);
+                assert.strictEqual(data[0].segments[0].category, "poi_highlight");
+                assert.strictEqual(data[0].segments[0].actionType, "poi");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return skip actionType for highlight for old clients", (done) => {
         client.get(`${endpoint}/c962`, { params: { category: "poi_highlight" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
                 assert.strictEqual(data.length, 1);
                 assert.strictEqual(data[0].segments.length, 1);
+                assert.strictEqual(data[0].segments[0].category, "poi_highlight");
+                assert.strictEqual(data[0].segments[0].actionType, "skip");
                 done();
             })
             .catch(err => done(err));

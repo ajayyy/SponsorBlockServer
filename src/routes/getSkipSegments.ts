@@ -66,6 +66,12 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
 
+    // For old clients
+    const forcePoiAsSkip = !actionTypes.includes(ActionType.Poi) && categories.includes("poi_highlight" as Category);
+    if (forcePoiAsSkip) {
+        actionTypes.push(ActionType.Poi);
+    }
+
     try {
         categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
         if (categories.length === 0) return null;
@@ -77,9 +83,17 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
             }, {});
 
         const canUseCache = requiredSegments.length === 0;
-        const processedSegments: Segment[] = await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache);
+        let processedSegments: Segment[] = (await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache))
+            .filter((segment: Segment) => categories.includes(segment?.category) && (actionTypes.includes(segment?.actionType)));
 
-        return processedSegments.filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
+        if (forcePoiAsSkip) {
+            processedSegments = processedSegments.map((segment) => ({
+                ...segment,
+                actionType: ActionType.Skip
+            }));
+        }
+
+        return processedSegments;
     } catch (err) {
         if (err) {
             Logger.error(err as string);
@@ -92,6 +106,12 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: SBRecord<VideoID, VideoData> = {};
+
+    // For old clients
+    const forcePoiAsSkip = !actionTypes.includes(ActionType.Poi) && categories.includes("poi_highlight" as Category);
+    if (forcePoiAsSkip) {
+        actionTypes.push(ActionType.Poi);
+    }
 
     try {
         type SegmentWithHashPerVideoID = SBRecord<VideoID, { hash: VideoIDHash, segments: DBSegment[] }>;
@@ -122,6 +142,13 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             const canUseCache = requiredSegments.length === 0;
             data.segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
                 .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
+
+            if (forcePoiAsSkip) {
+                data.segments = data.segments.map((segment) => ({
+                    ...segment,
+                    actionType: ActionType.Skip
+                }));
+            }
 
             if (data.segments.length > 0) {
                 segments[videoID] = data;
