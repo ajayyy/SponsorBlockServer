@@ -4,8 +4,7 @@ import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
-import { getCategoryActionType } from "../utils/categoryInfo";
+import { ActionType, Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { Logger } from "../utils/logger";
@@ -263,7 +262,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 
     // Filter for only 1 item for POI categories and Full video
     let chosenGroups = getWeightedRandomChoice(groups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Full);
-    chosenGroups = getWeightedRandomChoice(chosenGroups, 1, true, (choice) => getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI);
+    chosenGroups = getWeightedRandomChoice(chosenGroups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Poi);
     return chosenGroups.map(//randomly choose 1 good segment per group and return them
         group => getWeightedRandomChoice(group.segments, 1)[0]
     );

@@ -103,11 +103,6 @@ export interface SegmentCache {
     userHashedIP?: HashedIP
 }
 
-export enum CategoryActionType {
-    Skippable,
-    POI
-}
-
 export interface DBLock {
     videoID: VideoID,
     userID: HashedUserID,
