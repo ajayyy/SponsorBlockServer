@@ -9,9 +9,8 @@ import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, CategoryActionType, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
+import { ActionType, Category, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
-import { getCategoryActionType } from "../utils/categoryInfo";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
@@ -375,6 +374,11 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
             };
         }
 
+        // For old clients
+        if (segments[i].category === "poi_highlight" && segments[i].actionType !== ActionType.Poi) {
+            segments[i].actionType = ActionType.Poi;
+        }
+
         if (!config.categorySupport[segments[i].category]?.includes(segments[i].actionType)) {
             return { pass: false, errorMessage: "ActionType is not supported with this category.", errorCode: 400 };
         }
@@ -384,16 +388,16 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
 
         if (isNaN(startTime) || isNaN(endTime)
                 || startTime === Infinity || endTime === Infinity || startTime < 0 || startTime > endTime
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.Skippable
+                || (segments[i].actionType !== ActionType.Poi
                     && segments[i].actionType !== ActionType.Full && startTime === endTime)
-                || (getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime !== endTime)
+                || (segments[i].actionType === ActionType.Poi && startTime !== endTime)
                 || (segments[i].actionType === ActionType.Full && (startTime !== 0 || endTime !== 0))) {
             //invalid request
             return { pass: false, errorMessage: "One of your segments times are invalid (too short, endTime before startTime, etc.)", errorCode: 400 };
         }
 
         // Check for POI segments before some seconds
-        if (!isVIP && getCategoryActionType(segments[i].category) === CategoryActionType.POI && startTime < config.poiMinimumStartTime) {
+        if (!isVIP && segments[i].actionType === ActionType.Poi && startTime < config.poiMinimumStartTime) {
             return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400 };
         }
 

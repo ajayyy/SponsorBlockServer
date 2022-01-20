@@ -10,8 +10,7 @@ import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
 import { HashedUserID, UserID } from "../types/user.model";
-import { Category, CategoryActionType, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration, ActionType } from "../types/segments.model";
-import { getCategoryActionType } from "../utils/categoryInfo";
+import { Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration, ActionType } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 import redis from "../utils/redis";
@@ -211,8 +210,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     if (!config.categoryList.includes(category)) {
         return { status: 400, message: "Category doesn't exist." };
     }
-    if (getCategoryActionType(category) !== CategoryActionType.Skippable) {
-        return { status: 400, message: "Cannot vote for this category" };
+    if (videoInfo.actionType === ActionType.Poi) {
+        return { status: 400, message: "Not allowed to change category for single point segments" };
     }
 
     // Ignore vote if the next category is locked

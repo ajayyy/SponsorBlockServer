@@ -14,7 +14,8 @@ export enum ActionType {
     Skip = "skip",
     Mute = "mute",
     Chapter = "chapter",
-    Full = "full"
+    Full = "full",
+    Poi = "poi"
 }
 
 // Uncomment as needed
@@ -100,11 +101,6 @@ export interface VideoData {
 export interface SegmentCache {
     shadowHiddenSegmentIPs: SBRecord<VideoID, SBRecord<string, {hashedIP: HashedIP}[]>>,
     userHashedIP?: HashedIP
-}
-
-export enum CategoryActionType {
-    Skippable,
-    POI
 }
 
 export interface DBLock {

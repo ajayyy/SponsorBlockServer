@@ -4,8 +4,7 @@ import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, CategoryActionType, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
-import { getCategoryActionType } from "../utils/categoryInfo";
+import { ActionType, Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { Logger } from "../utils/logger";
@@ -66,6 +65,12 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<Segment[]> {
     const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
 
+    // For old clients
+    const forcePoiAsSkip = !actionTypes.includes(ActionType.Poi) && categories.includes("poi_highlight" as Category);
+    if (forcePoiAsSkip) {
+        actionTypes.push(ActionType.Poi);
+    }
+
     try {
         categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
         if (categories.length === 0) return null;
@@ -77,9 +82,17 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
             }, {});
 
         const canUseCache = requiredSegments.length === 0;
-        const processedSegments: Segment[] = await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache);
+        let processedSegments: Segment[] = (await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache))
+            .filter((segment: Segment) => categories.includes(segment?.category) && (actionTypes.includes(segment?.actionType)));
 
-        return processedSegments.filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
+        if (forcePoiAsSkip) {
+            processedSegments = processedSegments.map((segment) => ({
+                ...segment,
+                actionType: ActionType.Skip
+            }));
+        }
+
+        return processedSegments;
     } catch (err) {
         if (err) {
             Logger.error(err as string);
@@ -92,6 +105,12 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
     actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: SBRecord<VideoID, VideoData> = {};
+
+    // For old clients
+    const forcePoiAsSkip = !actionTypes.includes(ActionType.Poi) && categories.includes("poi_highlight" as Category);
+    if (forcePoiAsSkip) {
+        actionTypes.push(ActionType.Poi);
+    }
 
     try {
         type SegmentWithHashPerVideoID = SBRecord<VideoID, { hash: VideoIDHash, segments: DBSegment[] }>;
@@ -122,6 +141,13 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             const canUseCache = requiredSegments.length === 0;
             data.segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
                 .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
+
+            if (forcePoiAsSkip) {
+                data.segments = data.segments.map((segment) => ({
+                    ...segment,
+                    actionType: ActionType.Skip
+                }));
+            }
 
             if (data.segments.length > 0) {
                 segments[videoID] = data;
@@ -236,7 +262,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 
     // Filter for only 1 item for POI categories and Full video
     let chosenGroups = getWeightedRandomChoice(groups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Full);
-    chosenGroups = getWeightedRandomChoice(chosenGroups, 1, true, (choice) => getCategoryActionType(choice.segments[0].category) === CategoryActionType.POI);
+    chosenGroups = getWeightedRandomChoice(chosenGroups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Poi);
     return chosenGroups.map(//randomly choose 1 good segment per group and return them
         group => getWeightedRandomChoice(group.segments, 1)[0]
     );

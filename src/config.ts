@@ -30,7 +30,7 @@ addDefaults(config, {
         preview: ["skip", "mute"],
         filler: ["skip", "mute"],
         music_offtopic: ["skip"],
-        poi_highlight: ["skip"],
+        poi_highlight: ["poi"],
         chapter: ["chapter"]
     },
     maxNumberOfActiveWarnings: 1,
