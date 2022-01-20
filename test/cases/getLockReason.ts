@@ -129,7 +129,7 @@ describe("getLockReason", () => {
     });
 
     it("should be able to get by actionType", (done) => {
-        client.get(endpoint, { params: { videoID: "getLockReason", actionTypes: ["full"] } })
+        client.get(endpoint, { params: { videoID: "getLockReason", actionType: "full" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [

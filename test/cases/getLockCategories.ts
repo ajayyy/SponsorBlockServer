@@ -5,7 +5,7 @@ import { client } from "../utils/httpClient";
 import { mixedDeepEquals } from "../utils/partialDeepEquals";
 const endpoint = "/api/lockCategories";
 const defaultActionTypes = ["skip", "mute"];
-const getLockCategories = (videoID: string, actionTypes = defaultActionTypes, service = "YouTube") => client.get(endpoint, { params: { videoID, actionTypes, service } });
+const getLockCategories = (videoID: string, actionType = defaultActionTypes, service = "YouTube") => client.get(endpoint, { params: { videoID, actionType, service } });
 
 describe("getLockCategories", () => {
     before(async () => {
@@ -165,7 +165,6 @@ describe("getLockCategories", () => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
                     categories: [
-                        "sponsor",
                         "interaction"
                     ],
                     reason: "1-longer-reason",
@@ -184,6 +183,7 @@ describe("getLockCategories", () => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
                     categories: [
+                        "sponsor",
                         "nonmusic",
                         "outro"
                     ],
@@ -191,6 +191,33 @@ describe("getLockCategories", () => {
                     actionTypes
                 };
                 mixedDeepEquals(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should return 200 by single actionType", (done) => {
+        client.get(`${endpoint}?videoID=getLockCategory1&actionType=mute`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should return 200 by single actionTypes JSON", (done) => {
+        client.get(`${endpoint}?videoID=getLockCategory1&actionTypes=["mute"]`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should return 200 by repeating actionTypes", (done) => {
+        client.get(`${endpoint}?videoID=getLockCategory1&actionType=mute&actionType=skip`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
                 done();
             })
             .catch(err => done(err));
