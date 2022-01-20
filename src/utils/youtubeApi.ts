@@ -27,7 +27,9 @@ export class YouTubeAPI {
         if (!config.newLeafURLs || config.newLeafURLs.length <= 0) return { err: "NewLeaf URL not found", data: null };
 
         try {
-            const result = await axios.get(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`);
+            const result = await axios.get(`${config.newLeafURLs[Math.floor(Math.random() * config.newLeafURLs.length)]}/api/v1/videos/${videoID}`, {
+                timeout: 3500
+            });
 
             if (result.status === 200) {
                 const data = result.data;
