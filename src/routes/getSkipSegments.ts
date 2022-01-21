@@ -88,7 +88,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
         if (forcePoiAsSkip) {
             processedSegments = processedSegments.map((segment) => ({
                 ...segment,
-                actionType: ActionType.Skip
+                actionType: segment.actionType === ActionType.Poi ? ActionType.Skip : segment.actionType
             }));
         }
 
@@ -145,7 +145,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             if (forcePoiAsSkip) {
                 data.segments = data.segments.map((segment) => ({
                     ...segment,
-                    actionType: ActionType.Skip
+                    actionType: segment.actionType === ActionType.Poi ? ActionType.Skip : segment.actionType
                 }));
             }
 
