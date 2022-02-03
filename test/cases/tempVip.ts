@@ -129,7 +129,7 @@ describe("tempVIP test", function() {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegment(UUID0);
-                assert.strictEqual(row.votes, -2);
+                assert.strictEqual(row.votes, 1);
                 assert.strictEqual(row.locked, 0);
                 done();
             })
