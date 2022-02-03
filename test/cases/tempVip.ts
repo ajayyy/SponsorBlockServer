@@ -124,24 +124,24 @@ describe("tempVIP test", function() {
             })
             .catch(err => done(err));
     });
-    it("Should be able to VIP lock", (done) => {
+    it("Should not be able to lock segment", (done) => {
         postVote(tempVIPOne, UUID0, 1)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegment(UUID0);
-                assert.ok(row.votes > -2);
-                assert.strictEqual(row.locked, 1);
+                assert.strictEqual(row.votes, -2);
+                assert.strictEqual(row.locked, 0);
                 done();
             })
             .catch(err => done(err));
     });
-    it("Should be able to VIP change category", (done) => {
+    it("Should be able to change category but not lock", (done) => {
         postVoteCategory(tempVIPOne, UUID0, "filler")
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegment(UUID0);
                 assert.strictEqual(row.category, "filler");
-                assert.strictEqual(row.locked, 1);
+                assert.strictEqual(row.locked, 0);
                 done();
             })
             .catch(err => done(err));
