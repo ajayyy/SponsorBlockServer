@@ -73,9 +73,9 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash(vipUser)]);
         await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
 
-        const insertlockCategoriesQuerry = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertlockCategoriesQuerry, ["no-sponsor-segments-video", "someUser", "sponsor", ""]);
-        await db.prepare("run", insertlockCategoriesQuerry, ["category-change-test-1", "someUser", "preview", ""]); // sponsor should stay unlocked
+        const insertlockCategoriesQuery = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "actionType") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertlockCategoriesQuery, ["no-sponsor-segments-video", "someUser", "sponsor", "skip"]);
+        await db.prepare("run", insertlockCategoriesQuery, ["category-change-test-1", "someUser", "preview", "skip"]); // sponsor should stay unlocked
     });
     // constants
     const endpoint = "/api/voteOnSponsorTime";
@@ -409,15 +409,15 @@ describe("voteOnSponsorTime", () => {
         const UUID = "invalid-uuid";
         postVoteCategory("randomID3", UUID, "intro")
             .then(res => {
-                assert.strictEqual(res.status, 400);
+                assert.strictEqual(res.status, 404);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should not be able to category-vote on an a full video segment", (done) => {
-        const UUID = "invalid-uuid";
-        postVoteCategory("full-video-uuid-1", UUID, "selfpromo")
+    it("Should not be able to category-vote on a full video segment", (done) => {
+        const UUID = "full-video-uuid-1";
+        postVoteCategory("randomID3", UUID, "selfpromo")
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

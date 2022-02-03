@@ -10,7 +10,7 @@ import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
 import { HashedUserID, UserID } from "../types/user.model";
-import { Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, Visibility, VideoDuration, ActionType } from "../types/segments.model";
+import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 import redis from "../utils/redis";
@@ -52,23 +52,24 @@ interface VoteData {
 }
 
 function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
-    if (config.newLeafURLs !== null) {
-        return YouTubeAPI.listVideos(videoID, ignoreCache);
-    } else {
-        return null;
-    }
+    return config.newLeafURLs ? YouTubeAPI.listVideos(videoID, ignoreCache) : null;
 }
 
 const isUserTempVIP = async (nonAnonUserID: HashedUserID, videoID: VideoID): Promise<boolean> => {
+    // fetch videoInfo from cache
     const apiVideoInfo = await getYouTubeVideoInfo(videoID);
-    const channelID = apiVideoInfo?.data?.authorId;
+    // get channelID or fallback to invalid channelID (<> are invalid URL characters and & is not a valid ChannelID character)
+    const channelID = apiVideoInfo?.data?.authorId ?? "<INVALID_CHANNEL_ID_&&&&&>";
     const { err, reply } = await redis.getAsync(tempVIPKey(nonAnonUserID));
-    return err ? false : (reply == channelID);
+    // return false if error, reply mismatch or reply is not length 21 and not in testing mode
+    return err ? false :
+        (config.mode === "test") ? reply == channelID
+            : (reply?.length === 21 && reply == channelID);
 };
 
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
 
-async function checkVideoDurationChange(UUID: SegmentUUID) {
+async function updateSegmentVideoDuration(UUID: SegmentUUID) {
     const { videoDuration, videoID, service } = await db.prepare("get", `select "videoDuration", "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
     let apiVideoInfo: APIVideoInfo = null;
     if (service == Service.YouTube) {
@@ -79,6 +80,34 @@ async function checkVideoDurationChange(UUID: SegmentUUID) {
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${videoDuration} to ${apiVideoDuration}`);
         await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ? WHERE "UUID" = ?`, [apiVideoDuration, UUID]);
+    }
+}
+
+async function checkVideoDuration(UUID: SegmentUUID) {
+    const { videoID, service } = await db.prepare("get", `select "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
+    let apiVideoInfo: APIVideoInfo = null;
+    if (service == Service.YouTube) {
+        // don't use cache since we have no information about the video length
+        apiVideoInfo = await getYouTubeVideoInfo(videoID, true);
+    }
+    const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
+    // if no videoDuration return early
+    if (!apiVideoDuration && apiVideoDuration != 0) return;
+    // fetch latest submission
+    const latestSubmission = await db.prepare("get", `SELECT "videoDuration, UUID, submissionTime
+        FROM "sponsorTimes
+        WHERE "videoID" = ? AND "service" = ? AND 
+            "hidden" = 0 AND "shadowHidden" = 0 AND 
+            "actionType" != 'full' AND
+            "votes" > -2 AND "videoDuration" != 0
+        ORDER BY "submissionTime" DESC
+        TOP 1`,
+    [videoID, service]) as {videoDuration: VideoDuration, UUID: SegmentUUID, submissionTime: number};
+
+    if (videoDurationChanged(latestSubmission.videoDuration, apiVideoDuration)) {
+        Logger.info(`Video duration changed for ${videoID} from ${latestSubmission.videoDuration} to ${apiVideoDuration}`);
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE videoID = ? AND service = ? AND submissionTime < ?`,
+            [videoID, service, latestSubmission.submissionTime]);
     }
 }
 
@@ -186,7 +215,7 @@ async function sendWebhooks(voteData: VoteData) {
     }
 }
 
-async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, isOwnSubmission: boolean, category: Category
+async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, isTempVIP: boolean, isOwnSubmission: boolean, category: Category
     , hashedIP: HashedIP, finalResponse: FinalResponse): Promise<{ status: number, message?: string }> {
     // Check if they've already made a vote
     const usersLastVoteInfo = await privateDB.prepare("get", `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID]);
@@ -196,32 +225,28 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         return { status: finalResponse.finalStatus };
     }
 
-    const videoInfo = (await db.prepare("get", `SELECT "category", "actionType", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
+    const segmentInfo = (await db.prepare("get", `SELECT "category", "actionType", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
         [UUID])) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
-    if (!videoInfo) {
-        // Submission doesn't exist
-        return { status: 400, message: "Submission doesn't exist." };
-    }
 
-    if (videoInfo.actionType === ActionType.Full) {
+    if (segmentInfo.actionType === ActionType.Full) {
         return { status: 400, message: "Not allowed to change category of a full video segment" };
     }
 
     if (!config.categoryList.includes(category)) {
         return { status: 400, message: "Category doesn't exist." };
     }
-    if (videoInfo.actionType === ActionType.Poi) {
+    if (segmentInfo.actionType === ActionType.Poi) {
         return { status: 400, message: "Not allowed to change category for single point segments" };
     }
 
     // Ignore vote if the next category is locked
-    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [videoInfo.videoID, videoInfo.service, category]);
+    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [segmentInfo.videoID, segmentInfo.service, category]);
     if (nextCategoryLocked && !isVIP) {
         return { status: 200 };
     }
 
     // Ignore vote if the segment is locked
-    if (!isVIP && videoInfo.locked === 1) {
+    if (!isVIP && segmentInfo.locked === 1) {
         return { status: 200 };
     }
 
@@ -229,8 +254,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
     const timeSubmitted = Date.now();
 
-    const voteAmount = isVIP ? 500 : 1;
-    const ableToVote = isVIP || finalResponse.finalStatus === 200 || true;
+    const voteAmount = (isVIP || isTempVIP) ? 500 : 1;
+    const ableToVote = isVIP || isTempVIP || finalResponse.finalStatus === 200 || true;
 
     if (ableToVote) {
         // Add the vote
@@ -253,7 +278,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         }
 
         // See if the submissions category is ready to change
-        const currentCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, videoInfo.category]);
+        const currentCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, segmentInfo.category]);
 
         const submissionInfo = await db.prepare("get", `SELECT "userID", "timeSubmitted", "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
         const isSubmissionVIP = submissionInfo && await isUserVIP(submissionInfo.userID);
@@ -265,23 +290,20 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
         // Add submission as vote
         if (!currentCategoryInfo && submissionInfo) {
-            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, videoInfo.category, currentCategoryCount]);
-
-            await privateDB.prepare("run", `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, submissionInfo.userID, "unknown", videoInfo.category, submissionInfo.timeSubmitted]);
+            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, segmentInfo.category, currentCategoryCount]);
+            await privateDB.prepare("run", `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, submissionInfo.userID, "unknown", segmentInfo.category, submissionInfo.timeSubmitted]);
         }
 
         const nextCategoryCount = (nextCategoryInfo?.votes || 0) + voteAmount;
 
         //TODO: In the future, raise this number from zero to make it harder to change categories
         // VIPs change it every time
-        if (nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2) || isVIP || isOwnSubmission) {
+        if (nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2) || isVIP || isTempVIP || isOwnSubmission) {
             // Replace the category
             await db.prepare("run", `update "sponsorTimes" set "category" = ? where "UUID" = ?`, [category, UUID]);
         }
     }
-
-    QueryCacher.clearSegmentCache(videoInfo);
-
+    QueryCacher.clearSegmentCache(segmentInfo);
     return { status: finalResponse.finalStatus };
 }
 
@@ -309,12 +331,12 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
 }
 
 export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID, type: number, category?: Category): Promise<{ status: number, message?: string, json?: unknown }> {
-    if (UUID === undefined || paramUserID === undefined || (type === undefined && category === undefined)) {
-        //invalid request
+    // missing key parameters
+    if (!UUID || !paramUserID || !(type !== undefined || category)) {
         return { status: 400 };
     }
+    // Ignore this vote, invalid
     if (paramUserID.length < 30 && config.mode !== "test") {
-        // Ignore this vote, invalid
         return { status: 200 };
     }
 
@@ -334,51 +356,49 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     //hash the ip 5000 times so no one can get it from the database
     const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);
 
-    //check if this user is on the vip list
-    const videoID = await db.prepare("get", `select "videoID" from "sponsorTimes" where "UUID" = ?`, [UUID]);
-    const isTempVIP = await isUserTempVIP(nonAnonUserID, videoID?.videoID || null);
-    const isVIP = await isUserVIP(nonAnonUserID) || isTempVIP;
+    const segmentInfo: DBSegment = await db.prepare("get", `SELECT * from "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+    // segment doesnt exist
+    if (!segmentInfo) {
+        return { status: 404 };
+    }
+
+    const isTempVIP = await isUserTempVIP(nonAnonUserID, segmentInfo.videoID);
+    const isVIP = await isUserVIP(nonAnonUserID);
 
     //check if user voting on own submission
-    const isOwnSubmission = (await db.prepare("get", `SELECT "UUID" as "submissionCount" FROM "sponsorTimes" where "userID" = ? AND "UUID" = ?`, [nonAnonUserID, UUID])) !== undefined;
+    const isOwnSubmission = nonAnonUserID === segmentInfo.userID;
 
     // disallow vote types 10/11
     if (type === 10 || type === 11) {
-        // no longer allow type 10/11 alternative votes
         return { status: 400 };
+    }
+
+    // no type but has category, categoryVote
+    if (!type && category) {
+        return categoryVote(UUID, nonAnonUserID, isVIP, isTempVIP, isOwnSubmission, category, hashedIP, finalResponse);
     }
 
     // If not upvote
     if (!isVIP && type != 1) {
-        const isSegmentLocked = async () => !!(await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]))?.locked;
-        const isVideoLocked = async () => !!(await db.prepare("get", `SELECT "lockCategories".category from "lockCategories" left join "sponsorTimes"
-            on ("lockCategories"."videoID" = "sponsorTimes"."videoID" and 
-            "lockCategories"."service" = "sponsorTimes"."service" and "lockCategories".category = "sponsorTimes".category)
-            where "UUID" = ?`, [UUID]));
-
-        if (await isSegmentLocked() || await isVideoLocked()) {
+        const isSegmentLocked = segmentInfo.locked;
+        const isVideoLocked = async () => !!(await db.prepare("get", `SELECT "category" FROM "lockCategories" WHERE
+                "videoID" = ? AND "service" = ? AND "category" = ? AND "actionType" = ?`,
+        [segmentInfo.videoID, segmentInfo.service, segmentInfo.category, segmentInfo.actionType]));
+        if (isSegmentLocked || await isVideoLocked()) {
             finalResponse.blockVote = true;
             finalResponse.webhookType = VoteWebhookType.Rejected;
             finalResponse.webhookMessage = "Vote rejected: A moderator has decided that this segment is correct";
         }
     }
 
-    if (type === undefined && category !== undefined) {
-        return categoryVote(UUID, nonAnonUserID, isVIP, isOwnSubmission, category, hashedIP, finalResponse);
-    }
-
-    if (type !== undefined && !isVIP && !isOwnSubmission) {
-        // Check if upvoting hidden segment
-        const voteInfo = await db.prepare("get", `SELECT votes, "actionType" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as
-            { votes: number, actionType: ActionType };
-
-        if (voteInfo && voteInfo.votes <= -2 && voteInfo.actionType !== ActionType.Full) {
-            if (type == 1) {
-                return { status: 403, message: "Not allowed to upvote segment with too many downvotes unless you are VIP." };
-            } else if (type == 0) {
-                // Already downvoted enough, ignore
-                return { status: 200 };
-            }
+    // if on downvoted non-full segment and is not VIP/ tempVIP/ submitter
+    if (!isNaN(type) && segmentInfo.votes <= -2 && segmentInfo.actionType !== ActionType.Full &&
+        !(isVIP || isTempVIP || isOwnSubmission)) {
+        if (type == 1) {
+            return { status: 403, message: "Not allowed to upvote segment with too many downvotes unless you are VIP." };
+        } else if (type == 0) {
+            // Already downvoted enough, ignore
+            return { status: 200 };
         }
     }
 
@@ -389,18 +409,20 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     ));
 
     if (warnings.length >= config.maxNumberOfActiveWarnings) {
+        const warningReason = warnings[0]?.reason;
         return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
             "Could you please send a message in Discord or Matrix so we can further help you?" +
-            `${(warnings[0]?.reason?.length > 0 ? ` Warning reason: '${warnings[0].reason}'` : "")}` };
+            `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
     }
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
 
     try {
-        //check if vote has already happened
+        // check if vote has already happened
         const votesRow = await privateDB.prepare("get", `SELECT "type" FROM "votes" WHERE "userID" = ? AND "UUID" = ?`, [userID, UUID]);
 
-        //-1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
+        // -1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
+        // oldIncrementAmount will be zero if row is null
         let incrementAmount = 0;
         let oldIncrementAmount = 0;
 
@@ -417,7 +439,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             //unrecongnised type of vote
             return { status: 400 };
         }
-        if (votesRow != undefined) {
+        if (votesRow) {
             if (votesRow.type === 1) {
                 //upvote
                 oldIncrementAmount = 1;
@@ -442,65 +464,56 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             }
         }
 
-        //check if the increment amount should be multiplied (downvotes have more power if there have been many views)
-        const videoInfo = await db.prepare("get", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID", "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]) as
-                        {videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, votes: number, views: number, userID: UserID, hidden: Visibility};
-
-        if (voteTypeEnum === voteTypes.normal) {
-            if ((isVIP || isOwnSubmission) && incrementAmount < 0) {
-                //this user is a vip and a downvote
-                incrementAmount = -(videoInfo.votes + 2 - oldIncrementAmount);
-                type = incrementAmount;
-            }
-        } else if (voteTypeEnum == voteTypes.incorrect) {
-            if (isVIP || isOwnSubmission) {
-                //this user is a vip and a downvote
-                incrementAmount = 500 * incrementAmount;
-                type = incrementAmount < 0 ? 12 : 13;
-            }
+        // check if the increment amount should be multiplied (downvotes have more power if there have been many views)
+        // user is temp/ VIP/ own submission and downvoting
+        if ((isVIP || isTempVIP || isOwnSubmission) && incrementAmount < 0) {
+            incrementAmount = -(segmentInfo.votes + 2 - oldIncrementAmount);
+            type = incrementAmount;
         }
 
         // Only change the database if they have made a submission before and haven't voted recently
-        const ableToVote = isVIP
-            || (!(isOwnSubmission && incrementAmount > 0 && oldIncrementAmount >= 0)
+        const userAbleToVote = (!(isOwnSubmission && incrementAmount > 0 && oldIncrementAmount >= 0)
                 && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
                 && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
                 && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
                 && !finalResponse.blockVote
                 && finalResponse.finalStatus === 200;
 
+        const tempVIPAbleToVote = isTempVIP
+            && (await db.prepare("get", `SELECT COUNT(*) FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) >= 5
+            && userAbleToVote;
+
+        const ableToVote = isVIP || userAbleToVote || tempVIPAbleToVote;
+
         if (ableToVote) {
             //update the votes table
-            if (votesRow != undefined) {
+            if (votesRow) {
                 await privateDB.prepare("run", `UPDATE "votes" SET "type" = ? WHERE "userID" = ? AND "UUID" = ?`, [type, userID, UUID]);
             } else {
                 await privateDB.prepare("run", `INSERT INTO "votes" VALUES(?, ?, ?, ?)`, [UUID, userID, hashedIP, type]);
             }
 
-            let columnName = "";
-            if (voteTypeEnum === voteTypes.normal) {
-                columnName = "votes";
-            } else if (voteTypeEnum === voteTypes.incorrect) {
-                columnName = "incorrectVotes";
+            // update the vote count on this sponsorTime
+            await db.prepare("run", `UPDATE "sponsorTimes" SET "votes" = "votes" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
+
+            // check duration of all submissions on this video
+            if (type < 0) {
+                checkVideoDuration(UUID);
             }
 
-            //update the vote count on this sponsorTime
-            //oldIncrementAmount will be zero is row is null
-            await db.prepare("run", `UPDATE "sponsorTimes" SET "${columnName}" = "${columnName}" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
+            // additional procesing for VIP
+            // on VIP upvote
             if (isVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
-                // check for video duration change
-                await checkVideoDurationChange(UUID);
-                // Unhide and Lock this submission
+                // Update video duration in case that caused it to be hidden
+                await updateSegmentVideoDuration(UUID);
+                // unhide & unlock
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 1, hidden = 0, "shadowHidden" = 0 WHERE "UUID" = ?', [UUID]);
-
-                // Reset video duration in case that caused it to be hidden
-                if (videoInfo.hidden) await db.prepare("run", 'UPDATE "sponsorTimes" SET "videoDuration" = 0 WHERE "UUID" = ?', [UUID]);
+            // on VIP downvote/ undovote, also unlock submission
             } else if (isVIP && incrementAmount <= 0 && voteTypeEnum === voteTypes.normal) {
-                // Unlock if a VIP downvotes it
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET locked = 0 WHERE "UUID" = ?', [UUID]);
             }
 
-            QueryCacher.clearSegmentCache(videoInfo);
+            QueryCacher.clearSegmentCache(segmentInfo);
         }
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({
@@ -510,7 +523,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 isTempVIP,
                 isVIP,
                 isOwnSubmission,
-                row: videoInfo,
+                row: segmentInfo,
                 category,
                 incrementAmount,
                 oldIncrementAmount,
