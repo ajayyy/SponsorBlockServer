@@ -5,6 +5,7 @@ import { db } from "../databases/databases";
 import { Request, Response } from "express";
 import { ActionType, Category, VideoIDHash } from "../types/segments.model";
 import { getService } from "../utils/getService";
+import { config } from "../config";
 
 export async function postLockCategories(req: Request, res: Response): Promise<string[]> {
     // Collect user input data
@@ -44,25 +45,18 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     const existingLocks = (await db.prepare("all", 'SELECT "category", "actionType" from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service])) as
                             { category: Category, actionType: ActionType }[];
 
-    const filteredCategories = filterData(categories);
-    const filteredActionTypes = filterData(actionTypes);
-
     const locksToApply: { category: Category, actionType: ActionType }[] = [];
     const overwrittenLocks: { category: Category, actionType: ActionType }[] = [];
-    for (const category of filteredCategories) {
-        for (const actionType of filteredActionTypes) {
-            if (!existingLocks.some((lock) => lock.category === category && lock.actionType === actionType)) {
-                locksToApply.push({
-                    category,
-                    actionType
-                });
-            } else {
-                overwrittenLocks.push({
-                    category,
-                    actionType
-                });
-            }
-        }
+
+    // push new/ existing locks
+    const validLocks = createLockArray(categories, actionTypes);
+    for (const { category, actionType } of validLocks) {
+        const targetArray = existingLocks.some((lock) => lock.category === category && lock.actionType === actionType)
+            ? overwrittenLocks
+            : locksToApply;
+        targetArray.push({
+            category, actionType
+        });
     }
 
     // calculate hash of videoID
@@ -99,20 +93,26 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     }
 
     res.status(200).json({
-        submitted: reason.length === 0
-            ? [...filteredCategories.filter(((category) => locksToApply.some((lock) => category === lock.category)))]
-            : [...filteredCategories], // Legacy
-        submittedValues: [...locksToApply, ...overwrittenLocks],
+        submitted: deDupArray(validLocks.map(e => e.category)),
+        submittedValues: validLocks,
     });
 }
 
-function filterData<T extends string>(data: T[]): T[] {
-    // get user categories not already submitted that match accepted format
-    const filtered = data.filter((elem) => {
-        return !!elem.match(/^[_a-zA-Z]+$/);
+const isValidCategoryActionPair = (category: Category, actionType: ActionType): boolean =>
+    config.categorySupport?.[category]?.includes(actionType);
+
+// filter out any invalid category/action pairs
+type validLockArray = { category: Category, actionType: ActionType }[];
+const createLockArray = (categories: Category[], actionTypes: ActionType[]): validLockArray => {
+    const validLocks: validLockArray = [];
+    categories.forEach(category => {
+        actionTypes.forEach(actionType => {
+            if (isValidCategoryActionPair(category, actionType)) {
+                validLocks.push({ category, actionType });
+            }
+        });
     });
-    // remove any duplicates
-    return filtered.filter((elem, index) => {
-        return filtered.indexOf(elem) === index;
-    });
-}
+    return validLocks;
+};
+
+const deDupArray = (arr: any[]): any[] => [...new Set(arr)];

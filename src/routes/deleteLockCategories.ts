@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { getHashCache } from "../utils/getHashCache";
 import { db } from "../databases/databases";
-import { Category, Service, VideoID } from "../types/segments.model";
+import { ActionType, Category, Service, VideoID } from "../types/segments.model";
 import { UserID } from "../types/user.model";
 import { getService } from "../utils/getService";
+import { config } from "../config";
 
 interface DeleteLockCategoriesRequest extends Request {
     body: {
@@ -12,6 +13,7 @@ interface DeleteLockCategoriesRequest extends Request {
         service: string;
         userID: UserID;
         videoID: VideoID;
+        actionTypes: ActionType[];
     };
 }
 
@@ -22,7 +24,8 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
             videoID,
             userID,
             categories,
-            service
+            service,
+            actionTypes
         }
     } = req;
 
@@ -32,6 +35,7 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
         || !categories
         || !Array.isArray(categories)
         || categories.length === 0
+        || actionTypes.length === 0
     ) {
         return res.status(400).json({
             message: "Bad Format",
@@ -48,33 +52,14 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
         });
     }
 
-    await deleteLockCategories(videoID, categories, getService(service));
+    await deleteLockCategories(videoID, categories, actionTypes, getService(service));
 
     return res.status(200).json({ message: `Removed lock categories entries for video ${videoID}` });
 }
 
-/**
- *
- * @param videoID
- * @param categories If null, will remove all
- * @param service
- */
-export async function deleteLockCategories(videoID: VideoID, categories: Category[], service: Service): Promise<void> {
-    type DBEntry = { category: Category };
-    const dbEntries = await db.prepare(
-        "all",
-        'SELECT * FROM "lockCategories" WHERE "videoID" = ? AND "service" = ?',
-        [videoID, service]
-    ) as Array<DBEntry>;
-
-    const entries = dbEntries.filter(
-        ({ category }: DBEntry) => categories === null || categories.indexOf(category) !== -1);
-
-    await Promise.all(
-        entries.map(({ category }: DBEntry) => db.prepare(
-            "run",
-            'DELETE FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?',
-            [videoID, service, category]
-        ))
-    );
+export async function deleteLockCategories(videoID: VideoID, categories = config.categoryList, actionTypes = [ActionType.Skip, ActionType.Mute], service: Service): Promise<void> {
+    const arrJoin = (arr: string[]): string => `'${arr.join(`','`)}'`;
+    const categoryString = arrJoin(categories);
+    const actionTypeString = arrJoin(actionTypes);
+    await db.prepare("run", `DELETE FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" IN (${categoryString}) AND "actionType" IN (${actionTypeString})`, [videoID, service]);
 }

@@ -106,8 +106,11 @@ async function checkVideoDuration(UUID: SegmentUUID) {
 
     if (videoDurationChanged(latestSubmission.videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${latestSubmission.videoDuration} to ${apiVideoDuration}`);
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE videoID = ? AND service = ? AND submissionTime < ?`,
-            [videoID, service, latestSubmission.submissionTime]);
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1
+            WHERE videoID = ? AND service = ? AND submissionTime < ?
+            hidden" = 0 AND "shadowHidden" = 0 AND 
+            "actionType" != 'full' AND "votes" > -2`,
+        [videoID, service, latestSubmission.submissionTime]);
     }
 }
 
@@ -231,12 +234,11 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     if (segmentInfo.actionType === ActionType.Full) {
         return { status: 400, message: "Not allowed to change category of a full video segment" };
     }
-
-    if (!config.categoryList.includes(category)) {
-        return { status: 400, message: "Category doesn't exist." };
-    }
     if (segmentInfo.actionType === ActionType.Poi) {
         return { status: 400, message: "Not allowed to change category for single point segments" };
+    }
+    if (!config.categoryList.includes(category)) {
+        return { status: 400, message: "Category doesn't exist." };
     }
 
     // Ignore vote if the next category is locked
@@ -417,6 +419,12 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
 
+    // no restrictions on checkDuration
+    // check duration of all submissions on this video
+    if (type < 0) {
+        checkVideoDuration(UUID);
+    }
+
     try {
         // check if vote has already happened
         const votesRow = await privateDB.prepare("get", `SELECT "type" FROM "votes" WHERE "userID" = ? AND "UUID" = ?`, [userID, UUID]);
@@ -495,11 +503,6 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
             // update the vote count on this sponsorTime
             await db.prepare("run", `UPDATE "sponsorTimes" SET "votes" = "votes" + ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, UUID]);
-
-            // check duration of all submissions on this video
-            if (type < 0) {
-                checkVideoDuration(UUID);
-            }
 
             // additional procesing for VIP
             // on VIP upvote

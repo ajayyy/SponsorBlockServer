@@ -488,7 +488,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
             await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
         }
         lockedCategoryList = [];
-        deleteLockCategories(videoID, null, service);
+        deleteLockCategories(videoID, null, null, service);
     }
 
     return {
