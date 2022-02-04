@@ -58,6 +58,12 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["duration-update", 1, 10, 0, 0, "duration-update-uuid-1", "testman", 0, 0, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["full-video", 1, 10, 0, 0, "full-video-uuid-1", "testman", 0, 0, "sponsor", "full", 0, 0]);
+        // videoDuration change
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 10, 0, 0, "duration-changed-uuid-1", "testman", 1, 0, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 11, 0, 0, "duration-changed-uuid-2", "testman", 10, 0, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 12, 0, 0, "duration-changed-uuid-3", "testman", 20, 0, "sponsor", "skip", 0, 0]);
+        // add videoDuration to duration-changed-uuid-2
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -582,6 +588,20 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
                 assert.strictEqual(videoDuration, 500);
+                done();
+            });
+    });
+
+    it("Should hide changed submission on any downvote", (done) => {
+        const UUID = "duration-changed-uuid-3";
+        const videoID = "duration-changed";
+        postVote(randomID2, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
+                assert.strictEqual(hiddenSegments.length, 2);
+                assert.strictEqual(hiddenSegments[0].UUID, "duration-changed-uuid-1");
+                assert.strictEqual(hiddenSegments[1].UUID, "duration-changed-uuid-2");
                 done();
             });
     });

@@ -56,6 +56,13 @@ export class YouTubeApiMock {
                     authorId: "ChannelID"
                 } as APIVideoData
             };
+        } else if (obj.id === "duration-changed") {
+            return {
+                err: null,
+                data: {
+                    lengthSeconds: 100,
+                } as APIVideoData
+            };
         } else {
             return {
                 err: null,

@@ -64,7 +64,6 @@ describe("tempVIP test", function() {
         await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   1, 9, 0, 1, "tempvip-submit", publicTempVIPOne, 0, 50, "sponsor", 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["otherchannel",        1, 9, 0, 1, UUID1, "testman", 0, 50, "sponsor", 0]);
 
-
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP1]);
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP2]);
         // clear redis if running consecutive tests
