@@ -6,6 +6,7 @@ import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
 import { YouTubeApiMock } from "../youtubeMock";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { arrayDeepEquals } from "../utils/partialDeepEquals";
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
@@ -46,6 +47,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "warnvote-uuid-0", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-0", "no-sponsor-segments", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-1", "no-sponsor-segments", 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-2", "no-sponsor-segments", 0, 50, "sponsor", "mute", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["segment-locking-video", 1, 11, 2, 0, "segment-locking-uuid-1", "segment-locking-user", 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["segment-hidden-video", 1, 11, 2, 0, "segment-hidden-uuid-1", "segment-hidden-user", 0, 50, "intro", "skip", 0, 1]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 22, 0, 0, "category-change-uuid-1", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
@@ -600,8 +602,23 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
                 assert.strictEqual(hiddenSegments.length, 2);
-                assert.strictEqual(hiddenSegments[0].UUID, "duration-changed-uuid-1");
-                assert.strictEqual(hiddenSegments[1].UUID, "duration-changed-uuid-2");
+                const expected = [{
+                    "UUID": "duration-changed-uuid-1",
+                }, {
+                    "UUID": "duration-changed-uuid-2",
+                }];
+                arrayDeepEquals(hiddenSegments, expected);
+                done();
+            });
+    });
+
+    it("Should be able to downvote segment with ajacent actionType lock", (done) => {
+        const UUID = "no-sponsor-segments-uuid-2";
+        postVote(randomID2, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 1);
                 done();
             });
     });

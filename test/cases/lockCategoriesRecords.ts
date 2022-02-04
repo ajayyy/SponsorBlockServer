@@ -49,6 +49,7 @@ describe("lockCategoriesRecords", () => {
 
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "skip", "sponsor", "reason-4", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "mute", "sponsor", "reason-4", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "full", "sponsor", "reason-4", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "skip", "sponsor", "reason-5", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "mute", "sponsor", "reason-5", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "skip", "intro", "reason-5", "YouTube"]);
@@ -379,7 +380,7 @@ describe("lockCategoriesRecords", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await checkLockCategories(videoID);
-                assert.strictEqual(result.length, 0);
+                assert.strictEqual(result.length, 1);
                 done();
             })
             .catch(err => done(err));
@@ -494,6 +495,26 @@ describe("lockCategoriesRecords", () => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
                 assert.ok(stringDeepEquals(data.categories, expected.categories));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should be able to delete individual category lock", (done) => {
+        const videoID = "delete-record";
+        const json = {
+            videoID,
+            userID: lockVIPUser,
+            categories: [
+                "sponsor",
+            ],
+            actionTypes: ["full"]
+        };
+        client.delete(endpoint, { data: json })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const result = await checkLockCategories(videoID);
+                assert.strictEqual(result.length, 0);
                 done();
             })
             .catch(err => done(err));
