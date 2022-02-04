@@ -106,7 +106,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
     if (videoDurationChanged(latestSubmission.videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${latestSubmission.videoDuration} to ${apiVideoDuration}`);
         await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1
-            WHERE videoID = ? AND service = ? AND timeSubmitted <= ?
+            WHERE "videoID" = ? AND "service" = ? AND "timeSubmitted" <= ?
             AND "hidden" = 0 AND "shadowHidden" = 0 AND 
             "actionType" != 'full' AND "votes" > -2`,
         [videoID, service, latestSubmission.timeSubmitted]);
