@@ -32,7 +32,8 @@ const getChannelInfo = async (videoID: VideoID): Promise<{id: string | null, nam
 };
 
 export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Response): Promise<Response> {
-    const { query: { userID, adminUserID } } = req;
+    const userID = req.query.userID;
+    let adminUserID = req.query.adminUserID;
 
     const enabled = req.query?.enabled === "true";
     const channelVideoID = req.query?.channelVideoID as VideoID;
@@ -43,9 +44,9 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
     }
 
     // hash the issuer userID
-    const issuerUserID = await getHashCache(adminUserID);
+    adminUserID = await getHashCache(adminUserID);
     // check if issuer is VIP
-    const issuerIsVIP = await isUserVIP(issuerUserID as HashedUserID);
+    const issuerIsVIP = await isUserVIP(adminUserID as HashedUserID);
     if (!issuerIsVIP) {
         return res.sendStatus(403);
     }
