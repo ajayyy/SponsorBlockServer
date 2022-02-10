@@ -60,10 +60,14 @@ function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<API
 }
 
 const isUserTempVIP = async (nonAnonUserID: HashedUserID, videoID: VideoID): Promise<boolean> => {
+    // fetch videoInfo from cache
     const apiVideoInfo = await getYouTubeVideoInfo(videoID);
-    const channelID = apiVideoInfo?.data?.authorId;
+    // get channelID or fallback to invalid channelID (<> are invalid URL characters and & is not a valid ChannelID character)
+    const channelID = apiVideoInfo?.data?.authorId ?? "<INVALID_CHANNEL_ID_&&&&&>";
     const { err, reply } = await redis.getAsync(tempVIPKey(nonAnonUserID));
-    return err ? false : (reply == channelID);
+    return err ? false :
+        (config.mode === "test") ? reply == channelID
+            : (reply?.length === 21 && reply == channelID);
 };
 
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
