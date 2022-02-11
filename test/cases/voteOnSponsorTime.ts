@@ -6,6 +6,7 @@ import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
 import { YouTubeApiMock } from "../youtubeMock";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { arrayDeepEquals } from "../utils/partialDeepEquals";
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
@@ -46,6 +47,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "warnvote-uuid-0", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-0", "no-sponsor-segments", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-1", "no-sponsor-segments", 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-2", "no-sponsor-segments", 0, 50, "sponsor", "mute", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["segment-locking-video", 1, 11, 2, 0, "segment-locking-uuid-1", "segment-locking-user", 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["segment-hidden-video", 1, 11, 2, 0, "segment-hidden-uuid-1", "segment-hidden-user", 0, 50, "intro", "skip", 0, 1]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 22, 0, 0, "category-change-uuid-1", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
@@ -58,6 +60,12 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["duration-update", 1, 10, 0, 0, "duration-update-uuid-1", "testman", 0, 0, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["full-video", 1, 10, 0, 0, "full-video-uuid-1", "testman", 0, 0, "sponsor", "full", 0, 0]);
+        // videoDuration change
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 10, 0, 0, "duration-changed-uuid-1", "testman", 1, 0, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 11, 0, 0, "duration-changed-uuid-2", "testman", 10, 0, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 12, 0, 0, "duration-changed-uuid-3", "testman", 20, 0, "sponsor", "skip", 0, 0]);
+        // add videoDuration to duration-changed-uuid-2
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -73,9 +81,9 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash(vipUser)]);
         await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
 
-        const insertlockCategoriesQuerry = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "reason") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertlockCategoriesQuerry, ["no-sponsor-segments-video", "someUser", "sponsor", ""]);
-        await db.prepare("run", insertlockCategoriesQuerry, ["category-change-test-1", "someUser", "preview", ""]); // sponsor should stay unlocked
+        const insertlockCategoriesQuery = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "actionType") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertlockCategoriesQuery, ["no-sponsor-segments-video", "someUser", "sponsor", "skip"]);
+        await db.prepare("run", insertlockCategoriesQuery, ["category-change-test-1", "someUser", "preview", "skip"]); // sponsor should stay unlocked
     });
     // constants
     const endpoint = "/api/voteOnSponsorTime";
@@ -409,15 +417,15 @@ describe("voteOnSponsorTime", () => {
         const UUID = "invalid-uuid";
         postVoteCategory("randomID3", UUID, "intro")
             .then(res => {
-                assert.strictEqual(res.status, 400);
+                assert.strictEqual(res.status, 404);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should not be able to category-vote on an a full video segment", (done) => {
-        const UUID = "invalid-uuid";
-        postVoteCategory("full-video-uuid-1", UUID, "selfpromo")
+    it("Should not be able to category-vote on a full video segment", (done) => {
+        const UUID = "full-video-uuid-1";
+        postVoteCategory("randomID3", UUID, "selfpromo")
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -582,6 +590,35 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
                 assert.strictEqual(videoDuration, 500);
+                done();
+            });
+    });
+
+    it("Should hide changed submission on any downvote", (done) => {
+        const UUID = "duration-changed-uuid-3";
+        const videoID = "duration-changed";
+        postVote(randomID2, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
+                assert.strictEqual(hiddenSegments.length, 2);
+                const expected = [{
+                    "UUID": "duration-changed-uuid-1",
+                }, {
+                    "UUID": "duration-changed-uuid-2",
+                }];
+                arrayDeepEquals(hiddenSegments, expected);
+                done();
+            });
+    });
+
+    it("Should be able to downvote segment with ajacent actionType lock", (done) => {
+        const UUID = "no-sponsor-segments-uuid-2";
+        postVote(randomID2, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 1);
                 done();
             });
     });

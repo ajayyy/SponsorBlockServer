@@ -64,7 +64,6 @@ describe("tempVIP test", function() {
         await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   1, 9, 0, 1, "tempvip-submit", publicTempVIPOne, 0, 50, "sponsor", 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["otherchannel",        1, 9, 0, 1, UUID1, "testman", 0, 50, "sponsor", 0]);
 
-
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP1]);
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP2]);
         // clear redis if running consecutive tests
@@ -124,24 +123,24 @@ describe("tempVIP test", function() {
             })
             .catch(err => done(err));
     });
-    it("Should be able to VIP lock", (done) => {
+    it("Should not be able to lock segment", (done) => {
         postVote(tempVIPOne, UUID0, 1)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegment(UUID0);
-                assert.ok(row.votes > -2);
-                assert.strictEqual(row.locked, 1);
+                assert.strictEqual(row.votes, 1);
+                assert.strictEqual(row.locked, 0);
                 done();
             })
             .catch(err => done(err));
     });
-    it("Should be able to VIP change category", (done) => {
+    it("Should be able to change category but not lock", (done) => {
         postVoteCategory(tempVIPOne, UUID0, "filler")
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegment(UUID0);
                 assert.strictEqual(row.category, "filler");
-                assert.strictEqual(row.locked, 1);
+                assert.strictEqual(row.locked, 0);
                 done();
             })
             .catch(err => done(err));

@@ -44,7 +44,13 @@ const mergeLocks = (source: DBLock[], actionTypes: ActionType[]): LockResultByHa
 
 export async function getLockCategoriesByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    const actionTypes = req.query.actionTypes as ActionType[] || [ActionType.Mute, ActionType.Skip];
+    const actionTypes: ActionType[] = req.query.actionTypes
+        ? JSON.parse(req.query.actionTypes as string)
+        : req.query.actionType
+            ? Array.isArray(req.query.actionType)
+                ? req.query.actionType
+                : [req.query.actionType]
+            : [ActionType.Skip, ActionType.Mute];
     if (!hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }

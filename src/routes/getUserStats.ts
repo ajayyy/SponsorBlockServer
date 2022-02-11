@@ -19,12 +19,17 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
             SUM(CASE WHEN "category" = 'music_offtopic' THEN 1 ELSE 0 END) as "categorySumMusicOfftopic",
             SUM(CASE WHEN "category" = 'preview' THEN 1 ELSE 0 END) as "categorySumPreview",
             SUM(CASE WHEN "category" = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",
-            SUM(CASE WHEN "category" = 'filler' THEN 1 ELSE 0 END) as "categorySumFiller",`;
+            SUM(CASE WHEN "category" = 'filler' THEN 1 ELSE 0 END) as "categorySumFiller",
+            SUM(CASE WHEN "category" = 'exclusive_access' THEN 1 ELSE 0 END) as "categorySumExclusiveAccess",
+        `;
     }
     if (fetchActionTypeStats) {
         additionalQuery += `
             SUM(CASE WHEN "actionType" = 'skip' THEN 1 ELSE 0 END) as "typeSumSkip",
-            SUM(CASE WHEN "actionType" = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",`;
+            SUM(CASE WHEN "actionType" = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",
+            SUM(CASE WHEN "actionType" = 'full' THEN 1 ELSE 0 END) as "typeSumFull",
+            SUM(CASE WHEN "actionType" = 'poi' THEN 1 ELSE 0 END) as "typeSumPoi",
+        `;
     }
     try {
         const row = await db.prepare("get", `
@@ -54,12 +59,15 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
                 preview: proxy.categorySumPreview,
                 poi_highlight: proxy.categorySumHighlight,
                 filler: proxy.categorySumFiller,
+                exclusive_access: proxy.categorySumExclusiveAccess,
             };
         }
         if (fetchActionTypeStats) {
             result.actionTypeCount = {
                 skip: proxy.typeSumSkip,
                 mute: proxy.typeSumMute,
+                full: proxy.typeSumFull,
+                poi: proxy.typeSumPoi
             };
         }
         return result;

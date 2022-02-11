@@ -7,8 +7,13 @@ import { getService } from "../utils/getService";
 export async function getLockCategories(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
     const service = getService(req.query.service as string);
-    const actionTypes = req.query.actionTypes as ActionType[] || [ActionType.Skip, ActionType.Mute];
-
+    const actionTypes: ActionType[] = req.query.actionTypes
+        ? JSON.parse(req.query.actionTypes as string)
+        : req.query.actionType
+            ? Array.isArray(req.query.actionType)
+                ? req.query.actionType
+                : [req.query.actionType]
+            : [ActionType.Skip, ActionType.Mute];
     if (!videoID || !Array.isArray(actionTypes)) {
         //invalid request
         return res.sendStatus(400);

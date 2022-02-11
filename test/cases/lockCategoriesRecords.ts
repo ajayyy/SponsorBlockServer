@@ -49,6 +49,7 @@ describe("lockCategoriesRecords", () => {
 
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "skip", "sponsor", "reason-4", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "mute", "sponsor", "reason-4", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record", "full", "sponsor", "reason-4", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "skip", "sponsor", "reason-5", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "mute", "sponsor", "reason-5", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "skip", "intro", "reason-5", "YouTube"]);
@@ -76,7 +77,7 @@ describe("lockCategoriesRecords", () => {
         const expected = {
             submitted: [
                 "outro",
-                "shilling",
+                "intro"
             ],
             submittedValues: [
                 {
@@ -86,14 +87,6 @@ describe("lockCategoriesRecords", () => {
                 {
                     actionType: "mute",
                     category: "outro"
-                },
-                {
-                    actionType: "skip",
-                    category: "shilling"
-                },
-                {
-                    actionType: "mute",
-                    category: "shilling"
                 },
                 {
                     actionType: "skip",
@@ -132,14 +125,14 @@ describe("lockCategoriesRecords", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await checkLockCategories(videoID);
-                assert.strictEqual(result.length, 8);
+                assert.strictEqual(result.length, 6);
                 const oldRecordNotChangeReason = result.filter(item =>
                     item.reason === "reason-2" && ["sponsor", "intro"].includes(item.category)
                 );
                 const newRecordWithEmptyReason = result.filter(item =>
-                    item.reason === "" && ["outro", "shilling"].includes(item.category)
+                    item.reason === "" && ["outro"].includes(item.category)
                 );
-                assert.strictEqual(newRecordWithEmptyReason.length, 4);
+                assert.strictEqual(newRecordWithEmptyReason.length, 2);
                 assert.strictEqual(oldRecordNotChangeReason.length, 4);
                 done();
             })
@@ -164,7 +157,6 @@ describe("lockCategoriesRecords", () => {
         const expected = {
             submitted: [
                 "outro",
-                "shilling",
                 "intro"
             ],
         };
@@ -196,7 +188,6 @@ describe("lockCategoriesRecords", () => {
 
         const expectedWithNewReason = [
             "outro",
-            "shilling",
             "intro"
         ];
 
@@ -204,7 +195,7 @@ describe("lockCategoriesRecords", () => {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await checkLockCategories(videoID);
-                assert.strictEqual(result.length, 8);
+                assert.strictEqual(result.length, 6);
                 const newRecordWithNewReason = result.filter(item =>
                     expectedWithNewReason.includes(item.category) && item.reason === "new reason"
                 );
@@ -212,7 +203,7 @@ describe("lockCategoriesRecords", () => {
                     item.reason === "reason-2"
                 );
 
-                assert.strictEqual(newRecordWithNewReason.length, 6);
+                assert.strictEqual(newRecordWithNewReason.length, 4);
                 assert.strictEqual(oldRecordNotChangeReason.length, 2);
                 done();
             })
@@ -220,56 +211,20 @@ describe("lockCategoriesRecords", () => {
     });
 
     it("Should be able to submit categories with _ in the category", (done) => {
-        const json = {
-            videoID: "underscore",
-            userID: lockVIPUser,
-            categories: [
-                "word_word",
-            ],
-        };
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const result = await checkLockCategories("underscore");
-                assert.strictEqual(result.length, 2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to submit categories with upper and lower case in the category", (done) => {
-        const json = {
-            videoID: "bothCases",
-            userID: lockVIPUser,
-            categories: [
-                "wordWord",
-            ],
-        };
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const result = await checkLockCategories("bothCases");
-                assert.strictEqual(result.length, 2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not be able to submit categories with $ in the category", (done) => {
-        const videoID = "specialChar";
+        const videoID = "underscore";
         const json = {
             videoID,
             userID: lockVIPUser,
             categories: [
-                "word&word",
+                "exclusive_access",
             ],
+            actionTypes: ["full"]
         };
-
         client.post(endpoint, json)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await checkLockCategories(videoID);
-                assert.strictEqual(result.length, 0);
+                assert.strictEqual(result.length, 1);
                 done();
             })
             .catch(err => done(err));
@@ -418,13 +373,14 @@ describe("lockCategoriesRecords", () => {
             categories: [
                 "sponsor",
             ],
+            actionTypes: ["skip", "mute"]
         };
 
         client.delete(endpoint, { data: json })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const result = await checkLockCategories(videoID);
-                assert.strictEqual(result.length, 0);
+                assert.strictEqual(result.length, 1);
                 done();
             })
             .catch(err => done(err));
@@ -438,6 +394,7 @@ describe("lockCategoriesRecords", () => {
             categories: [
                 "sponsor",
             ],
+            actionTypes: ["skip", "mute"]
         };
 
         client.delete(endpoint, { data: json })
@@ -531,7 +488,6 @@ describe("lockCategoriesRecords", () => {
                 "sponsor",
                 "intro",
                 "outro",
-                "shilling"
             ],
         };
         client.get(endpoint, { params: { videoID: "no-segments-video-id" } })
@@ -539,6 +495,26 @@ describe("lockCategoriesRecords", () => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
                 assert.ok(stringDeepEquals(data.categories, expected.categories));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should be able to delete individual category lock", (done) => {
+        const videoID = "delete-record";
+        const json = {
+            videoID,
+            userID: lockVIPUser,
+            categories: [
+                "sponsor",
+            ],
+            actionTypes: ["full"]
+        };
+        client.delete(endpoint, { data: json })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const result = await checkLockCategories(videoID);
+                assert.strictEqual(result.length, 0);
                 done();
             })
             .catch(err => done(err));
