@@ -210,7 +210,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     if (!config.categoryList.includes(category)) {
         return { status: 400, message: "Category doesn't exist." };
     }
-    if (videoInfo.actionType === ActionType.Poi) {
+    if (videoInfo.actionType === ActionType.Poi || category === "poi_highlight") {
         return { status: 400, message: "Not allowed to change category for single point segments" };
     }
 
