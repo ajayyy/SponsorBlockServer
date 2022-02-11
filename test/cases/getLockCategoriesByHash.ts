@@ -6,7 +6,7 @@ import { ActionType } from "../../src/types/segments.model";
 
 const fakeHash = "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35";
 const endpoint = "/api/lockCategories";
-const getLockCategories = (hash: string, actionTypes = [ActionType.Mute, ActionType.Skip]) => client.get(`${endpoint}/${hash}`, { params: { actionTypes } });
+const getLockCategories = (hash: string, actionType = [ActionType.Mute, ActionType.Skip]) => client.get(`${endpoint}/${hash}`, { params: { actionType } });
 
 describe("getLockCategoriesByHash", () => {
     before(async () => {

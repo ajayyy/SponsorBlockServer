@@ -27,9 +27,23 @@ const filterActionType = (actionTypes: ActionType[]) => {
 
 export async function getLockReason(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
+    if (!videoID) {
+        // invalid request
+        return res.status(400).send("No videoID provided");
+    }
     let categories: Category[] = [];
-    const actionTypes = req.query.actionTypes as ActionType[] || [ActionType.Skip, ActionType.Mute];
+    const actionTypes: ActionType[] = req.query.actionTypes
+        ? JSON.parse(req.query.actionTypes as string)
+        : req.query.actionType
+            ? Array.isArray(req.query.actionType)
+                ? req.query.actionType
+                : [req.query.actionType]
+            : [ActionType.Skip, ActionType.Mute];
     const possibleCategories = filterActionType(actionTypes);
+    if (!Array.isArray(actionTypes)) {
+        //invalid request
+        return res.status(400).send("actionTypes parameter does not match format requirements");
+    }
     try {
         categories = req.query.categories
             ? JSON.parse(req.query.categories as string)

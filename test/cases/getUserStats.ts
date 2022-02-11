@@ -10,17 +10,19 @@ describe("getUserStats", () => {
         const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
         await db.prepare("run", insertUserNameQuery, [getHash("getuserstats_user_01"), "Username user 01"]);
 
-        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid1", getHash("getuserstats_user_01"), 1, 1, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid2", getHash("getuserstats_user_01"), 2, 2, "selfpromo", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid3", getHash("getuserstats_user_01"), 3, 3, "interaction", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid4", getHash("getuserstats_user_01"), 4, 4, "intro", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid5", getHash("getuserstats_user_01"), 5, 5, "outro", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid6", getHash("getuserstats_user_01"), 6, 6, "preview", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid7", getHash("getuserstats_user_01"), 7, 7, "music_offtopic", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 11, 11, 0, "getuserstatsuuid8", getHash("getuserstats_user_01"), 8, 8, "poi_highlight", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, -2, "getuserstatsuuid9", getHash("getuserstats_user_02"), 8, 2, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "getuserstatsuuid10", getHash("getuserstats_user_01"), 8, 2, "filler", 0]);
+        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "actionType", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid1", getHash("getuserstats_user_01"), 1, 1, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid2", getHash("getuserstats_user_01"), 2, 2, "selfpromo", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid3", getHash("getuserstats_user_01"), 3, 3, "interaction", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid4", getHash("getuserstats_user_01"), 4, 4, "intro", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid5", getHash("getuserstats_user_01"), 5, 5, "outro", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid6", getHash("getuserstats_user_01"), 6, 6, "preview", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid7", getHash("getuserstats_user_01"), 7, 7, "music_offtopic", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 11, 11, 0, "poi", "getuserstatsuuid8", getHash("getuserstats_user_01"), 8, 8, "poi_highlight", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, -2, "skip", "getuserstatsuuid9", getHash("getuserstats_user_02"), 8, 2, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid10", getHash("getuserstats_user_01"), 8, 2, "filler", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 0, 0, "full", "getuserstatsuuid11", getHash("getuserstats_user_01"), 8, 2, "exclusive_access", 0]);
+
 
     });
 
@@ -49,15 +51,18 @@ describe("getUserStats", () => {
                         preview: 1,
                         music_offtopic: 1,
                         poi_highlight: 1,
-                        filler: 1
+                        filler: 1,
+                        exclusive_access: 1
                     },
                     actionTypeCount: {
                         mute: 0,
-                        skip: 9
+                        skip: 8,
+                        full: 1,
+                        poi: 1
                     },
                     overallStats: {
                         minutesSaved: 30,
-                        segmentCount: 9
+                        segmentCount: 10
                     }
                 };
                 assert.ok(partialDeepEquals(res.data, expected));
