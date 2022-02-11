@@ -63,7 +63,7 @@ const isUserTempVIP = async (nonAnonUserID: HashedUserID, videoID: VideoID): Pro
     const apiVideoInfo = await getYouTubeVideoInfo(videoID);
     const channelID = apiVideoInfo?.data?.authorId;
     const { err, reply } = await redis.getAsync(tempVIPKey(nonAnonUserID));
-    return err ? false : (reply == channelID);
+    return err || !reply ? false : (reply == channelID);
 };
 
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
