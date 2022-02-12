@@ -59,7 +59,7 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
 
 export async function deleteLockCategories(videoID: VideoID, categories = config.categoryList, actionTypes = [ActionType.Skip, ActionType.Mute], service: Service): Promise<void> {
     const arrJoin = (arr: string[]): string => `'${arr.join(`','`)}'`;
-    const categoryString = arrJoin(categories);
-    const actionTypeString = arrJoin(actionTypes);
+    const categoryString = arrJoin(categories.filter((v) => !/[^a-z|_|-]/.test(v)));
+    const actionTypeString = arrJoin(actionTypes.filter((v) => !/[^a-z|_|-]/.test(v)));
     await db.prepare("run", `DELETE FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" IN (${categoryString}) AND "actionType" IN (${actionTypeString})`, [videoID, service]);
 }
