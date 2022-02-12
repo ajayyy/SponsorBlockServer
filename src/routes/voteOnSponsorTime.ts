@@ -99,7 +99,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
         ORDER BY "timeSubmitted" DESC LIMIT 1`,
     [videoID, service]) as {videoDuration: VideoDuration, UUID: SegmentUUID, timeSubmitted: number};
 
-    if (videoDurationChanged(latestSubmission.videoDuration, apiVideoDuration)) {
+    if (latestSubmission && videoDurationChanged(latestSubmission.videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${latestSubmission.videoDuration} to ${apiVideoDuration}`);
         await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1
             WHERE "videoID" = ? AND "service" = ? AND "timeSubmitted" <= ?
