@@ -375,8 +375,8 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         return categoryVote(UUID, nonAnonUserID, isVIP, isTempVIP, isOwnSubmission, category, hashedIP, finalResponse);
     }
 
-    // If not upvote
-    if (!isVIP && type != 1) {
+    // If not upvote, or an upvote on a dead segment (for ActionType.Full)
+    if (!isVIP && (type != 1 || segmentInfo.votes <= -2)) {
         const isSegmentLocked = segmentInfo.locked;
         const isVideoLocked = async () => !!(await db.prepare("get", `SELECT "category" FROM "lockCategories" WHERE
                 "videoID" = ? AND "service" = ? AND "category" = ? AND "actionType" = ?`,
