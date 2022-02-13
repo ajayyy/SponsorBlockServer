@@ -106,6 +106,7 @@ type validLockArray = { category: Category, actionType: ActionType }[];
 const createLockArray = (categories: Category[], actionTypes: ActionType[]): validLockArray => {
     const validLocks: validLockArray = [];
     categories.forEach(category => {
+        if (category === "poi_highlight") validLocks.push({ category, actionType: ActionType.Poi });
         actionTypes.forEach(actionType => {
             if (isValidCategoryActionPair(category, actionType)) {
                 validLocks.push({ category, actionType });
