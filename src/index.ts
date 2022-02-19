@@ -24,7 +24,7 @@ async function init() {
 
         // ignite cron job after server created
         startAllCrons();
-    });
+    }).setTimeout(15000);
 }
 
 init();
