@@ -1,11 +1,11 @@
 export function parseUserAgent(userAgent: string): string {
     const ua = userAgent.toLowerCase();
 
-    if (ua.includes("com.google.android.youtube/") || ua.includes("com.vanced.android.youtube/")) {
+    if (ua.match(/(com.google.android.youtube\/)|(com.vanced.android.youtube\/)|(^YouTube\/)|(^Dalvik\/)/)) {
         return `Vanced/${ua.match(/.android.youtube\/([^\s]+)/)[1]}`;
     }
 
-    if (ua.includes("mpv_sponsorblock/")) {
+    if (ua.match(/(mpv_sponsorblock\/)|(^python-requests)|(^GuzzleHttp\/)|(^PostmanRuntime\/)/)) {
         return ua;
     }
 
