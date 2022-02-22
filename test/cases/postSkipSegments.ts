@@ -436,12 +436,12 @@ describe("postSkipSegments", () => {
             category: "sponsor",
             videoDuration: 100
         };
-        assert.ok(partialDeepEquals(videoRows[1], expected));
         const fullExpected = {
             category: "sponsor",
             actionType: "full"
         };
-        assert.ok(partialDeepEquals(videoRows[0], fullExpected));
+        assert.ok((partialDeepEquals(videoRows[0], fullExpected) && partialDeepEquals(videoRows[1], expected))
+            || (partialDeepEquals(videoRows[1], fullExpected) && partialDeepEquals(videoRows[0], expected)));
         assert.strictEqual(hiddenVideoRows.length, 1);
     });
 
