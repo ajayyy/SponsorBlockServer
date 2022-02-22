@@ -16,6 +16,9 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
     return `segments.v4.${service}.${hashedVideoIDPrefix}`;
 }
 
+export const shadowHiddenIPKey = (videoID: VideoID, timeSubmitted: number, service: Service): string =>
+    `segments.${service}.videoID.${videoID}.shadow.${timeSubmitted}`;
+
 export const reputationKey = (userID: UserID): string =>
     `reputation.user.${userID}`;
 

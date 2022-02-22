@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { partition } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
-import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey } from "../utils/redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey, shadowHiddenIPKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
 import { ActionType, Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHashCache } from "../utils/getHashCache";
@@ -28,8 +28,9 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
         if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
             const service = getService(req?.query?.service as string);
-            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
-                [videoID, segment.timeSubmitted, service]) as { hashedIP: HashedIP }[];
+            const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
+                [videoID, segment.timeSubmitted, service]) as Promise<{ hashedIP: HashedIP }[]>;
+            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service));
         }
 
         const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
