@@ -20,8 +20,8 @@ export async function getReputation(userID: UserID): Promise<number> {
     // 1596240000000 is August 1st 2020, a little after auto upvote was disabled
     const fetchFromDB = () => db.prepare("get",
         `SELECT COUNT(*) AS "totalSubmissions",
-            SUM(CASE WHEN "votes" < 0 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
-            SUM(CASE WHEN "votes" < 0 AND "videoID" NOT IN 
+            SUM(CASE WHEN "votes" < 0 AND "views" > 5 THEN 1 ELSE 0 END) AS "downvotedSubmissions",
+            SUM(CASE WHEN "votes" < 0 AND "views" > 5 AND "videoID" NOT IN 
                 (SELECT b."videoID" FROM "sponsorTimes" as b 
                     WHERE b."userID" = ?
                         AND b."votes" > 0 AND b."category" = "a"."category" AND b."videoID" = "a"."videoID" LIMIT 1)

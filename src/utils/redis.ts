@@ -33,7 +33,14 @@ if (config.redis) {
     const client = redis.createClient(config.redis);
     exportObject = client;
 
-    exportObject.getAsync = (key) => new Promise((resolve) => client.get(key, (err, reply) => resolve({ err, reply })));
+    const timeoutDuration = 200;
+    exportObject.getAsync = (key) => new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve({ err: null, reply: undefined }), timeoutDuration);
+        client.get(key, (err, reply) => {
+            clearTimeout(timeout);
+            resolve({ err, reply });
+        });
+    });
     exportObject.setAsync = (key, value) => new Promise((resolve) => client.set(key, value, (err, reply) => resolve({ err, reply })));
     exportObject.setAsyncEx = (key, value, seconds) => new Promise((resolve) => client.setex(key, seconds, value, (err, reply) => resolve({ err, reply })));
     exportObject.delAsync = (...keys) => new Promise((resolve) => client.del(keys, (err) => resolve(err)));
