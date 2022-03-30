@@ -1,5 +1,5 @@
 import { config } from "../../src/config";
-import { db } from "../../src/databases/databases";
+import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import { ImportMock } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -13,6 +13,7 @@ const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 const vipUser = "VIPUser";
 const randomID2 = "randomID2";
+const randomID2Hashed = getHash(randomID2);
 const categoryChangeUser = "category-change-user";
 
 describe("voteOnSponsorTime", () => {
@@ -37,7 +38,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, 0, "vote-uuid-6", "testman", 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, 0, "vote-uuid-7", "testman", 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-9", getHash(randomID2), 0, 50, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-9", randomID2Hashed, 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-10", getHash("randomID3"), 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-11", getHash("randomID4"), 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["own-submission-video", 1, 11, 500, 0, "own-submission-uuid", getHash("own-submission-id"), 0, 50, "sponsor", "skip", 0, 0]);
@@ -108,6 +109,7 @@ describe("voteOnSponsorTime", () => {
 
     const getSegmentVotes = (UUID: string) => db.prepare("get", `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
     const getSegmentCategory = (UUID: string) => db.prepare("get", `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+    const getPrivateVoteInfo = (UUID: string) => privateDB.prepare("all", `SELECT * FROM "votes" WHERE "UUID" = ?`, [UUID]);
 
     it("Should be able to upvote a segment", (done) => {
         const UUID = "vote-uuid-0";
@@ -128,6 +130,10 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentVotes(UUID);
                 assert.ok(row.votes < 10);
+                const voteInfo = await getPrivateVoteInfo(UUID);
+                assert.strictEqual(voteInfo.length, 1);
+                assert.strictEqual(voteInfo[0].normalUserID, randomID2Hashed);
+                assert.strictEqual(voteInfo[0].type, 0);
                 done();
             })
             .catch(err => done(err));
