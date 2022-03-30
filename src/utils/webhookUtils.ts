@@ -17,14 +17,14 @@ function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: bo
 }
 
 function getVoteAuthor(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
-    if (submissionCount === 0) {
-        return "Report by New User";
-    } else if (isOwnSubmission) {
+    if (isOwnSubmission) {
         return "Report by Submitter";
     } else if (isTempVIP) {
         return "Report by Temp VIP";
     } else if (isVIP) {
         return "Report by VIP User";
+    } else if (submissionCount === 0) {
+        return "Report by New User";
     }
 
     return "";
