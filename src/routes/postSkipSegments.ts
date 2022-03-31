@@ -112,55 +112,6 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
     }
 }
 
-async function sendWebhooksNB(userID: string, videoID: string, UUID: string, startTime: number, endTime: number, category: string, probability: number, ytData: any) {
-    const submissionInfoRow = await db.prepare("get", `SELECT
-        (select count(1) from "sponsorTimes" where "userID" = ?) count,
-        (select count(1) from "sponsorTimes" where "userID" = ? and "votes" <= -2) disregarded,
-        coalesce((select "userName" FROM "userNames" WHERE "userID" = ?), ?) "userName"`,
-    [userID, userID, userID, userID]);
-
-    let submittedBy: string;
-    // If a userName was created then show both
-    if (submissionInfoRow.userName !== userID) {
-        submittedBy = `${submissionInfoRow.userName}\n${userID}`;
-    } else {
-        submittedBy = userID;
-    }
-
-    // Send discord message
-    if (config.discordNeuralBlockRejectWebhookURL === null) return;
-
-    axios.post(config.discordNeuralBlockRejectWebhookURL, {
-        "embeds": [{
-            "title": ytData.items[0].snippet.title,
-            "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseFloat(startTime.toFixed(0)) - 2)}`,
-            "description": `**Submission ID:** ${UUID}\
-                \n**Timestamp:** ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
-                \n**Predicted Probability:** ${probability}\
-                \n**Category:** ${category}\
-                \n**Submitted by:** ${submittedBy}\
-                \n**Total User Submissions:** ${submissionInfoRow.count}\
-                \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}`,
-            "color": 10813440,
-            "thumbnail": {
-                "url": ytData.items[0].snippet.thumbnails.maxres ? ytData.items[0].snippet.thumbnails.maxres.url : "",
-            },
-        }]
-    })
-        .then(res => {
-            if (res.status >= 400) {
-                Logger.error("Error sending NeuralBlock Discord hook");
-                Logger.error(JSON.stringify(res));
-                Logger.error("\n");
-            }
-        })
-        .catch(err => {
-            Logger.error("Failed to send NeuralBlock Discord hook.");
-            Logger.error(JSON.stringify(err));
-            Logger.error("\n");
-        });
-}
-
 // callback:  function(reject: "String containing reason the submission was rejected")
 // returns: string when an error, false otherwise
 
@@ -168,98 +119,47 @@ async function sendWebhooksNB(userID: string, videoID: string, UUID: string, sta
 //   false for a pass - it was confusing and lead to this bug - any use of this function in
 //   the future could have the same problem.
 async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
-    submission: { videoID: VideoID; userID: UserID; segments: IncomingSegment[], service: Service }) {
-    if (apiVideoInfo) {
+    submission: { videoID: VideoID; userID: UserID; segments: IncomingSegment[], service: Service, videoDuration: number }) {
+
+    const apiVideoDuration = (apiVideoInfo: APIVideoInfo) => {
+        if (!apiVideoInfo) return undefined;
         const { err, data } = apiVideoInfo;
-        if (err) return false;
+        // return undefined if API error
+        if (err) return undefined;
+        return data?.lengthSeconds;
+    };
+    // get duration from API
+    const apiDuration = apiVideoDuration(apiVideoInfo);
+    // if API fail or returns 0, get duration from client
+    const duration = apiDuration || submission.videoDuration;
+    // return false on undefined or 0
+    if (!duration) return false;
 
-        const duration = apiVideoInfo?.data?.lengthSeconds;
-        const segments = submission.segments;
-        let nbString = "";
-        for (let i = 0; i < segments.length; i++) {
-            if (duration == 0) {
-                // Allow submission if the duration is 0 (bug in youtube api)
-                return false;
-            } else {
-                if (segments[i].category === "sponsor") {
-                    //Prepare timestamps to send to NB all at once
-                    nbString = `${nbString}${segments[i].segment[0]},${segments[i].segment[1]};`;
-                }
-            }
-        }
+    const segments = submission.segments;
+    // map all times to float array
+    const allSegmentTimes = segments.map(segment => [parseFloat(segment.segment[0]), parseFloat(segment.segment[1])]);
 
-        // Get all submissions for this user
-        const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ? and "votes" > -1`, [submission.userID, submission.videoID]);
-        const allSegmentTimes = [];
-        if (allSubmittedByUser !== undefined) {
-            //add segments the user has previously submitted
-            for (const segmentInfo of allSubmittedByUser) {
-                allSegmentTimes.push([parseFloat(segmentInfo.startTime), parseFloat(segmentInfo.endTime)]);
-            }
-        }
+    // add previous submissions by this user
+    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ? and "votes" > -1`, [submission.userID, submission.videoID]);
 
-        //add segments they are trying to add in this submission
-        for (let i = 0; i < segments.length; i++) {
-            const startTime = parseFloat(segments[i].segment[0]);
-            const endTime = parseFloat(segments[i].segment[1]);
-            allSegmentTimes.push([startTime, endTime]);
-        }
-
-        //merge all the times into non-overlapping arrays
-        const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort(function (a, b) {
-            return a[0] - b[0] || a[1] - b[1];
-        }));
-
-        const videoDuration = data?.lengthSeconds;
-        if (videoDuration != 0) {
-            let allSegmentDuration = 0;
-            //sum all segment times together
-            allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
-            if (allSegmentDuration > (videoDuration / 100) * 80) {
-                // Reject submission if all segments combine are over 80% of the video
-                return "Total length of your submitted segments are over 80% of the video.";
-            }
-        }
-
-        // Check NeuralBlock
-        const neuralBlockURL = config.neuralBlockURL;
-        if (!neuralBlockURL) return false;
-        const response = await axios.get(`${neuralBlockURL}/api/checkSponsorSegments?vid=${submission.videoID}
-            &segments=${nbString.substring(0, nbString.length - 1)}`, { validateStatus: () => true });
-        if (response.status !== 200) return false;
-
-        const nbPredictions = response.data;
-        let nbDecision = false;
-        let predictionIdx = 0; //Keep track because only sponsor categories were submitted
-        for (let i = 0; i < segments.length; i++) {
-            if (segments[i].category === "sponsor") {
-                if (nbPredictions.probabilities[predictionIdx] < 0.70) {
-                    nbDecision = true; // At least one bad entry
-                    const startTime = parseFloat(segments[i].segment[0]);
-                    const endTime = parseFloat(segments[i].segment[1]);
-
-                    const UUID = getSubmissionUUID(submission.videoID, segments[i].category, segments[i].actionType, submission.userID, startTime, endTime, submission.service);
-                    // Send to Discord
-                    // Note, if this is too spammy. Consider sending all the segments as one Webhook
-                    sendWebhooksNB(submission.userID, submission.videoID, UUID, startTime, endTime, segments[i].category, nbPredictions.probabilities[predictionIdx], data);
-                }
-                predictionIdx++;
-            }
-
-        }
-
-        if (nbDecision) {
-            return "Rejected based on NeuralBlock predictions.";
-        } else {
-            return false;
-        }
-    } else {
-        Logger.debug("Skipped YouTube API");
-
-        // Can't moderate the submission without calling the youtube API
-        // so allow by default.
-        return false;
+    if (allSubmittedByUser) {
+        //add segments the user has previously submitted
+        const allSubmittedTimes = allSubmittedByUser.map((segment: { startTime: string, endTime: string }) => [parseFloat(segment.startTime),  parseFloat(segment.endTime)]);
+        allSegmentTimes.push(...allSubmittedTimes);
     }
+
+    //merge all the times into non-overlapping arrays
+    const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort((a, b) => a[0] - b[0] || a[1] - b[1]));
+
+    let allSegmentDuration = 0;
+    //sum all segment times together
+    allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
+
+    if (allSegmentDuration > (duration / 100) * 80) {
+        // Reject submission if all segments combine are over 80% of the video
+        return "Total length of your submitted segments are over 80% of the video.";
+    }
+    return false;
 }
 
 function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
@@ -310,7 +210,7 @@ function checkInvalidFields(videoID: VideoID, userID: UserID, segments: Incoming
         invalidFields.push("userID");
         if (userID?.length < 30) errors.push(`userID must be at least 30 characters long`);
     }
-    if (!Array.isArray(segments) || segments.length < 1) {
+    if (!Array.isArray(segments) || segments.length == 0) {
         invalidFields.push("segments");
     }
     // validate start and end times (no : marks)
@@ -323,7 +223,7 @@ function checkInvalidFields(videoID: VideoID, userID: UserID, segments: Incoming
         }
 
         if (typeof segmentPair.description !== "string"
-                || (segmentPair.description.length > 60 && segmentPair.actionType === ActionType.Chapter)
+                || (segmentPair.actionType === ActionType.Chapter && segmentPair.description.length > 60 )
                 || (segmentPair.description.length !== 0 && segmentPair.actionType !== ActionType.Chapter)) {
             invalidFields.push("segment description");
         }
@@ -425,19 +325,11 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
     return CHECK_PASS;
 }
 
-async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, isVIP: boolean, service:string, apiVideoInfo: APIVideoInfo, decreaseVotes: number): Promise<CheckResult & { decreaseVotes: number; } > {
+async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, isVIP: boolean, service:string, apiVideoInfo: APIVideoInfo, decreaseVotes: number, videoDuration: number): Promise<CheckResult & { decreaseVotes: number; } > {
     // Auto moderator check
     if (!isVIP && service == Service.YouTube) {
-        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, { userID, videoID, segments, service });//startTime, endTime, category: segments[i].category});
-
-        if (autoModerateResult == "Rejected based on NeuralBlock predictions.") {
-            // If NB automod rejects, the submission will start with -2 votes.
-            // Note, if one submission is bad all submissions will be affected.
-            // However, this behavior is consistent with other automod functions
-            // already in place.
-            //decreaseVotes = -2; //Disable for now
-        } else if (autoModerateResult) {
-            //Normal automod behavior
+        const autoModerateResult = await autoModerateSubmission(apiVideoInfo, { userID, videoID, segments, service, videoDuration });//startTime, endTime, category: segments[i].category});
+        if (autoModerateResult) {
             return {
                 pass: false,
                 errorCode: 403,
@@ -619,8 +511,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     let decreaseVotes = 0;
-    // Auto check by NB
-    const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, isVIP, service, apiVideoInfo, decreaseVotes);
+    const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, isVIP, service, apiVideoInfo, decreaseVotes, videoDurationParam);
     if (!autoModerateCheckResult.pass) {
         return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
     } else {
