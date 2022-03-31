@@ -118,16 +118,11 @@ function chooseSegment<T extends DBSegment>(choices: T[]): Segment[] {
         return transformDBSegments(choices);
     }
     // sponsor > exclusive > selfpromo
-    const sponsorResult = choices.find((segment) => segment.category === "sponsor");
-    const eaResult = choices.find((segment) => segment.category === "exclusive_access");
-    const selfpromoResult = choices.find((segment) => segment.category === "selfpromo");
-    if (sponsorResult) {
-        results.push(sponsorResult);
-    } else if (eaResult) {
-        results.push(eaResult);
-    } else if (selfpromoResult) {
-        results.push(selfpromoResult);
-    }
+    const findCategory = (category: string) => choices.find((segment) => segment.category === category);
+
+    const categoryResult = findCategory("sponsor") ?? findCategory("exclusive_access") ?? findCategory("selfpromo");
+    if (categoryResult) results.push(categoryResult);
+
     return transformDBSegments(results);
 }
 
@@ -167,6 +162,6 @@ async function endpoint(req: Request, res: Response): Promise<Response> {
 
 export {
     getLabelsByVideoID,
-    getLabelsbyHash,
+    getLabelsByHash,
     endpoint
 };

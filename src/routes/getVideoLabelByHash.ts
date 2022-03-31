@@ -1,5 +1,5 @@
 import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { getLabelsbyHash } from "./getVideoLabel";
+import { getLabelsByHash } from "./getVideoLabel";
 import { Request, Response } from "express";
 import { VideoIDHash, Service } from "../types/segments.model";
 import { getService } from "../utils/getService";
@@ -14,7 +14,7 @@ export async function getVideoLabelsByHash(req: Request, res: Response): Promise
     const service: Service = getService(req.query.service, req.body.service);
 
     // Get all video id's that match hash prefix
-    const segments = await getLabelsbyHash(hashPrefix, service);
+    const segments = await getLabelsByHash(hashPrefix, service);
 
     if (!segments) return res.status(404).json([]);
 
