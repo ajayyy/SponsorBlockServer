@@ -33,7 +33,7 @@ async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<S
     }
 }
 
-async function getLabelsbyHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<SBRecord<VideoID, VideoData>> {
+async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const segments: SBRecord<VideoID, VideoData> = {};
 
     try {
