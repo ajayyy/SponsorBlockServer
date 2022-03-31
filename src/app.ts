@@ -48,6 +48,8 @@ import { getRating } from "./routes/ratings/getRating";
 import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
+import { endpoint as getVideoLabels } from "./routes/getVideoLabel";
+import { getVideoLabelsByHash } from "./routes/getVideoLabelByHash";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -201,6 +203,10 @@ function setupRoutes(router: Router) {
     router.get("/api/ratings/rate", getRating);
     router.post("/api/ratings/rate", postRateEndpoints);
     router.post("/api/ratings/clearCache", ratingPostClearCache);
+
+    // labels
+    router.get("/api/videoLabels", getVideoLabels);
+    router.get("/api/videoLabels/:prefix", getVideoLabelsByHash);
 
     if (config.postgres) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));

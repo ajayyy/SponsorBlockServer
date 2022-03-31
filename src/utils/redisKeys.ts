@@ -37,3 +37,13 @@ export function shaHashKey(singleIter: HashedValue): string {
 
 export const tempVIPKey = (userID: HashedUserID): string =>
     `vip.temp.${userID}`;
+
+export const videoLabelsKey = (videoID: VideoID, service: Service): string =>
+    `labels.v1.${service}.videoID.${videoID}`;
+
+export function videoLabelsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
+    hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 4) as VideoIDHash;
+    if (hashedVideoIDPrefix.length !== 4) Logger.warn(`Redis skip segment hash-prefix key is not length 4! ${hashedVideoIDPrefix}`);
+
+    return `labels.v1.${service}.${hashedVideoIDPrefix}`;
+}
