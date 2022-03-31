@@ -24,7 +24,6 @@ function transformDBSegments(segments: DBSegment[]): Segment[] {
 async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<Segment[]> {
     try {
         const segments: DBSegment[] = await getSegmentsFromDBByVideoID(videoID, service);
-        console.log("dbSegments", segments);
         return chooseSegment(segments);
     } catch (err) {
         if (err) {
@@ -76,7 +75,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
         .prepare(
             "all",
             `SELECT "startTime", "endTime", "videoID", "votes", "locked", "UUID", "userID", "category", "actionType", "hashedVideoID", "description" FROM "sponsorTimes"
-            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND actionType = 'full' AND "hidden" = 0 AND "shadowHidden" = 0`,
+            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "actionType" = 'full' AND "hidden" = 0 AND "shadowHidden" = 0`,
             [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
 
@@ -92,7 +91,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
         .prepare(
             "all",
             `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "description" FROM "sponsorTimes" 
-            WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 AND "shadowHidden" = 0`,
+            WHERE "videoID" = ? AND "service" = ? AND "actionType" = 'full' AND "hidden" = 0 AND "shadowHidden" = 0`,
             [videoID, service]
         ) as Promise<DBSegment[]>;
 
@@ -129,7 +128,6 @@ function chooseSegment<T extends DBSegment>(choices: T[]): Segment[] {
     } else if (selfpromoResult) {
         results.push(selfpromoResult);
     }
-    console.log("chosenresults", results);
     return transformDBSegments(results);
 }
 
@@ -142,8 +140,6 @@ async function handleGetLabel(req: Request, res: Response): Promise<Segment[] | 
 
     const service = getService(req.query.service, req.body.service);
     const segments = await getLabelsByVideoID(videoID, service);
-
-    console.log("segments", segments);
 
     if (!segments || segments.length === 0) {
         res.sendStatus(404);
