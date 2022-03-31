@@ -16,6 +16,7 @@ import { getReputation } from "../utils/reputation";
 import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
 import { HashedUserID, UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
+import { isUserTempVIP } from "../utils/isUserTempVIP";
 import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
@@ -81,19 +82,19 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
         if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
 
         axios.post(config.discordFirstTimeSubmissionsWebhookURL, {
-            "embeds": [{
-                "title": data?.title,
-                "url": `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}s#requiredSegment=${UUID}`,
-                "description": `Submission ID: ${UUID}\
+            embeds: [{
+                title: data?.title,
+                url: `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}s#requiredSegment=${UUID}`,
+                description: `Submission ID: ${UUID}\
                     \n\nTimestamp: \
                     ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
                     \n\nCategory: ${segmentInfo.category}`,
-                "color": 10813440,
-                "author": {
-                    "name": userID,
+                color: 10813440,
+                author: {
+                    name: userID,
                 },
-                "thumbnail": {
-                    "url": getMaxResThumbnail(data) || "",
+                thumbnail: {
+                    url: getMaxResThumbnail(data) || "",
                 },
             }],
         })
@@ -151,9 +152,8 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
     //merge all the times into non-overlapping arrays
     const allSegmentsSorted = mergeTimeSegments(allSegmentTimes.sort((a, b) => a[0] - b[0] || a[1] - b[1]));
 
-    let allSegmentDuration = 0;
     //sum all segment times together
-    allSegmentsSorted.forEach(segmentInfo => allSegmentDuration += segmentInfo[1] - segmentInfo[0]);
+    const allSegmentDuration = allSegmentsSorted.reduce((acc, curr) => acc + (curr[1] - curr[0]), 0);
 
     if (allSegmentDuration > (duration / 100) * 80) {
         // Reject submission if all segments combine are over 80% of the video
@@ -325,24 +325,20 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
     return CHECK_PASS;
 }
 
-async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, isVIP: boolean, service:string, apiVideoInfo: APIVideoInfo, decreaseVotes: number, videoDuration: number): Promise<CheckResult & { decreaseVotes: number; } > {
+async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, service:string, apiVideoInfo: APIVideoInfo, videoDuration: number): Promise<CheckResult> {
     // Auto moderator check
-    if (!isVIP && service == Service.YouTube) {
+    if (service == Service.YouTube) {
         const autoModerateResult = await autoModerateSubmission(apiVideoInfo, { userID, videoID, segments, service, videoDuration });//startTime, endTime, category: segments[i].category});
         if (autoModerateResult) {
             return {
                 pass: false,
                 errorCode: 403,
-                errorMessage: `Request rejected by auto moderator: ${autoModerateResult} If this is an issue, send a message on Discord.`,
-                decreaseVotes
+                errorMessage: `Request rejected by auto moderator: ${autoModerateResult} If this is an issue, send a message on Discord.`
             };
         }
     }
 
-    return {
-        ...CHECK_PASS,
-        decreaseVotes
-    };
+    return CHECK_PASS;
 }
 
 async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
@@ -498,6 +494,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     const isVIP = await isUserVIP(userID);
+    const isTempVIP = await isUserTempVIP(userID, videoID);
     const rawIP = getIP(req);
 
     const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
@@ -510,12 +507,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
-    let decreaseVotes = 0;
-    const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, isVIP, service, apiVideoInfo, decreaseVotes, videoDurationParam);
-    if (!autoModerateCheckResult.pass) {
-        return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
-    } else {
-        decreaseVotes = autoModerateCheckResult.decreaseVotes;
+    if (!isVIP || !isTempVIP) {
+        const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoInfo, videoDurationParam);
+        if (!autoModerateCheckResult.pass) {
+            return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
+        }
     }
 
     // Will be filled when submitting
@@ -536,7 +532,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
         //check to see if this user is shadowbanned
         const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
-        const startingVotes = 0 + decreaseVotes;
+        const startingVotes = 0;
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
