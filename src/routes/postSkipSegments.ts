@@ -141,7 +141,7 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
     const allSegmentTimes = segments.map(segment => [parseFloat(segment.segment[0]), parseFloat(segment.segment[1])]);
 
     // add previous submissions by this user
-    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? and "videoID" = ? and "votes" > -1`, [submission.userID, submission.videoID]);
+    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? AND "videoID" = ? AND "votes" > -1 AND "hidden" = 0`, [submission.userID, submission.videoID]);
 
     if (allSubmittedByUser) {
         //add segments the user has previously submitted
@@ -302,7 +302,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         }
 
         if (!isVIP && segments[i].category === "sponsor"
-                && segments[i].actionType !== ActionType.Full && Math.abs(startTime - endTime) < 1) {
+                && segments[i].actionType !== ActionType.Full && (endTime - startTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
         }
@@ -488,7 +488,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
     const userWarningCheckResult = await checkUserActiveWarning(userID);
     if (!userWarningCheckResult.pass) {
-        Logger.warn(`Caught a submission for for a warned user. userID: '${userID}', videoID: '${videoID}', category: '${segments.reduce<string>((prev, val) => `${prev} ${val.category}`, "")}', times: ${segments.reduce<string>((prev, val) => `${prev} ${val.segment}`, "")}`);
+        Logger.warn(`Caught a submission for a warned user. userID: '${userID}', videoID: '${videoID}', category: '${segments.reduce<string>((prev, val) => `${prev} ${val.category}`, "")}', times: ${segments.reduce<string>((prev, val) => `${prev} ${val.segment}`, "")}`);
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
