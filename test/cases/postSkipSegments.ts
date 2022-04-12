@@ -734,22 +734,6 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be rejected if NB's predicted probability is <70%.", (done) => {
-        const videoID = "LevkAjUE6d4";
-        postSkipSegmentParam({
-            videoID,
-            startTime: 40,
-            endTime: 60,
-            userID: submitUserTwo,
-            category: "sponsor"
-        })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
     it("Should be rejected with custom message if user has to many active warnings", (done) => {
         postSkipSegmentJSON({
             userID: warnUser01,
