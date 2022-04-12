@@ -44,6 +44,7 @@ interface VoteData {
     row: {
         votes: number;
         views: number;
+        locked: boolean;
     };
     category: string;
     incrementAmount: number;
@@ -178,7 +179,7 @@ async function sendWebhooks(voteData: VoteData) {
                         "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}s#requiredSegment=${voteData.UUID}`,
                         "description": `**${voteData.row.votes} Votes Prior | \
                             ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
-                            Views**\n\n**Submission ID:** ${voteData.UUID}\
+                            Views**\n\n**Locked**: ${voteData.row.locked}\n\n**Submission ID:** ${voteData.UUID}\
                             \n**Category:** ${submissionInfoRow.category}\
                             \n\n**Submitted by:** ${submissionInfoRow.userName}\n${submissionInfoRow.userID}\
                             \n\n**Total User Submissions:** ${submissionInfoRow.count}\
@@ -189,7 +190,7 @@ async function sendWebhooks(voteData: VoteData) {
                         "author": {
                             "name": voteData.finalResponse?.webhookMessage ??
                                     voteData.finalResponse?.finalMessage ??
-                                    getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
+                                    `${getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission)}${voteData.row.locked ? " (Locked)" : ""}`,
                         },
                         "thumbnail": {
                             "url": getMaxResThumbnail(data) || "",
