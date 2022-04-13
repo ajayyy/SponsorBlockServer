@@ -115,15 +115,15 @@ function migrate(config: SBSConfig) {
     // Redis change
     if (config.redis) {
         const redisConfig = config.redis as any;
-        if (redisConfig["host"] || redisConfig["port"]) {
+        if (redisConfig.host || redisConfig.port) {
             config.redis.socket = {
-                host: redisConfig["host"],
-                port: redisConfig["port"]
+                host: redisConfig.host,
+                port: redisConfig.port
             };
         }
 
-        if (redisConfig["enable_offline_queue"] !== undefined) {
-            config.disableOfflineQueue = !redisConfig["enable_offline_queue"];
+        if (redisConfig.enable_offline_queue !== undefined) {
+            config.disableOfflineQueue = !redisConfig.enable_offline_queue;
         }
     }
 }
