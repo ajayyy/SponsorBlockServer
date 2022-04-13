@@ -18,18 +18,19 @@ export async function getHashCache<T extends string>(value: T, times = defaulted
 
 async function getFromRedis<T extends string>(key: HashedValue): Promise<T & HashedValue> {
     const redisKey = shaHashKey(key);
-    const { err, reply } = await redis.getAsync(redisKey);
 
-    if (!err && reply) {
-        try {
+    try {
+        const reply = await redis.get(redisKey);;
+
+        if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);
             return reply as T & HashedValue;
-        } catch (e) {
-            // If all else, continue on hashing
         }
-    }
-    const data = getHash(key, cachedHashTimes);
+    } catch (e) {} // eslint-disable-line no-empty
 
-    redis.setAsync(key, data);
+    // Otherwise, calculate it
+    const data = getHash(key, cachedHashTimes);
+    redis.set(key, data);
+
     return data as T & HashedValue;
 }

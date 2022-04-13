@@ -6,6 +6,7 @@ import { client } from "../utils/httpClient";
 import { db, privateDB } from "../../src/databases/databases";
 import redis from "../../src/utils/redis";
 import assert from "assert";
+import { Logger } from "../../src/utils/logger";
 
 // helpers
 const getSegment = (UUID: string) => db.prepare("get", `SELECT "votes", "locked", "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
@@ -51,8 +52,13 @@ const postVoteCategory = (userID: string, UUID: string, category: string) => cli
     }
 });
 const checkUserVIP = async (publicID: HashedUserID) => {
-    const { reply } = await redis.getAsync(tempVIPKey(publicID));
-    return reply;
+    try {
+        const reply = await redis.get(tempVIPKey(publicID));
+        return reply;
+    } catch (e) {
+        Logger.error(e as string);
+        return false;
+    }
 };
 
 describe("tempVIP test", function() {
@@ -67,7 +73,7 @@ describe("tempVIP test", function() {
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP1]);
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [publicPermVIP2]);
         // clear redis if running consecutive tests
-        await redis.delAsync(tempVIPKey(publicTempVIPOne));
+        await redis.del(tempVIPKey(publicTempVIPOne));
     });
 
     it("Should update db version when starting the application", () => {
