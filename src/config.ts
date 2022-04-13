@@ -1,6 +1,7 @@
 import fs from "fs";
 import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
+import { RedisSearchLanguages } from "@node-redis/search/dist/commands";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_POSTGRES ? "ci.json"
@@ -8,6 +9,7 @@ const configFile = process.env.TEST_POSTGRES ? "ci.json"
         : "config.json";
 export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString("utf8"));
 
+migrate(config);
 addDefaults(config, {
     port: 80,
     behindProxy: "X-Forwarded-For",
@@ -106,6 +108,23 @@ function addDefaults(config: SBSConfig, defaults: SBSConfig) {
     for (const key in defaults) {
         if (!Object.prototype.hasOwnProperty.call(config, key)) {
             config[key] = defaults[key];
+        }
+    }
+}
+
+function migrate(config: SBSConfig) {
+    // Redis change
+    if (config.redis) {
+        const redisConfig = config.redis as any;
+        if (redisConfig["host"] || redisConfig["port"]) {
+            config.redis.socket = {
+                host: redisConfig["host"],
+                port: redisConfig["port"]
+            };
+        }
+
+        if (redisConfig["enable_offline_queue"] !== undefined) {
+            config.disableOfflineQueue = !redisConfig["enable_offline_queue"];
         }
     }
 }
