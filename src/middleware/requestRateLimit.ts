@@ -1,19 +1,20 @@
 import { getIP } from "../utils/getIP";
 import { getHash } from "../utils/getHash";
 import { getHashCache } from "../utils/getHashCache";
-import rateLimit from "express-rate-limit";
+import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
 import { RateLimitConfig } from "../types/config.model";
 import { Request } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { UserID } from "../types/user.model";
 
-export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (req: Request) => UserID): rateLimit.RateLimit {
+export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (req: Request) => UserID): RateLimitRequestHandler {
     return rateLimit({
         windowMs: limitConfig.windowMs,
         max: limitConfig.max,
         message: limitConfig.message,
         statusCode: limitConfig.statusCode,
-        headers: false,
+        legacyHeaders: false,
+        standardHeaders: false,
         keyGenerator: (req) => {
             return getHash(getIP(req), 1);
         },
