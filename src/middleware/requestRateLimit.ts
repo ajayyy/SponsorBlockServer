@@ -6,6 +6,9 @@ import { RateLimitConfig } from "../types/config.model";
 import { Request } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { UserID } from "../types/user.model";
+import RedisStore from "rate-limit-redis";
+import redis from "../utils/redis";
+import { config } from "../config";
 
 export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (req: Request) => UserID): RateLimitRequestHandler {
     return rateLimit({
@@ -24,6 +27,9 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (r
             } else {
                 return next();
             }
-        }
+        },
+        store: config.redis ? new RedisStore({
+            sendCommand: (...args: string[]) => redis.sendCommand(args),
+        }) : null,
     });
 }

@@ -9,6 +9,7 @@ import { isUserVIP } from "../utils/isUserVIP";
 import { HashedUserID } from "../types/user.model";
 import redis from "../utils/redis";
 import { tempVIPKey } from "../utils/redisKeys";
+import { Logger } from "../utils/logger";
 
 interface AddUserAsTempVIPRequest extends Request {
     query: {
@@ -65,12 +66,22 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
         if (!channelInfo?.id) {
             return res.status(404).send(`No channel found for videoID ${channelVideoID}`);
         }
-        await redis.setAsyncEx(tempVIPKey(userID), channelInfo?.id, dayInSeconds);
-        await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
-        return res.status(200).send(`Temp VIP added on channel ${channelInfo?.name}`);
-    }
 
-    await redis.delAsync(tempVIPKey(userID));
-    await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
-    return res.status(200).send(`Temp VIP removed`);
+        try {
+            await redis.setEx(tempVIPKey(userID), dayInSeconds, channelInfo?.id);
+            await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
+            return res.status(200).send(`Temp VIP added on channel ${channelInfo?.name}`);
+        } catch (e) {
+            Logger.error(e as string);
+            return res.status(500).send();
+        }
+    }
+    try {
+        await redis.del(tempVIPKey(userID));
+        await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
+        return res.status(200).send(`Temp VIP removed`);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.status(500).send();
+    }
 }
