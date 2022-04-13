@@ -12,7 +12,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
             return JSON.parse(reply);
         }
-    } catch (e) { Logger.error(e as string)} //eslint-disable-line no-empty
+    } catch (e) { } //eslint-disable-line no-empty
 
     const data = await fetchFromDB();
 

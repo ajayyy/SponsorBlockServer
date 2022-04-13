@@ -20,7 +20,7 @@ async function getFromRedis<T extends string>(key: HashedValue): Promise<T & Has
     const redisKey = shaHashKey(key);
 
     try {
-        const reply = await redis.get(redisKey);;
+        const reply = await redis.get(redisKey);
 
         if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);

@@ -1,7 +1,6 @@
 import { config } from "../config";
 import { Logger } from "./logger";
 import { createClient } from "redis";
-import { RedisClientType } from "@node-redis/client";
 import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@node-redis/client/dist/lib/commands";
 import { ClientCommandOptions } from "@node-redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
@@ -17,12 +16,12 @@ interface RedisSB {
 }
 
 let exportClient: RedisSB = {
-    get: (key) => new Promise((resolve, reject) => reject()),
-    set: (key, value) => new Promise((resolve, reject) => reject()),
-    setEx: (key, value, seconds) => new Promise((resolve, reject) => reject()),
-    del: (...keys) => new Promise((resolve, reject) => reject()),
-    increment: (key) => new Promise((resolve, reject) => reject()),
-    sendCommand: (command, args) => new Promise((resolve, reject) => reject()),
+    get: () => new Promise((resolve, reject) => reject()),
+    set: () => new Promise((resolve, reject) => reject()),
+    setEx: () => new Promise((resolve, reject) => reject()),
+    del: () => new Promise((resolve, reject) => reject()),
+    increment: () => new Promise((resolve, reject) => reject()),
+    sendCommand: () => new Promise((resolve, reject) => reject()),
     quit: () => new Promise((resolve, reject) => reject()),
 };
 
