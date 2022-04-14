@@ -41,7 +41,7 @@ export interface SBSConfig {
     privateMysql?: any;
     minimumPrefix?: string;
     maximumPrefix?: string;
-    redis?: redis.ClientOpts;
+    redis?: redis.RedisClientOptions;
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: PoolConfig;
     dumpDatabase?: DumpDatabase;

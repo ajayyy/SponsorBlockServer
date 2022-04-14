@@ -5,21 +5,18 @@ import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { UserID } from "../types/user.model";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
-    const { err, reply } = await redis.getAsync(key);
-
-    if (!err && reply) {
-        try {
+    try {
+        const reply = await redis.get(key);
+        if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);
 
             return JSON.parse(reply);
-        } catch (e) {
-            // If all else, continue on to fetching from the database
         }
-    }
+    } catch (e) { } //eslint-disable-line no-empty
 
     const data = await fetchFromDB();
 
-    redis.setAsync(key, JSON.stringify(data));
+    redis.set(key, JSON.stringify(data));
 
     return data;
 }
@@ -30,18 +27,17 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Promise<Array<T>>, keyGenerator: (value: U) => string, splitKey: string, values: U[]): Promise<Array<T>> {
     const cachedValues = await Promise.all(values.map(async (value) => {
         const key = keyGenerator(value);
-        const { err, reply } = await redis.getAsync(key);
-
-        if (!err && reply) {
-            try {
+        try {
+            const reply = await redis.get(key);
+            if (reply) {
                 Logger.debug(`Got data from redis: ${reply}`);
 
                 return {
                     value,
                     result: JSON.parse(reply)
                 };
-            } catch (e) { } //eslint-disable-line no-empty
-        }
+            }
+        } catch (e) { } //eslint-disable-line no-empty
 
         return {
             value,
@@ -71,7 +67,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
             }
 
             for (const key in newResults) {
-                redis.setAsync(key, JSON.stringify(newResults[key]));
+                redis.set(key, JSON.stringify(newResults[key]));
             }
         });
     }
@@ -81,16 +77,16 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
 
 function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }): void {
     if (videoInfo) {
-        redis.delAsync(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
-        redis.delAsync(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service));
-        redis.delAsync(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
-        if (videoInfo.userID) redis.delAsync(reputationKey(videoInfo.userID));
+        redis.del(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
+        redis.del(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service));
+        redis.del(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
+        if (videoInfo.userID) redis.del(reputationKey(videoInfo.userID));
     }
 }
 
 function clearRatingCache(videoInfo: { hashedVideoID: VideoIDHash; service: Service;}): void {
     if (videoInfo) {
-        redis.delAsync(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service));
+        redis.del(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service));
     }
 }
 
