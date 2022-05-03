@@ -223,7 +223,8 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 
         //The 3 makes -2 the minimum votes before being ignored completely
         //this can be changed if this system increases in popularity.
-        const weight = Math.exp(choice.votes * Math.max(1, choice.reputation + 1) + 3 + boost);
+        const repFactor = choice.votes > 0 ? Math.max(1, choice.reputation + 1) : 1;
+        const weight = Math.exp(choice.votes * repFactor + 3 + boost);
         totalWeight += Math.max(weight, 0);
 
         return { ...choice, weight };
