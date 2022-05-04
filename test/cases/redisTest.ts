@@ -11,7 +11,7 @@ const randKey2 = genRandom(16);
 
 describe("redis test", function() {
     before(async function() {
-        if (!config.redis) this.skip();
+        if (!config.redis?.enabled) this.skip();
         await redis.set(randKey1, randValue1);
     });
     it("Should get stored value", (done) => {

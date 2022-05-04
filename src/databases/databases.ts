@@ -9,7 +9,7 @@ let privateDB: IDatabase;
 if (config.mysql) {
     db = new Mysql(config.mysql);
     privateDB = new Mysql(config.privateMysql);
-} else if (config.postgres) {
+} else if (config.postgres?.enabled) {
     db = new Postgres({
         dbSchemaFileName: config.dbSchema,
         dbSchemaFolder: config.schemaFolder,

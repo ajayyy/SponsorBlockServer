@@ -25,7 +25,7 @@ let exportClient: RedisSB = {
     quit: () => new Promise((resolve, reject) => reject()),
 };
 
-if (config.redis) {
+if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
     client.connect();

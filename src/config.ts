@@ -1,6 +1,7 @@
 import fs from "fs";
 import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
+import { isBoolean, isNumber } from "lodash";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_POSTGRES ? "ci.json"
@@ -8,9 +9,10 @@ const configFile = process.env.TEST_POSTGRES ? "ci.json"
         : "config.json";
 export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString("utf8"));
 
+loadFromEnv(config);
 migrate(config);
 addDefaults(config, {
-    port: 80,
+    port: 8080,
     behindProxy: "X-Forwarded-For",
     db: "./databases/sponsorTimes.db",
     privateDB: "./databases/private.db",
@@ -20,7 +22,7 @@ addDefaults(config, {
     privateDBSchema: "./databases/_private.db.sql",
     readOnly: false,
     webhooks: [],
-    categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight", "chapter"],
+    categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight"],
     categorySupport: {
         sponsor: ["skip", "mute", "full"],
         selfpromo: ["skip", "mute", "full"],
@@ -35,14 +37,14 @@ addDefaults(config, {
         chapter: ["chapter"]
     },
     maxNumberOfActiveWarnings: 1,
-    hoursAfterWarningExpires: 24,
+    hoursAfterWarningExpires: 16300000,
     adminUserID: "",
     discordCompletelyIncorrectReportWebhookURL: null,
     discordFirstTimeSubmissionsWebhookURL: null,
     discordNeuralBlockRejectWebhookURL: null,
     discordFailedReportChannelWebhookURL: null,
     discordReportChannelWebhookURL: null,
-    getTopUsersCacheTimeMinutes: 0,
+    getTopUsersCacheTimeMinutes: 240,
     globalSalt: null,
     mode: "",
     neuralBlockURL: null,
@@ -50,15 +52,15 @@ addDefaults(config, {
     rateLimit: {
         vote: {
             windowMs: 900000,
-            max: 20,
-            message: "Too many votes, please try again later",
-            statusCode: 429,
+            max: 15,
+            message: "OK",
+            statusCode: 200,
         },
         view: {
             windowMs: 900000,
-            max: 20,
+            max: 10,
             statusCode: 200,
-            message: "Too many views, please try again later",
+            message: "OK",
         },
         rate: {
             windowMs: 900000,
@@ -71,10 +73,16 @@ addDefaults(config, {
     newLeafURLs: null,
     maxRewardTimePerSegmentInSeconds: 600,
     poiMinimumStartTime: 2,
-    postgres: null,
+    postgres: {
+        enabled: null,
+        user: "",
+        host: "",
+        password: "",
+        port: 5432
+    },
     dumpDatabase: {
         enabled: false,
-        minTimeBetweenMs: 60000,
+        minTimeBetweenMs: 180000,
         appExportPath: "./docker/database-export",
         postgresExportPath: "/opt/exports",
         tables: [{
@@ -96,10 +104,29 @@ addDefaults(config, {
         },
         {
             name: "vipUsers"
+        },
+        {
+            name: "unlistedVideos"
+        },
+        {
+            name: "videoInfo"
+        },
+        {
+            name: "ratings"
         }]
     },
-    diskCache: null,
-    crons: null
+    diskCache: {
+        max: 10737418240
+    },
+    crons: null,
+    redis: {
+        enabled: null,
+        socket: {
+            host: "",
+            port: 0
+        },
+        disableOfflineQueue: true
+    }
 });
 
 // Add defaults
@@ -124,6 +151,31 @@ function migrate(config: SBSConfig) {
 
         if (redisConfig.enable_offline_queue !== undefined) {
             config.disableOfflineQueue = !redisConfig.enable_offline_queue;
+        }
+
+        if (redisConfig.socket.host && redisConfig.enabled === null) {
+            redisConfig.enabled = true;
+        }
+    }
+
+    if (config.postgres && config.postgres.user && config.postgres.enabled === null) {
+        config.postgres.enabled = true;
+    }
+}
+
+function loadFromEnv(config: SBSConfig, prefix = "") {
+    for (const key in config) {
+        if (typeof config[key] === "object") {
+            loadFromEnv(config[key], (prefix ? `${prefix}.` : "") + key);
+        } else if (process.env[key]) {
+            const value = process.env[key];
+            if (isNumber(value)) {
+                config[key] = parseInt(value, 10);
+            } else if (isBoolean(value)) {
+                config[key] = value === "true";
+            } else {
+                config[key] = value;
+            }
         }
     }
 }

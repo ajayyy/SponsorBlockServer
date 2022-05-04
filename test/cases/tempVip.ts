@@ -63,7 +63,7 @@ const checkUserVIP = async (publicID: HashedUserID) => {
 
 describe("tempVIP test", function() {
     before(async function() {
-        if (!config.redis) this.skip();
+        if (!config.redis?.enabled) this.skip();
 
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   0, 1, 0, 0, UUID0, "testman", 0, 50, "sponsor", 0]);

@@ -202,7 +202,7 @@ function setupRoutes(router: Router) {
     router.post("/api/ratings/rate", postRateEndpoints);
     router.post("/api/ratings/clearCache", ratingPostClearCache);
 
-    if (config.postgres) {
+    if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
         router.get("/database/*", redirectLink);

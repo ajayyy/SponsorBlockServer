@@ -100,7 +100,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
         res.status(404).send("Database dump is disabled");
         return;
     }
-    if (!config.postgres) {
+    if (!config.postgres?.enabled) {
         res.status(404).send("Not supported on this instance");
         return;
     }
@@ -175,7 +175,7 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
         res.status(404).send("Database dump is disabled");
         return;
     }
-    if (!config.postgres) {
+    if (!config.postgres?.enabled) {
         res.status(404).send("Not supported on this instance");
         return;
     }
