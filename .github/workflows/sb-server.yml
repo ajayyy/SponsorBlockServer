@@ -9,7 +9,7 @@ jobs:
   build:
     uses: ./.github/workflows/docker-build.yml
     with:
-      name: "sb-container"
+      name: "sb-server"
       username: "ajayyy"
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
