@@ -16,13 +16,13 @@ interface RedisSB {
 }
 
 let exportClient: RedisSB = {
-    get: () => new Promise((resolve, reject) => reject()),
-    set: () => new Promise((resolve, reject) => reject()),
-    setEx: () => new Promise((resolve, reject) => reject()),
-    del: () => new Promise((resolve, reject) => reject()),
-    increment: () => new Promise((resolve, reject) => reject()),
-    sendCommand: () => new Promise((resolve, reject) => reject()),
-    quit: () => new Promise((resolve, reject) => reject()),
+    get: () => new Promise((resolve) => resolve(null)),
+    set: () => new Promise((resolve) => resolve(null)),
+    setEx: () => new Promise((resolve) => resolve(null)),
+    del: () => new Promise((resolve) => resolve(null)),
+    increment: () => new Promise((resolve) => resolve(null)),
+    sendCommand: () => new Promise((resolve) => resolve(null)),
+    quit: () => new Promise((resolve) => resolve(null)),
 };
 
 if (config.redis?.enabled) {

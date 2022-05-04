@@ -9,8 +9,6 @@ const configFile = process.env.TEST_POSTGRES ? "ci.json"
         : "config.json";
 export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString("utf8"));
 
-loadFromEnv(config);
-migrate(config);
 addDefaults(config, {
     port: 8080,
     behindProxy: "X-Forwarded-For",
@@ -74,7 +72,7 @@ addDefaults(config, {
     maxRewardTimePerSegmentInSeconds: 600,
     poiMinimumStartTime: 2,
     postgres: {
-        enabled: null,
+        enabled: false,
         user: "",
         host: "",
         password: "",
@@ -120,7 +118,7 @@ addDefaults(config, {
     },
     crons: null,
     redis: {
-        enabled: null,
+        enabled: false,
         socket: {
             host: "",
             port: 0
@@ -128,6 +126,8 @@ addDefaults(config, {
         disableOfflineQueue: true
     }
 });
+loadFromEnv(config);
+migrate(config);
 
 // Add defaults
 function addDefaults(config: SBSConfig, defaults: SBSConfig) {
@@ -153,25 +153,27 @@ function migrate(config: SBSConfig) {
             config.disableOfflineQueue = !redisConfig.enable_offline_queue;
         }
 
-        if (redisConfig.socket.host && redisConfig.enabled === null) {
+        if (redisConfig.socket?.host && redisConfig.enabled === undefined) {
             redisConfig.enabled = true;
         }
     }
 
-    if (config.postgres && config.postgres.user && config.postgres.enabled === null) {
+    if (config.postgres && config.postgres.user && config.postgres.enabled === undefined) {
         config.postgres.enabled = true;
     }
 }
 
 function loadFromEnv(config: SBSConfig, prefix = "") {
     for (const key in config) {
+        const fullKey = (prefix ? `${prefix}_` : "") + key;
+
         if (typeof config[key] === "object") {
-            loadFromEnv(config[key], (prefix ? `${prefix}.` : "") + key);
-        } else if (process.env[key]) {
-            const value = process.env[key];
+            loadFromEnv(config[key], fullKey);
+        } else if (process.env[fullKey]) {
+            const value = process.env[fullKey];
             if (isNumber(value)) {
                 config[key] = parseInt(value, 10);
-            } else if (isBoolean(value)) {
+            } else if (value.toLowerCase() === "true" || value.toLowerCase() === "false") {
                 config[key] = value === "true";
             } else {
                 config[key] = value;
