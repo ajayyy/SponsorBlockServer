@@ -94,7 +94,6 @@ export class Postgres implements IDatabase {
             await client.query(`CREATE DATABASE "${this.config.postgres.database}"
                                 WITH 
                                 OWNER = ${this.config.postgres.user}
-                                TABLESPACE = pg_default
                                 CONNECTION LIMIT = -1;`
             );
         }
