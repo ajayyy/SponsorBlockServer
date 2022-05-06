@@ -1,4 +1,4 @@
-name: sb-runner
+name: Docker image builds
 on:
   push:
     branches:
@@ -7,17 +7,21 @@ on:
 
 jobs:
   build:
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      name: "sb-server"
-      username: "ajayyy"
-      folder: "."
-    secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      name: "rsync-host"
-      username: "ajayyy"
-      folder: "./rsync"
-    secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: Build docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ./.github/workflows/docker-build.yml
+        with:
+          name: "sb-server"
+          username: "ajayyy"
+          folder: "."
+        secrets:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/workflows/docker-build.yml
+        with:
+          name: "rsync-host"
+          username: "ajayyy"
+          folder: "./rsync"
+        secrets:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
