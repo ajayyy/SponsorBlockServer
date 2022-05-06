@@ -6,22 +6,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build docker images
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: ./.github/workflows/docker-build.yml
-        with:
-          name: "sb-server"
-          username: "ajayyy"
-          folder: "."
-        secrets:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: ./.github/workflows/docker-build.yml
-        with:
-          name: "rsync-host"
-          username: "ajayyy"
-          folder: "./rsync"
-        secrets:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  sb-server:
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      name: "sb-server"
+      username: "ajayyy"
+      folder: "."
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  sb-client:
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      name: "rsync-host"
+      username: "ajayyy"
+      folder: "./rsync"
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
