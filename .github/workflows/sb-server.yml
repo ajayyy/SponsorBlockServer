@@ -14,7 +14,8 @@ jobs:
       folder: "."
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  sb-client:
+  rsync-host:
+    needs: sb-server
     uses: ./.github/workflows/docker-build.yml
     with:
       name: "rsync-host"
