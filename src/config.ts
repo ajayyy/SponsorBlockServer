@@ -165,9 +165,10 @@ function migrate(config: SBSConfig) {
 function loadFromEnv(config: SBSConfig, prefix = "") {
     for (const key in config) {
         const fullKey = (prefix ? `${prefix}_` : "") + key;
+        const data = config[key];
 
-        if (typeof config[key] === "object") {
-            loadFromEnv(config[key], fullKey);
+        if (typeof data === "object" && !Array.isArray(data)) {
+            loadFromEnv(data, fullKey);
         } else if (process.env[fullKey]) {
             const value = process.env[fullKey];
             if (isNumber(value)) {
