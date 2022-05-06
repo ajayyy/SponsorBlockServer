@@ -84,7 +84,6 @@ export interface DumpDatabase {
     enabled: boolean;
     minTimeBetweenMs: number;
     appExportPath: string;
-    postgresExportPath: string;
     tables: DumpDatabaseTable[];
 }
 

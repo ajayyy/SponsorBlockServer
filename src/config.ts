@@ -82,7 +82,6 @@ addDefaults(config, {
         enabled: false,
         minTimeBetweenMs: 180000,
         appExportPath: "./docker/database-export",
-        postgresExportPath: "/opt/exports",
         tables: [{
             name: "sponsorTimes",
             order: "timeSubmitted"

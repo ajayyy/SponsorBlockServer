@@ -6,7 +6,7 @@ RUN npm ci && npm run tsc
 
 FROM node:16-alpine as app
 WORKDIR /usr/src/app
-RUN apk add git
+RUN apk add git postgresql-client
 COPY --from=builder ./node_modules ./node_modules
 COPY --from=builder ./dist ./dist
 COPY ./.git ./.git

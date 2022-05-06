@@ -27,7 +27,7 @@ import { loggerMiddleware } from "./middleware/logger";
 import { corsMiddleware } from "./middleware/cors";
 import { apiCspMiddleware } from "./middleware/apiCsp";
 import { rateLimitMiddleware } from "./middleware/requestRateLimit";
-import dumpDatabase, { appExportPath, redirectLink } from "./routes/dumpDatabase";
+import dumpDatabase, { appExportPath, downloadFile } from "./routes/dumpDatabase";
 import { endpoint as getSegmentInfo } from "./routes/getSegmentInfo";
 import { postClearCache } from "./routes/postClearCache";
 import { addUnlistedVideo } from "./routes/addUnlistedVideo";
@@ -205,7 +205,7 @@ function setupRoutes(router: Router) {
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
-        router.get("/database/*", redirectLink);
+        router.get("/database/*", downloadFile);
         router.use("/download", express.static(appExportPath));
     } else {
         router.get("/database.db", function (req: Request, res: Response) {

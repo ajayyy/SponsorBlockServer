@@ -72,7 +72,7 @@ async function initDb(): Promise<void> {
         const tables = config?.dumpDatabase?.tables ?? [];
         const tableNames = tables.map(table => table.name);
         for (const table of tableNames) {
-            const filePath = `${config?.dumpDatabase?.postgresExportPath}/${table}.csv`;
+            const filePath = `${config?.dumpDatabase?.appExportPath}/${table}.csv`;
             await db.prepare("run", `COPY "${table}" FROM '${filePath}' WITH (FORMAT CSV, HEADER true);`);
         }
     }
