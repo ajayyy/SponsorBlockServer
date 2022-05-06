@@ -175,6 +175,8 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
                 config[key] = parseInt(value, 10);
             } else if (value.toLowerCase() === "true" || value.toLowerCase() === "false") {
                 config[key] = value === "true";
+            } else if (key === "newLeafURLs") {
+                config[key] = [value];
             } else {
                 config[key] = value;
             }
