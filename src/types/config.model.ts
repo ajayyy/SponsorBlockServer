@@ -2,6 +2,14 @@ import { PoolConfig } from "pg";
 import * as redis from "redis";
 import { CacheOptions } from "@ajayyy/lru-diskcache";
 
+interface RedisConfig extends redis.RedisClientOptions {
+    enabled: boolean;
+}
+
+interface CustomPostgresConfig extends PoolConfig {
+    enabled: boolean;
+}
+
 export interface SBSConfig {
     [index: string]: any
     port: number;
@@ -41,9 +49,9 @@ export interface SBSConfig {
     privateMysql?: any;
     minimumPrefix?: string;
     maximumPrefix?: string;
-    redis?: redis.ClientOpts;
+    redis?: RedisConfig;
     maxRewardTimePerSegmentInSeconds?: number;
-    postgres?: PoolConfig;
+    postgres?: CustomPostgresConfig;
     dumpDatabase?: DumpDatabase;
     diskCache: CacheOptions;
     crons: CronJobOptions;
@@ -76,7 +84,6 @@ export interface DumpDatabase {
     enabled: boolean;
     minTimeBetweenMs: number;
     appExportPath: string;
-    postgresExportPath: string;
     tables: DumpDatabaseTable[];
 }
 

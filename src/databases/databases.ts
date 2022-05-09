@@ -9,7 +9,7 @@ let privateDB: IDatabase;
 if (config.mysql) {
     db = new Mysql(config.mysql);
     privateDB = new Mysql(config.privateMysql);
-} else if (config.postgres) {
+} else if (config.postgres?.enabled) {
     db = new Postgres({
         dbSchemaFileName: config.dbSchema,
         dbSchemaFolder: config.schemaFolder,
@@ -72,7 +72,7 @@ async function initDb(): Promise<void> {
         const tables = config?.dumpDatabase?.tables ?? [];
         const tableNames = tables.map(table => table.name);
         for (const table of tableNames) {
-            const filePath = `${config?.dumpDatabase?.postgresExportPath}/${table}.csv`;
+            const filePath = `${config?.dumpDatabase?.appExportPath}/${table}.csv`;
             await db.prepare("run", `COPY "${table}" FROM '${filePath}' WITH (FORMAT CSV, HEADER true);`);
         }
     }

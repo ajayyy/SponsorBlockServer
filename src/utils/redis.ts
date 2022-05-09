@@ -1,59 +1,56 @@
 import { config } from "../config";
 import { Logger } from "./logger";
-import redis, { Callback } from "redis";
+import { createClient } from "redis";
+import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@node-redis/client/dist/lib/commands";
+import { ClientCommandOptions } from "@node-redis/client/dist/lib/client";
+import { RedisReply } from "rate-limit-redis";
 
 interface RedisSB {
-    get(key: string, callback?: Callback<string | null>): void;
-    getAsync?(key: string): Promise<{err: Error | null, reply: string | null}>;
-    set(key: string, value: string, callback?: Callback<string | null>): void;
-    setAsync?(key: string, value: string): Promise<{err: Error | null, reply: string | null}>;
-    setAsyncEx?(key: string, value: string, seconds: number): Promise<{err: Error | null, reply: string | null}>;
-    delAsync?(...keys: [string]): Promise<Error | null>;
-    close?(flush?: boolean): void;
-    increment?(key: string): Promise<{err: Error| null, replies: any[] | null}>;
+    get(key: RedisCommandArgument): Promise<string>;
+    set(key: RedisCommandArgument, value: RedisCommandArgument): Promise<string>;
+    setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
+    del(...keys: [RedisCommandArgument]): Promise<number>;
+    increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
+    sendCommand(args: RedisCommandArguments, options?: ClientCommandOptions): Promise<RedisReply>;
+    quit(): Promise<void>;
 }
 
-let exportObject: RedisSB = {
-    get: (key, callback?) => callback(null, undefined),
-    getAsync: () =>
-        new Promise((resolve) => resolve({ err: null, reply: undefined })),
-    set: (key, value, callback) => callback(null, undefined),
-    setAsync: () =>
-        new Promise((resolve) => resolve({ err: null, reply: undefined })),
-    setAsyncEx: () =>
-        new Promise((resolve) => resolve({ err: null, reply: undefined })),
-    delAsync: () =>
-        new Promise((resolve) => resolve(null)),
-    increment: () =>
-        new Promise((resolve) => resolve({ err: null, replies: undefined })),
+let exportClient: RedisSB = {
+    get: () => new Promise((resolve) => resolve(null)),
+    set: () => new Promise((resolve) => resolve(null)),
+    setEx: () => new Promise((resolve) => resolve(null)),
+    del: () => new Promise((resolve) => resolve(null)),
+    increment: () => new Promise((resolve) => resolve(null)),
+    sendCommand: () => new Promise((resolve) => resolve(null)),
+    quit: () => new Promise((resolve) => resolve(null)),
 };
 
-if (config.redis) {
+if (config.redis?.enabled) {
     Logger.info("Connected to redis");
-    const client = redis.createClient(config.redis);
-    exportObject = client;
+    const client = createClient(config.redis);
+    client.connect();
+    exportClient = client;
 
     const timeoutDuration = 200;
-    exportObject.getAsync = (key) => new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve({ err: null, reply: undefined }), timeoutDuration);
-        client.get(key, (err, reply) => {
+    const get = client.get.bind(client);
+    exportClient.get = (key) => new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(), timeoutDuration);
+        get(key).then((reply) => {
             clearTimeout(timeout);
-            resolve({ err, reply });
-        });
+            resolve(reply);
+        }).catch((err) => reject(err));
     });
-    exportObject.setAsync = (key, value) => new Promise((resolve) => client.set(key, value, (err, reply) => resolve({ err, reply })));
-    exportObject.setAsyncEx = (key, value, seconds) => new Promise((resolve) => client.setex(key, seconds, value, (err, reply) => resolve({ err, reply })));
-    exportObject.delAsync = (...keys) => new Promise((resolve) => client.del(keys, (err) => resolve(err)));
-    exportObject.close    = (flush) => client.end(flush);
-    exportObject.increment = (key) => new Promise((resolve) =>
+    exportClient.increment = (key) => new Promise((resolve, reject) =>
         client.multi()
             .incr(key)
             .expire(key, 60)
-            .exec((err, replies) => resolve({ err, replies }))
+            .exec()
+            .then((reply) => resolve(reply))
+            .catch((err) => reject(err))
     );
     client.on("error", function(error) {
         Logger.error(error);
     });
 }
 
-export default exportObject;
+export default exportClient;

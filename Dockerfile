@@ -1,13 +1,15 @@
-FROM node:14-alpine as builder
-RUN apk add --no-cache --virtual .build-deps python make g++
+FROM node:16-alpine as builder
+RUN apk add --no-cache --virtual .build-deps python3 make g++
 COPY package.json package-lock.json tsconfig.json entrypoint.sh ./
 COPY src src
 RUN npm ci && npm run tsc
 
-FROM node:14-alpine as app
+FROM node:16-alpine as app
 WORKDIR /usr/src/app
-COPY --from=builder node_modules .
-COPY --from=builder dist ./dist
+RUN apk add git postgresql-client
+COPY --from=builder ./node_modules ./node_modules
+COPY --from=builder ./dist ./dist
+COPY ./.git ./.git
 COPY entrypoint.sh .
 COPY databases/*.sql databases/
 EXPOSE 8080

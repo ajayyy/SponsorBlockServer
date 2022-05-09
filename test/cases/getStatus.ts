@@ -89,7 +89,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get statusRequests only", function (done) {
-        if (!config.redis) this.skip();
+        if (!config.redis?.enabled) this.skip();
         client.get(`${endpoint}/statusRequests`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
@@ -100,7 +100,7 @@ describe("getStatus", () => {
     });
 
     it("Should be able to get status with statusRequests", function (done) {
-        if (!config.redis) this.skip();
+        if (!config.redis?.enabled) this.skip();
         client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 200);

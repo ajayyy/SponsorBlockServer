@@ -28,12 +28,15 @@ async function generateTopCategoryUsersStats(sortBy: string, category: string) {
         GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 20
         ORDER BY "${sortBy}" DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, category]);
 
-    for (const row of rows) {
-        userNames.push(row.userName);
-        viewCounts.push(row.viewCount);
-        totalSubmissions.push(row.totalSubmissions);
-        minutesSaved.push(row.minutesSaved);
+    if (rows) {
+        for (const row of rows) {
+            userNames.push(row.userName);
+            viewCounts.push(row.viewCount);
+            totalSubmissions.push(row.totalSubmissions);
+            minutesSaved.push(row.minutesSaved);
+        }
     }
+
 
     return {
         userNames,

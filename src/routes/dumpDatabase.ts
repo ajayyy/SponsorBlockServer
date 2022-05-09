@@ -5,6 +5,7 @@ import { config } from "../config";
 import util from "util";
 import fs from "fs";
 import path from "path";
+import { ChildProcess, exec, ExecOptions, spawn } from "child_process";
 const unlink = util.promisify(fs.unlink);
 
 const ONE_MINUTE = 1000 * 60;
@@ -32,8 +33,18 @@ const licenseHeader = `<p>The API and database follow <a href="https://creativec
 const tables = config?.dumpDatabase?.tables ?? [];
 const MILLISECONDS_BETWEEN_DUMPS = config?.dumpDatabase?.minTimeBetweenMs ?? ONE_MINUTE;
 export const appExportPath = config?.dumpDatabase?.appExportPath ?? "./docker/database-export";
-const postgresExportPath = config?.dumpDatabase?.postgresExportPath ?? "/opt/exports";
 const tableNames = tables.map(table => table.name);
+
+const credentials: ExecOptions = {
+    env: {
+        ...process.env,
+        PGHOST: config.postgres.host,
+        PGPORT: String(config.postgres.port),
+        PGUSER: config.postgres.user,
+        PGPASSWORD: String(config.postgres.password),
+        PGDATABASE: "sponsorTimes",
+    }
+}
 
 interface TableDumpList {
     fileName: string;
@@ -100,7 +111,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
         res.status(404).send("Database dump is disabled");
         return;
     }
-    if (!config.postgres) {
+    if (!config.postgres?.enabled) {
         res.status(404).send("Not supported on this instance");
         return;
     }
@@ -170,12 +181,12 @@ async function getDbVersion(): Promise<number> {
     return row.value;
 }
 
-export async function redirectLink(req: Request, res: Response): Promise<void> {
+export async function downloadFile(req: Request, res: Response): Promise<void> {
     if (!config?.dumpDatabase?.enabled) {
         res.status(404).send("Database dump is disabled");
         return;
     }
-    if (!config.postgres) {
+    if (!config.postgres?.enabled) {
         res.status(404).send("Not supported on this instance");
         return;
     }
@@ -183,7 +194,7 @@ export async function redirectLink(req: Request, res: Response): Promise<void> {
     const file = latestDumpFiles.find((value) => `/database/${value.tableName}.csv` === req.path);
 
     if (file) {
-        res.redirect(`/download/${file.fileName}`);
+        res.sendFile(file.fileName, { root: appExportPath });
     } else {
         res.sendStatus(404);
     }
@@ -210,9 +221,19 @@ async function queueDump(): Promise<void> {
 
             for (const table of tables) {
                 const fileName = `${table.name}_${startTime}.csv`;
-                const file = `${postgresExportPath}/${fileName}`;
-                await db.prepare("run", `COPY (SELECT * FROM "${table.name}"${table.order ? ` ORDER BY "${table.order}"` : ``}) 
-                        TO '${file}' WITH (FORMAT CSV, HEADER true);`);
+                const file = `${appExportPath}/${fileName}`;
+
+                await new Promise<string>((resolve) => {
+                    exec(`psql -c "\\copy (SELECT * FROM \\"${table.name}\\"${table.order ? ` ORDER BY \\"${table.order}\\"` : ``})`
+                            + ` TO '${file}' WITH (FORMAT CSV, HEADER true);"`, credentials, (error, stdout, stderr) => {
+                        if (error) {
+                            Logger.error(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
+                        }
+
+                        resolve(error ? stderr : stdout);
+                    });
+                })
+
                 dumpFiles.push({
                     fileName,
                     tableName: table.name,

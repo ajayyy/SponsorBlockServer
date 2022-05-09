@@ -17,13 +17,16 @@
         "port": 5432
     },
     "redis": {
-        "host": "localhost",
-        "port": 6379
+        "socket": {
+            "host": "localhost",
+            "port": 6379
+        }
     },
     "createDatabaseIfNotExist": true,
     "schemaFolder": "./databases",
     "dbSchema": "./databases/_sponsorTimes.db.sql",
     "privateDBSchema": "./databases/_private.db.sql",
+    "categoryList": ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight", "chapter"],
     "mode": "test",
     "readOnly": false,
     "webhooks": [

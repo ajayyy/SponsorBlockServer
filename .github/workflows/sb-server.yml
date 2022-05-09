@@ -1,0 +1,25 @@
+name: Docker image builds
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  sb-server:
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      name: "sb-server"
+      username: "ajayyy"
+      folder: "."
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  rsync-host:
+    needs: sb-server
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      name: "rsync-host"
+      username: "ajayyy"
+      folder: "./rsync"
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

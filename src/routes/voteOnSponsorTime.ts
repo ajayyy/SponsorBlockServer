@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
+import { isUserTempVIP } from "../utils/isUserTempVIP";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
 import { APIVideoInfo } from "../types/youtubeApi.model";
 import { db, privateDB } from "../databases/databases";
@@ -9,12 +10,10 @@ import { getFormattedTime } from "../utils/getFormattedTime";
 import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
-import { HashedUserID, UserID } from "../types/user.model";
+import { UserID } from "../types/user.model";
 import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
-import redis from "../utils/redis";
-import { tempVIPKey } from "../utils/redisKeys";
 
 const voteTypes = {
     normal: 0,
@@ -44,6 +43,7 @@ interface VoteData {
     row: {
         votes: number;
         views: number;
+        locked: boolean;
     };
     category: string;
     incrementAmount: number;
@@ -54,14 +54,6 @@ interface VoteData {
 function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
     return config.newLeafURLs ? YouTubeAPI.listVideos(videoID, ignoreCache) : null;
 }
-
-const isUserTempVIP = async (nonAnonUserID: HashedUserID, videoID: VideoID): Promise<boolean> => {
-    const apiVideoInfo = await getYouTubeVideoInfo(videoID);
-    const channelID = apiVideoInfo?.data?.authorId;
-    const { err, reply } = await redis.getAsync(tempVIPKey(nonAnonUserID));
-
-    return err || !reply ? false : (reply == channelID);
-};
 
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
 
@@ -178,7 +170,7 @@ async function sendWebhooks(voteData: VoteData) {
                         "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}s#requiredSegment=${voteData.UUID}`,
                         "description": `**${voteData.row.votes} Votes Prior | \
                             ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
-                            Views**\n\n**Submission ID:** ${voteData.UUID}\
+                            Views**\n\n**Locked**: ${voteData.row.locked}\n\n**Submission ID:** ${voteData.UUID}\
                             \n**Category:** ${submissionInfoRow.category}\
                             \n\n**Submitted by:** ${submissionInfoRow.userName}\n${submissionInfoRow.userID}\
                             \n\n**Total User Submissions:** ${submissionInfoRow.count}\
@@ -189,7 +181,7 @@ async function sendWebhooks(voteData: VoteData) {
                         "author": {
                             "name": voteData.finalResponse?.webhookMessage ??
                                     voteData.finalResponse?.finalMessage ??
-                                    getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
+                                    `${getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission)}${voteData.row.locked ? " (Locked)" : ""}`,
                         },
                         "thumbnail": {
                             "url": getMaxResThumbnail(data) || "",
@@ -476,11 +468,11 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
         // Only change the database if they have made a submission before and haven't voted recently
         const userAbleToVote = (!(isOwnSubmission && incrementAmount > 0 && oldIncrementAmount >= 0)
+                && !finalResponse.blockVote
+                && finalResponse.finalStatus === 200
                 && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
                 && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
-                && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined)
-                && !finalResponse.blockVote
-                && finalResponse.finalStatus === 200;
+                && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined);
 
 
         const ableToVote = isVIP || isTempVIP || userAbleToVote;

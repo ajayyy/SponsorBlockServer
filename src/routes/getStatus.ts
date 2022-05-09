@@ -10,8 +10,12 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
     value = Array.isArray(value) ? value[0] : value;
     try {
         const dbVersion = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
-        const numberRequests = await redis.increment("statusRequest");
-        const statusRequests = numberRequests?.replies?.[0];
+        let statusRequests: unknown = 0;
+        try {
+            const numberRequests = await redis.increment("statusRequest");
+            statusRequests = numberRequests?.[0];
+        } catch (error) { } // eslint-disable-line no-empty
+
         const statusValues: Record<string, any> = {
             uptime: process.uptime(),
             commit: (global as any).HEADCOMMIT || "unknown",

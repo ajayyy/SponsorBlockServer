@@ -7,7 +7,6 @@ services:
       - database.env
     volumes:
       - database-data:/var/lib/postgresql/data
-      - ./database-export/:/opt/exports # To make this work, run chmod 777 ./database-exports
     ports:
       - 5432:5432
     restart: always

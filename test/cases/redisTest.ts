@@ -11,22 +11,21 @@ const randKey2 = genRandom(16);
 
 describe("redis test", function() {
     before(async function() {
-        if (!config.redis) this.skip();
-        await redis.setAsync(randKey1, randValue1);
+        if (!config.redis?.enabled) this.skip();
+        await redis.set(randKey1, randValue1);
     });
     it("Should get stored value", (done) => {
-        redis.getAsync(randKey1)
+        redis.get(randKey1)
             .then(res => {
-                if (res.err) assert.fail(res.err);
-                assert.strictEqual(res.reply, randValue1);
+                assert.strictEqual(res, randValue1);
                 done();
-            });
+            }).catch(err => assert.fail(err));
     });
     it("Should not be able to get not stored value", (done) => {
-        redis.getAsync(randKey2)
+        redis.get(randKey2)
             .then(res => {
-                if (res.reply || res.err ) assert.fail("Value should not be found");
+                if (res) assert.fail("Value should not be found");
                 done();
-            });
+            }).catch(err => assert.fail(err));
     });
 });
