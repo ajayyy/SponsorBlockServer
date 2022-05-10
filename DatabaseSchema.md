@@ -193,14 +193,14 @@
 
 # Private 
 
-[vote](#vote)  
+[votes](#votes)  
 [categoryVotes](#categoryVotes)  
 [sponsorTimes](#sponsorTimes)  
 [config](#config)  
 [tempVipLog](#tempVipLog)
 [userNameLogs](#userNameLogs)  
 
-### vote
+### votes
 
 | Name | Type | |
 | -- | :--: | -- |
