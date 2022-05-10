@@ -2,7 +2,7 @@ BEGIN TRANSACTION;
 
 -- Add primary keys
 
-ALTER TABLE "userNameLogs" ADD PRIMARY KEY ("userID");
+ALTER TABLE "userNameLogs" ADD "id" SERIAL PRIMARY KEY;
 ALTER TABLE "categoryVotes" ADD "id" SERIAL PRIMARY KEY;
 ALTER TABLE "sponsorTimes" ADD "id" SERIAL PRIMARY KEY;
 ALTER TABLE "config" ADD PRIMARY KEY ("key");
