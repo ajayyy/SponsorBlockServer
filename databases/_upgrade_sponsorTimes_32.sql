@@ -9,7 +9,7 @@ ALTER TABLE "categoryVotes" ADD "id" SERIAL PRIMARY KEY;
 ALTER TABLE "lockCategories" ADD "id" SERIAL PRIMARY KEY;
 ALTER TABLE "warnings" ADD PRIMARY KEY ("userID", "issueTime");
 ALTER TABLE "shadowBannedUsers" ADD PRIMARY KEY ("userID");
-ALTER TABLE "unlistedVideos" ADD PRIMARY KEY ("videoID");
+ALTER TABLE "unlistedVideos" ADD PRIMARY KEY ("videoID", "timeSubmitted");
 ALTER TABLE "config" ADD PRIMARY KEY ("key");
 ALTER TABLE "archivedSponsorTimes" ADD PRIMARY KEY ("UUID");
 ALTER TABLE "ratings" ADD PRIMARY KEY ("videoID", "service", "type");
