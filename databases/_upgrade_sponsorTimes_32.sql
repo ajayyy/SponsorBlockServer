@@ -12,7 +12,7 @@ ALTER TABLE "shadowBannedUsers" ADD PRIMARY KEY ("userID");
 ALTER TABLE "unlistedVideos" ADD "id" SERIAL PRIMARY KEY;
 ALTER TABLE "config" ADD PRIMARY KEY ("key");
 ALTER TABLE "archivedSponsorTimes" ADD PRIMARY KEY ("UUID");
-ALTER TABLE "ratings" ADD PRIMARY KEY ("videoID", "service", "type");
+ALTER TABLE "ratings" ADD "id" SERIAL PRIMARY KEY;
 
 UPDATE "config" SET value = 32 WHERE key = 'version';
 
