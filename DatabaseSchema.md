@@ -3,7 +3,6 @@
 [vipUsers](#vipUsers)  
 [sponsorTimes](#sponsorTimes)  
 [userNames](#userNames)  
-[userNameLogs](#userNameLogs)  
 [categoryVotes](#categoryVotes)  
 [lockCategories](#lockCategories)  
 [warnings](#warnings)  
@@ -65,16 +64,6 @@
 | index | field |
 | -- | :--: |
 | userNames_userID | userID |
-
-### userNameLogs
-
-| Name | Type | |
-| -- | :--: | -- |
-| userID | TEXT | not null |
-| newUserName | TEXT | not null |
-| oldUserName | TEXT | not null |
-| updatedByAdmin | BOOLEAN | not null |
-| updatedAt | INTEGER | not null |
 
 ### categoryVotes
 
@@ -209,6 +198,7 @@
 [sponsorTimes](#sponsorTimes)  
 [config](#config)  
 [tempVipLog](#tempVipLog)
+[userNameLogs](#userNameLogs)  
 
 ### vote
 
@@ -279,4 +269,14 @@
 | issuerUserID | TEXT | not null |
 | targetUserID | TEXT | not null |
 | enabled | BOOLEAN | not null |
+| updatedAt | INTEGER | not null |
+
+### userNameLogs
+
+| Name | Type | |
+| -- | :--: | -- |
+| userID | TEXT | not null |
+| newUserName | TEXT | not null |
+| oldUserName | TEXT | not null |
+| updatedByAdmin | BOOLEAN | not null |
 | updatedAt | INTEGER | not null |
