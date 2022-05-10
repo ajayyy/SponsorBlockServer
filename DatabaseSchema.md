@@ -197,7 +197,8 @@
 [categoryVotes](#categoryVotes)  
 [sponsorTimes](#sponsorTimes)  
 [config](#config)  
-[tempVipLog](#tempVipLog)
+[ratings](#ratings)  
+[tempVipLog](#tempVipLog)  
 [userNameLogs](#userNameLogs)  
 
 ### votes
