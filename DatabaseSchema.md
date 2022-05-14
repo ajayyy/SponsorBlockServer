@@ -50,7 +50,7 @@
 | sponsorTime_timeSubmitted | timeSubmitted |
 | sponsorTime_userID | userID |
 | sponsorTimes_UUID | UUID |
-| sponsorTimes_hashedVideoID_gin| hashedVideoID, category |
+| sponsorTimes_hashedVideoID | hashedVideoID, category |
 | sponsorTimes_videoID | videoID, service, category, timeSubmitted |
 
 ### userNames
