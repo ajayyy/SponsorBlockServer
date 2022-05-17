@@ -112,9 +112,7 @@ addDefaults(config, {
             name: "ratings"
         }]
     },
-    diskCache: {
-        max: 10737418240
-    },
+    diskCacheURL: null,
     crons: null,
     redis: {
         enabled: false,

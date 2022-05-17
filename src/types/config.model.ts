@@ -1,6 +1,5 @@
 import { PoolConfig } from "pg";
 import * as redis from "redis";
-import { CacheOptions } from "@ajayyy/lru-diskcache";
 
 interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;
@@ -53,7 +52,7 @@ export interface SBSConfig {
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: CustomPostgresConfig;
     dumpDatabase?: DumpDatabase;
-    diskCache: CacheOptions;
+    diskCacheURL: string;
     crons: CronJobOptions;
 }
 

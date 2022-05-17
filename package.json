@@ -17,7 +17,6 @@
   "author": "Ajay Ramachandran",
   "license": "MIT",
   "dependencies": {
-    "@ajayyy/lru-diskcache": "^2.0.0",
     "axios": "^0.24.0",
     "better-sqlite3": "^7.4.5",
     "cron": "^1.8.2",
