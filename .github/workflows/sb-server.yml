@@ -23,11 +23,3 @@ jobs:
       folder: "./containers/rsync"
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  backup-db:
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      name: "db-backup"
-      username: "ajayyy"
-      folder: "./containers/backup-db"
-    secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
