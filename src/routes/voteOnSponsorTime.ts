@@ -102,6 +102,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
 }
 
 async function sendWebhooks(voteData: VoteData) {
+    Logger.error(`about to send webhook ${JSON.stringify(voteData)}`);
     const submissionInfoRow = await db.prepare("get", `SELECT "s"."videoID", "s"."userID", s."startTime", s."endTime", s."category", u."userName",
         (select count(1) from "sponsorTimes" where "userID" = s."userID") count,
         (select count(1) from "sponsorTimes" where "userID" = s."userID" and votes <= -2) disregarded
@@ -109,6 +110,8 @@ async function sendWebhooks(voteData: VoteData) {
     [voteData.UUID]);
 
     const userSubmissionCountRow = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ?`, [voteData.nonAnonUserID]);
+
+    Logger.error(`Sending webhook ${config.discordReportChannelWebhookURL}, ${submissionInfoRow}, ${userSubmissionCountRow}`)
 
     if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
         let webhookURL: string = null;
