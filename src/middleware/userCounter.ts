@@ -6,8 +6,10 @@ import { getHash } from "../utils/getHash";
 import { NextFunction, Request, Response } from "express";
 
 export function userCounter(req: Request, res: Response, next: NextFunction): void {
-    axios.post(`${config.userCounterURL}/api/v1/addIP?hashedIP=${getHash(getIP(req), 1)}`)
-        .catch(() => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
+    if (req.method !== "OPTIONS") {
+        axios.post(`${config.userCounterURL}/api/v1/addIP?hashedIP=${getHash(getIP(req), 1)}`)
+            .catch(() => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
+    }
 
     next();
 }
