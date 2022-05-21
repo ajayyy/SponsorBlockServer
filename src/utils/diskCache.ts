@@ -31,7 +31,11 @@ class DiskCache {
 
             return result.status === 200 ? result.data : null;
         } catch (err) {
-            Logger.error(`DiskCache: Error getting key ${key}: ${err}`);
+            const response = (err as AxiosError).response;
+            if (!response || response.status !== 404) {
+                Logger.error(`DiskCache: Error getting key ${key}: ${err}`);
+            }
+
             return null;
         }
     }
