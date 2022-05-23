@@ -6,9 +6,10 @@ import { RateLimitConfig } from "../types/config.model";
 import { Request } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { UserID } from "../types/user.model";
-import RedisStore from "rate-limit-redis";
+import RedisStore, { RedisReply } from "rate-limit-redis";
 import redis from "../utils/redis";
 import { config } from "../config";
+import { Logger } from "../utils/logger";
 
 export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (req: Request) => UserID): RateLimitRequestHandler {
     return rateLimit({
@@ -29,7 +30,7 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (r
             }
         },
         store: config.redis?.enabled ? new RedisStore({
-            sendCommand: (...args: string[]) => redis.sendCommand(args),
+            sendCommand: (...args: string[]) => redis.sendCommand(args).catch((err) => Logger.error(err)) as Promise<RedisReply>,
         }) : null,
     });
 }

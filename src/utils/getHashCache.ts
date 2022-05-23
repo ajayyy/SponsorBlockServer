@@ -30,7 +30,7 @@ async function getFromRedis<T extends string>(key: HashedValue): Promise<T & Has
 
     // Otherwise, calculate it
     const data = getHash(key, cachedHashTimes);
-    redis.set(key, data);
+    redis.set(key, data).catch((err) => Logger.error(err));
 
     return data as T & HashedValue;
 }
