@@ -16,7 +16,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.set(key, JSON.stringify(data));
+    redis.set(key, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return data;
 }
@@ -67,7 +67,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
             }
 
             for (const key in newResults) {
-                redis.set(key, JSON.stringify(newResults[key]));
+                redis.set(key, JSON.stringify(newResults[key])).catch((err) => Logger.error(err));
             }
         });
     }
@@ -77,16 +77,16 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
 
 function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }): void {
     if (videoInfo) {
-        redis.del(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
-        redis.del(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service));
-        redis.del(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
-        if (videoInfo.userID) redis.del(reputationKey(videoInfo.userID));
+        redis.del(skipSegmentsKey(videoInfo.videoID, videoInfo.service)).catch((err) => Logger.error(err));
+        redis.del(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service)).catch((err) => Logger.error(err));
+        redis.del(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
+        if (videoInfo.userID) redis.del(reputationKey(videoInfo.userID)).catch((err) => Logger.error(err));
     }
 }
 
 function clearRatingCache(videoInfo: { hashedVideoID: VideoIDHash; service: Service;}): void {
     if (videoInfo) {
-        redis.del(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service));
+        redis.del(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
     }
 }
 

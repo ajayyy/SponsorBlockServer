@@ -165,7 +165,7 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
         const fullKey = (prefix ? `${prefix}_` : "") + key;
         const data = config[key];
 
-        if (typeof data === "object" && !Array.isArray(data)) {
+        if (data && typeof data === "object" && !Array.isArray(data)) {
             loadFromEnv(data, fullKey);
         } else if (process.env[fullKey]) {
             const value = process.env[fullKey];

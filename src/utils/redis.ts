@@ -31,7 +31,7 @@ if (config.redis?.enabled) {
     client.connect();
     exportClient = client;
 
-    const timeoutDuration = 200;
+    const timeoutDuration = 40;
     const get = client.get.bind(client);
     exportClient.get = (key) => new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(), timeoutDuration);
