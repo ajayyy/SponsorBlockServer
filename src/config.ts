@@ -76,7 +76,8 @@ addDefaults(config, {
         user: "",
         host: "",
         password: "",
-        port: 5432
+        port: 5432,
+        max: 150
     },
     dumpDatabase: {
         enabled: false,
