@@ -54,6 +54,7 @@ describe("lockCategoriesRecords", () => {
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "mute", "sponsor", "reason-5", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "skip", "intro", "reason-5", "YouTube"]);
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-1", "mute", "intro", "reason-5", "YouTube"]);
+        await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "delete-record-poi", "poi", "poi_highlight", "reason-6", "YouTube"]);
     });
 
     it("Should update the database version when starting the application", async () => {
@@ -509,6 +510,46 @@ describe("lockCategoriesRecords", () => {
                 "sponsor",
             ],
             actionTypes: ["full"]
+        };
+        client.delete(endpoint, { data: json })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const result = await checkLockCategories(videoID);
+                assert.strictEqual(result.length, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should be able to delete poi type category by type poi", (done) => {
+        const videoID = "delete-record-poi";
+        const json = {
+            videoID,
+            userID: lockVIPUser,
+            categories: [
+                "poi_highlight",
+            ],
+            actionTypes: ["poi"]
+        };
+        client.delete(endpoint, { data: json })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const result = await checkLockCategories(videoID);
+                assert.strictEqual(result.length, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should be able to delete poi type category by type poi", (done) => {
+        const videoID = "delete-record-poi";
+        const json = {
+            videoID,
+            userID: lockVIPUser,
+            categories: [
+                "poi_highlight",
+            ],
+            actionTypes: ["poi"]
         };
         client.delete(endpoint, { data: json })
             .then(async res => {
