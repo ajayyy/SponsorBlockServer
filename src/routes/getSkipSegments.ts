@@ -25,6 +25,11 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             return true;
         }
 
+        if (logData.extraLogging) {
+            Logger.error(`Starting ip fetch: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
+
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
         if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
             const service = getService(req?.query?.service as string);
@@ -37,7 +42,15 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
         if (ipList?.length > 0 && cache.userHashedIP === undefined) {
             //hash the IP only if it's strictly necessary
+            if (logData.extraLogging) {
+                Logger.error(`Starting hash: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                logData.lastTime = Date.now();
+            }
             cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
+            if (logData.extraLogging) {
+                Logger.error(`Ending hash: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                logData.lastTime = Date.now();
+            }
         }
         //if this isn't their ip, don't send it to them
         const shouldShadowHide = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
