@@ -1,9 +1,8 @@
 -- sponsorTimes
 
-CREATE INDEX IF NOT EXISTS "privateDB_sponsorTimes_v3"
+CREATE INDEX IF NOT EXISTS "privateDB_sponsorTimes_v4"
     ON public."sponsorTimes" USING btree
-    ("hashedIP" COLLATE pg_catalog."default" ASC NULLS LAST, "videoID" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST)
-;
+    ("videoID" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST);
 
 -- votes
 
