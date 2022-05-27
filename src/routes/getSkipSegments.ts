@@ -149,6 +149,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         if (categories.length === 0) return null;
 
         if (logData.extraLogging) {
+            Logger.warn(`IP: ${getIP(req)}, request con ip: ${req.socket?.remoteAddress}`);
             Logger.error(`About to fetch: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
             logData.lastTime = Date.now();
         }

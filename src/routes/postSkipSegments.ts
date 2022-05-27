@@ -475,6 +475,12 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         proxySubmission(req);
     }
 
+    const logData = {
+        extraLogging: req.query.extraLogging,
+        startTime: Date.now(),
+        lastTime: Date.now()
+    };
+
     // eslint-disable-next-line prefer-const
     let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
@@ -513,12 +519,22 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         }
     }
 
+    if (logData.extraLogging) {
+        Logger.error(`Checks done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     // Will be filled when submitting
     const UUIDs = [];
     const newSegments = [];
 
     //hash the ip 5000 times so no one can get it from the database
     const hashedIP = await getHashCache(rawIP + config.globalSalt);
+
+    if (logData.extraLogging) {
+        Logger.error(`IP hash done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
 
     try {
         //get current time
@@ -534,6 +550,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const startingVotes = 0;
         const reputation = await getReputation(userID);
 
+        if (logData.extraLogging) {
+            Logger.error(`Ban check complete: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
+
         for (const segmentInfo of segments) {
             // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
             if (segmentInfo.ignoreSegment
@@ -547,6 +568,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
             const hashedVideoID = getHash(videoID, 1);
 
+            if (logData.extraLogging) {
+                Logger.error(`Submission prep done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                logData.lastTime = Date.now();
+            }
+
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
@@ -557,13 +583,28 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 ],
                 );
 
+                if (logData.extraLogging) {
+                    Logger.error(`Normal DB done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                    logData.lastTime = Date.now();
+                }
+
                 //add to private db as well
                 await privateDB.prepare("run", `INSERT INTO "sponsorTimes" VALUES(?, ?, ?, ?)`, [videoID, hashedIP, timeSubmitted, service]);
+
+                if (logData.extraLogging) {
+                    Logger.error(`Private db: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                    logData.lastTime = Date.now();
+                }
 
                 await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published", "genreUrl") 
                     SELECT ?, ?, ?, ?, ?
                     WHERE NOT EXISTS (SELECT 1 FROM "videoInfo" WHERE "videoID" = ?)`, [
                     videoID, apiVideoInfo?.data?.authorId || "", apiVideoInfo?.data?.title || "", apiVideoInfo?.data?.published || 0, apiVideoInfo?.data?.genreUrl || "", videoID]);
+
+                if (logData.extraLogging) {
+                    Logger.error(`Video info: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                    logData.lastTime = Date.now();
+                }
 
                 // Clear redis cache for this video
                 QueryCacher.clearSegmentCache({
@@ -588,6 +629,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     } catch (err) {
         Logger.error(err as string);
         return res.sendStatus(500);
+    }
+
+    if (logData.extraLogging) {
+        Logger.error(`Sending webhooks: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
     }
 
     for (let i = 0; i < segments.length; i++) {
