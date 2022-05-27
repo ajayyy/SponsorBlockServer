@@ -340,8 +340,13 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
     return CHECK_PASS;
 }
 
-async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
+async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration, logData: any) {
     let lockedCategoryList = await db.prepare("all", 'SELECT category, "actionType", reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
+
+    if (logData.extraLogging) {
+        Logger.error(`got locked categories: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
@@ -352,6 +357,11 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
             "votes" > -2 AND "videoDuration" != 0`,
         [videoID, service]
     ) as {videoDuration: VideoDuration, UUID: SegmentUUID}[];
+
+    if (logData.extraLogging) {
+        Logger.error(`got previous submissions: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
 
     // If the video's duration is changed, then the video should be unlocked and old submissions should be hidden
     const videoDurationChanged = (videoDuration: number) => videoDuration != 0
@@ -368,6 +378,11 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
         videoDuration = apiVideoDuration || 0 as VideoDuration;
     }
 
+    if (logData.extraLogging) {
+        Logger.error(`got api response: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     // Only treat as difference if both the api duration and submitted duration have changed
     if (videoDurationChanged(videoDuration) && (!videoDurationParam || videoDurationChanged(videoDurationParam))) {
         // Hide all previous submissions
@@ -376,6 +391,11 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
         }
         lockedCategoryList = [];
         deleteLockCategories(videoID, null, null, service);
+    }
+
+    if (logData.extraLogging) {
+        Logger.error(`updated old submissions: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
     }
 
     return {
@@ -522,7 +542,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const isTempVIP = await isUserTempVIP(userID, videoID);
     const rawIP = getIP(req);
 
-    const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
+    const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam, logData);
     videoDuration = newData.videoDuration;
     const { lockedCategoryList, apiVideoInfo } = newData;
 
