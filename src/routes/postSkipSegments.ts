@@ -484,18 +484,38 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     // eslint-disable-next-line prefer-const
     let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
+    if (logData.extraLogging) {
+        Logger.error(`preprocess: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     const invalidCheckResult = checkInvalidFields(videoID, paramUserID, segments);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
 
+    if (logData.extraLogging) {
+        Logger.error(`invalid fields: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     //hash the userID
     const userID = await getHashCache(paramUserID);
+
+    if (logData.extraLogging) {
+        Logger.error(`userid: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
 
     const userWarningCheckResult = await checkUserActiveWarning(userID);
     if (!userWarningCheckResult.pass) {
         Logger.warn(`Caught a submission for a warned user. userID: '${userID}', videoID: '${videoID}', category: '${segments.reduce<string>((prev, val) => `${prev} ${val.category}`, "")}', times: ${segments.reduce<string>((prev, val) => `${prev} ${val.segment}`, "")}`);
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
+    }
+
+    if (logData.extraLogging) {
+        Logger.error(`warning done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
     }
 
     const isVIP = await isUserVIP(userID);
@@ -506,10 +526,20 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     videoDuration = newData.videoDuration;
     const { lockedCategoryList, apiVideoInfo } = newData;
 
+    if (logData.extraLogging) {
+        Logger.error(`duration change done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     // Check if all submissions are correct
     const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, lockedCategoryList);
     if (!segmentCheckResult.pass) {
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
+    }
+
+    if (logData.extraLogging) {
+        Logger.error(`valid segmenrs done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
     }
 
     if (!isVIP && !isTempVIP) {
