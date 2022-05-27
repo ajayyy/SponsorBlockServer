@@ -311,7 +311,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     const ip = getIP(req);
 
     const logData = {
-        extraLogging: req.params.extraLogging,
+        extraLogging: req.query.extraLogging,
         startTime: Date.now(),
         lastTime: Date.now()
     };

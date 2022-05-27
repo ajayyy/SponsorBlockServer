@@ -124,7 +124,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
     }
 
     const logData = {
-        extraLogging: req.params.extraLogging,
+        extraLogging: req.query.extraLogging,
         startTime: Date.now(),
         lastTime: Date.now()
     };
