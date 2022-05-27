@@ -310,7 +310,18 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     const category = req.query.category as Category;
     const ip = getIP(req);
 
-    const result = await vote(ip, UUID, paramUserID, type, category);
+    const logData = {
+        extraLogging: req.params.extraLogging,
+        startTime: Date.now(),
+        lastTime: Date.now()
+    };
+
+    const result = await vote(ip, UUID, paramUserID, type, category, logData);
+
+    if (logData.extraLogging) {
+        Logger.error(`Done vote: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
 
     const response = res.status(result.status);
     if (result.message) {
@@ -322,7 +333,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     }
 }
 
-export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID, type: number, category?: Category): Promise<{ status: number, message?: string, json?: unknown }> {
+export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID, type: number, category?: Category, logData = {} as any): Promise<{ status: number, message?: string, json?: unknown }> {
     // missing key parameters
     if (!UUID || !paramUserID || !(type !== undefined || category)) {
         return { status: 400 };
@@ -352,6 +363,11 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     // segment doesnt exist
     if (!segmentInfo) {
         return { status: 404 };
+    }
+
+    if (logData.extraLogging) {
+        Logger.error(`Got segment info: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
     }
 
     const isTempVIP = await isUserTempVIP(nonAnonUserID, segmentInfo.videoID);
@@ -415,9 +431,19 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         checkVideoDuration(UUID);
     }
 
+    if (logData.extraLogging) {
+        Logger.error(`Main prep done: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     try {
         // check if vote has already happened
         const votesRow = await privateDB.prepare("get", `SELECT "type" FROM "votes" WHERE "userID" = ? AND "UUID" = ?`, [userID, UUID]);
+
+        if (logData.extraLogging) {
+            Logger.error(`Got previous vote info: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
 
         // -1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
         // oldIncrementAmount will be zero if row is null
@@ -480,6 +506,11 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
         const ableToVote = isVIP || isTempVIP || userAbleToVote;
 
+        if (logData.extraLogging) {
+            Logger.error(`About to run vote code ${ableToVote}: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
+
         if (ableToVote) {
             //update the votes table
             if (votesRow) {
@@ -507,8 +538,19 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 await db.prepare("run", 'UPDATE "sponsorTimes" SET "locked" = 0 WHERE "UUID" = ?', [UUID]);
             }
 
+            if (logData.extraLogging) {
+                Logger.error(`Did vote stuff: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                logData.lastTime = Date.now();
+            }
+
             QueryCacher.clearSegmentCache(segmentInfo);
         }
+
+        if (logData.extraLogging) {
+            Logger.error(`Ready to send webhook ${incrementAmount - oldIncrementAmount !== 0}: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
+
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({
                 UUID,

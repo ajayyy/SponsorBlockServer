@@ -13,7 +13,7 @@ import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
 
 
-async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
+async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean, logData: any): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
         if (segment.votes < -1 && !segment.required) {
             return false; //too untrustworthy, just ignore it
@@ -47,9 +47,19 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
         return shouldShadowHide;
     }));
 
+    if (logData.extraLogging) {
+        Logger.error(`Preparing segments: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
     const filteredSegments = segments.filter((_, index) => shouldFilter[index]);
 
-    return (await chooseSegments(videoID, service, filteredSegments, useCache)).map((chosenSegment) => ({
+    if (logData.extraLogging) {
+        Logger.error(`Filter complete: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+        logData.lastTime = Date.now();
+    }
+
+    return (await chooseSegments(videoID, service, filteredSegments, useCache, logData)).map((chosenSegment) => ({
         category: chosenSegment.category,
         actionType: chosenSegment.actionType,
         segment: [chosenSegment.startTime, chosenSegment.endTime],
@@ -83,7 +93,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
             }, {});
 
         const canUseCache = requiredSegments.length === 0;
-        let processedSegments: Segment[] = (await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache))
+        let processedSegments: Segment[] = (await prepareCategorySegments(req, videoID, service, segments, cache, canUseCache, {}))
             .filter((segment: Segment) => categories.includes(segment?.category) && (actionTypes.includes(segment?.actionType)));
 
         if (forcePoiAsSkip) {
@@ -113,11 +123,22 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         actionTypes.push(ActionType.Poi);
     }
 
+    const logData = {
+        extraLogging: req.params.extraLogging,
+        startTime: Date.now(),
+        lastTime: Date.now()
+    };
+
     try {
         type SegmentWithHashPerVideoID = SBRecord<VideoID, { hash: VideoIDHash, segments: DBSegment[] }>;
 
         categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
         if (categories.length === 0) return null;
+
+        if (logData.extraLogging) {
+            Logger.error(`About to fetch: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
 
         const segmentPerVideoID: SegmentWithHashPerVideoID = (await getSegmentsFromDBByHash(hashedVideoIDPrefix, service))
             .reduce((acc: SegmentWithHashPerVideoID, segment: DBSegment) => {
@@ -133,6 +154,11 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                 return acc;
             }, {});
 
+        if (logData.extraLogging) {
+            Logger.error(`Fetch complete: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
+
         for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
             const data: VideoData = {
                 hash: videoData.hash,
@@ -140,7 +166,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             };
 
             const canUseCache = requiredSegments.length === 0;
-            data.segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
+            data.segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache, logData))
                 .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
 
             if (forcePoiAsSkip) {
@@ -152,6 +178,11 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
 
             if (data.segments.length > 0) {
                 segments[videoID] = data;
+            }
+
+            if (logData.extraLogging) {
+                Logger.error(`Done one video: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+                logData.lastTime = Date.now();
             }
         }
 
@@ -255,12 +286,17 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
     return chosen;
 }
 
-async function chooseSegments(videoID: VideoID, service: Service, segments: DBSegment[], useCache: boolean): Promise<DBSegment[]> {
+async function chooseSegments(videoID: VideoID, service: Service, segments: DBSegment[], useCache: boolean, logData: any): Promise<DBSegment[]> {
     const fetchData = async () => await buildSegmentGroups(segments);
 
     const groups = useCache
         ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service))
         : await fetchData();
+
+        if (logData.extraLogging) {
+            Logger.error(`Built groups: ${Date.now() - logData.lastTime}, ${Date.now() - logData.startTime}`);
+            logData.lastTime = Date.now();
+        }
 
     // Filter for only 1 item for POI categories and Full video
     let chosenGroups = getWeightedRandomChoice(groups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Full);
