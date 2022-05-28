@@ -22,6 +22,7 @@ if (config.mysql) {
             database: "sponsorTimes",
             password: config.postgres?.password,
             port: config.postgres?.port,
+            max: config.postgres?.max,
         }
     });
 
@@ -37,6 +38,7 @@ if (config.mysql) {
             database: "privateDB",
             password: config.postgres?.password,
             port: config.postgres?.port,
+            max: config.postgres?.max,
         }
     });
 } else {
