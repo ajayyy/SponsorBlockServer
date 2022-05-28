@@ -23,6 +23,7 @@ if (config.mysql) {
             password: config.postgres?.password,
             port: config.postgres?.port,
             max: config.postgres?.max,
+            min: config.postgres?.min,
         }
     });
 
@@ -39,6 +40,7 @@ if (config.mysql) {
             password: config.postgres?.password,
             port: config.postgres?.port,
             max: config.postgres?.max,
+            min: config.postgres?.min,
         }
     });
 } else {
