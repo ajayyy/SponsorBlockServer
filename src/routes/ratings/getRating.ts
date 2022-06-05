@@ -22,7 +22,7 @@ export async function getRating(req: Request, res: Response): Promise<Response> 
         hashPrefixes = req.query.hashPrefixes
             ? JSON.parse(req.query.hashPrefixes as string)
             : Array.isArray(req.query.prefix)
-                ? req.query.prefix
+                ? req.query.prefix.toString()
                 : [req.query.prefix ?? req.params.prefix];
         if (!Array.isArray(hashPrefixes)) {
             return res.status(400).send("hashPrefixes parameter does not match format requirements.");
