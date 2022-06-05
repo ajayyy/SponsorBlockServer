@@ -12,8 +12,8 @@ function logUserNameChange(userID: string, newUserName: string, oldUserName: str
 }
 
 export async function setUsername(req: Request, res: Response): Promise<Response> {
-    let userID = req.query.userID as string;
-    let userName = req.query.username as string;
+    let userID = req.query.userID.toString() as string;
+    let userName = req.query.username.toString() as string;
 
     let adminUserIDInput = req.query.adminUserID as string;
 
