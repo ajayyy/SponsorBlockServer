@@ -77,7 +77,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         ? JSON.parse(req.query.categories as string)
         : req.query.category
             ? Array.isArray(req.query.category)
-                ? req.query.category
+                ? req.query.category.toString()
                 : [req.query.category]
             : [];
     if (!Array.isArray(categories)) {
