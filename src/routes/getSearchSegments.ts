@@ -89,7 +89,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         ? JSON.parse(req.query.actionTypes as string)
         : req.query.actionType
             ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
+                ? req.query.actionType.toString()
                 : [req.query.actionType]
             : [ActionType.Skip];
     if (!Array.isArray(actionTypes)) {
