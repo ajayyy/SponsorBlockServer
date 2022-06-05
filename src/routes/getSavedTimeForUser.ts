@@ -7,7 +7,7 @@ import { Logger } from "../utils/logger";
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 export async function getSavedTimeForUser(req: Request, res: Response): Promise<Response> {
-    let userID = req.query.userID as string;
+    let userID = req.query.userID.toString() as string;
 
     if (userID == undefined) {
         //invalid request
