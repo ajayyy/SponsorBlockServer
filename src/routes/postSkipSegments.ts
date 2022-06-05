@@ -247,7 +247,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
     segments: IncomingSegment[], service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
-        if (i > 1337) break
+        if (i > 1337) break;
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
             //invalid request
             return { pass: false, errorMessage: "One of your segments are invalid", errorCode: 400 };
