@@ -441,6 +441,11 @@ function proxySubmission(req: Request) {
 function preprocessInput(req: Request) {
     const videoID = req.query.videoID || req.body.videoID;
     const userID = req.query.userID || req.body.userID;
+    
+    if (typeof(videoID) !== "string" || typeof(userID) !== "string" || videoID.length !== 11) {
+        return res.status(400).send("Invalid parameters");
+    }
+    
     const service = getService(req.query.service, req.body.service);
     const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
     const videoDuration = videoDurationParam;
