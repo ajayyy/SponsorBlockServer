@@ -297,7 +297,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 }
 
 export function getUserID(req: Request): UserID {
-    return req.query.userID as UserID;
+    return req.query.userID.toString() as UserID;
 }
 
 export async function voteOnSponsorTime(req: Request, res: Response): Promise<Response> {
