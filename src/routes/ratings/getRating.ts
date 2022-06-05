@@ -41,7 +41,7 @@ export async function getRating(req: Request, res: Response): Promise<Response> 
     try {
         types = req.query.types
             ? JSON.parse(req.query.types as string)
-            : req.query.type
+            : req.query.type.toString()
                 ? Array.isArray(req.query.type)
                     ? req.query.type
                     : [req.query.type]
