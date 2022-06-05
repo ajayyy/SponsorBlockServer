@@ -43,7 +43,7 @@ export async function getRating(req: Request, res: Response): Promise<Response> 
             ? JSON.parse(req.query.types as string)
             : req.query.type.toString()
                 ? Array.isArray(req.query.type)
-                    ? req.query.type
+                    ? req.query.type.toString()
                     : [req.query.type]
                 : [RatingType.Upvote, RatingType.Downvote];
         if (!Array.isArray(types)) {
