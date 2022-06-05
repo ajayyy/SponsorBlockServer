@@ -5,7 +5,7 @@ import { Request, Response } from "express";
 import { HashedUserID, UserID } from "../types/user.model";
 
 export async function getIsUserVIP(req: Request, res: Response): Promise<Response> {
-    const userID = req.query.userID as UserID;
+    const userID = req.query.userID.toString() as UserID;
 
     if (userID == undefined) {
         //invalid request
