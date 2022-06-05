@@ -87,8 +87,8 @@ async function dbGetUsername(userID: HashedUserID) {
 }
 
 export async function getUserStats(req: Request, res: Response): Promise<Response> {
-    const userID = req.query.userID as UserID;
-    const hashedUserID: HashedUserID = userID ? await getHashCache(userID) : req.query.publicUserID as HashedUserID;
+    const userID = req.query.userID.toString() as UserID;
+    const hashedUserID: HashedUserID = userID ? await getHashCache(userID) : req.query.publicUserID.toString() as HashedUserID;
     const fetchCategoryStats = req.query.fetchCategoryStats == "true";
     const fetchActionTypeStats = req.query.fetchActionTypeStats == "true";
 
