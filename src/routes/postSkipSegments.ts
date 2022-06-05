@@ -592,6 +592,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     for (let i = 0; i < segments.length; i++) {
+        if (i > 1337) break;
         sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service);
     }
     return res.json(newSegments);
