@@ -7,7 +7,7 @@ export async function youtubeApiProxy(req: Request, res: Response): Promise<Resp
         return res.send("Invalid key").status(403);
     }
 
-    const videoID = req.query.videoID;
+    const videoID = req.query.videoID.toString();
     if (videoID === undefined || typeof(videoID) !== "string" || videoID.length !== 11) {
         return res.status(400).send("Invalid parameters");
     }
