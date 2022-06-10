@@ -76,7 +76,10 @@ addDefaults(config, {
         user: "",
         host: "",
         password: "",
-        port: 5432
+        port: 5432,
+        ssl: {
+            rejectUnauthorized: false
+        }
     },
     dumpDatabase: {
         enabled: false,
