@@ -17,11 +17,8 @@ if (config.mysql) {
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
-            user: config.postgres?.user,
-            host: config.postgres?.host,
+            ...config.postgres,
             database: "sponsorTimes",
-            password: config.postgres?.password,
-            port: config.postgres?.port,
         }
     });
 
@@ -32,11 +29,8 @@ if (config.mysql) {
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
-            user: config.postgres?.user,
-            host: config.postgres?.host,
-            database: "privateDB",
-            password: config.postgres?.password,
-            port: config.postgres?.port,
+            ...config.postgres,
+            database: "privateDB"
         }
     });
 } else {
