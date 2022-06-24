@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_videoID"
 
 CREATE INDEX IF NOT EXISTS "sponsorTimes_videoID_category"
     ON public."sponsorTimes" USING btree
-    (service COLLATE pg_catalog."default" ASC NULLS LAST, "videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "category" ASC NULLS LAST)
+    (service COLLATE pg_catalog."default" ASC NULLS LAST, "videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "category" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "sponsorTimes_description_gin"
