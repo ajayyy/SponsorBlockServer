@@ -21,6 +21,9 @@ export class Postgres implements IDatabase {
 
     async init(): Promise<void> {
         this.pool = new Pool(this.config.postgres);
+        this.pool.on("error", (err) => {
+            Logger.error(err.stack);
+        });
 
         if (!this.config.readOnly) {
             if (this.config.createDbIfNotExists) {
