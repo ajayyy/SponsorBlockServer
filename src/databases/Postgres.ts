@@ -27,20 +27,26 @@ export interface DatabaseConfig {
 
 export class Postgres implements IDatabase {
     private pool: Pool;
+    private lastPoolFail: number = 0;
+
     private poolRead: Pool;
+    private lastPoolReadFail: number = 0;
 
     constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
         this.pool = new Pool(this.config.postgres);
-        const errorHandler = (err: Error) => {
+        this.pool.on("error", (err) => {
             Logger.error(err.stack);
-        };
-        this.pool.on("error", errorHandler);
+            this.lastPoolFail = Date.now();
+        });
 
         if (this.config.postgresReadOnly) {
             this.poolRead = new Pool(this.config.postgresReadOnly);
-            this.poolRead.on("error", errorHandler);
+            this.poolRead.on("error", (err) => {
+                Logger.error(err.stack);
+                this.lastPoolReadFail = Date.now();
+            });
         }
 
         if (!this.config.readOnly) {
@@ -104,8 +110,11 @@ export class Postgres implements IDatabase {
     }
 
     private getClient(type: string): Promise<PoolClient> {
-        if (this.poolRead && (type === "get" || type === "all")
-                && Math.random() > 1 / (this.config.postgresReadOnly.weight + 1)) {
+        const readAvailable = this.poolRead && (type === "get" || type === "all");
+        const ignroreReadDueToFailure = this.lastPoolReadFail < Date.now() - 1000 * 30;
+        const readDueToFailure = this.lastPoolFail < Date.now() - 1000 * 30;
+        if (readAvailable && !ignroreReadDueToFailure && (readDueToFailure ||
+                Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
             return this.poolRead.connect();
         } else {
             return this.pool.connect();
