@@ -3,6 +3,7 @@ import { IDatabase, QueryType } from "./IDatabase";
 import { Client, Pool, PoolClient, types } from "pg";
 
 import fs from "fs";
+import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
 
 // return numeric (pg_type oid=1700) as float
 types.setTypeParser(1700, function(val) {
@@ -14,16 +15,33 @@ types.setTypeParser(20, function(val) {
     return parseInt(val, 10);
 });
 
+export interface DatabaseConfig {
+    dbSchemaFileName: string,
+    dbSchemaFolder: string,
+    fileNamePrefix: string,
+    readOnly: boolean,
+    createDbIfNotExists: boolean,
+    postgres: CustomPostgresConfig,
+    postgresReadOnly: CustomPostgresReadOnlyConfig
+}
+
 export class Postgres implements IDatabase {
     private pool: Pool;
+    private poolRead: Pool;
 
-    constructor(private config: Record<string, any>) {}
+    constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
         this.pool = new Pool(this.config.postgres);
-        this.pool.on("error", (err) => {
+        const errorHandler = (err: Error) => {
             Logger.error(err.stack);
-        });
+        };
+        this.pool.on("error", errorHandler);
+
+        if (this.config.postgresReadOnly) {
+            this.poolRead = new Pool(this.config.postgresReadOnly);
+            this.poolRead.on("error", errorHandler);
+        }
 
         if (!this.config.readOnly) {
             if (this.config.createDbIfNotExists) {
@@ -60,7 +78,7 @@ export class Postgres implements IDatabase {
 
         let client: PoolClient;
         try {
-            client = await this.pool.connect();
+            client = await this.getClient(type);
             const queryResult = await client.query({ text: query, values: params });
 
             switch (type) {
@@ -82,6 +100,15 @@ export class Postgres implements IDatabase {
             Logger.error(`prepare (postgres): ${err}`);
         } finally {
             client?.release();
+        }
+    }
+
+    private getClient(type: string): Promise<PoolClient> {
+        if (this.poolRead && (type === "get" || type === "all")
+                && Math.random() > 1 / (this.config.postgresReadOnly.weight + 1)) {
+            return this.poolRead.connect();
+        } else {
+            return this.pool.connect();
         }
     }
 

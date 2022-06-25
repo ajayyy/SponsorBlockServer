@@ -1,7 +1,7 @@
 import fs from "fs";
 import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
-import { isBoolean, isNumber } from "lodash";
+import { isNumber } from "lodash";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_POSTGRES ? "ci.json"
@@ -73,6 +73,17 @@ addDefaults(config, {
     poiMinimumStartTime: 2,
     postgres: {
         enabled: false,
+        user: "",
+        host: "",
+        password: "",
+        port: 5432,
+        ssl: {
+            rejectUnauthorized: false
+        }
+    },
+    postgresReadOnly: {
+        enabled: false,
+        weight: 1,
         user: "",
         host: "",
         password: "",

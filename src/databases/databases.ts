@@ -19,7 +19,11 @@ if (config.mysql) {
         postgres: {
             ...config.postgres,
             database: "sponsorTimes",
-        }
+        },
+        postgresReadOnly: config.postgresReadOnly ? {
+            ...config.postgresReadOnly,
+            database: "sponsorTimes"
+        } : null
     });
 
     privateDB = new Postgres({
@@ -31,7 +35,11 @@ if (config.mysql) {
         postgres: {
             ...config.postgres,
             database: "privateDB"
-        }
+        },
+        postgresReadOnly: config.postgresReadOnly ? {
+            ...config.postgresReadOnly,
+            database: "privateDB"
+        } : null
     });
 } else {
     db = new Sqlite({

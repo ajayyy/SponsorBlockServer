@@ -5,8 +5,12 @@ interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;
 }
 
-interface CustomPostgresConfig extends PoolConfig {
+export interface CustomPostgresConfig extends PoolConfig {
     enabled: boolean;
+}
+
+export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
+    weight: number;
 }
 
 export interface SBSConfig {
@@ -51,6 +55,7 @@ export interface SBSConfig {
     redis?: RedisConfig;
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: CustomPostgresConfig;
+    postgresReadOnly?: CustomPostgresReadOnlyConfig;
     dumpDatabase?: DumpDatabase;
     diskCacheURL: string;
     crons: CronJobOptions;
