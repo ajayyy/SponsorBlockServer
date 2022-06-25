@@ -27,10 +27,10 @@ export interface DatabaseConfig {
 
 export class Postgres implements IDatabase {
     private pool: Pool;
-    private lastPoolFail: number = 0;
+    private lastPoolFail = 0;
 
     private poolRead: Pool;
-    private lastPoolReadFail: number = 0;
+    private lastPoolReadFail = 0;
 
     constructor(private config: DatabaseConfig) {}
 
