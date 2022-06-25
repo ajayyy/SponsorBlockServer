@@ -111,8 +111,8 @@ export class Postgres implements IDatabase {
 
     private getClient(type: string): Promise<PoolClient> {
         const readAvailable = this.poolRead && (type === "get" || type === "all");
-        const ignroreReadDueToFailure = this.lastPoolReadFail < Date.now() - 1000 * 30;
-        const readDueToFailure = this.lastPoolFail < Date.now() - 1000 * 30;
+        const ignroreReadDueToFailure = this.lastPoolReadFail > Date.now() - 1000 * 30;
+        const readDueToFailure = this.lastPoolFail > Date.now() - 1000 * 30;
         if (readAvailable && !ignroreReadDueToFailure && (readDueToFailure ||
                 Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
             return this.poolRead.connect();
