@@ -76,10 +76,7 @@ addDefaults(config, {
         user: "",
         host: "",
         password: "",
-        port: 5432,
-        ssl: {
-            rejectUnauthorized: false
-        }
+        port: 5432
     },
     postgresReadOnly: {
         enabled: false,
@@ -87,10 +84,7 @@ addDefaults(config, {
         user: "",
         host: "",
         password: "",
-        port: 5432,
-        ssl: {
-            rejectUnauthorized: false
-        }
+        port: 5432
     },
     dumpDatabase: {
         enabled: false,
