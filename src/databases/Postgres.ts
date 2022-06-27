@@ -36,16 +36,20 @@ export class Postgres implements IDatabase {
 
     async init(): Promise<void> {
         this.pool = new Pool(this.config.postgres);
-        this.pool.on("error", (err) => {
+        this.pool.on("error", (err, client) => {
             Logger.error(err.stack);
             this.lastPoolFail = Date.now();
+
+            client.release(true);
         });
 
         if (this.config.postgresReadOnly) {
             this.poolRead = new Pool(this.config.postgresReadOnly);
-            this.poolRead.on("error", (err) => {
+            this.poolRead.on("error", (err, client) => {
                 Logger.error(err.stack);
                 this.lastPoolReadFail = Date.now();
+
+                client.release(true);
             });
         }
 
