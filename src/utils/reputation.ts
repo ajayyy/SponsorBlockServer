@@ -61,13 +61,13 @@ export function calculateReputationFromMetrics(metrics: ReputationDBResult): num
     }
 
     const downvoteRatio = metrics.downvotedSubmissions / metrics.totalSubmissions;
-    if (downvoteRatio > 0.3) {
-        return convertRange(Math.min(downvoteRatio, 0.7), 0.3, 0.7, -0.5, -2.5);
+    if (downvoteRatio > 0.5) {
+        return convertRange(Math.min(downvoteRatio, 0.7), 0.5, 0.7, -0.5, -2.5);
     }
 
     const nonSelfDownvoteRatio = metrics.nonSelfDownvotedSubmissions / metrics.totalSubmissions;
-    if (nonSelfDownvoteRatio > 0.05) {
-        return convertRange(Math.min(nonSelfDownvoteRatio, 0.4), 0.05, 0.4, -0.5, -2.5);
+    if (nonSelfDownvoteRatio > 0.3) {
+        return convertRange(Math.min(nonSelfDownvoteRatio, 0.4), 0.3, 0.4, -0.5, -2.5);
     }
 
     if (metrics.votedSum < 5) {

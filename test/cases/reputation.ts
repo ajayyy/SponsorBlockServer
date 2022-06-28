@@ -10,6 +10,8 @@ describe("reputation", () => {
     const userHashLowSubmissions = getHash(userIDLowSubmissions);
     const userIDHighDownvotes = "reputation-highdownvotes" as UserID;
     const userHashHighDownvotes = getHash(userIDHighDownvotes);
+    const userIDLowNonSelfDownvotes = "reputation-lownonselfdownvotes" as UserID;
+    const userHashLowNonSelfDownvotes = getHash(userIDLowNonSelfDownvotes);
     const userIDHighNonSelfDownvotes = "reputation-highnonselfdownvotes" as UserID;
     const userHashHighNonSelfDownvotes = getHash(userIDHighNonSelfDownvotes);
     const userIDNewSubmissions = "reputation-newsubmissions" as UserID;
@@ -45,15 +47,28 @@ describe("reputation", () => {
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-uuid-7", userHashHighDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
 
         // First video is considered a normal downvote, second is considered a self-downvote (ie. they didn't resubmit to fix their downvote)
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-uuid-0", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-uuid-0", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
         // Different category, same video
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-uuid-1", userHashHighNonSelfDownvotes, 1606240000000, 50, "intro", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-2", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-3", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-4", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-uuid-5", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-6", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-7", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-uuid-1", userHashLowNonSelfDownvotes, 1606240000000, 50, "intro", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-2", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-3", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-4", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-uuid-5", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-6", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-7", userHashLowNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+
+        // First videos is considered a normal downvote, last is considered a self-downvote (ie. they didn't resubmit to fix their downvote)
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-1-uuid-0", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        // Different category, same video
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1", userHashHighNonSelfDownvotes, 1606240000000, 50, "intro", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}B`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1-b", userHashHighNonSelfDownvotes, 1606240000000, 50, "intro", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}C`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1-c", userHashHighNonSelfDownvotes, 1606240000000, 50, "intro", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-2", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-3", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-4", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-1-uuid-5", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-6", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-7", userHashHighNonSelfDownvotes, 1606240000000, 50, "sponsor", 0, 0]);
 
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-0", userHashNewSubmissions, Date.now(), 50, "sponsor", 0, 0]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-1", userHashNewSubmissions, Date.now(), 50, "sponsor", 0, 0]);
@@ -141,10 +156,10 @@ describe("reputation", () => {
         };
         const data = await getReputation(getHash(userIDHighDownvotes));
         assert.strictEqual(data, calculateReputationFromMetrics(metrics));
-        assert.strictEqual(data, -2.125);
+        assert.strictEqual(data, -1.7500000000000002);
     });
 
-    it("user with high non self downvote ratio", async () => {
+    it("user with low non self downvote ratio", async () => {
         const metrics = {
             totalSubmissions: 8,
             downvotedSubmissions: 2,
@@ -155,9 +170,14 @@ describe("reputation", () => {
             oldUpvotedSubmissions: 1,
             mostUpvotedInLockedVideoSum: 0
         };
-        const data = await getReputation(userHashHighNonSelfDownvotes);
+        const data = await getReputation(userHashLowNonSelfDownvotes);
         assert.strictEqual(data, calculateReputationFromMetrics(metrics));
-        assert.strictEqual(data, -1.6428571428571428);
+        assert.strictEqual(data, 0);
+    });
+
+    it("user with high non self downvote ratio", async () => {
+        const data = await getReputation(userHashHighNonSelfDownvotes);
+        assert.strictEqual(data, -2.5);
     });
 
     it("user with mostly new submissions", async () => {

@@ -64,7 +64,7 @@ describe("getUserInfo", () => {
                     ignoredViewCount: 20,
                     segmentCount: 3,
                     ignoredSegmentCount: 2,
-                    reputation: -2,
+                    reputation: -1.5,
                     lastSegmentID: "uuid000005",
                     vip: false,
                     warnings: 0,
