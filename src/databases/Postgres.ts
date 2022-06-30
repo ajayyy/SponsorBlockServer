@@ -99,12 +99,6 @@ export class Postgres implements IDatabase {
             client = await this.getClient(type);
             client.on("error", (err) => {
                 Logger.error(err.stack);
-
-                try {
-                    client.release(true);
-                } catch (err) {
-                    Logger.error(`client (postgres): ${err}`);
-                }
             });
 
             const queryResult = await client.query({ text: query, values: params });
