@@ -10,8 +10,9 @@ let firefoxUsersCache = 0;
 
 // By the privacy friendly user counter
 let apiUsersCache = 0;
-
 let lastUserCountCheck = 0;
+
+updateExtensionUsers();
 
 export async function getTotalStats(req: Request, res: Response): Promise<void> {
     const userCountQuery = `(SELECT COUNT(*) FROM (SELECT DISTINCT "userID" from "sponsorTimes") t) "userCount",`;
