@@ -40,7 +40,11 @@ export class Postgres implements IDatabase {
             Logger.error(err.stack);
             this.lastPoolFail = Date.now();
 
-            client.release(true);
+            try {
+                client.release(true);
+            } catch (err) {
+                Logger.error(`prepare (postgres): ${err}`);
+            }
         });
 
         if (this.config.postgresReadOnly) {
@@ -49,7 +53,11 @@ export class Postgres implements IDatabase {
                 Logger.error(err.stack);
                 this.lastPoolReadFail = Date.now();
 
-                client.release(true);
+                try {
+                    client.release(true);
+                } catch (err) {
+                    Logger.error(`prepare (postgres): ${err}`);
+                }
             });
         }
 
@@ -109,7 +117,11 @@ export class Postgres implements IDatabase {
         } catch (err) {
             Logger.error(`prepare (postgres): ${err}`);
         } finally {
-            client?.release();
+            try {
+                client?.release();
+            } catch (err) {
+                Logger.error(`prepare (postgres): ${err}`);
+            }
         }
     }
 
