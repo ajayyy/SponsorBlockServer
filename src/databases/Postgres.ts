@@ -47,7 +47,7 @@ export class Postgres implements IDatabase {
             }
         });
 
-        if (this.config.postgresReadOnly) {
+        if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
             this.poolRead = new Pool(this.config.postgresReadOnly);
             this.poolRead.on("error", (err, client) => {
                 Logger.error(err.stack);
