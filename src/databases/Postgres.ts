@@ -43,7 +43,7 @@ export class Postgres implements IDatabase {
             try {
                 client.release(true);
             } catch (err) {
-                Logger.error(`prepare (postgres): ${err}`);
+                Logger.error(`pool (postgres): ${err}`);
             }
         });
 
@@ -56,7 +56,7 @@ export class Postgres implements IDatabase {
                 try {
                     client.release(true);
                 } catch (err) {
-                    Logger.error(`prepare (postgres): ${err}`);
+                    Logger.error(`poolRead (postgres): ${err}`);
                 }
             });
         }
@@ -97,6 +97,16 @@ export class Postgres implements IDatabase {
         let client: PoolClient;
         try {
             client = await this.getClient(type);
+            client.on("error", (err) => {
+                Logger.error(err.stack);
+
+                try {
+                    client.release(true);
+                } catch (err) {
+                    Logger.error(`client (postgres): ${err}`);
+                }
+            });
+
             const queryResult = await client.query({ text: query, values: params });
 
             switch (type) {
