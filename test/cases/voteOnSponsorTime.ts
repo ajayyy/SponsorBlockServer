@@ -67,6 +67,8 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 12, 0, 0, "duration-changed-uuid-3", "testman", 20, 0, "sponsor", "skip", 0, 0]);
         // add videoDuration to duration-changed-uuid-2
         await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
+        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "chapter-uuid-1", "testman", 0, 0, "chapter", "chapter", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "non-chapter-uuid-2", "testman", 0, 0, "sponsor", "skip", 0, 0]);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -218,6 +220,30 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentVotes(UUID);
                 assert.strictEqual(row.votes, 499);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should be able to completely downvote chapter using malicious", (done) => {
+        const UUID = "chapter-uuid-1";
+        postVote(randomID2, UUID, 30)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, -2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should not be able to completely downvote non-chapter using malicious", (done) => {
+        const UUID = "non-chapter-uuid-2";
+        postVote(randomID2, UUID, 30)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 0);
                 done();
             })
             .catch(err => done(err));

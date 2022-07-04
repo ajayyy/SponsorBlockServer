@@ -11,7 +11,7 @@ import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
 import { UserID } from "../types/user.model";
-import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType } from "../types/segments.model";
+import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 
@@ -36,6 +36,7 @@ interface FinalResponse {
 interface VoteData {
     UUID: string;
     nonAnonUserID: string;
+    originalType: VoteType;
     voteTypeEnum: number;
     isTempVIP: boolean;
     isVIP: boolean;
@@ -112,7 +113,9 @@ async function sendWebhooks(voteData: VoteData) {
 
     if (submissionInfoRow !== undefined && userSubmissionCountRow != undefined) {
         let webhookURL: string = null;
-        if (voteData.voteTypeEnum === voteTypes.normal) {
+        if (voteData.originalType === VoteType.Malicious) {
+            webhookURL = config.discordMaliciousReportWebhookURL;
+        } else if (voteData.voteTypeEnum === voteTypes.normal) {
             switch (voteData.finalResponse.webhookType) {
                 case VoteWebhookType.Normal:
                     webhookURL = config.discordReportChannelWebhookURL;
@@ -329,6 +332,8 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         return { status: 200 };
     }
 
+    const originalType = type;
+
     //hash the userID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
@@ -421,13 +426,13 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         let incrementAmount = 0;
         let oldIncrementAmount = 0;
 
-        if (type == 1) {
+        if (type == VoteType.Upvote) {
             //upvote
             incrementAmount = 1;
-        } else if (type == 0) {
+        } else if (type === VoteType.Downvote || type === VoteType.Malicious) {
             //downvote
             incrementAmount = -1;
-        } else if (type == 20) {
+        } else if (type == VoteType.Undo) {
             //undo/cancel vote
             incrementAmount = 0;
         } else {
@@ -435,17 +440,13 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             return { status: 400 };
         }
         if (votesRow) {
-            if (votesRow.type === 1) {
-                //upvote
+            if (votesRow.type === VoteType.Upvote) {
                 oldIncrementAmount = 1;
-            } else if (votesRow.type === 0) {
-                //downvote
+            } else if (votesRow.type === VoteType.Downvote) {
                 oldIncrementAmount = -1;
-            } else if (votesRow.type === 2) {
-                //extra downvote
+            } else if (votesRow.type === VoteType.ExtraDownvote) {
                 oldIncrementAmount = -4;
-            } else if (votesRow.type === 20) {
-                //undo/cancel vote
+            } else if (votesRow.type === VoteType.Undo) {
                 oldIncrementAmount = 0;
             } else if (votesRow.type < 0) {
                 //vip downvote
@@ -466,8 +467,14 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             type = incrementAmount;
         }
 
+        if (type === VoteType.Malicious) {
+            incrementAmount = -Math.min(segmentInfo.votes + 2 - oldIncrementAmount, 5);
+            type = incrementAmount;
+        }
+
         // Only change the database if they have made a submission before and haven't voted recently
         const userAbleToVote = (!(isOwnSubmission && incrementAmount > 0 && oldIncrementAmount >= 0)
+                && !(originalType === VoteType.Malicious && segmentInfo.actionType !== ActionType.Chapter)
                 && !finalResponse.blockVote
                 && finalResponse.finalStatus === 200
                 && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
@@ -480,9 +487,9 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         if (ableToVote) {
             //update the votes table
             if (votesRow) {
-                await privateDB.prepare("run", `UPDATE "votes" SET "type" = ? WHERE "userID" = ? AND "UUID" = ?`, [type, userID, UUID]);
+                await privateDB.prepare("run", `UPDATE "votes" SET "type" = ?, "originalType" = ? WHERE "userID" = ? AND "UUID" = ?`, [type, originalType, userID, UUID]);
             } else {
-                await privateDB.prepare("run", `INSERT INTO "votes" VALUES(?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, type, nonAnonUserID]);
+                await privateDB.prepare("run", `INSERT INTO "votes" VALUES(?, ?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, type, nonAnonUserID, originalType]);
             }
 
             // update the vote count on this sponsorTime
@@ -510,6 +517,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             sendWebhooks({
                 UUID,
                 nonAnonUserID,
+                originalType,
                 voteTypeEnum,
                 isTempVIP,
                 isVIP,

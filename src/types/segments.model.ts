@@ -120,3 +120,12 @@ export enum SortableFields {
     votes = "votes",
     views = "views",
 }
+
+
+export enum VoteType {
+    Downvote = 0,
+    Upvote = 1,
+    ExtraDownvote = 2,
+    Undo = 20,
+    Malicious = 30
+}

@@ -24,6 +24,7 @@ export interface SBSConfig {
     discordFailedReportChannelWebhookURL?: string;
     discordFirstTimeSubmissionsWebhookURL?: string;
     discordCompletelyIncorrectReportWebhookURL?: string;
+    discordMaliciousReportWebhookURL?: string;
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
     userCounterURL?: string;

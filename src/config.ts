@@ -42,6 +42,7 @@ addDefaults(config, {
     discordNeuralBlockRejectWebhookURL: null,
     discordFailedReportChannelWebhookURL: null,
     discordReportChannelWebhookURL: null,
+    discordMaliciousReportWebhookURL: null,
     getTopUsersCacheTimeMinutes: 240,
     globalSalt: null,
     mode: "",

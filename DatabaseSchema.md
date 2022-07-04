@@ -209,6 +209,7 @@
 | userID | TEXT | not null |
 | hashedIP | TEXT | not null |
 | type | INTEGER | not null |
+| originalVoteType | INTEGER | not null | # Since type was reused to also specify the number of votes removed when less than 0, this is being used for the actual type
 
 | index | field |
 | -- | :--: |
