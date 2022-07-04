@@ -37,7 +37,7 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
             ${additionalQuery}
             count(*) as "segmentCount"
             FROM "sponsorTimes"
-            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" !=1`,
+            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1 AND "actionType" != 'chapter'`,
         [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, userID]);
         const source = (row.minutesSaved != null) ? row : {};
         const handler = { get: (target: Record<string, any>, name: string) => target?.[name] || 0 };
