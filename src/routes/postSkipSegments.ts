@@ -492,8 +492,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
-    const isVIP = await isUserVIP(userID);
-    const isTempVIP = await isUserTempVIP(userID, videoID);
+    const isVIP = (await isUserVIP(userID)) || (await isUserTempVIP(userID, videoID));
     const rawIP = getIP(req);
 
     const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
@@ -506,7 +505,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
-    if (!isVIP && !isTempVIP) {
+    if (!isVIP) {
         const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoInfo, videoDurationParam);
         if (!autoModerateCheckResult.pass) {
             return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
