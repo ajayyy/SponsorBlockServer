@@ -489,7 +489,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             if (votesRow) {
                 await privateDB.prepare("run", `UPDATE "votes" SET "type" = ?, "originalType" = ? WHERE "userID" = ? AND "UUID" = ?`, [type, originalType, userID, UUID]);
             } else {
-                await privateDB.prepare("run", `INSERT INTO "votes" VALUES(?, ?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, type, nonAnonUserID, originalType]);
+                await privateDB.prepare("run", `INSERT INTO "votes" ("UUID", "userID", "hashedIP", "type", "normalUserID", "originalType") VALUES(?, ?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, type, nonAnonUserID, originalType]);
             }
 
             // update the vote count on this sponsorTime
