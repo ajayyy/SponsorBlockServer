@@ -27,6 +27,7 @@ export interface SBSConfig {
     discordMaliciousReportWebhookURL?: string;
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
+    minReputationToSubmitChapter: number;
     userCounterURL?: string;
     proxySubmission?: string;
     behindProxy: string | boolean;

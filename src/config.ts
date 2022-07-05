@@ -43,6 +43,7 @@ addDefaults(config, {
     discordFailedReportChannelWebhookURL: null,
     discordReportChannelWebhookURL: null,
     discordMaliciousReportWebhookURL: null,
+    minReputationToSubmitChapter: 0,
     getTopUsersCacheTimeMinutes: 240,
     globalSalt: null,
     mode: "",

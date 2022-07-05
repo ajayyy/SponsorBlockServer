@@ -105,6 +105,10 @@ async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
     }
 }
 
+async function dbCanSubmitChapter(userID: HashedUserID): Promise<boolean> {
+    return (await isUserVIP(userID)) || (await getReputation(userID)) > config.minReputationToSubmitChapter;
+}
+
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -119,16 +123,17 @@ const functionSwitch = (cases: cases) => (defaultCase: string) => (key: string) 
 const dbGetValue = (userID: HashedUserID, property: string): Promise<string|SegmentUUID|number> => {
     return functionSwitch({
         userID,
-        userName: dbGetUsername(userID),
-        ignoredSegmentCount: dbGetIgnoredSegmentCount(userID),
-        viewCount: dbGetViewsForUser(userID),
-        ignoredViewCount: dbGetIgnoredViewsForUser(userID),
-        warnings: dbGetWarningsForUser(userID),
-        warningReason: dbGetActiveWarningReasonForUser(userID),
-        banned: dbGetBanned(userID),
-        reputation: getReputation(userID),
-        vip: isUserVIP(userID),
-        lastSegmentID: dbGetLastSegmentForUser(userID),
+        userName: () => dbGetUsername(userID),
+        ignoredSegmentCount: () => dbGetIgnoredSegmentCount(userID),
+        viewCount: () => dbGetViewsForUser(userID),
+        ignoredViewCount: () => dbGetIgnoredViewsForUser(userID),
+        warnings: () => dbGetWarningsForUser(userID),
+        warningReason: () => dbGetActiveWarningReasonForUser(userID),
+        banned: () => dbGetBanned(userID),
+        reputation: () => getReputation(userID),
+        vip: () => isUserVIP(userID),
+        lastSegmentID: () => dbGetLastSegmentForUser(userID),
+        canSubmitChapter: () => dbCanSubmitChapter(userID)
     })("")(property);
 };
 
