@@ -101,6 +101,7 @@ export interface VideoData {
 export interface SegmentCache {
     shadowHiddenSegmentIPs: SBRecord<VideoID, SBRecord<string, {hashedIP: HashedIP}[]>>,
     userHashedIP?: HashedIP
+    userHashedIPPromise?: Promise<HashedIP>;
 }
 
 export interface DBLock {

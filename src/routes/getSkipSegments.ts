@@ -27,6 +27,10 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
         if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
+            if (cache.userHashedIP === undefined && cache.userHashedIPPromise === undefined) {
+                cache.userHashedIPPromise = getHashCache((getIP(req) + config.globalSalt) as IPAddress);
+            }
+
             const service = getService(req?.query?.service as string);
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
                 [videoID, segment.timeSubmitted, service]) as Promise<{ hashedIP: HashedIP }[]>;
@@ -35,9 +39,8 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
         const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
 
-        if (ipList?.length > 0 && cache.userHashedIP === undefined) {
-            //hash the IP only if it's strictly necessary
-            cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
+        if (ipList?.length > 0 && cache.userHashedIP === undefined && cache.userHashedIPPromise) {
+            cache.userHashedIP = await cache.userHashedIPPromise;
         }
         //if this isn't their ip, don't send it to them
         const shouldShadowHide = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
@@ -133,7 +136,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                 return acc;
             }, {});
 
-        for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
+        await Promise.all(Object.entries(segmentPerVideoID).map(async ([videoID, videoData]) => {
             const data: VideoData = {
                 hash: videoData.hash,
                 segments: [],
@@ -153,7 +156,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             if (data.segments.length > 0) {
                 segments[videoID] = data;
             }
-        }
+        }));
 
         return segments;
     } catch (err) {
@@ -283,7 +286,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
     let overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
-    for (const segment of segments) {
+    await Promise.all(segments.map(async (segment) => {
         if (segment.startTime >= cursor) {
             currentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
             overlappingSegmentsGroups.push(currentGroup);
@@ -309,7 +312,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
         }
 
         cursor = Math.max(cursor, segment.endTime);
-    }
+    }));
 
     overlappingSegmentsGroups = splitPercentOverlap(overlappingSegmentsGroups);
     overlappingSegmentsGroups.forEach((group) => {
