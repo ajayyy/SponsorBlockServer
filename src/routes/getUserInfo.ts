@@ -143,7 +143,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
-    const allProperties: string[] = [...defaultProperties, "banned"];
+    const allProperties: string[] = [...defaultProperties, "banned", "canSubmitChapter"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value
