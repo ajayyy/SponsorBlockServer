@@ -7,6 +7,7 @@ import { HashedUserID, UserID } from "../types/user.model";
 import { getReputation } from "../utils/reputation";
 import { SegmentUUID } from "../types/segments.model";
 import { config } from "../config";
+import { canSubmitChapter } from "../utils/permissions";
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
@@ -105,10 +106,6 @@ async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
     }
 }
 
-async function dbCanSubmitChapter(userID: HashedUserID): Promise<boolean> {
-    return (await isUserVIP(userID)) || (await getReputation(userID)) > config.minReputationToSubmitChapter;
-}
-
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -133,7 +130,7 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
         reputation: () => getReputation(userID),
         vip: () => isUserVIP(userID),
         lastSegmentID: () => dbGetLastSegmentForUser(userID),
-        canSubmitChapter: () => dbCanSubmitChapter(userID)
+        canSubmitChapter: () => canSubmitChapter(userID)
     })("")(property);
 };
 

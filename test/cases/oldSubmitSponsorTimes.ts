@@ -44,8 +44,17 @@ describe("postVideoSponsorTime (Old submission method)", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 for missing params", (done) => {
-        client.post(endpoint, { params: { startTime: 1, endTime: 10, userID } })
+    it("Should return 400 for missing video", (done) => {
+        client.get(endpoint, { params: { startTime: 1, endTime: 10, userID } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 for missing userID", (done) => {
+        client.get(endpoint, { params: { videoID: videoID1, startTime: 1, endTime: 10 } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();

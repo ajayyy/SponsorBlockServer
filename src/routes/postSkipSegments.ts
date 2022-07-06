@@ -21,6 +21,7 @@ import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
+import { canSubmitChapter } from "../utils/permissions";
 
 type CheckResult = {
     pass: boolean,
@@ -200,7 +201,8 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
     return CHECK_PASS;
 }
 
-function checkInvalidFields(videoID: VideoID, userID: UserID, segments: IncomingSegment[]): CheckResult {
+async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID: HashedUserID
+    , segments: IncomingSegment[]): Promise<CheckResult> {
     const invalidFields = [];
     const errors = [];
     if (typeof videoID !== "string" || videoID?.length == 0) {
@@ -226,6 +228,10 @@ function checkInvalidFields(videoID: VideoID, userID: UserID, segments: Incoming
                 || (segmentPair.actionType === ActionType.Chapter && segmentPair.description.length > 60 )
                 || (segmentPair.description.length !== 0 && segmentPair.actionType !== ActionType.Chapter)) {
             invalidFields.push("segment description");
+        }
+
+        if (segmentPair.actionType === ActionType.Chapter && !(await canSubmitChapter(hashedUserID))) {
+            invalidFields.push("permission to submit chapters");
         }
     }
 
@@ -478,13 +484,13 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     // eslint-disable-next-line prefer-const
     let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
-    const invalidCheckResult = checkInvalidFields(videoID, paramUserID, segments);
+    //hash the userID
+    const userID = await getHashCache(paramUserID || "");
+
+    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
-
-    //hash the userID
-    const userID = await getHashCache(paramUserID);
 
     const userWarningCheckResult = await checkUserActiveWarning(userID);
     if (!userWarningCheckResult.pass) {

@@ -48,6 +48,7 @@ import { getRating } from "./routes/ratings/getRating";
 import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
+import { addFeature } from "./routes/addFeature";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -195,6 +196,8 @@ function setupRoutes(router: Router) {
     router.get("/api/userStats", getUserStats);
 
     router.get("/api/lockReason", getLockReason);
+
+    router.post("/api/feature", addFeature)
 
     // ratings
     router.get("/api/ratings/rate/:prefix", getRating);

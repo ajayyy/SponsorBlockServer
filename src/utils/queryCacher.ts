@@ -1,8 +1,8 @@
 import redis from "../utils/redis";
 import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey } from "./redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import { Feature, HashedUserID, UserID } from "../types/user.model";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
@@ -90,9 +90,14 @@ function clearRatingCache(videoInfo: { hashedVideoID: VideoIDHash; service: Serv
     }
 }
 
+function clearFeatureCache(userID: HashedUserID, feature: Feature): void {
+    redis.del(userFeatureKey(userID, feature)).catch((err) => Logger.error(err));
+}
+
 export const QueryCacher = {
     get,
     getAndSplit,
     clearSegmentCache,
-    clearRatingCache
+    clearRatingCache,
+    clearFeatureCache
 };

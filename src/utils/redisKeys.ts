@@ -1,5 +1,5 @@
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { HashedUserID, UserID } from "../types/user.model";
+import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { HashedValue } from "../types/hash.model";
 import { Logger } from "./logger";
 
@@ -37,3 +37,7 @@ export function shaHashKey(singleIter: HashedValue): string {
 
 export const tempVIPKey = (userID: HashedUserID): string =>
     `vip.temp.${userID}`;
+
+export function userFeatureKey (userID: HashedUserID, feature: Feature): string {
+    return `user.${userID}.feature.${feature}`;
+}

@@ -109,3 +109,10 @@ CREATE INDEX IF NOT EXISTS "ratings_videoID"
     ON public."ratings" USING btree
     ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+--- userFeatures
+
+CREATE INDEX IF NOT EXISTS "userFeatures_userID"
+    ON public."userFeatures" USING btree
+    ("userID" COLLATE pg_catalog."default" ASC NULLS LAST, "feature" ASC NULLS LAST)
+    TABLESPACE pg_default;

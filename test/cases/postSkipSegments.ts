@@ -7,6 +7,7 @@ import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
 import { YouTubeApiMock } from "../youtubeMock";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { Feature } from "../../src/types/user.model";
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
@@ -15,6 +16,7 @@ sinonStub.callsFake(YouTubeApiMock.listVideos);
 describe("postSkipSegments", () => {
 // Constant and helpers
     const submitUserOne = `PostSkipUser1${".".repeat(18)}`;
+    const submitUserOneHash = getHash(submitUserOne);
     const submitUserTwo = `PostSkipUser2${".".repeat(18)}`;
     const submitUserTwoHash = getHash(submitUserTwo);
     const submitUserThree = `PostSkipUser3${".".repeat(18)}`;
@@ -30,7 +32,6 @@ describe("postSkipSegments", () => {
     const banUser01 = "ban-user01-loremipsumdolorsitametconsectetur";
     const banUser01Hash = getHash(banUser01);
 
-    const submitUserOneHash = getHash(submitUserOne);
     const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
     const warnVideoID = "postSkip2";
     const badInputVideoID = "dQw4w9WgXcQ";
@@ -65,6 +66,15 @@ describe("postSkipSegments", () => {
 
         db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 0, 0, 0, "full-video-duration-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 123, 0, "full_video_duration_segment"]);
         db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 25, 30, 0, "full-video-duration-uuid-1", submitUserTwoHash, 0, 0, "sponsor", "skip", 123, 0, "full_video_duration_segment"]);
+
+        const reputationVideoID = "post_reputation_video";
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 2,"post_reputation-5-uuid-0", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 2,"post_reputation-5-uuid-1", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 2,"post_reputation-5-uuid-2", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 2,"post_reputation-5-uuid-3", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 2,"post_reputation-5-uuid-4", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 0,"post_reputation-5-uuid-6", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
+        db.prepare("run", insertSponsorTimeQuery, [reputationVideoID, 1, 11, 0,"post_reputation-5-uuid-7", submitUserOneHash, 1606240000000, 50, "sponsor", "skip", 0, 0, reputationVideoID]);
 
         const now = Date.now();
         const warnVip01Hash = getHash("warn-vip01-qwertyuiopasdfghjklzxcvbnm");
@@ -102,6 +112,9 @@ describe("postSkipSegments", () => {
 
         // ban user
         db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, [banUser01Hash]);
+
+        // user feature
+        db.prepare("run", `INSERT INTO "userFeatures" ("userID", "feature", "issuerUserID", "timeSubmitted") VALUES(?, ?, ?, ?)`, [submitUserTwoHash, Feature.ChapterSubmitter, "some-user", 0]);
     });
 
     it("Should be able to submit a single time (Params method)", (done) => {
@@ -189,10 +202,38 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to submit a single chapter (JSON method)", (done) => {
+    it("Should be able to submit a single chapter due to reputation (JSON method)", (done) => {
         const videoID = "postSkipChapter1";
         postSkipSegmentJSON({
             userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "chapter",
+                actionType: "chapter",
+                description: "This is a chapter"
+            }],
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabaseChapter(videoID);
+                const expected = {
+                    startTime: 0,
+                    endTime: 10,
+                    category: "chapter",
+                    actionType: "chapter",
+                    description: "This is a chapter"
+                };
+                assert.ok(partialDeepEquals(row, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to submit a single chapter due to user feature (JSON method)", (done) => {
+        const videoID = "postSkipChapter2";
+        postSkipSegmentJSON({
+            userID: submitUserTwo,
             videoID,
             segments: [{
                 segment: [0, 10],
@@ -237,8 +278,27 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should not be able to submit a chapter without permission (JSON method)", (done) => {
+        const videoID = "postSkipChapter3";
+        postSkipSegmentJSON({
+            userID: submitUserThree,
+            videoID,
+            segments: [{
+                segment: [0, 10],
+                category: "chapter",
+                actionType: "chapter",
+                description: "This is a chapter"
+            }],
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should not be able to submit a chapter with skip action type (JSON method)", (done) => {
-        const videoID = "postSkipChapter2";
+        const videoID = "postSkipChapter4";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
@@ -258,7 +318,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should not be able to submit a sponsor with a description (JSON method)", (done) => {
-        const videoID = "postSkipChapter3";
+        const videoID = "postSkipChapter5";
         postSkipSegmentJSON({
             userID: submitUserOne,
             videoID,
