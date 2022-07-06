@@ -39,7 +39,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
         const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
 
-        if (ipList?.length > 0 && cache.userHashedIP === undefined && cache.userHashedIPPromise) {
+        if (ipList?.length > 0 && cache.userHashedIP === undefined) {
             cache.userHashedIP = await cache.userHashedIPPromise;
         }
         //if this isn't their ip, don't send it to them
@@ -278,6 +278,9 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
 async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
+    const reputationPromises = segments.map(segment =>
+        segment.userID ? getReputation(segment.userID) : null);
+
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
@@ -286,7 +289,8 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
     let overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
-    await Promise.all(segments.map(async (segment) => {
+    for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
         if (segment.startTime >= cursor) {
             currentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
             overlappingSegmentsGroups.push(currentGroup);
@@ -298,7 +302,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
             currentGroup.votes += segment.votes;
         }
 
-        if (segment.userID) segment.reputation = Math.min(segment.reputation, await getReputation(segment.userID));
+        if (segment.userID) segment.reputation = Math.min(segment.reputation, await reputationPromises[i]);
         if (segment.reputation > 0) {
             currentGroup.reputation += segment.reputation;
         }
@@ -312,7 +316,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
         }
 
         cursor = Math.max(cursor, segment.endTime);
-    }));
+    }
 
     overlappingSegmentsGroups = splitPercentOverlap(overlappingSegmentsGroups);
     overlappingSegmentsGroups.forEach((group) => {
