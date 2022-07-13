@@ -1,8 +1,8 @@
 import { config } from "../config";
 import { Logger } from "./logger";
 import { createClient } from "redis";
-import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@node-redis/client/dist/lib/commands";
-import { ClientCommandOptions } from "@node-redis/client/dist/lib/client";
+import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@redis/client/dist/lib/commands";
+import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 
 interface RedisSB {
@@ -11,7 +11,7 @@ interface RedisSB {
     setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
-    sendCommand(args: RedisCommandArguments, options?: ClientCommandOptions): Promise<RedisReply>;
+    sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
     quit(): Promise<void>;
 }
 
@@ -29,7 +29,7 @@ if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
     client.connect();
-    exportClient = client;
+    exportClient = client as RedisSB;
 
     const timeoutDuration = 40;
     const get = client.get.bind(client);
