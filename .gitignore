@@ -45,3 +45,6 @@ working
 .DS_Store
 /.idea/
 /dist/
+
+# nyc coverage output
+.nyc_output/
