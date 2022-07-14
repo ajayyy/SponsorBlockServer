@@ -55,6 +55,8 @@ function convertRange(value: number, currentMin: number, currentMax: number, tar
 }
 
 export function calculateReputationFromMetrics(metrics: ReputationDBResult): number {
+    if (!metrics) return 0;
+
     // Grace period
     if (metrics.totalSubmissions < 5) {
         return 0;
