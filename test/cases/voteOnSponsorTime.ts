@@ -59,6 +59,8 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 12, 0, 1, "category-change-uuid-6", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 14, 0, 0, "category-change-uuid-7", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-2", 7, 14, 0, 0, "category-warnvote-uuid-0", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-2", 8, 13, 0, 0, "category-banvote-uuid-0", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["duration-update", 1, 10, 0, 0, "duration-update-uuid-1", "testman", 0, 0, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["full-video", 1, 10, 0, 0, "full-video-uuid-1", "testman", 0, 0, "sponsor", "full", 0, 0]);
         // videoDuration change
@@ -440,6 +442,32 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
                 assert.strictEqual(row.category, category);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to vote for a category of a segment (Too many warning)", (done) => {
+        const UUID = "category-warnvote-uuid-0";
+        const category = "preview";
+        postVoteCategory("warn-voteuser01", UUID, category)
+            .then(res => {
+                assert.strictEqual(res.status, 403);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to vote for a category as a shadowbanned user, but it shouldn't add your vote to the database", (done) => {
+        const UUID = "category-banvote-uuid-0";
+        const category = "preview";
+        postVoteCategory("randomID4", UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
+                assert.strictEqual(row.category, "intro");
+                assert.strictEqual(categoryRows.length, 0);
                 done();
             })
             .catch(err => done(err));

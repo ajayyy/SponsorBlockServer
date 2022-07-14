@@ -247,7 +247,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     const timeSubmitted = Date.now();
 
     const voteAmount = (isVIP || isTempVIP) ? 500 : 1;
-    const ableToVote = isVIP || isTempVIP || finalResponse.finalStatus === 200 || true;
+    const ableToVote = finalResponse.finalStatus === 200
+                        && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID])) === undefined;
 
     if (ableToVote) {
         // Add the vote
@@ -278,7 +279,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
         // Change this value from 1 in the future to make it harder to change categories
         // Done this way without ORs incase the value is zero
-        const currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? startingVotes : currentCategoryInfo.votes;
+        const currentCategoryCount = currentCategoryInfo?.votes ?? startingVotes;
 
         // Add submission as vote
         if (!currentCategoryInfo && submissionInfo) {
@@ -290,7 +291,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
         //TODO: In the future, raise this number from zero to make it harder to change categories
         // VIPs change it every time
-        if (nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2) || isVIP || isTempVIP || isOwnSubmission) {
+        if (isVIP || isTempVIP || isOwnSubmission || nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2)) {
             // Replace the category
             await db.prepare("run", `update "sponsorTimes" set "category" = ? where "UUID" = ?`, [category, UUID]);
         }
@@ -367,6 +368,19 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         return { status: 400 };
     }
 
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
+        [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
+    ));
+
+    if (warnings.length >= config.maxNumberOfActiveWarnings) {
+        const warningReason = warnings[0]?.reason;
+        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
+                "Could you please send a message in Discord or Matrix so we can further help you?" +
+                `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
+    }
+
     // no type but has category, categoryVote
     if (!type && category) {
         return categoryVote(UUID, nonAnonUserID, isVIP, isTempVIP, isOwnSubmission, category, hashedIP, finalResponse);
@@ -394,19 +408,6 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             // Already downvoted enough, ignore
             return { status: 200 };
         }
-    }
-
-    const MILLISECONDS_IN_HOUR = 3600000;
-    const now = Date.now();
-    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
-        [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
-    ));
-
-    if (warnings.length >= config.maxNumberOfActiveWarnings) {
-        const warningReason = warnings[0]?.reason;
-        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
-            "Could you please send a message in Discord or Matrix so we can further help you?" +
-            `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
     }
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
