@@ -279,7 +279,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
         // Change this value from 1 in the future to make it harder to change categories
         // Done this way without ORs incase the value is zero
-        const currentCategoryCount = (currentCategoryInfo === undefined || currentCategoryInfo === null) ? startingVotes : currentCategoryInfo.votes;
+        const currentCategoryCount = currentCategoryInfo?.votes ?? startingVotes;
 
         // Add submission as vote
         if (!currentCategoryInfo && submissionInfo) {
