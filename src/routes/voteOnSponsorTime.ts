@@ -367,6 +367,19 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         return { status: 400 };
     }
 
+    const MILLISECONDS_IN_HOUR = 3600000;
+    const now = Date.now();
+    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
+        [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
+    ));
+
+    if (warnings.length >= config.maxNumberOfActiveWarnings) {
+        const warningReason = warnings[0]?.reason;
+        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
+                "Could you please send a message in Discord or Matrix so we can further help you?" +
+                `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
+    }
+
     // no type but has category, categoryVote
     if (!type && category) {
         return categoryVote(UUID, nonAnonUserID, isVIP, isTempVIP, isOwnSubmission, category, hashedIP, finalResponse);
@@ -394,19 +407,6 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             // Already downvoted enough, ignore
             return { status: 200 };
         }
-    }
-
-    const MILLISECONDS_IN_HOUR = 3600000;
-    const now = Date.now();
-    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
-        [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
-    ));
-
-    if (warnings.length >= config.maxNumberOfActiveWarnings) {
-        const warningReason = warnings[0]?.reason;
-        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
-            "Could you please send a message in Discord or Matrix so we can further help you?" +
-            `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
     }
 
     const voteTypeEnum = (type == 0 || type == 1 || type == 20) ? voteTypes.normal : voteTypes.incorrect;
