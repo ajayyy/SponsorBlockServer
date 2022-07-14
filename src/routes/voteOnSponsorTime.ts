@@ -291,7 +291,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
 
         //TODO: In the future, raise this number from zero to make it harder to change categories
         // VIPs change it every time
-        if (nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2) || isVIP || isTempVIP || isOwnSubmission) {
+        if (isVIP || isTempVIP || isOwnSubmission || nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2)) {
             // Replace the category
             await db.prepare("run", `update "sponsorTimes" set "category" = ? where "UUID" = ?`, [category, UUID]);
         }
