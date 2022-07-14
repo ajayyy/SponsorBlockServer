@@ -247,7 +247,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     const timeSubmitted = Date.now();
 
     const voteAmount = (isVIP || isTempVIP) ? 500 : 1;
-    const ableToVote = isVIP || isTempVIP || finalResponse.finalStatus === 200 || true;
+    const ableToVote = finalResponse.finalStatus === 200
+                        && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID])) === undefined;
 
     if (ableToVote) {
         // Add the vote
