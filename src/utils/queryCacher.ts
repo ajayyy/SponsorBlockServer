@@ -4,7 +4,7 @@ import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, ski
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
 
-async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
+async function get<T>(fetchFromDB: () => Promise<T>, key: string, cacheEmpty = true): Promise<T> {
     try {
         const reply = await redis.get(key);
         if (reply) {
@@ -16,7 +16,9 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.set(key, JSON.stringify(data)).catch((err) => Logger.error(err));
+    if (cacheEmpty || data) {
+        redis.set(key, JSON.stringify(data)).catch((err) => Logger.error(err));
+    }
 
     return data;
 }
