@@ -302,7 +302,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
             currentGroup.votes += segment.votes;
         }
 
-        if (segment.userID) segment.reputation = Math.min(segment.reputation, await reputationPromises[i]);
+        if (segment.userID) segment.reputation = Math.min(segment.reputation, (await reputationPromises[i]) || Infinity);
         if (segment.reputation > 0) {
             currentGroup.reputation += segment.reputation;
         }
