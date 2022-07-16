@@ -23,6 +23,8 @@ describe("getSkipSegments", () => {
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, 0, "requiredSegmentVid4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 0, 0, "requiredSegmentVid-hidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 1, 0, ""]);
+        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 0, 0, "requiredSegmentVid-shadowhidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 1, ""]);
         await db.prepare("run", query, ["chapterVid", 60, 80, 2, 0, "chapterVid-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 1"]);
         await db.prepare("run", query, ["chapterVid", 70, 75, 2, 0, "chapterVid-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 2"]);
         await db.prepare("run", query, ["chapterVid", 71, 75, 2, 0, "chapterVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 3"]);
@@ -441,6 +443,44 @@ describe("getSkipSegments", () => {
                     UUID: required1,
                 }, {
                     UUID: required2,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get hidden segments with requiredSegments", (done) => {
+        const required3 = "requiredSegmentVid3";
+        const requiredHidden = "requiredSegmentVid-hidden";
+        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${requiredHidden}","${required3}"]` } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 2);
+                const expected = [{
+                    UUID: requiredHidden,
+                }, {
+                    UUID: required3,
+                }];
+                assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get shadowhidden segments with requiredSegments", (done) => {
+        const required2 = "requiredSegmentVid2";
+        const requiredShadowHidden = "requiredSegmentVid-shadowhidden";
+        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${required2}","${requiredShadowHidden}"]` } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 2);
+                const expected = [{
+                    UUID: required2,
+                }, {
+                    UUID: requiredShadowHidden,
                 }];
                 assert.ok(partialDeepEquals(data, expected));
                 done();
