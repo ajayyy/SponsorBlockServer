@@ -52,8 +52,8 @@ export async function postWarning(req: Request, res: Response): Promise<Response
         // check if warning is still within issue time and warning is not enabled
         } else if (checkExpiredWarning(previousWarning) ) {
             await db.prepare(
-                "run", 'UPDATE "warnings" SET "enabled" = 1 WHERE "userID" = ? AND "issueTime" = ?',
-                [userID, previousWarning.issueTime]
+                "run", 'UPDATE "warnings" SET "enabled" = 1, "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
+                [reason, userID, previousWarning.issueTime]
             );
             resultStatus = "re-enabled";
         } else {
