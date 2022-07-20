@@ -32,6 +32,8 @@ export class Postgres implements IDatabase {
     private poolRead: Pool;
     private lastPoolReadFail = 0;
 
+    private maxTries = 3;
+
     constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
@@ -94,27 +96,36 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        try {
-            const queryResult = await this.getPool(type, options).query({ text: query, values: params });
+        let tries = 0;
+        do {
+            tries++;
 
-            switch (type) {
-                case "get": {
-                    const value = queryResult.rows[0];
-                    Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
-                    return value;
+            try {
+                const queryResult = await this.getPool(type, options).query({ text: query, values: params });
+
+                switch (type) {
+                    case "get": {
+                        const value = queryResult.rows[0];
+                        Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
+                        return value;
+                    }
+                    case "all": {
+                        const values = queryResult.rows;
+                        Logger.debug(`result (postgres): ${JSON.stringify(values)}`);
+                        return values;
+                    }
+                    case "run": {
+                        return;
+                    }
                 }
-                case "all": {
-                    const values = queryResult.rows;
-                    Logger.debug(`result (postgres): ${JSON.stringify(values)}`);
-                    return values;
+            } catch (err) {
+                if (err instanceof Error && err.message.includes("terminating connection due to conflict with recovery")) {
+                    options.useReplica = false;
                 }
-                case "run": {
-                    break;
-                }
+
+                Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
-        } catch (err) {
-            Logger.error(`prepare (postgres): ${err}`);
-        }
+        } while ((type === "get" || type === "all") && tries < this.maxTries);
     }
 
     private getPool(type: string, options: QueryOption): Pool {
