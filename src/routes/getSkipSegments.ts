@@ -33,7 +33,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
             const service = getService(req?.query?.service as string);
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
-                [videoID, segment.timeSubmitted, service]) as Promise<{ hashedIP: HashedIP }[]>;
+                [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
             cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service));
         }
 
@@ -171,7 +171,8 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
             "all",
             `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
-            [`${hashedVideoIDPrefix}%`, service]
+            [`${hashedVideoIDPrefix}%`, service],
+            { useReplica: true }
         ) as Promise<DBSegment[]>;
 
     if (hashedVideoIDPrefix.length === 4) {
@@ -187,7 +188,8 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
             "all",
             `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
-            [videoID, service]
+            [videoID, service],
+            { useReplica: true }
         ) as Promise<DBSegment[]>;
 
     return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service));

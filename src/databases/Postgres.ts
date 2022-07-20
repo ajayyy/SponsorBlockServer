@@ -1,5 +1,5 @@
 import { Logger } from "../utils/logger";
-import { IDatabase, QueryType } from "./IDatabase";
+import { IDatabase, QueryOption, QueryType } from "./IDatabase";
 import { Client, Pool, PoolClient, types } from "pg";
 
 import fs from "fs";
@@ -82,7 +82,7 @@ export class Postgres implements IDatabase {
         }
     }
 
-    async prepare(type: QueryType, query: string, params?: any[]): Promise<any[]> {
+    async prepare(type: QueryType, query: string, params?: any[], options: QueryOption = {}): Promise<any[]> {
         // Convert query to use numbered parameters
         let count = 1;
         for (let char = 0; char < query.length; char++) {
@@ -95,7 +95,7 @@ export class Postgres implements IDatabase {
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
         try {
-            const queryResult = await this.getPool(type).query({ text: query, values: params });
+            const queryResult = await this.getPool(type, options).query({ text: query, values: params });
 
             switch (type) {
                 case "get": {
@@ -117,8 +117,8 @@ export class Postgres implements IDatabase {
         }
     }
 
-    private getPool(type: string): Pool {
-        const readAvailable = this.poolRead && (type === "get" || type === "all");
+    private getPool(type: string, options: QueryOption): Pool {
+        const readAvailable = this.poolRead && options.useReplica && (type === "get" || type === "all");
         const ignroreReadDueToFailure = this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.lastPoolFail > Date.now() - 1000 * 30;
         if (readAvailable && !ignroreReadDueToFailure && (readDueToFailure ||

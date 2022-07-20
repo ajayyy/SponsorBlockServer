@@ -211,7 +211,7 @@ async function sendWebhooks(voteData: VoteData) {
 async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, isTempVIP: boolean, isOwnSubmission: boolean, category: Category
     , hashedIP: HashedIP, finalResponse: FinalResponse): Promise<{ status: number, message?: string }> {
     // Check if they've already made a vote
-    const usersLastVoteInfo = await privateDB.prepare("get", `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID]);
+    const usersLastVoteInfo = await privateDB.prepare("get", `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID], { useReplica: true });
 
     if (usersLastVoteInfo?.category === category) {
         // Double vote, ignore
@@ -219,7 +219,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     }
 
     const segmentInfo = (await db.prepare("get", `SELECT "category", "actionType", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
-        [UUID])) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
+        [UUID], { useReplica: true })) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
 
     if (segmentInfo.actionType === ActionType.Full) {
         return { status: 400, message: "Not allowed to change category of a full video segment" };
@@ -232,7 +232,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     }
 
     // Ignore vote if the next category is locked
-    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [segmentInfo.videoID, segmentInfo.service, category]);
+    const nextCategoryLocked = await db.prepare("get", `SELECT "videoID", "category" FROM "lockCategories" WHERE "videoID" = ? AND "service" = ? AND "category" = ?`, [segmentInfo.videoID, segmentInfo.service, category], { useReplica: true });
     if (nextCategoryLocked && !isVIP) {
         return { status: 200 };
     }
@@ -242,13 +242,13 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         return { status: 200 };
     }
 
-    const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category]);
+    const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category], { useReplica: true });
 
     const timeSubmitted = Date.now();
 
     const voteAmount = (isVIP || isTempVIP) ? 500 : 1;
     const ableToVote = finalResponse.finalStatus === 200
-                        && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID])) === undefined;
+                        && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID], { useReplica: true })) === undefined;
 
     if (ableToVote) {
         // Add the vote
@@ -271,9 +271,9 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         }
 
         // See if the submissions category is ready to change
-        const currentCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, segmentInfo.category]);
+        const currentCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, segmentInfo.category], { useReplica: true });
 
-        const submissionInfo = await db.prepare("get", `SELECT "userID", "timeSubmitted", "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        const submissionInfo = await db.prepare("get", `SELECT "userID", "timeSubmitted", "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID], { useReplica: true });
         const isSubmissionVIP = submissionInfo && await isUserVIP(submissionInfo.userID);
         const startingVotes = isSubmissionVIP ? 10000 : 1;
 
@@ -391,7 +391,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         const isSegmentLocked = segmentInfo.locked;
         const isVideoLocked = async () => !!(await db.prepare("get", `SELECT "category" FROM "lockCategories" WHERE
                 "videoID" = ? AND "service" = ? AND "category" = ? AND "actionType" = ?`,
-        [segmentInfo.videoID, segmentInfo.service, segmentInfo.category, segmentInfo.actionType]));
+        [segmentInfo.videoID, segmentInfo.service, segmentInfo.category, segmentInfo.actionType], { useReplica: true }));
         if (isSegmentLocked || await isVideoLocked()) {
             finalResponse.blockVote = true;
             finalResponse.webhookType = VoteWebhookType.Rejected;
@@ -420,7 +420,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     try {
         // check if vote has already happened
-        const votesRow = await privateDB.prepare("get", `SELECT "type" FROM "votes" WHERE "userID" = ? AND "UUID" = ?`, [userID, UUID]);
+        const votesRow = await privateDB.prepare("get", `SELECT "type" FROM "votes" WHERE "userID" = ? AND "UUID" = ?`, [userID, UUID], { useReplica: true });
 
         // -1 for downvote, 1 for upvote. Maybe more depending on reputation in the future
         // oldIncrementAmount will be zero if row is null
@@ -478,9 +478,9 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 && !(originalType === VoteType.Malicious && segmentInfo.actionType !== ActionType.Chapter)
                 && !finalResponse.blockVote
                 && finalResponse.finalStatus === 200
-                && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID])) !== undefined
-                && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID])) === undefined
-                && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID])) === undefined);
+                && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ?`, [nonAnonUserID]), { useReplica: true }) !== undefined
+                && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID]), { useReplica: true }) === undefined
+                && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID]), { useReplica: true }) === undefined);
 
 
         const ableToVote = isVIP || isTempVIP || userAbleToVote;
