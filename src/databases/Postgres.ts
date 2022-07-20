@@ -1,5 +1,5 @@
 import { Logger } from "../utils/logger";
-import { IDatabase, QueryType } from "./IDatabase";
+import { IDatabase, QueryOption, QueryType } from "./IDatabase";
 import { Client, Pool, PoolClient, types } from "pg";
 
 import fs from "fs";
@@ -31,6 +31,8 @@ export class Postgres implements IDatabase {
 
     private poolRead: Pool;
     private lastPoolReadFail = 0;
+
+    private maxTries = 3;
 
     constructor(private config: DatabaseConfig) {}
 
@@ -82,7 +84,7 @@ export class Postgres implements IDatabase {
         }
     }
 
-    async prepare(type: QueryType, query: string, params?: any[]): Promise<any[]> {
+    async prepare(type: QueryType, query: string, params?: any[], options: QueryOption = {}): Promise<any[]> {
         // Convert query to use numbered parameters
         let count = 1;
         for (let char = 0; char < query.length; char++) {
@@ -94,46 +96,47 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        let client: PoolClient;
-        try {
-            client = await this.getClient(type);
-            const queryResult = await client.query({ text: query, values: params });
+        let tries = 0;
+        do {
+            tries++;
 
-            switch (type) {
-                case "get": {
-                    const value = queryResult.rows[0];
-                    Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
-                    return value;
-                }
-                case "all": {
-                    const values = queryResult.rows;
-                    Logger.debug(`result (postgres): ${JSON.stringify(values)}`);
-                    return values;
-                }
-                case "run": {
-                    break;
-                }
-            }
-        } catch (err) {
-            Logger.error(`prepare (postgres): ${err}`);
-        } finally {
             try {
-                client?.release();
+                const queryResult = await this.getPool(type, options).query({ text: query, values: params });
+
+                switch (type) {
+                    case "get": {
+                        const value = queryResult.rows[0];
+                        Logger.debug(`result (postgres): ${JSON.stringify(value)}`);
+                        return value;
+                    }
+                    case "all": {
+                        const values = queryResult.rows;
+                        Logger.debug(`result (postgres): ${JSON.stringify(values)}`);
+                        return values;
+                    }
+                    case "run": {
+                        return;
+                    }
+                }
             } catch (err) {
-                Logger.error(`prepare (postgres): ${err}`);
+                if (err instanceof Error && err.message.includes("terminating connection due to conflict with recovery")) {
+                    options.useReplica = false;
+                }
+
+                Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
-        }
+        } while ((type === "get" || type === "all") && tries < this.maxTries);
     }
 
-    private getClient(type: string): Promise<PoolClient> {
-        const readAvailable = this.poolRead && (type === "get" || type === "all");
+    private getPool(type: string, options: QueryOption): Pool {
+        const readAvailable = this.poolRead && options.useReplica && (type === "get" || type === "all");
         const ignroreReadDueToFailure = this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.lastPoolFail > Date.now() - 1000 * 30;
         if (readAvailable && !ignroreReadDueToFailure && (readDueToFailure ||
                 Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
-            return this.poolRead.connect();
+            return this.poolRead;
         } else {
-            return this.pool.connect();
+            return this.pool;
         }
     }
 

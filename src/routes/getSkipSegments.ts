@@ -37,7 +37,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
             const service = getService(req?.query?.service as string);
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
-                [videoID, segment.timeSubmitted, service]) as Promise<{ hashedIP: HashedIP }[]>;
+                [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
             cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service));
         }
 
@@ -175,7 +175,8 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
             "all",
             `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
             WHERE "hashedVideoID" LIKE ? AND "service" = ? ORDER BY "startTime"`,
-            [`${hashedVideoIDPrefix}%`, service]
+            [`${hashedVideoIDPrefix}%`, service],
+            { useReplica: true }
         ) as Promise<DBSegment[]>;
 
     if (hashedVideoIDPrefix.length === 4) {
@@ -191,7 +192,8 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
             "all",
             `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "hidden", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
             WHERE "videoID" = ? AND "service" = ? ORDER BY "startTime"`,
-            [videoID, service]
+            [videoID, service],
+            { useReplica: true }
         ) as Promise<DBSegment[]>;
 
     return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service));
@@ -283,7 +285,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 //Segments with less than -1 votes are already ignored before this function is called
 async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
     const reputationPromises = segments.map(segment =>
-        segment.userID ? getReputation(segment.userID) : null);
+        segment.userID ? getReputation(segment.userID).catch((e) => Logger.error(e)) : null);
 
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
@@ -306,7 +308,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
             currentGroup.votes += segment.votes;
         }
 
-        if (segment.userID) segment.reputation = Math.min(segment.reputation, await reputationPromises[i]);
+        if (segment.userID) segment.reputation = Math.min(segment.reputation, (await reputationPromises[i]) || Infinity);
         if (segment.reputation > 0) {
             currentGroup.reputation += segment.reputation;
         }

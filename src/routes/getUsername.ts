@@ -15,7 +15,7 @@ export async function getUsername(req: Request, res: Response): Promise<Response
     userID = await getHashCache(userID);
 
     try {
-        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID], { useReplica: true });
 
         if (row !== undefined) {
             return res.send({
