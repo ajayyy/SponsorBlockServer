@@ -94,10 +94,8 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        let client: PoolClient;
         try {
-            client = await this.getClient(type);
-            const queryResult = await client.query({ text: query, values: params });
+            const queryResult = await this.getPool(type).query({ text: query, values: params });
 
             switch (type) {
                 case "get": {
@@ -116,24 +114,18 @@ export class Postgres implements IDatabase {
             }
         } catch (err) {
             Logger.error(`prepare (postgres): ${err}`);
-        } finally {
-            try {
-                client?.release();
-            } catch (err) {
-                Logger.error(`prepare (postgres): ${err}`);
-            }
         }
     }
 
-    private getClient(type: string): Promise<PoolClient> {
+    private getPool(type: string): Pool {
         const readAvailable = this.poolRead && (type === "get" || type === "all");
         const ignroreReadDueToFailure = this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.lastPoolFail > Date.now() - 1000 * 30;
         if (readAvailable && !ignroreReadDueToFailure && (readDueToFailure ||
                 Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
-            return this.poolRead.connect();
+            return this.poolRead;
         } else {
-            return this.pool.connect();
+            return this.pool;
         }
     }
 
