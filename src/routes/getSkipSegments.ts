@@ -262,7 +262,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
     const fetchData = async () => await buildSegmentGroups(segments);
 
     const groups = useCache
-        ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service), false)
+        ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service))
         : await fetchData();
 
     // Filter for only 1 item for POI categories and Full video
@@ -337,7 +337,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
 function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegmentGroup[] {
     return groups.flatMap((group) => {
         const result: OverlappingSegmentGroup[] = [];
-        for (const segment of group.segments) {
+        group.segments.forEach((segment) => {
             const bestGroup = result.find((group) => {
                 // At least one segment in the group must have high % overlap or the same action type
                 // Since POI and Full video segments will always have <= 0 overlap, they will always be in their own groups
@@ -360,7 +360,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
             } else {
                 result.push({ segments: [segment], votes: segment.votes, reputation: segment.reputation, locked: segment.locked, required: segment.required });
             }
-        }
+        });
 
         return result;
     });
