@@ -137,4 +137,22 @@ describe("postWarning", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should be able to add your own warning", (done) => {
+        const json = {
+            userID: "warning-0"
+        };
+
+        client.post(endpoint, json)
+            .then(async res => {
+                assert.strictEqual(res.status, 403);
+                const data = await getWarning(warnedUser);
+                const expected = {
+                    enabled: 0
+                };
+                assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

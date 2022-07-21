@@ -30,7 +30,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     const enabled: boolean = req.body.enabled ?? true;
     const reason: string = req.body.reason ?? "";
 
-    if ((!issuerUserID && enabled) ||(issuerUserID && !await isUserVIP(issuerUserID))) {
+    if ((!issuerUserID && enabled) || (issuerUserID && !await isUserVIP(issuerUserID))) {
         Logger.warn(`Permission violation: User ${issuerUserID} attempted to warn user ${userID}.`);
         return res.status(403).json({ "message": "Not a VIP" });
     }
