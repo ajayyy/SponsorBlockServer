@@ -15,7 +15,11 @@ import { getService } from "../utils/getService";
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
-        if (segment.votes < -1 && !segment.required) {
+        if (segment.required) {
+            return true; //required - always send
+        }
+
+        if (segment.hidden || segment.votes < -1) {
             return false; //too untrustworthy, just ignore it
         }
 
@@ -169,8 +173,8 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
-            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
+            WHERE "hashedVideoID" LIKE ? AND "service" = ? ORDER BY "startTime"`,
             [`${hashedVideoIDPrefix}%`, service],
             { useReplica: true }
         ) as Promise<DBSegment[]>;
@@ -186,8 +190,8 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
-            WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "hidden", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
+            WHERE "videoID" = ? AND "service" = ? ORDER BY "startTime"`,
             [videoID, service],
             { useReplica: true }
         ) as Promise<DBSegment[]>;
