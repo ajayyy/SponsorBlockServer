@@ -103,11 +103,13 @@ export class Postgres implements IDatabase {
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
         let tries = 0;
+        let lastPool: Pool = null;
         do {
             tries++;
 
             try {
-                const queryResult = await this.getPool(type, options).query({ text: query, values: params });
+                lastPool = this.getPool(type, options);
+                const queryResult = await lastPool.query({ text: query, values: params });
 
                 switch (type) {
                     case "get": {
@@ -125,7 +127,12 @@ export class Postgres implements IDatabase {
                     }
                 }
             } catch (err) {
-                options.useReplica = false;
+                if (lastPool === this.pool) {
+                    // Only applies if it is get or all request
+                    options.forceReplica = true;
+                } else if (lastPool === this.poolRead) {
+                    options.useReplica = false;
+                }
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
@@ -136,7 +143,7 @@ export class Postgres implements IDatabase {
         const readAvailable = this.poolRead && options.useReplica && (type === "get" || type === "all");
         const ignroreReadDueToFailure = this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.lastPoolFail > Date.now() - 1000 * 30;
-        if (readAvailable && !ignroreReadDueToFailure && (readDueToFailure ||
+        if (readAvailable && !ignroreReadDueToFailure && (options.forceReplica || readDueToFailure ||
                 Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
             return this.poolRead;
         } else {

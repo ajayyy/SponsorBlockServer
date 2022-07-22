@@ -1,5 +1,6 @@
 export interface QueryOption {
     useReplica?: boolean;
+    forceReplica?: boolean;
 }
 
 export interface IDatabase {
