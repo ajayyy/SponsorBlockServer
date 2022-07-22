@@ -37,7 +37,10 @@ export class Postgres implements IDatabase {
     constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
-        this.pool = new Pool(this.config.postgres);
+        this.pool = new Pool({
+            ...this.config.postgres,
+            statement_timeout: 25000
+        });
         this.pool.on("error", (err, client) => {
             Logger.error(err.stack);
             this.lastPoolFail = Date.now();
