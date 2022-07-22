@@ -50,7 +50,10 @@ export class Postgres implements IDatabase {
         });
 
         if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
-            this.poolRead = new Pool(this.config.postgresReadOnly);
+            this.poolRead = new Pool({
+                ...this.config.postgresReadOnly,
+                statement_timeout: 120
+            });
             this.poolRead.on("error", (err, client) => {
                 Logger.error(err.stack);
                 this.lastPoolReadFail = Date.now();
@@ -119,9 +122,7 @@ export class Postgres implements IDatabase {
                     }
                 }
             } catch (err) {
-                if (err instanceof Error && err.message.includes("terminating connection due to conflict with recovery")) {
-                    options.useReplica = false;
-                }
+                options.useReplica = false;
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
