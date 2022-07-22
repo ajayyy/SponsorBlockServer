@@ -1,6 +1,6 @@
 import { Logger } from "../utils/logger";
 import { IDatabase, QueryOption, QueryType } from "./IDatabase";
-import { Client, Pool, PoolClient, types } from "pg";
+import { Client, Pool, types } from "pg";
 
 import fs from "fs";
 import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
@@ -52,7 +52,7 @@ export class Postgres implements IDatabase {
         if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
             this.poolRead = new Pool({
                 ...this.config.postgresReadOnly,
-                statement_timeout: 120
+                statement_timeout: 300
             });
             this.poolRead.on("error", (err, client) => {
                 Logger.error(err.stack);
