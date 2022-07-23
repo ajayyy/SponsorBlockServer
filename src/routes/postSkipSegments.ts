@@ -250,7 +250,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
 }
 
 async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
-    segments: IncomingSegment[], service: string, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+    segments: IncomingSegment[], service: Service, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -265,7 +265,13 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         // Reject segment if it's in the locked categories list
         const lockIndex = lockedCategoryList.findIndex(c => segments[i].category === c.category && segments[i].actionType === c.actionType);
         if (!isVIP && lockIndex !== -1) {
-            // TODO: Do something about the fradulent submission
+            QueryCacher.clearSegmentCache({
+                videoID,
+                hashedVideoID: await getHashCache(videoID, 1),
+                service,
+                userID
+            });
+
             Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
             return {
                 pass: false,
