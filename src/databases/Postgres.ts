@@ -4,6 +4,7 @@ import { Client, Pool, types } from "pg";
 
 import fs from "fs";
 import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
+import { promiseTimeout } from "../utils/promiseTimeout";
 
 // return numeric (pg_type oid=1700) as float
 types.setTypeParser(1700, function(val) {
@@ -31,6 +32,7 @@ export class Postgres implements IDatabase {
 
     private poolRead: Pool;
     private lastPoolReadFail = 0;
+    private readTimeout = 400;
 
     private maxTries = 3;
 
@@ -109,7 +111,7 @@ export class Postgres implements IDatabase {
 
             try {
                 lastPool = this.getPool(type, options);
-                const queryResult = await lastPool.query({ text: query, values: params });
+                const queryResult = await promiseTimeout(lastPool.query({ text: query, values: params }), options.useReplica ? this.readTimeout : null);
 
                 switch (type) {
                     case "get": {
@@ -136,11 +138,11 @@ export class Postgres implements IDatabase {
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
-        } while ((type === "get" || type === "all") && tries < this.maxTries);
+        } while (this.isReadQuery(type) && tries < this.maxTries);
     }
 
     private getPool(type: string, options: QueryOption): Pool {
-        const readAvailable = this.poolRead && options.useReplica && (type === "get" || type === "all");
+        const readAvailable = this.poolRead && options.useReplica && this.isReadQuery(type);
         const ignroreReadDueToFailure = this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.lastPoolFail > Date.now() - 1000 * 30;
         if (readAvailable && !ignroreReadDueToFailure && (options.forceReplica || readDueToFailure ||
@@ -149,6 +151,10 @@ export class Postgres implements IDatabase {
         } else {
             return this.pool;
         }
+    }
+
+    private isReadQuery(type: string): boolean {
+        return type === "get" || type === "all";
     }
 
     private async createDB() {
