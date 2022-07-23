@@ -277,7 +277,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 pass: false,
                 errorCode: 403,
                 errorMessage:
-                    `NOTE: THERE IS A BUG RIGHT NOW CAUSING SEGMENTS NOT TO APPEAR, try refreshing. Users have voted that new segments aren't needed for the following category: ` +
+                    `Users have voted that new segments aren't needed for the following category: ` +
                     `'${segments[i].category}'\n` +
                     `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
