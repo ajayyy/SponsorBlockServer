@@ -11,6 +11,7 @@ import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
+import { promiseTimeout } from "../utils/promiseTimeout";
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
@@ -38,7 +39,12 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             const service = getService(req?.query?.service as string);
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
                 [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
-            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service));
+            try {
+                cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await promiseTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
+            } catch (e) {
+                // give up on shadowhide for now
+                cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = null;
+            }
         }
 
         const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
