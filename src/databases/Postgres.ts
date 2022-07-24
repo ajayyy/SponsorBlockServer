@@ -1,10 +1,10 @@
 import { Logger } from "../utils/logger";
 import { IDatabase, QueryOption, QueryType } from "./IDatabase";
-import { Client, Pool, types } from "pg";
+import { Client, Pool, QueryResult, types } from "pg";
 
 import fs from "fs";
 import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
-import { promiseTimeout } from "../utils/promiseTimeout";
+import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promiseTimeout";
 
 // return numeric (pg_type oid=1700) as float
 types.setTypeParser(1700, function(val) {
@@ -104,6 +104,8 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
+        const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
+
         let tries = 0;
         let lastPool: Pool = null;
         do {
@@ -111,7 +113,11 @@ export class Postgres implements IDatabase {
 
             try {
                 lastPool = this.getPool(type, options);
-                const queryResult = await promiseTimeout(lastPool.query({ text: query, values: params }), options.useReplica ? this.readTimeout : null);
+
+                pendingQueries.push(savePromiseState(lastPool.query({ text: query, values: params })));
+                const currentPromises = [...pendingQueries];
+                if (options.useReplica) currentPromises.push(savePromiseState(timeoutPomise(this.readTimeout)));
+                const queryResult = await nextFulfilment(currentPromises);
 
                 switch (type) {
                     case "get": {
