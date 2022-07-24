@@ -32,7 +32,7 @@ export class Postgres implements IDatabase {
 
     private poolRead: Pool;
     private lastPoolReadFail = 0;
-    private readTimeout = 400;
+    private readTimeout = 250;
 
     private maxTries = 3;
 
@@ -57,7 +57,7 @@ export class Postgres implements IDatabase {
         if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
             this.poolRead = new Pool({
                 ...this.config.postgresReadOnly,
-                statement_timeout: 300
+                statement_timeout: 1000
             });
             this.poolRead.on("error", (err, client) => {
                 Logger.error(err.stack);
