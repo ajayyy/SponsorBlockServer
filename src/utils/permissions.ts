@@ -23,7 +23,7 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
                 canSubmit: (await isUserVIP(userID))
                 || (await getReputation(userID)) > config.minReputationToSubmitFiller
                 || (await hasFeature(userID, Feature.FillerSubmitter)),
-                reason: "Someone is submitting over 180,000 spam filler submissions and refuses to stop even after talking with them, so we have to restrict it for now. You can request submission access on chat.sponsor.ajay.app, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app"
+                reason: "Someone has submitted over 1.9 million spam filler submissions and refuses to stop even after talking with them, so we have to restrict it for now. You can request submission access on chat.sponsor.ajay.app, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app"
             };
     }
 
