@@ -41,7 +41,7 @@ describe("addFeatures", () => {
 
     it("can add features", async () => {
         for (const feature of validFeatures) {
-            const result = await postAddFeatures(hashedUserID1, vipUserID, feature, "true");
+            const result = await postAddFeatures(hashedUserID1, privateVipUserID, feature, "true");
             assert.strictEqual(result.status, 200);
 
             assert.strictEqual(await hasFeature(hashedUserID1, feature), true);
@@ -51,7 +51,7 @@ describe("addFeatures", () => {
     it("can remove features", async () => {
         const feature = Feature.ChapterSubmitter;
 
-        const result = await postAddFeatures(hashedUserID2, vipUserID, feature, "false");
+        const result = await postAddFeatures(hashedUserID2, privateVipUserID, feature, "false");
         assert.strictEqual(result.status, 200);
 
         assert.strictEqual(await hasFeature(hashedUserID2, feature), false);
@@ -60,7 +60,7 @@ describe("addFeatures", () => {
     it("can update features", async () => {
         const feature = Feature.ChapterSubmitter;
 
-        const result = await postAddFeatures(hashedUserID3, vipUserID, feature, "true");
+        const result = await postAddFeatures(hashedUserID3, privateVipUserID, feature, "true");
         assert.strictEqual(result.status, 200);
 
         assert.strictEqual(await hasFeature(hashedUserID3, feature), true);

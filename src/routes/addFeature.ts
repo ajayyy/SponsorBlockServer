@@ -3,7 +3,7 @@ import { db } from "../databases/databases";
 import { config } from "../config";
 import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
-import { Feature, HashedUserID } from "../types/user.model";
+import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 
@@ -38,11 +38,11 @@ export async function addFeature(req: AddFeatureRequest, res: Response): Promise
     }
 
     // hash the userID
-    const adminUserIDInput = await getHashCache(adminUserID);
-    const isAdmin = adminUserIDInput !== config.adminUserID;
-    const isVIP = (await isUserVIP(userID)) || isAdmin;
+    const adminUserIDInput = await getHashCache(adminUserID as UserID);
+    const isAdmin = adminUserIDInput === config.adminUserID;
+    const isVIP = (await isUserVIP(adminUserIDInput)) || isAdmin;
 
-    if (!isAdmin && !isVIP) {
+    if (!isVIP) {
         // not authorized
         return res.sendStatus(403);
     }
