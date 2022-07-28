@@ -25,7 +25,7 @@ const allowedFeatures = {
         Feature.ChapterSubmitter,
         Feature.FillerSubmitter
     ]
-}
+};
 
 export async function addFeature(req: AddFeatureRequest, res: Response): Promise<Response> {
     const { body: { userID, adminUserID } } = req;

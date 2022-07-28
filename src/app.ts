@@ -197,7 +197,7 @@ function setupRoutes(router: Router) {
 
     router.get("/api/lockReason", getLockReason);
 
-    router.post("/api/feature", addFeature)
+    router.post("/api/feature", addFeature);
 
     // ratings
     router.get("/api/ratings/rate/:prefix", getRating);
