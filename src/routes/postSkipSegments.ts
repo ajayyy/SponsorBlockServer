@@ -21,7 +21,7 @@ import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
-import { canSubmitChapter } from "../utils/permissions";
+import { canSubmit } from "../utils/permissions";
 
 type CheckResult = {
     pass: boolean,
@@ -230,8 +230,10 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
             invalidFields.push("segment description");
         }
 
-        if (segmentPair.actionType === ActionType.Chapter && !(await canSubmitChapter(hashedUserID))) {
-            invalidFields.push("permission to submit chapters");
+        const permission = await canSubmit(hashedUserID, segmentPair.category);
+        if (!permission.canSubmit) {
+            invalidFields.push(`permission to submit ${segmentPair.category}`);
+            errors.push(permission.reason);
         }
     }
 
@@ -241,7 +243,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
         const formattedErrors = errors.reduce((p, c, i) => p + (i !== 0 ? ". " : " ") + c, "");
         return {
             pass: false,
-            errorMessage: `No valid ${formattedFields} field(s) provided.${formattedErrors}`,
+            errorMessage: `No valid ${formattedFields}.${formattedErrors}`,
             errorCode: 400
         };
     }

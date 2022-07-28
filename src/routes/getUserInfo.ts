@@ -5,9 +5,9 @@ import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { HashedUserID, UserID } from "../types/user.model";
 import { getReputation } from "../utils/reputation";
-import { SegmentUUID } from "../types/segments.model";
+import { Category, SegmentUUID } from "../types/segments.model";
 import { config } from "../config";
-import { canSubmitChapter } from "../utils/permissions";
+import { canSubmit } from "../utils/permissions";
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
@@ -106,6 +106,15 @@ async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
     }
 }
 
+async function getPermissions(userID: HashedUserID): Promise<Record<string, boolean>> {
+    const result: Record<string, boolean> = {};
+    for (const category of config.categoryList) {
+        result[category] = (await canSubmit(userID, category as Category)).canSubmit;
+    }
+
+    return result;
+}
+
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -130,7 +139,7 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
         reputation: () => getReputation(userID),
         vip: () => isUserVIP(userID),
         lastSegmentID: () => dbGetLastSegmentForUser(userID),
-        canSubmitChapter: () => canSubmitChapter(userID)
+        permissions: () => getPermissions(userID)
     })("")(property);
 };
 
@@ -140,7 +149,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
-    const allProperties: string[] = [...defaultProperties, "banned", "canSubmitChapter"];
+    const allProperties: string[] = [...defaultProperties, "banned", "permissions"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value

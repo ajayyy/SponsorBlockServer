@@ -28,6 +28,7 @@ export interface SBSConfig {
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
     minReputationToSubmitChapter: number;
+    minReputationToSubmitFiller: number;
     userCounterURL?: string;
     proxySubmission?: string;
     behindProxy: string | boolean;

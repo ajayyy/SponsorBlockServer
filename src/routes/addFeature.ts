@@ -18,10 +18,12 @@ interface AddFeatureRequest extends Request {
 
 const allowedFeatures = {
     vip: [
-        Feature.ChapterSubmitter
+        Feature.ChapterSubmitter,
+        Feature.FillerSubmitter
     ],
     admin: [
-        Feature.ChapterSubmitter
+        Feature.ChapterSubmitter,
+        Feature.FillerSubmitter
     ]
 }
 
