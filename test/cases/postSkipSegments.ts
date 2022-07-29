@@ -1280,7 +1280,7 @@ describe("postSkipSegments", () => {
     });
 
     it("Should return 400 if videoID is empty", (done) => {
-        const videoID = null as string;
+        const videoID = null as unknown as string;
         postSkipSegmentParam({
             videoID,
             startTime: 1,
