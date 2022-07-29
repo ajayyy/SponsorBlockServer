@@ -40,7 +40,7 @@ export async function getReputation(userID: UserID): Promise<number> {
                     SELECT * FROM "lockCategories" as l 
                     WHERE l."videoID" = "a"."videoID" AND l."service" = "a"."service" AND l."category" = "a"."category" LIMIT 1)
                 THEN 1 ELSE 0 END) AS "mostUpvotedInLockedVideoSum"
-        FROM "sponsorTimes" as "a" WHERE "userID" = ? "actionType" != 'full'`, [userID, weekAgo, pastDate, userID], { useReplica: true }) as Promise<ReputationDBResult>;
+        FROM "sponsorTimes" as "a" WHERE "userID" = ? AND "actionType" != 'full'`, [userID, weekAgo, pastDate, userID], { useReplica: true }) as Promise<ReputationDBResult>;
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
 
