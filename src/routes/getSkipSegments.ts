@@ -11,7 +11,7 @@ import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
-import { promiseOrTimeout } from "../utils/promiseTimeout";
+import { promiseOrTimeout } from "../utils/promise";
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {

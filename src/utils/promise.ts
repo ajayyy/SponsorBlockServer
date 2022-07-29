@@ -1,3 +1,5 @@
+import { Logger } from "./logger";
+
 export class PromiseTimeoutError<T> extends Error {
     promise?: Promise<T>;
 
@@ -47,4 +49,27 @@ export function savePromiseState<T>(promise: Promise<T>): PromiseWithState<T> {
  */
 export function nextFulfilment<T>(promises: PromiseWithState<T>[]): Promise<T> {
     return Promise.race(promises.filter((p) => !p.isRejected));
+}
+
+export function oneOf<T>(promises: Promise<T>[]): Promise<T> {
+    return new Promise((resolve, reject) => {
+        let fulfilments = 0;
+        for (const promise of promises) {
+            promise.then((result) => {
+                fulfilments++;
+
+                if (result || fulfilments === promises.length) {
+                    resolve(result);
+                }
+            }).catch((err) => {
+                fulfilments++;
+
+                if (fulfilments === promises.length) {
+                    reject(err);
+                } else {
+                    Logger.error(`oneOf ignore error (promise): ${err}`);
+                }
+            });
+        }
+    });
 }

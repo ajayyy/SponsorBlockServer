@@ -4,7 +4,7 @@ import { Client, Pool, QueryResult, types } from "pg";
 
 import fs from "fs";
 import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
-import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promiseTimeout";
+import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promise";
 
 // return numeric (pg_type oid=1700) as float
 types.setTypeParser(1700, function(val) {
