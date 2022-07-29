@@ -685,14 +685,15 @@ describe("voteOnSponsorTime", () => {
 
     it("Should not be able to revive full video segment as non-vip", (done) => {
         const UUID = "full-video-uuid-1";
-        postVote("VIPUser", UUID, 0); // downvote as VIP
-        postVote("randomID3", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -2);
-                done();
-            })
-            .catch(err => done(err));
+        postVote("VIPUser", UUID, 0).then(() => {
+            postVote("randomID3", UUID, 1)
+                .then(async res => {
+                    assert.strictEqual(res.status, 200);
+                    const row = await getSegmentVotes(UUID);
+                    assert.strictEqual(row.votes, -2);
+                    done();
+                })
+                .catch(err => done(err));
+        });
     });
 });
