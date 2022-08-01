@@ -28,7 +28,7 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
                     hasFeature(userID, Feature.FillerSubmitter),
                     (async () => (await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND category != 'filler' AND "timeSubmitted" < 1654010691000 LIMIT 4`, [userID], { useReplica: true }))?.submissionCount > 3)()
                 ]),
-                reason: "Unfortunately, someone is doing a targetd attack and as a temporary emergency measure, segment submission for new users is disabled. You can request submission access on chat.sponsor.ajay.app/#filler, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app"
+                reason: "Unfortunately, someone is doing a targeted attack and as a temporary emergency measure, segment submission for new users is disabled. You can request submission access on chat.sponsor.ajay.app/#filler, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app"
             };
     }
 
