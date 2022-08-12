@@ -4,6 +4,8 @@ import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, ski
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
 
+const expiryTime = 2 * 60 * 60;
+
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
         const reply = await redis.get(key);
@@ -16,7 +18,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.set(key, JSON.stringify(data)).catch((err) => Logger.error(err));
+    redis.setEx(key, expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return data;
 }
@@ -67,7 +69,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
             }
 
             for (const key in newResults) {
-                redis.set(key, JSON.stringify(newResults[key])).catch((err) => Logger.error(err));
+                redis.setEx(key, expiryTime, JSON.stringify(newResults[key])).catch((err) => Logger.error(err));
             }
         });
     }
