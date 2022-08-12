@@ -202,7 +202,7 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
 }
 
 async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID: HashedUserID
-    , segments: IncomingSegment[]): Promise<CheckResult> {
+    , segments: IncomingSegment[], videoDurationParam: number, userAgent: string): Promise<CheckResult> {
     const invalidFields = [];
     const errors = [];
     if (typeof videoID !== "string" || videoID?.length == 0) {
@@ -232,6 +232,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
 
         const permission = await canSubmit(hashedUserID, segmentPair.category);
         if (!permission.canSubmit) {
+            Logger.warn(`Rejecting submission due to lack of permissions for category ${segmentPair.category}: ${segmentPair.segment} ${hashedUserID} ${videoID} ${videoDurationParam} ${userAgent}`);
             invalidFields.push(`permission to submit ${segmentPair.category}`);
             errors.push(permission.reason);
         }
@@ -495,7 +496,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     //hash the userID
     const userID = await getHashCache(paramUserID || "");
 
-    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments);
+    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
