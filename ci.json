@@ -67,5 +67,6 @@
           "max": 20,
           "statusCode": 200
         }
-    }
+    },
+    "minReputationToSubmitFiller": -1
 }
