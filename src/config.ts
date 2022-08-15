@@ -87,7 +87,8 @@ addDefaults(config, {
         user: "",
         host: "",
         password: "",
-        port: 5432
+        port: 5432,
+        readTimeout: 250
     },
     dumpDatabase: {
         enabled: false,

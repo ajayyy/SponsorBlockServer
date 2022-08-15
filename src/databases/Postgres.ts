@@ -32,7 +32,6 @@ export class Postgres implements IDatabase {
 
     private poolRead: Pool;
     private lastPoolReadFail = 0;
-    private readTimeout = 150;
 
     private maxTries = 3;
 
@@ -116,7 +115,7 @@ export class Postgres implements IDatabase {
 
                 pendingQueries.push(savePromiseState(lastPool.query({ text: query, values: params })));
                 const currentPromises = [...pendingQueries];
-                if (options.useReplica) currentPromises.push(savePromiseState(timeoutPomise(this.readTimeout)));
+                if (options.useReplica) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
                 const queryResult = await nextFulfilment(currentPromises);
 
                 switch (type) {
