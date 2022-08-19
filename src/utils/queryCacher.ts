@@ -3,8 +3,7 @@ import { Logger } from "../utils/logger";
 import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
-
-const expiryTime = 2 * 60 * 60;
+import { config } from "../config";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
@@ -18,7 +17,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.setEx(key, expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+    redis.setEx(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return data;
 }

@@ -3,6 +3,7 @@ import * as redis from "redis";
 
 interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;
+    expiryTime: number;
 }
 
 export interface CustomPostgresConfig extends PoolConfig {

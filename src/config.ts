@@ -132,7 +132,8 @@ addDefaults(config, {
             host: "",
             port: 0
         },
-        disableOfflineQueue: true
+        disableOfflineQueue: true,
+        expiryTime: 24 * 60 * 60,
     }
 });
 loadFromEnv(config);
