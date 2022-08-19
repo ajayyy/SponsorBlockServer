@@ -33,7 +33,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
             ? JSON.parse(req.query.actionTypes as string)
             : req.query.actionType
                 ? Array.isArray(req.query.actionType)
-                    ? req.query.actionType
+                    ? req.query.actionType.toString()
                     : [req.query.actionType]
                 : [ActionType.Skip];
         if (!Array.isArray(actionTypes)) {

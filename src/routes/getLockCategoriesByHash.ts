@@ -48,7 +48,7 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
         ? JSON.parse(req.query.actionTypes as string)
         : req.query.actionType
             ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
+                ? req.query.actionType.toString()
                 : [req.query.actionType]
             : [ActionType.Skip, ActionType.Mute];
     if (!hashPrefixTester(req.params.prefix)) {

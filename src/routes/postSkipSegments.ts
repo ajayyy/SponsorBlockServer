@@ -256,6 +256,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
     segments: IncomingSegment[], service: Service, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
+        if (i > 1337) break;
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
             //invalid request
             return { pass: false, errorMessage: "One of your segments are invalid", errorCode: 400 };
@@ -454,8 +455,8 @@ function proxySubmission(req: Request) {
 }
 
 function preprocessInput(req: Request) {
-    const videoID = req.query.videoID || req.body.videoID;
-    const userID = req.query.userID || req.body.userID;
+    const videoID = req.query.videoID.toString() || req.body.videoID;
+    const userID = req.query.userID.toString() || req.body.userID;
     const service = getService(req.query.service, req.body.service);
     const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
     const videoDuration = videoDurationParam;
@@ -464,10 +465,10 @@ function preprocessInput(req: Request) {
     if (segments === undefined) {
         // Use query instead
         segments = [{
-            segment: [req.query.startTime as string, req.query.endTime as string],
+            segment: [req.query.startTime.toString() as string, req.query.endTime.toString() as string],
             category: req.query.category as Category,
             actionType: (req.query.actionType as ActionType) ?? ActionType.Skip,
-            description: req.query.description as string || "",
+            description: req.query.description.toString() as string || "",
         }];
     }
     // Add default action type
@@ -605,6 +606,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     for (let i = 0; i < segments.length; i++) {
+        if (i > 1337) break;
         sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service);
     }
     return res.json(newSegments);

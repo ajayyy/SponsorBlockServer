@@ -26,7 +26,7 @@ function getExactUserID(userName: string): Promise<{userName: string, userID: Us
 }
 
 export async function getUserID(req: Request, res: Response): Promise<Response> {
-    const userName = req.query.username as string;
+    const userName = req.query.username.toString() as string;
     const exactSearch = req.query.exact
         ? req.query.exact == "true"
         : false as boolean;

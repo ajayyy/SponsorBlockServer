@@ -400,7 +400,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<Segment[]
         ? JSON.parse(req.query.categories as string)
         : req.query.category
             ? Array.isArray(req.query.category)
-                ? req.query.category
+                ? req.query.category.toString()
                 : [req.query.category]
             : ["sponsor"];
     if (!Array.isArray(categories)) {

@@ -36,7 +36,7 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
         ? JSON.parse(req.query.actionTypes as string)
         : req.query.actionType
             ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
+                ? req.query.actionType.toString()
                 : [req.query.actionType]
             : [ActionType.Skip, ActionType.Mute];
     const possibleCategories = filterActionType(actionTypes);
