@@ -68,7 +68,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
             }
 
             for (const key in newResults) {
-                redis.setEx(key, expiryTime, JSON.stringify(newResults[key])).catch((err) => Logger.error(err));
+                redis.setEx(key, config.redis?.expiryTime, JSON.stringify(newResults[key])).catch((err) => Logger.error(err));
             }
         });
     }
