@@ -496,6 +496,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     //hash the userID
     const userID = await getHashCache(paramUserID || "");
 
+    if (userID === "a41d853c7328a86f8d712f910c4ef77f6c7a9e467f349781b1a7d405c37b681b") {
+        return res.status(200);
+    }
+
     const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
