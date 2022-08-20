@@ -33,8 +33,6 @@ export class Postgres implements IDatabase {
     private poolRead: Pool;
     private lastPoolReadFail = 0;
 
-    private maxTries = 3;
-
     constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
@@ -141,7 +139,8 @@ export class Postgres implements IDatabase {
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
-        } while (this.isReadQuery(type) && tries < this.maxTries);
+        } while (this.isReadQuery(type) && tries < (lastPool === this.pool
+            ? this.config.postgres.maxTries : this.config.postgresReadOnly.maxTries));
     }
 
     private getPool(type: string, options: QueryOption): Pool {

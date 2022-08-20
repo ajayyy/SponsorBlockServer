@@ -81,7 +81,8 @@ addDefaults(config, {
         password: "",
         port: 5432,
         max: 10,
-        idleTimeoutMillis: 10000
+        idleTimeoutMillis: 10000,
+        maxTries: 3
     },
     postgresReadOnly: {
         enabled: false,
@@ -92,7 +93,8 @@ addDefaults(config, {
         port: 5432,
         readTimeout: 250,
         max: 10,
-        idleTimeoutMillis: 10000
+        idleTimeoutMillis: 10000,
+        maxTries: 3
     },
     dumpDatabase: {
         enabled: false,
