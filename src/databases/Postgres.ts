@@ -39,8 +39,7 @@ export class Postgres implements IDatabase {
 
     async init(): Promise<void> {
         this.pool = new Pool({
-            ...this.config.postgres,
-            statement_timeout: 25000
+            ...this.config.postgres
         });
         this.pool.on("error", (err, client) => {
             Logger.error(err.stack);
@@ -55,8 +54,7 @@ export class Postgres implements IDatabase {
 
         if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
             this.poolRead = new Pool({
-                ...this.config.postgresReadOnly,
-                statement_timeout: 1500
+                ...this.config.postgresReadOnly
             });
             this.poolRead.on("error", (err, client) => {
                 Logger.error(err.stack);
