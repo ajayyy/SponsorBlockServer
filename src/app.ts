@@ -43,9 +43,6 @@ import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
-import { postRating } from "./routes/ratings/postRating";
-import { getRating } from "./routes/ratings/getRating";
-import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
 import { addFeature } from "./routes/addFeature";
@@ -80,11 +77,9 @@ function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
-    const postRateEndpoints: RequestHandler[] = [postRating];
     if (config.rateLimit) {
         if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote, voteGetUserID));
         if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
-        if (config.rateLimit.rate) postRateEndpoints.unshift(rateLimitMiddleware(config.rateLimit.rate));
     }
 
     //add the get function
@@ -198,12 +193,6 @@ function setupRoutes(router: Router) {
     router.get("/api/lockReason", getLockReason);
 
     router.post("/api/feature", addFeature);
-
-    // ratings
-    router.get("/api/ratings/rate/:prefix", getRating);
-    router.get("/api/ratings/rate", getRating);
-    router.post("/api/ratings/rate", postRateEndpoints);
-    router.post("/api/ratings/clearCache", ratingPostClearCache);
 
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));

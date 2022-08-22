@@ -62,12 +62,6 @@ addDefaults(config, {
             max: 10,
             statusCode: 200,
             message: "OK",
-        },
-        rate: {
-            windowMs: 900000,
-            max: 20,
-            statusCode: 200,
-            message: "Success",
         }
     },
     userCounterURL: null,
