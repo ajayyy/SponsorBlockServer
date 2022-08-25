@@ -183,7 +183,7 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
         } else if (process.env[fullKey]) {
             const value = process.env[fullKey];
             if (isNumber(value)) {
-                config[key] = parseInt(value, 10);
+                config[key] = parseFloat(value);
             } else if (value.toLowerCase() === "true" || value.toLowerCase() === "false") {
                 config[key] = value === "true";
             } else if (key === "newLeafURLs") {
