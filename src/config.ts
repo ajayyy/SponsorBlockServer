@@ -134,6 +134,7 @@ addDefaults(config, {
         },
         disableOfflineQueue: true,
         expiryTime: 24 * 60 * 60,
+        getTimeout: 40
     }
 });
 loadFromEnv(config);

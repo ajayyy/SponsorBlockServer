@@ -31,10 +31,9 @@ if (config.redis?.enabled) {
     client.connect();
     exportClient = client as RedisSB;
 
-    const timeoutDuration = 40;
     const get = client.get.bind(client);
     exportClient.get = (key) => new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(), timeoutDuration);
+        const timeout = setTimeout(() => reject(), config.redis.getTimeout);
         get(key).then((reply) => {
             clearTimeout(timeout);
             resolve(reply);
