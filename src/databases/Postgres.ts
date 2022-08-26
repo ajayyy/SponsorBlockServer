@@ -141,6 +141,8 @@ export class Postgres implements IDatabase {
             }
         } while (this.isReadQuery(type) && tries < (lastPool === this.pool
             ? this.config.postgres.maxTries : this.config.postgresReadOnly.maxTries));
+
+        throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }
 
     private getPool(type: string, options: QueryOption): Pool {
