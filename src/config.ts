@@ -135,6 +135,15 @@ addDefaults(config, {
         disableOfflineQueue: true,
         expiryTime: 24 * 60 * 60,
         getTimeout: 40
+    },
+    patreon: {
+        clientId: "",
+        clientSecret: "",
+        minPrice: 0,
+        redirectUri: "https://sponsor.ajay.app/api/generateToken/patreon"
+    },
+    gumroad: {
+        productPermalinks: []
     }
 });
 loadFromEnv(config);
