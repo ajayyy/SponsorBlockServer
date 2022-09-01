@@ -197,7 +197,7 @@ function setupRoutes(router: Router) {
     router.post("/api/feature", addFeature);
 
     router.get("/api/generateToken/:type", generateTokenRequest);
-    router.get("/api/verifyToken/", verifyTokenRequest);
+    router.get("/api/verifyToken", verifyTokenRequest);
 
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
