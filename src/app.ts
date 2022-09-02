@@ -46,6 +46,8 @@ import { getChapterNames } from "./routes/getChapterNames";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
 import { addFeature } from "./routes/addFeature";
+import { generateTokenRequest } from "./routes/generateToken";
+import { verifyTokenRequest } from "./routes/verifyToken";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -193,6 +195,9 @@ function setupRoutes(router: Router) {
     router.get("/api/lockReason", getLockReason);
 
     router.post("/api/feature", addFeature);
+
+    router.get("/api/generateToken/:type", generateTokenRequest);
+    router.get("/api/verifyToken", verifyTokenRequest);
 
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));

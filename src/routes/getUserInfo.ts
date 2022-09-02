@@ -8,6 +8,7 @@ import { getReputation } from "../utils/reputation";
 import { Category, SegmentUUID } from "../types/segments.model";
 import { config } from "../config";
 import { canSubmit } from "../utils/permissions";
+import { oneOf } from "../utils/promise";
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
@@ -115,6 +116,13 @@ async function getPermissions(userID: HashedUserID): Promise<Record<string, bool
     return result;
 }
 
+async function getFreeChaptersAccess(userID: HashedUserID): Promise<boolean> {
+    return await oneOf([isUserVIP(userID),
+        (async () => (await getReputation(userID)) > 0)(),
+        (async () => !!(await db.prepare("get", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "timeSubmitted" < 1590969600000 AND "userID" = ? LIMIT 1`, [userID], { useReplica: true })))()
+    ]);
+}
+
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -139,7 +147,8 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
         reputation: () => getReputation(userID),
         vip: () => isUserVIP(userID),
         lastSegmentID: () => dbGetLastSegmentForUser(userID),
-        permissions: () => getPermissions(userID)
+        permissions: () => getPermissions(userID),
+        freeChaptersAccess: () => getFreeChaptersAccess(userID)
     })("")(property);
 };
 
@@ -149,7 +158,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
-    const allProperties: string[] = [...defaultProperties, "banned", "permissions"];
+    const allProperties: string[] = [...defaultProperties, "banned", "permissions", "freeChaptersAccess"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value

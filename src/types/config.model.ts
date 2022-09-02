@@ -65,6 +65,15 @@ export interface SBSConfig {
     dumpDatabase?: DumpDatabase;
     diskCacheURL: string;
     crons: CronJobOptions;
+    patreon: {
+        clientId: string,
+        clientSecret: string,
+        minPrice: number,
+        redirectUri: string
+    }
+    gumroad: {
+        productPermalinks: string[],
+    }
 }
 
 export interface WebhookConfig {
