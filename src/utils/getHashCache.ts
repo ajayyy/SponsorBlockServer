@@ -26,11 +26,13 @@ async function getFromRedis<T extends string>(key: HashedValue): Promise<T & Has
             Logger.debug(`Got data from redis: ${reply}`);
             return reply as T & HashedValue;
         }
-    } catch (e) {} // eslint-disable-line no-empty
+    } catch (err) {
+        Logger.error(err as string);
+    }
 
     // Otherwise, calculate it
     const data = getHash(key, cachedHashTimes);
-    redis.set(key, data).catch((err) => Logger.error(err));
+    redis.set(redisKey, data).catch((err) => Logger.error(err));
 
     return data as T & HashedValue;
 }

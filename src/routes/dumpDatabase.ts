@@ -5,7 +5,7 @@ import { config } from "../config";
 import util from "util";
 import fs from "fs";
 import path from "path";
-import { ChildProcess, exec, ExecOptions, spawn } from "child_process";
+import { exec, ExecOptions } from "child_process";
 const unlink = util.promisify(fs.unlink);
 
 const ONE_MINUTE = 1000 * 60;
@@ -44,7 +44,7 @@ const credentials: ExecOptions = {
         PGPASSWORD: String(config.postgres.password),
         PGDATABASE: "sponsorTimes",
     }
-}
+};
 
 interface TableDumpList {
     fileName: string;
@@ -232,7 +232,7 @@ async function queueDump(): Promise<void> {
 
                         resolve(error ? stderr : stdout);
                     });
-                })
+                });
 
                 dumpFiles.push({
                     fileName,
