@@ -221,11 +221,8 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     const segmentInfo = (await db.prepare("get", `SELECT "category", "actionType", "videoID", "hashedVideoID", "service", "userID", "locked" FROM "sponsorTimes" WHERE "UUID" = ?`,
         [UUID], { useReplica: true })) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
 
-    if (segmentInfo.actionType === ActionType.Full) {
-        return { status: 400, message: "Not allowed to change category of a full video segment" };
-    }
-    if (segmentInfo.actionType === ActionType.Poi || category === "poi_highlight") {
-        return { status: 400, message: "Not allowed to change category for single point segments" };
+    if (segmentInfo.actionType !== ActionType.Skip || category === "poi_highlight" || category === "chapter") {
+        return { status: 400, message: "Not allowed to change category of non skip segments" };
     }
     if (!config.categoryList.includes(category)) {
         return { status: 400, message: "Category doesn't exist." };
