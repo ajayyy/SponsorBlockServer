@@ -26,7 +26,7 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
         if (licenseKey) {
             return res.status(200).send(`
                 <h1>
-                    Your access key:
+                    Your license key:
                 </h1>
                 <p>
                     <b>
@@ -40,7 +40,7 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
         } else {
             return res.status(401).send(`
                 <h1>
-                    Failed to generate an access key
+                    Failed to generate an license key
                 </h1>
             `);
         }
