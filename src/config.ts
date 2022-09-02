@@ -143,7 +143,7 @@ addDefaults(config, {
         redirectUri: "https://sponsor.ajay.app/api/generateToken/patreon"
     },
     gumroad: {
-        productPermalinks: []
+        productPermalinks: ["sponsorblock"]
     }
 });
 loadFromEnv(config);
