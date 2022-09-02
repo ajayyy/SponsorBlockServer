@@ -139,14 +139,16 @@ async function autoModerateSubmission(apiVideoInfo: APIVideoInfo,
 
     const segments = submission.segments;
     // map all times to float array
-    const allSegmentTimes = segments.map(segment => [parseFloat(segment.segment[0]), parseFloat(segment.segment[1])]);
+    const allSegmentTimes = segments.filter((s) => s.actionType !== ActionType.Chapter)
+        .map(segment => [parseFloat(segment.segment[0]), parseFloat(segment.segment[1])]);
 
     // add previous submissions by this user
-    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? AND "videoID" = ? AND "votes" > -1 AND "hidden" = 0`, [submission.userID, submission.videoID]);
+    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? AND "videoID" = ? AND "votes" > -1 AND "actionType" != 'chapter' AND "hidden" = 0`
+        , [submission.userID, submission.videoID]) as { startTime: string, endTime: string }[];
 
     if (allSubmittedByUser) {
         //add segments the user has previously submitted
-        const allSubmittedTimes = allSubmittedByUser.map((segment: { startTime: string, endTime: string }) => [parseFloat(segment.startTime),  parseFloat(segment.endTime)]);
+        const allSubmittedTimes = allSubmittedByUser.map((segment) => [parseFloat(segment.startTime),  parseFloat(segment.endTime)]);
         allSegmentTimes.push(...allSubmittedTimes);
     }
 
