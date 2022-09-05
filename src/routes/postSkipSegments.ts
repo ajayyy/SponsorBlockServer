@@ -227,9 +227,12 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
         }
 
         if (typeof segmentPair.description !== "string"
-                || (segmentPair.actionType === ActionType.Chapter && segmentPair.description.length > 60 )
                 || (segmentPair.description.length !== 0 && segmentPair.actionType !== ActionType.Chapter)) {
             invalidFields.push("segment description");
+        }
+
+        if (segmentPair.actionType === ActionType.Chapter && segmentPair.description.length > 200) {
+            invalidFields.push("chapter name (too long)");
         }
 
         const permission = await canSubmit(hashedUserID, segmentPair.category);
