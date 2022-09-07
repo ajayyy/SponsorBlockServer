@@ -293,6 +293,18 @@ describe("voteOnSponsorTime", () => {
             .catch(err => done(err));
     });
 
+    it("Should not able to change to chapter category", (done) => {
+        const UUID = "incorrect-category";
+        postVoteCategory(randomID2, UUID, "chapter")
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await getSegmentCategory(UUID);
+                assert.strictEqual(row.category, "sponsor");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to change your vote for a category and it should add your vote to the database(segment unlocked, nextCatgeory unlocked)", (done) => {
         const UUID = "vote-uuid-4";
         postVoteCategory(randomID2, UUID, "outro")
