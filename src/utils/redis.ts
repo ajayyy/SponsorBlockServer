@@ -33,9 +33,9 @@ if (config.redis?.enabled) {
 
     const get = client.get.bind(client);
     exportClient.get = (key) => new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(), config.redis.getTimeout);
+        const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
         get(key).then((reply) => {
-            clearTimeout(timeout);
+            if (timeout !== null) clearTimeout(timeout);
             resolve(reply);
         }).catch((err) => reject(err));
     });
