@@ -93,7 +93,6 @@ describe("postSkipSegments", () => {
         db.prepare("run", insertWarningQuery, [warnUser01Hash, warnVip01Hash, 1, reason01, (now - 3601000)]);
         // User 2
         db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 1, reason02, now]);
-        db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 1, reason02, now]);
         db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 1, reason02, (now - (warningExpireTime + 1000))]);
         db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 1, reason02, (now - (warningExpireTime + 2000))]);
         // User 3

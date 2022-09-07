@@ -48,7 +48,10 @@ if (config.redis?.enabled) {
             .catch((err) => reject(err))
     );
     client.on("error", function(error) {
-        Logger.error(error);
+        Logger.error(`Redis Error: ${error}`);
+    });
+    client.on("reconnect", () => {
+        Logger.info("Redis: trying to reconnect");
     });
 }
 

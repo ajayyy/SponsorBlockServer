@@ -6,14 +6,13 @@ import { client } from "../utils/httpClient";
 import { db, privateDB } from "../../src/databases/databases";
 import redis from "../../src/utils/redis";
 import assert from "assert";
-import { Logger } from "../../src/utils/logger";
 
 // helpers
 const getSegment = (UUID: string) => db.prepare("get", `SELECT "votes", "locked", "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
 
-const permVIP1 = "tempVipPermOne";
+const permVIP1 = "tempVip_permaVIPOne";
 const publicPermVIP1 = getHash(permVIP1) as HashedUserID;
-const permVIP2 = "tempVipPermOne";
+const permVIP2 = "tempVip_permaVIPTwo";
 const publicPermVIP2 = getHash(permVIP2) as HashedUserID;
 
 const tempVIPOne = "tempVipTempOne";
@@ -51,15 +50,8 @@ const postVoteCategory = (userID: string, UUID: string, category: string) => cli
         category
     }
 });
-const checkUserVIP = async (publicID: HashedUserID) => {
-    try {
-        const reply = await redis.get(tempVIPKey(publicID));
-        return reply;
-    } catch (e) {
-        Logger.error(e as string);
-        return false;
-    }
-};
+const checkUserVIP = async (publicID: HashedUserID): Promise<string> =>
+    await redis.get(tempVIPKey(publicID));
 
 describe("tempVIP test", function() {
     before(async function() {
@@ -152,7 +144,7 @@ describe("tempVIP test", function() {
             .catch(err => done(err));
     });
     it("Should be able to remove tempVIP prematurely", (done) => {
-        addTempVIP("false", permVIP1, publicTempVIPOne, null)
+        addTempVIP("false", permVIP1, publicTempVIPOne)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const vip = await checkUserVIP(publicTempVIPOne);
