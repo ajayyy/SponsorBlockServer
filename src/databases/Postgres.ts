@@ -103,6 +103,8 @@ export class Postgres implements IDatabase {
 
         let tries = 0;
         let lastPool: Pool = null;
+        const maxTries = () => (lastPool === this.pool
+            ? this.config.postgres.maxTries : this.config.postgresReadOnly.maxTries);
         do {
             tries++;
 
@@ -133,14 +135,13 @@ export class Postgres implements IDatabase {
                 if (lastPool === this.pool) {
                     // Only applies if it is get or all request
                     options.forceReplica = true;
-                } else if (lastPool === this.poolRead) {
+                } else if (lastPool === this.poolRead && maxTries() - tries <= 1) {
                     options.useReplica = false;
                 }
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
-        } while (this.isReadQuery(type) && tries < (lastPool === this.pool
-            ? this.config.postgres.maxTries : this.config.postgresReadOnly.maxTries));
+        } while (this.isReadQuery(type) && tries < maxTries());
 
         throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }
