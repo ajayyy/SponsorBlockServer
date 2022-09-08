@@ -412,7 +412,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     // no restrictions on checkDuration
     // check duration of all submissions on this video
     if (type <= 0) {
-        checkVideoDuration(UUID);
+        checkVideoDuration(UUID).catch(Logger.error);
     }
 
     try {
@@ -525,7 +525,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 incrementAmount,
                 oldIncrementAmount,
                 finalResponse
-            });
+            }).catch(Logger.error);
         }
         return { status: finalResponse.finalStatus, message: finalResponse.finalMessage ?? undefined };
     } catch (err) {

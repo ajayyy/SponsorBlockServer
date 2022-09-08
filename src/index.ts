@@ -27,4 +27,4 @@ async function init() {
     }).setTimeout(15000);
 }
 
-init();
+init().catch((err) => Logger.error(err));

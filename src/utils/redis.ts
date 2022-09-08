@@ -28,7 +28,7 @@ let exportClient: RedisSB = {
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
-    client.connect();
+    void client.connect(); // void as we don't care about the promise
     exportClient = client as RedisSB;
 
     const get = client.get.bind(client);
@@ -40,7 +40,7 @@ if (config.redis?.enabled) {
         }).catch((err) => reject(err));
     });
     exportClient.increment = (key) => new Promise((resolve, reject) =>
-        client.multi()
+        void client.multi()
             .incr(key)
             .expire(key, 60)
             .exec()

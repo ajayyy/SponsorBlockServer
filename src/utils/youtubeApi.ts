@@ -39,8 +39,8 @@ export class YouTubeAPI {
                 }
                 const apiResult = data as APIVideoData;
                 DiskCache.set(cacheKey, apiResult)
-                    .catch((err: any) => Logger.warn(err))
-                    .then(() => Logger.debug(`YouTube API: video information cache set for: ${videoID}`));
+                    .then(() => Logger.debug(`YouTube API: video information cache set for: ${videoID}`))
+                    .catch((err: any) => Logger.warn(err));
 
                 return { err: false, data: apiResult };
             } else {

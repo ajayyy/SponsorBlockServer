@@ -75,6 +75,7 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
         }, {});
 
         // read files in export directory
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         fs.readdir(exportPath, async (err: any, files: string[]) => {
             if (err) Logger.error(err);
             if (err) return resolve();

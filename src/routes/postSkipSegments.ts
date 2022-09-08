@@ -76,7 +76,7 @@ async function sendWebhooks(apiVideoInfo: APIVideoInfo, userID: string, videoID:
         sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, data, {
             submissionStart: startTime,
             submissionEnd: endTime,
-        }, segmentInfo);
+        }, segmentInfo).catch(Logger.error);
 
         // If it is a first time submission
         // Then send a notification to discord
@@ -395,7 +395,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
             await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
         }
         lockedCategoryList = [];
-        deleteLockCategories(videoID, null, null, service);
+        deleteLockCategories(videoID, null, null, service).catch(Logger.error);
     }
 
     return {
@@ -614,7 +614,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     for (let i = 0; i < segments.length; i++) {
-        sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service);
+        sendWebhooks(apiVideoInfo, userID, videoID, UUIDs[i], segments[i], service).catch(Logger.error);
     }
     return res.json(newSegments);
 }

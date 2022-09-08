@@ -22,6 +22,7 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (r
         keyGenerator: (req) => {
             return getHash(getIP(req), 1);
         },
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         handler: async (req, res, next) => {
             if (getUserID === undefined || !await isUserVIP(await getHashCache(getUserID(req)))) {
                 return res.status(limitConfig.statusCode).send(limitConfig.message);

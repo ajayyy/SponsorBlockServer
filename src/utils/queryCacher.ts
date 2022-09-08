@@ -53,7 +53,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
     if (valuesToBeFetched.length > 0) {
         data = await fetchFromDB(valuesToBeFetched);
 
-        new Promise(() => {
+        void new Promise(() => {
             const newResults: Record<string, T[]> = {};
             for (const item of data) {
                 const splitValue = (item as unknown as Record<string, string>)[splitKey];

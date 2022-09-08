@@ -177,7 +177,7 @@ export class Postgres implements IDatabase {
             );
         }
 
-        client.end();
+        client.end().catch(err => Logger.error(`closing db (postgres): ${err}`));
     }
 
     private async upgradeDB(fileNamePrefix: string, schemaFolder: string) {
