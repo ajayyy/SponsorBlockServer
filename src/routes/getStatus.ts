@@ -18,6 +18,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             })
             .catch(e => {
                 Logger.error(`status: SQL query timed out: ${e}`);
+                return -1;
             });
         let statusRequests: unknown = 0;
         const numberRequests = await promiseOrTimeout(redis.increment("statusRequest"), 5000)
