@@ -4,7 +4,8 @@ import { config } from "../config";
 import { Request, Response } from "express";
 
 const MILLISECONDS_IN_MINUTE = 60000;
-const getTopUsersWithCache = createMemoryCache(void generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+const getTopUsersWithCache = createMemoryCache(generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = false) {

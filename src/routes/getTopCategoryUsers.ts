@@ -4,7 +4,8 @@ import { config } from "../config";
 import { Request, Response } from "express";
 
 const MILLISECONDS_IN_MINUTE = 60000;
-const getTopCategoryUsersWithCache = createMemoryCache(void generateTopCategoryUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+const getTopCategoryUsersWithCache = createMemoryCache(generateTopCategoryUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 interface DBSegment {

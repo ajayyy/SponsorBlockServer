@@ -75,6 +75,7 @@ export function createServer(callback: () => void): Server {
     return app.listen(config.port, callback);
 }
 
+/* eslint-disable @typescript-eslint/no-misused-promises */
 function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
@@ -85,18 +86,18 @@ function setupRoutes(router: Router) {
     }
 
     //add the get function
-    router.get("/api/getVideoSponsorTimes", void oldGetVideoSponsorTimes);
+    router.get("/api/getVideoSponsorTimes", oldGetVideoSponsorTimes);
 
     //add the oldpost function
-    router.get("/api/postVideoSponsorTimes", void oldSubmitSponsorTimes);
-    router.post("/api/postVideoSponsorTimes", void oldSubmitSponsorTimes);
+    router.get("/api/postVideoSponsorTimes", oldSubmitSponsorTimes);
+    router.post("/api/postVideoSponsorTimes", oldSubmitSponsorTimes);
 
     //add the skip segments functions
-    router.get("/api/skipSegments", void getSkipSegments);
-    router.post("/api/skipSegments", void postSkipSegments);
+    router.get("/api/skipSegments", getSkipSegments);
+    router.post("/api/skipSegments", postSkipSegments);
 
     // add the privacy protecting skip segments functions
-    router.get("/api/skipSegments/:prefix", void getSkipSegmentsByHash);
+    router.get("/api/skipSegments/:prefix", getSkipSegmentsByHash);
 
     //voting endpoint
     router.get("/api/voteOnSponsorTime", ...voteEndpoints);
@@ -107,102 +108,102 @@ function setupRoutes(router: Router) {
     router.post("/api/viewedVideoSponsorTime", ...viewEndpoints);
 
     //To set your username for the stats view
-    router.post("/api/setUsername", void setUsername);
+    router.post("/api/setUsername", setUsername);
 
     //get what username this user has
-    router.get("/api/getUsername", void getUsername);
+    router.get("/api/getUsername", getUsername);
 
     //Endpoint used to hide a certain user's data
-    router.post("/api/shadowBanUser", void shadowBanUser);
+    router.post("/api/shadowBanUser", shadowBanUser);
 
     //Endpoint used to make a user a VIP user with special privileges
-    router.post("/api/addUserAsVIP", void addUserAsVIP);
+    router.post("/api/addUserAsVIP", addUserAsVIP);
     //Endpoint to add a user as a temporary VIP
-    router.post("/api/addUserAsTempVIP", void addUserAsTempVIP);
+    router.post("/api/addUserAsTempVIP", addUserAsTempVIP);
 
     //Gets all the views added up for one userID
     //Useful to see how much one user has contributed
-    router.get("/api/getViewsForUser", void getViewsForUser);
+    router.get("/api/getViewsForUser", getViewsForUser);
 
     //Gets all the saved time added up (views * sponsor length) for one userID
     //Useful to see how much one user has contributed
     //In minutes
-    router.get("/api/getSavedTimeForUser", void getSavedTimeForUser);
+    router.get("/api/getSavedTimeForUser", getSavedTimeForUser);
 
-    router.get("/api/getTopUsers", void getTopUsers);
-    router.get("/api/getTopCategoryUsers", void getTopCategoryUsers);
+    router.get("/api/getTopUsers", getTopUsers);
+    router.get("/api/getTopCategoryUsers", getTopCategoryUsers);
 
     //send out totals
     //send the total submissions, total views and total minutes saved
-    router.get("/api/getTotalStats", void getTotalStats);
+    router.get("/api/getTotalStats", getTotalStats);
 
-    router.get("/api/getUserInfo", void getUserInfo);
-    router.get("/api/userInfo", void getUserInfo);
+    router.get("/api/getUserInfo", getUserInfo);
+    router.get("/api/userInfo", getUserInfo);
 
     //send out a formatted time saved total
-    router.get("/api/getDaysSavedFormatted", void getDaysSavedFormatted);
+    router.get("/api/getDaysSavedFormatted", getDaysSavedFormatted);
 
     //submit video to lock categories
-    router.post("/api/noSegments", void postLockCategories);
-    router.post("/api/lockCategories", void postLockCategories);
+    router.post("/api/noSegments", postLockCategories);
+    router.post("/api/lockCategories", postLockCategories);
 
-    router.delete("/api/noSegments", void deleteLockCategoriesEndpoint);
-    router.delete("/api/lockCategories", void deleteLockCategoriesEndpoint);
+    router.delete("/api/noSegments", deleteLockCategoriesEndpoint);
+    router.delete("/api/lockCategories", deleteLockCategoriesEndpoint);
 
     //get if user is a vip
-    router.get("/api/isUserVIP", void getIsUserVIP);
+    router.get("/api/isUserVIP", getIsUserVIP);
 
     //sent user a warning
-    router.post("/api/warnUser", void postWarning);
+    router.post("/api/warnUser", postWarning);
 
     //get if user is a vip
-    router.post("/api/segmentShift", void postSegmentShift);
+    router.post("/api/segmentShift", postSegmentShift);
 
     //get segment info
-    router.get("/api/segmentInfo", void getSegmentInfo);
+    router.get("/api/segmentInfo", getSegmentInfo);
 
     //clear cache as VIP
-    router.post("/api/clearCache", void postClearCache);
+    router.post("/api/clearCache", postClearCache);
 
     //purge all segments for VIP
-    router.post("/api/purgeAllSegments", void postPurgeAllSegments);
+    router.post("/api/purgeAllSegments", postPurgeAllSegments);
 
-    router.post("/api/unlistedVideo", void addUnlistedVideo);
+    router.post("/api/unlistedVideo", addUnlistedVideo);
 
     // get userID from username
-    router.get("/api/userID", void getUserID);
+    router.get("/api/userID", getUserID);
 
     // get lock categores from userID
-    router.get("/api/lockCategories", void getLockCategories);
+    router.get("/api/lockCategories", getLockCategories);
 
     // get privacy protecting lock categories functions
-    router.get("/api/lockCategories/:prefix", void getLockCategoriesByHash);
+    router.get("/api/lockCategories/:prefix", getLockCategoriesByHash);
 
     // get all segments that match a search
-    router.get("/api/searchSegments", void getSearchSegments);
+    router.get("/api/searchSegments", getSearchSegments);
 
     // autocomplete chapter names
-    router.get("/api/chapterNames", void getChapterNames);
+    router.get("/api/chapterNames", getChapterNames);
 
     // get status
-    router.get("/api/status/:value", void getStatus);
-    router.get("/api/status", void getStatus);
+    router.get("/api/status/:value", getStatus);
+    router.get("/api/status", getStatus);
 
-    router.get("/api/youtubeApiProxy", void youtubeApiProxy);
+    router.get("/api/youtubeApiProxy", youtubeApiProxy);
     // get user category stats
-    router.get("/api/userStats", void getUserStats);
+    router.get("/api/userStats", getUserStats);
 
-    router.get("/api/lockReason", void getLockReason);
+    router.get("/api/lockReason", getLockReason);
 
-    router.post("/api/feature", void addFeature);
+    router.post("/api/feature", addFeature);
 
-    router.get("/api/generateToken/:type", void generateTokenRequest);
-    router.get("/api/verifyToken", void verifyTokenRequest);
+    router.get("/api/generateToken/:type", generateTokenRequest);
+    router.get("/api/verifyToken", verifyTokenRequest);
 
     if (config.postgres?.enabled) {
-        router.get("/database", (req, res) => void dumpDatabase(req, res, true));
-        router.get("/database.json", (req, res) => void dumpDatabase(req, res, false));
-        router.get("/database/*", void downloadFile);
+        router.get("/database", (req, res) => dumpDatabase(req, res, true));
+        router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
+        router.get("/database/*", downloadFile);
         router.use("/download", express.static(appExportPath));
     } else {
         router.get("/database.db", function (req: Request, res: Response) {
@@ -210,3 +211,4 @@ function setupRoutes(router: Router) {
         });
     }
 }
+/* eslint-enable @typescript-eslint/no-misused-promises */
