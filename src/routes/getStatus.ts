@@ -3,30 +3,30 @@ import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import os from "os";
 import redis from "../utils/redis";
-import { setTimeout } from "timers/promises";
+import { promiseOrTimeout } from "../utils/promise";
 
 export async function getStatus(req: Request, res: Response): Promise<Response> {
     const startTime = Date.now();
     let value = req.params.value as string[] | string;
     value = Array.isArray(value) ? value[0] : value;
     let processTime, redisProcessTime = -1;
-    const timeoutPromise = async (): Promise<string> => {
-        await setTimeout(5000);
-        return "timeout";
-    };
     try {
-        const dbVersion = await Promise.race([db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"]), timeoutPromise()])
+        const dbVersion = await promiseOrTimeout(db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"]), 5000)
             .then(e => {
-                if (e === "timeout") return e;
                 processTime = Date.now() - startTime;
                 return e.value;
+            })
+            .catch(e => {
+                Logger.error(`status: SQL query timed out: ${e}`);
             });
         let statusRequests: unknown = 0;
-        const numberRequests = await Promise.race([redis.increment("statusRequest"), timeoutPromise()])
+        const numberRequests = await promiseOrTimeout(redis.increment("statusRequest"), 5000)
             .then(e => {
-                if (e === "timeout") return [-1];
                 redisProcessTime = Date.now() - startTime;
                 return e;
+            }).catch(e => {
+                Logger.error(`status: redis increment timed out ${e}`);
+                return [-1];
             });
         statusRequests = numberRequests?.[0];
 
