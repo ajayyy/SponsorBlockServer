@@ -15,6 +15,7 @@ export interface CustomPostgresConfig extends PoolConfig {
 export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
     weight: number;
     readTimeout: number;
+    fallbackOnFail: boolean;
 }
 
 export interface SBSConfig {
