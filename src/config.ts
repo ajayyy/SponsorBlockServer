@@ -88,7 +88,8 @@ addDefaults(config, {
         readTimeout: 250,
         max: 10,
         idleTimeoutMillis: 10000,
-        maxTries: 3
+        maxTries: 3,
+        fallbackOnFail: true
     },
     dumpDatabase: {
         enabled: false,
