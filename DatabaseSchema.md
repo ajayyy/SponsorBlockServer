@@ -126,7 +126,6 @@
 | channelID | TEXT | not null |
 | title | TEXT | not null |
 | published | REAL | not null |
-| genreUrl | TEXT | not null |
 
 | index | field |
 | -- | :--: |

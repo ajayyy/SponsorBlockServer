@@ -19,5 +19,6 @@ export interface innerTubeVideoDetails {
     "author": string,
     "isPrivate": boolean,
     "isUnpluggedCorpus": boolean,
-    "isLiveContent": boolean
+    "isLiveContent": boolean,
+    "publishDate": string
 }

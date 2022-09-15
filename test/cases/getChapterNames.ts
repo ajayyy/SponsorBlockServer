@@ -19,9 +19,9 @@ if (db instanceof Postgres) {
             await db.prepare("run", query, [chapterNamesVid1, 70, 75, 2, 0, "chapterNamesVid-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "A different one"]);
             await db.prepare("run", query, [chapterNamesVid1, 71, 76, 2, 0, "chapterNamesVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Something else"]);
 
-            await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published", "genreUrl") 
-                SELECT ?, ?, ?, ?, ?`, [
-                chapterNamesVid1, chapterChannelID, "", 0, ""
+            await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published") 
+                SELECT ?, ?, ?, ?`, [
+                chapterNamesVid1, chapterChannelID, "", 0
             ]);
         });
 

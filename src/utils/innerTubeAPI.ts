@@ -22,8 +22,3 @@ export async function getPlayerData(videoID: string): Promise<innerTubeVideoDeta
         return Promise.reject(result.status);
     }
 }
-
-export const getLength = (videoID: string): Promise<number> =>
-    getPlayerData(videoID)
-        .then(pData => Number(pData.lengthSeconds))
-        .catch(err => err);

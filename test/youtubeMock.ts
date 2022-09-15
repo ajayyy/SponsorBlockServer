@@ -15,7 +15,7 @@ export class YouTubeApiMock {
 
         if (obj.id === "noDuration" || obj.id === "full_video_duration_segment") {
             return {
-                err: null,
+                err: false,
                 data: {
                     title: "Example Title",
                     lengthSeconds: 0,
@@ -32,7 +32,7 @@ export class YouTubeApiMock {
             };
         } else if (obj.id === "duration-update") {
             return {
-                err: null,
+                err: false,
                 data: {
                     title: "Example Title",
                     lengthSeconds: 500,
@@ -49,7 +49,7 @@ export class YouTubeApiMock {
             };
         } else if (obj.id === "channelid-convert") {
             return {
-                err: null,
+                err: false,
                 data: {
                     title: "Video Lookup Title",
                     author: "ChannelAuthor",
@@ -58,14 +58,14 @@ export class YouTubeApiMock {
             };
         } else if (obj.id === "duration-changed") {
             return {
-                err: null,
+                err: false,
                 data: {
                     lengthSeconds: 100,
                 } as APIVideoData
             };
         } else {
             return {
-                err: null,
+                err: false,
                 data: {
                     title: "Example Title",
                     authorId: "ExampleChannel",
