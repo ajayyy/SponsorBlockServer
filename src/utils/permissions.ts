@@ -12,11 +12,19 @@ interface CanSubmitResult {
     reason?: string;
 }
 
+async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
+    const result = await db.prepare("get", `SELECT count(*) as "submissionCount", SUM(CASE WHEN "votes" < 0 AND "views" > 5 THEN 1 ELSE 0 END) AS "downvotedSubmissions" FROM "sponsorTimes" WHERE "userID" = ?`
+        , [userID], { useReplica: true });
+
+    return result.submissionCount > 100 && result.downvotedSubmissions / result.submissionCount < 0.15;
+}
+
 export async function canSubmit(userID: HashedUserID, category: Category): Promise<CanSubmitResult> {
     switch (category) {
         case "chapter":
             return {
                 canSubmit: await oneOf([isUserVIP(userID),
+                    lowDownvotes(userID),
                     (async () => (await getReputation(userID)) > config.minReputationToSubmitChapter)(),
                     hasFeature(userID, Feature.ChapterSubmitter)
                 ])
