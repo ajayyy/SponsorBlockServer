@@ -1,5 +1,10 @@
 {
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "check-coverage": false,
   "exclude": [
-    "src/routes/addUnlitedVideo.ts"
-  ]
+    "src/routes/addUnlistedVideo.ts",
+    "src/cronjob/downvoteSegmentArchiveJob.ts",
+    "src/databases/*"
+  ],
+  "reporter": ["text", "html"]
 }
