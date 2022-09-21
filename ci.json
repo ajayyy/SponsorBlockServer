@@ -9,7 +9,7 @@
     "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/webhook/CompletelyIncorrectReport",
     "discordNeuralBlockRejectWebhookURL": "http://127.0.0.1:8081/webhook/NeuralBlockReject",
     "neuralBlockURL": "http://127.0.0.1:8081/NeuralBlock",
-    "userCounterURL": "https://127.0.0.1:8081/UserCounter",
+    "userCounterURL": "http://127.0.0.1:8081/UserCounter",
     "behindProxy": true,
     "postgres": {
         "user": "ci_db_user",
@@ -70,6 +70,11 @@
           "max": 20,
           "statusCode": 200
         }
+    },
+    "patreon": {
+        "clientId": "testClientID",
+        "clientSecret": "testClientSecret",
+        "redirectUri": "http://127.0.0.1/fake/callback"
     },
     "minReputationToSubmitFiller": -1
 }

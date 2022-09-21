@@ -12,11 +12,19 @@ interface VerifyTokenRequest extends Request {
     }
 }
 
+export const validatelicenseKeyRegex = (token: string) =>
+    new RegExp(/[A-Za-z0-9]{40}/).test(token);
+
 export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response): Promise<Response> {
     const { query: { licenseKey } } = req;
 
     if (!licenseKey) {
         return res.status(400).send("Invalid request");
+    } else if (!validatelicenseKeyRegex(licenseKey)) {
+        // fast check for invalid licence key
+        return res.status(200).send({
+            allowed: false
+        });
     }
     const licenseRegex = new RegExp(/[a-zA-Z0-9]{40}|[A-Z0-9-]{35}/);
     if (!licenseRegex.test(licenseKey)) {
