@@ -263,6 +263,15 @@ describe("getUserInfo", () => {
             .catch(err => done(err));
     });
 
+    it("Should throw 400 with invalid array", (done) => {
+        client.get(endpoint, { params: { userID: "x", values: 123 } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
     it("Should return 200 on userID not found", (done) => {
         client.get(endpoint, { params: { userID: "notused-userid" } })
             .then(res => {
@@ -304,6 +313,31 @@ describe("getUserInfo", () => {
                 };
                 assert.deepStrictEqual(res.data, expected);
                 done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get permissions", (done) => {
+        client.get(endpoint, { params: { userID: "getuserinfo_user_01", value: "permissions" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    permissions: {
+                        sponsor: true,
+                        selfpromo: true,
+                        exclusive_access: true,
+                        interaction: true,
+                        intro: true,
+                        outro: true,
+                        preview: true,
+                        music_offtopic: true,
+                        filler: true,
+                        poi_highlight: true,
+                        chapter: false,
+                    },
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
+                done(); // pass
             })
             .catch(err => done(err));
     });

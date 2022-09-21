@@ -560,4 +560,43 @@ describe("lockCategoriesRecords", () => {
             })
             .catch(err => done(err));
     });
+
+    it("should be able to add poi type category by type skip", (done) => {
+        const videoID = "add-record-poi";
+        client.post(endpoint, {
+            videoID,
+            userID: lockVIPUser,
+            categories: ["poi_highlight"],
+            actionTypes: ["skip"]
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                checkLockCategories(videoID)
+                    .then(result => {
+                        assert.strictEqual(result.length, 1);
+                        assert.strictEqual(result[0], "poi_highlight");
+                    });
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not add lock of invalid type", (done) => {
+        const videoID = "add_invalid_type";
+        client.post(endpoint, {
+            videoID,
+            userID: lockVIPUser,
+            categories: ["future_unused_invalid_type"],
+            actionTypes: ["skip"]
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                checkLockCategories(videoID)
+                    .then(result => {
+                        assert.strictEqual(result.length, 0);
+                    });
+                done();
+            })
+            .catch(err => done(err));
+    });
 });
