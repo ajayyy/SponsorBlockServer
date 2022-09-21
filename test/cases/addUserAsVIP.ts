@@ -10,6 +10,10 @@ const checkUserVIP = (publicID: string) => db.prepare("get", `SELECT "userID" FR
 const adminPrivateUserID = "testUserId";
 const permVIP1 = "addVIP_permaVIPOne";
 const publicPermVIP1 = getHash(permVIP1) as HashedUserID;
+const permVIP2 = "addVIP_permaVIPTwo";
+const publicPermVIP2 = getHash(permVIP2) as HashedUserID;
+const permVIP3 = "addVIP_permaVIPThree";
+const publicPermVIP3 = getHash(permVIP3) as HashedUserID;
 
 const endpoint = "/api/addUserAsVIP";
 const addUserAsVIP = (userID: string, enabled: boolean, adminUserID = adminPrivateUserID) => client({
@@ -36,6 +40,16 @@ describe("addVIP test", function() {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await checkUserVIP(publicPermVIP1);
+                assert.ok(row);
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should be able to add second user as VIP", (done) => {
+        addUserAsVIP(publicPermVIP2, true)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await checkUserVIP(publicPermVIP2);
                 assert.ok(row);
                 done();
             })
@@ -84,6 +98,41 @@ describe("addVIP test", function() {
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await checkUserVIP(publicPermVIP1);
+                assert.ok(!row);
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should remove VIP if enabled is false", (done) => {
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID: publicPermVIP2,
+                adminUserID: adminPrivateUserID,
+                enabled: "invalid-text"
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await checkUserVIP(publicPermVIP2);
+                assert.ok(!row);
+                done();
+            })
+            .catch(err => done(err));
+    });
+    it("Should remove VIP if enabled is missing", (done) => {
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID: publicPermVIP3,
+                adminUserID: adminPrivateUserID
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await checkUserVIP(publicPermVIP3);
                 assert.ok(!row);
                 done();
             })

@@ -3,7 +3,6 @@ import assert from "assert";
 import { config } from "../../src/config";
 import { getHash } from "../../src/utils/getHash";
 
-
 describe("userCounter", () => {
     it("Should return 200", function (done) {
         if (!config.userCounterURL) this.skip(); // skip if no userCounterURL is set

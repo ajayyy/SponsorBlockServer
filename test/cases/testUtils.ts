@@ -1,5 +1,5 @@
 import assert from "assert";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+import { partialDeepEquals, mixedDeepEquals } from "../utils/partialDeepEquals";
 
 describe("Test utils ", () => {
     it("objectContain", () => {
@@ -134,5 +134,46 @@ describe("Test utils ", () => {
                 }]
             }
         ), "Did not match partial child array");
+    });
+    it("mixedDeepEquals exists", () => {
+        assert(!mixedDeepEquals({
+            name: "lorem",
+            values: [{
+                name: "ipsum",
+            }],
+            child: {
+                name: "dolor",
+            },
+            ignore: true
+        }, {
+            name: "lorem",
+            values: [{
+                name: "ipsum",
+            }],
+            child: {
+                name: "dolor",
+            },
+            ignore: false
+        }));
+    });
+    it("mixedDeepEquals noProperty", () => {
+        assert(!mixedDeepEquals({
+            name: "lorem",
+            values: [{
+                name: "ipsum",
+            }],
+            child: {
+                name: "dolor",
+            }
+        }, {
+            name: "lorem",
+            values: [{
+                name: "ipsum",
+            }],
+            child: {
+                name: "dolor",
+            },
+            ignore: false
+        }));
     });
 });

@@ -1,0 +1,33 @@
+const nullStub = (): any => null;
+
+export const createRequest = (options: any) => ({
+    app: {},
+    baseUrl: "",
+    body: {},
+    cookies: {},
+    fresh: true,
+    headers: {},
+    hostname: "example.com",
+    ip: "",
+    ips: [],
+    method: "GET",
+    originalUrl: "/",
+    params: {},
+    path: "/",
+    protocol: "https",
+    query: {},
+    route: {},
+    secure: true,
+    signedCookies: {},
+    stale: false,
+    subdomains: [],
+    xhr: true,
+    accepts: nullStub(),
+    acceptsCharsets: nullStub(),
+    acceptsEncodings: nullStub(),
+    acceptsLanguages: nullStub(),
+    get: nullStub(),
+    is: nullStub(),
+    range: nullStub(),
+    ...options
+});
