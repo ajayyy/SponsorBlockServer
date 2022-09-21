@@ -5,8 +5,8 @@ import { getHash } from "../../src/utils/getHash";
 
 
 describe("userCounter", () => {
-    it("Should return 200", (done) => {
-        if (!config.userCounterURL) return done(); // skip if no userCounterURL is set
+    it("Should return 200", function (done) {
+        if (!config.userCounterURL) this.skip(); // skip if no userCounterURL is set
         axios.request({
             method: "POST",
             baseURL: config.userCounterURL,
