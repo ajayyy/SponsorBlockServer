@@ -76,7 +76,8 @@ addDefaults(config, {
         port: 5432,
         max: 10,
         idleTimeoutMillis: 10000,
-        maxTries: 3
+        maxTries: 3,
+        maxConcurrentRequests: 3500
     },
     postgresReadOnly: {
         enabled: false,
@@ -89,7 +90,8 @@ addDefaults(config, {
         max: 10,
         idleTimeoutMillis: 10000,
         maxTries: 3,
-        fallbackOnFail: true
+        fallbackOnFail: true,
+        maxConcurrentRequests: 3500
     },
     dumpDatabase: {
         enabled: false,

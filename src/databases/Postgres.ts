@@ -33,6 +33,9 @@ export class Postgres implements IDatabase {
     private poolRead: Pool;
     private lastPoolReadFail = 0;
 
+    private concurrentRequests = 0;
+    private concurrentReadRequests = 0;
+
     constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
@@ -99,8 +102,23 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
+        if (this.config.readOnly) {
+            if (this.concurrentReadRequests > this.config.postgresReadOnly?.maxConcurrentRequests) {
+                Logger.error(`prepare (postgres): cancelling read query because too many concurrent requests, query: ${query}`);
+                throw new Error("Too many concurrent requests");
+            }
 
+            this.concurrentReadRequests++;
+        } else {
+            if (this.concurrentRequests > this.config.postgres.maxConcurrentRequests) {
+                Logger.error(`prepare (postgres): cancelling query because too many concurrent requests, query: ${query}`);
+                throw new Error("Too many concurrent requests");
+            }
+
+            this.concurrentRequests++;
+        }
+
+        const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
         let tries = 0;
         let lastPool: Pool = null;
         const maxTries = () => (lastPool === this.pool
@@ -115,6 +133,12 @@ export class Postgres implements IDatabase {
                 const currentPromises = [...pendingQueries];
                 if (options.useReplica && maxTries() - tries > 1) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
                 const queryResult = await nextFulfilment(currentPromises);
+
+                if (this.config.readOnly) {
+                    this.concurrentReadRequests--;
+                } else {
+                    this.concurrentRequests--;
+                }
 
                 switch (type) {
                     case "get": {
@@ -142,6 +166,12 @@ export class Postgres implements IDatabase {
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
         } while (this.isReadQuery(type) && tries < maxTries());
+
+        if (this.config.readOnly) {
+            this.concurrentReadRequests--;
+        } else {
+            this.concurrentRequests--;
+        }
 
         throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }

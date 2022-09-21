@@ -10,6 +10,7 @@ interface RedisConfig extends redis.RedisClientOptions {
 export interface CustomPostgresConfig extends PoolConfig {
     enabled: boolean;
     maxTries: number;
+    maxConcurrentRequests: number;
 }
 
 export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
