@@ -1,4 +1,4 @@
-import { APIVideoData, APIVideoInfo } from "../src/types/youtubeApi.model";
+import { APIVideoData, APIVideoInfo } from "../../src/types/youtubeApi.model";
 
 export class YouTubeApiMock {
     // eslint-disable-next-line require-await

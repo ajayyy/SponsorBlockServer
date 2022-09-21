@@ -3,7 +3,7 @@ import { partialDeepEquals, arrayPartialDeepEquals } from "../utils/partialDeepE
 import { getHash } from "../../src/utils/getHash";
 import { ImportMock, } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import { YouTubeApiMock } from "../youtubeMock";
+import { YouTubeApiMock } from "../mocks/youtubeMock";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
