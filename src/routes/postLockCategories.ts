@@ -37,7 +37,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
 
     if (!userIsVIP) {
         res.status(403).json({
-            message: "Must be a VIP to mark videos.",
+            message: "Must be a VIP to lock videos.",
         });
         return;
     }
