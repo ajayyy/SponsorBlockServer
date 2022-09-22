@@ -118,7 +118,7 @@ async function getPermissions(userID: HashedUserID): Promise<Record<string, bool
 
 async function getFreeChaptersAccess(userID: HashedUserID): Promise<boolean> {
     return await oneOf([isUserVIP(userID),
-        (async () => (await getReputation(userID)) > 0)(),
+        (async () => !!(await db.prepare("get", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "reputation" > 0 AND "timeSubmitted" < 1663872563000 AND "userID" = ? LIMIT 1`, [userID], { useReplica: true })))(),
         (async () => !!(await db.prepare("get", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "timeSubmitted" < 1590969600000 AND "userID" = ? LIMIT 1`, [userID], { useReplica: true })))()
     ]);
 }
