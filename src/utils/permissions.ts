@@ -31,16 +31,7 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
             };
         default:
             return {
-                canSubmit: await oneOf([isUserVIP(userID),
-                    (async () => (await getReputation(userID)) > config.minReputationToSubmitFiller)(),
-                    hasFeature(userID, Feature.FillerSubmitter),
-                    (async () => (await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND category != 'filler' AND "timeSubmitted" < 1660096797000 LIMIT 1`, [userID], { useReplica: true }))?.submissionCount > 0)()
-                ]),
-                reason: "Yes, it has been a week, please be patient. Unfortunately, someone is doing a targeted attack and as a temporary emergency measure, segment submission for new users is disabled. You can request submission access on chat.sponsor.ajay.app/#filler, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app"
+                canSubmit: true
             };
     }
-
-    return {
-        canSubmit: true
-    };
 }
