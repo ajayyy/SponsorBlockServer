@@ -73,11 +73,6 @@ export async function getTopUsers(req: Request, res: Response): Promise<Response
     const sortType = parseInt(req.query.sortType as string);
     const categoryStatsEnabled = req.query.categoryStats;
 
-    if (sortType == undefined) {
-        //invalid request
-        return res.sendStatus(400);
-    }
-
     //setup which sort type to use
     let sortBy = "";
     if (sortType == 0) {
