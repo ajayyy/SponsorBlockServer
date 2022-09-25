@@ -27,7 +27,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             hostname: os.hostname()
         };
         return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

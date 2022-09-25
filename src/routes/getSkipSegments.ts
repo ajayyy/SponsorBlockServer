@@ -107,7 +107,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
         }
 
         return processedSegments;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         if (err) {
             Logger.error(err as string);
             return null;
@@ -169,7 +169,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
         }));
 
         return segments;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return null;
     }
@@ -465,7 +465,7 @@ async function endpoint(req: Request, res: Response): Promise<Response> {
             //send result
             return res.send(segments);
         }
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         if (err instanceof SyntaxError) {
             return res.status(400).send("Categories parameter does not match format requirements.");
         } else return res.sendStatus(500);

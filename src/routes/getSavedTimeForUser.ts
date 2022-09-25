@@ -27,7 +27,7 @@ export async function getSavedTimeForUser(req: Request, res: Response): Promise<
         } else {
             return res.sendStatus(404);
         }
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(`getSavedTimeForUser ${err}`);
         return res.sendStatus(500);
     }
