@@ -4,7 +4,6 @@ import { config } from "../config";
 import { privateDB } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { getPatreonIdentity, PatronStatus, refreshToken, TokenType } from "../utils/tokenUtils";
-import FormData from "form-data";
 
 interface VerifyTokenRequest extends Request {
     query: {
@@ -13,7 +12,7 @@ interface VerifyTokenRequest extends Request {
 }
 
 export const validatelicenseKeyRegex = (token: string) =>
-    new RegExp(/[A-Za-z0-9]{40}/).test(token);
+    new RegExp(/[A-Za-z0-9]{40}|[A-Za-z0-9-]{35}/).test(token);
 
 export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response): Promise<Response> {
     const { query: { licenseKey } } = req;
@@ -22,12 +21,6 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
         return res.status(400).send("Invalid request");
     } else if (!validatelicenseKeyRegex(licenseKey)) {
         // fast check for invalid licence key
-        return res.status(200).send({
-            allowed: false
-        });
-    }
-    const licenseRegex = new RegExp(/[a-zA-Z0-9]{40}|[A-Z0-9-]{35}/);
-    if (!licenseRegex.test(licenseKey)) {
         return res.status(200).send({
             allowed: false
         });
@@ -42,6 +35,7 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
             refreshToken(TokenType.patreon, licenseKey, tokens.refreshToken).catch(Logger.error);
         }
 
+        /* istanbul ignore else */
         if (identity) {
             const membership = identity.included?.[0]?.attributes;
             const allowed = !!membership && ((membership.patron_status === PatronStatus.active && membership.currently_entitled_amount_cents > 0)
@@ -73,20 +67,13 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
 async function checkAllGumroadProducts(licenseKey: string): Promise<boolean> {
     for (const link of config.gumroad.productPermalinks) {
         try {
-            const formData = new FormData();
-            formData.append("product_permalink", link);
-            formData.append("license_key", licenseKey);
-
-            const result = await axios.request({
-                url: "https://api.gumroad.com/v2/licenses/verify",
-                data: formData,
-                method: "POST",
-                headers: formData.getHeaders()
+            const result = await axios.post("https://api.gumroad.com/v2/licenses/verify", {
+                params: { product_permalink: link, license_key: licenseKey }
             });
 
             const allowed = result.status === 200 && result.data?.success;
             if (allowed) return allowed;
-        } catch (e) {
+        } catch (e) /* istanbul ignore next */ {
             Logger.error(`Gumroad fetch for ${link} failed: ${e}`);
         }
     }

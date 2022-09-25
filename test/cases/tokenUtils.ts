@@ -8,27 +8,12 @@ let mock: MockAdapter;
 import * as patreon from "../mocks/patreonMock";
 
 const validateToken = validatelicenseKeyRegex;
-const fakePatreonIdentity = {
-    data: {},
-    links: {},
-    included: [
-        {
-            attributes: {
-                is_monthly: true,
-                currently_entitled_amount_cents: 100,
-                patron_status: "active_patron",
-            },
-            id: "id",
-            type: "campaign"
-        }
-    ],
-};
 
 describe("tokenUtils test", function() {
     before(function() {
         mock = new MockAdapter(axios, { onNoMatch: "throwException" });
         mock.onPost("https://www.patreon.com/api/oauth2/token").reply(200, patreon.fakeOauth);
-        mock.onGet(/identity/).reply(200, patreon.fakeIdentity);
+        mock.onGet(/identity/).reply(200, patreon.activeIdentity);
     });
 
     it("Should be able to create patreon token", function (done) {
@@ -47,7 +32,7 @@ describe("tokenUtils test", function() {
     it("Should be able to get patreon identity", function (done) {
         if (!config?.patreon) this.skip();
         tokenUtils.getPatreonIdentity("fake_access_token").then((result) => {
-            assert.deepEqual(result, patreon.fakeIdentity);
+            assert.deepEqual(result, patreon.activeIdentity);
             done();
         });
     });

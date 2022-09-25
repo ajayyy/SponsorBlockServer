@@ -44,5 +44,7 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
                 </h1>
             `);
         }
+    } else {
+        return res.sendStatus(403);
     }
 }
