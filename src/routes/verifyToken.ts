@@ -18,6 +18,12 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
     if (!licenseKey) {
         return res.status(400).send("Invalid request");
     }
+    const licenseRegex = new RegExp(/[a-zA-Z0-9]{40}|[A-Z0-9-]{35}/);
+    if (!licenseRegex.test(licenseKey)) {
+        return res.status(200).send({
+            allowed: false
+        });
+    }
 
     const tokens = (await privateDB.prepare("get", `SELECT "accessToken", "refreshToken", "expiresIn" from "oauthLicenseKeys" WHERE "licenseKey" = ?`
         , [licenseKey])) as {accessToken: string, refreshToken: string, expiresIn: number};
@@ -41,12 +47,6 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
         }
     } else {
         // Check Local
-        const localRegex = new RegExp(/[a-zA-Z0-9]{40}/);
-        if (!localRegex.test(licenseKey)) {
-            return res.status(200).send({
-                allowed: false
-            });
-        }
         const result = await privateDB.prepare("get", `SELECT "licenseKey" from "licenseKeys" WHERE "licenseKey" = ?`, [licenseKey]);
         if (result) {
             return res.status(200).send({
@@ -54,12 +54,6 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
             });
         } else {
             // Gumroad
-            const gumRoadRegex = new RegExp(/[A-Z0-9-]{35}/);
-            if (gumRoadRegex.test(licenseKey)) { // check against regex
-                return res.status(200).send({
-                    allowed: false
-                });
-            }
             return res.status(200).send({
                 allowed: await checkAllGumroadProducts(licenseKey)
             });
