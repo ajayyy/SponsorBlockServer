@@ -581,4 +581,78 @@ describe("getSkipSegmentsByHash", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should be able to get single segment with requiredSegments", (done) => {
+        const requiredSegment1 = "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388";
+        client.get(`${endpoint}/17bf?requiredSegment=${requiredSegment1}`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
+                assert.strictEqual(data.length, 1);
+                const expected = [{
+                    segments: [{
+                        UUID: requiredSegment1
+                    }]
+                }];
+                assert.ok(partialDeepEquals(data, expected));
+                assert.strictEqual(data[0].segments.length, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if categories are is number", (done) => {
+        client.get(`${endpoint}/17bf?categories=3`)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if actionTypes is number", (done) => {
+        client.get(`${endpoint}/17bf?actionTypes=3`)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if actionTypes are invalid json", (done) => {
+        client.get(`${endpoint}/17bf?actionTypes={test}`)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if requiredSegments is number", (done) => {
+        client.get(`${endpoint}/17bf?requiredSegments=3`)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+
+    it("Should return 404 if requiredSegments is invalid json", (done) => {
+        client.get(`${endpoint}/17bf?requiredSegments={test}`)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if requiredSegments is not present", (done) => {
+        client.get(`${endpoint}/17bf?requiredSegment=${fullCategoryVidHash}`)
+            .then(res => {
+                assert.strictEqual(res.status, 404);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });
