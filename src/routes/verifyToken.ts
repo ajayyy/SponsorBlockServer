@@ -18,6 +18,12 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
     if (!licenseKey) {
         return res.status(400).send("Invalid request");
     }
+    const licenseRegex = new RegExp(/[a-zA-Z0-9]{40}|[A-Z0-9-]{35}/);
+    if (!licenseRegex.test(licenseKey)) {
+        return res.status(200).send({
+            allowed: false
+        });
+    }
 
     const tokens = (await privateDB.prepare("get", `SELECT "accessToken", "refreshToken", "expiresIn" from "oauthLicenseKeys" WHERE "licenseKey" = ?`
         , [licenseKey])) as {accessToken: string, refreshToken: string, expiresIn: number};
