@@ -17,6 +17,6 @@ const subCode = (length = 8) => {
         result += characters[(Math.floor(Math.random() * characters.length))];
     }
     return result;
-}
+};
 
 export const generateLicense = (): string => `${subCode()}-${subCode()}-${subCode()}-${subCode()}`;

@@ -222,7 +222,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         [UUID], { useReplica: true })) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
 
     if (!config.categorySupport[category]?.includes(segmentInfo.actionType) || segmentInfo.actionType === ActionType.Full) {
-        return { status: 400, message: `Not allowed to change to ${category} when for segment of type ${segmentInfo.actionType}`};
+        return { status: 400, message: `Not allowed to change to ${category} when for segment of type ${segmentInfo.actionType}` };
     }
     if (!config.categoryList.includes(category)) {
         return { status: 400, message: "Category doesn't exist." };
