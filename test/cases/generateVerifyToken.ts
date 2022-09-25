@@ -104,6 +104,7 @@ describe("verifyToken mock tests", function() {
 
     beforeEach(function() {
         mock = new MockAdapter(axios, { onNoMatch: "throwException" });
+        mock.onPost("https://www.patreon.com/api/oauth2/token").reply(200, patreon.fakeOauth);
     });
 
     afterEach(function () {

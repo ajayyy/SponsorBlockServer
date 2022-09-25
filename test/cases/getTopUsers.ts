@@ -38,6 +38,15 @@ describe("getTopUsers", () => {
             .catch(err => done(err));
     });
 
+    it("Should return 400 if undefined sortType provided", (done) => {
+        client.get(endpoint)
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to get by all sortTypes", (done) => {
         client.get(endpoint, { params: { sortType: 0 } })// minutesSaved
             .then(res => {
