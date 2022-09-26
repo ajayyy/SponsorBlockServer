@@ -23,16 +23,16 @@ const currentViews = 49816;
 
 describe("innertube API test", function() {
     it("should be able to get innerTube details", async () => {
-        const result = await innerTube.getPlayerData(videoID);
+        const result = await innerTube.getPlayerData(videoID, true);
         assert.ok(partialDeepEquals(result, expectedInnerTube));
     });
     it("Should have more views than current", async () => {
-        const result = await innerTube.getPlayerData(videoID);
+        const result = await innerTube.getPlayerData(videoID, true);
         assert.ok(Number(result.viewCount) >= currentViews);
     });
     it("Should have equivalent response from NewLeaf", async function () {
         if (!config.newLeafURLs || config.newLeafURLs.length <= 0 || config.newLeafURLs[0] == "placeholder") this.skip();
-        const itResponse = await innerTube.getPlayerData(videoID);
+        const itResponse = await innerTube.getPlayerData(videoID, true);
         const newLeafResponse = await YouTubeAPI.listVideos(videoID, true);
         // validate videoID
         assert.strictEqual(itResponse.videoId, videoID);
