@@ -26,7 +26,7 @@ jobs:
         with:
           name: SponsorTimesDB.db
           path: databases/sponsorTimes.db
-      - uses: mchangrh/s3cmd-sync@v1
+      - uses: mchangrh/s3cmd-sync@f4f36b9705bdd9af7ac91964136989ac17e3b513
         with:
           args: --acl-public
         env:
