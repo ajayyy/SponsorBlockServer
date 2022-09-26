@@ -26,3 +26,12 @@ jobs:
         with:
           name: SponsorTimesDB.db
           path: databases/sponsorTimes.db
+      - uses: mchangrh/s3cmd-sync@f4f36b9705bdd9af7ac91964136989ac17e3b513
+        with:
+          args: --acl-public
+        env:
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_ACCESS_KEY_SECRET: ${{ secrets.S3_ACCESS_KEY_SECRET }}
+          SOURCE_DIR: 'databases/sponsorTimes.db'
