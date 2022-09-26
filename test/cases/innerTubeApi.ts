@@ -1,26 +1,25 @@
 import { config } from "../../src/config";
 import assert from "assert";
-// import { innerTubeVideoDetails } from "../../src/types/innerTubeApi.model";
 import { YouTubeAPI } from "../../src/utils/youtubeApi";
 import * as innerTube from "../../src/utils/innerTubeAPI";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { getVideoDetails } from "../../src/utils/getVideoDetails";
 
-const videoID = "dQw4w9WgXcQ";
+const videoID = "BaW_jenozKc";
 const expectedInnerTube = { // partial type of innerTubeVideoDetails
     videoId: videoID,
-    title: "Rick Astley - Never Gonna Give You Up (Official Music Video)",
-    lengthSeconds: "212",
-    channelId: "UCuAXFkgsw1L7xaCfnd5JJOw",
+    title: "youtube-dl test video \"'/\\ä↭𝕐",
+    lengthSeconds: "10",
+    channelId: "UCLqxVugv74EIW3VWh2NOa3Q",
     isOwnerViewing: false,
     isCrawlable: true,
     allowRatings: true,
-    author: "Rick Astley",
+    author: "Philipp Hagemeister",
     isPrivate: false,
     isUnpluggedCorpus: false,
     isLiveContent: false
 };
-const currentViews = 1284257550;
+const currentViews = 49816;
 
 describe("innertube API test", function() {
     it("should be able to get innerTube details", async () => {
