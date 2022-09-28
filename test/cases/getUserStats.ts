@@ -22,8 +22,7 @@ describe("getUserStats", () => {
         await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, -2, "skip", "getuserstatsuuid9", getHash("getuserstats_user_02"), 8, 2, "sponsor", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid10", getHash("getuserstats_user_01"), 8, 2, "filler", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 0, 0, "full", "getuserstatsuuid11", getHash("getuserstats_user_01"), 8, 2, "exclusive_access", 0]);
-
-
+        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "chapter", "getuserstatsuuid12", getHash("getuserstats_user_01"), 9, 2, "chapter", 0]);
     });
 
     it("Should be able to get a 400 (No userID parameter)", (done) => {
@@ -52,17 +51,19 @@ describe("getUserStats", () => {
                         music_offtopic: 1,
                         poi_highlight: 1,
                         filler: 1,
-                        exclusive_access: 1
+                        exclusive_access: 1,
+                        chapter: 1,
                     },
                     actionTypeCount: {
                         mute: 0,
                         skip: 8,
                         full: 1,
-                        poi: 1
+                        poi: 1,
+                        chapter: 1,
                     },
                     overallStats: {
                         minutesSaved: 30,
-                        segmentCount: 10
+                        segmentCount: 11
                     }
                 };
                 assert.ok(partialDeepEquals(res.data, expected));
