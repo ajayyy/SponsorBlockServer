@@ -52,6 +52,5 @@ export class YouTubeAPI {
     }
 }
 
-export function getMaxResThumbnail(apiInfo: APIVideoData): string | void {
-    return apiInfo?.videoThumbnails?.find((elem) => elem.quality === "maxres")?.second__originalUrl;
-}
+export const getMaxResThumbnail = (videoID: string): string =>
+    `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;
