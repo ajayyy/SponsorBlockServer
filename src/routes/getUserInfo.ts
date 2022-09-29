@@ -14,7 +14,7 @@ const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
         const row = await db.prepare("get",
-            `SELECT SUM(((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views") as "minutesSaved",
+            `SELECT SUM(CASE WHEN "actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views" END) as "minutesSaved",
             count(*) as "segmentCount" FROM "sponsorTimes"
             WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [maxRewardTime, maxRewardTime, userID], { useReplica: true });
         if (row.minutesSaved != null) {
