@@ -110,4 +110,16 @@ describe("getStatus", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should be able to get redis latency", function (done) {
+        if (!config.redis?.enabled) this.skip();
+        client.get(endpoint)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.ok(data.redisProcessTime >= 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

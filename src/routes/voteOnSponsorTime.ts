@@ -3,7 +3,6 @@ import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
 import { isUserTempVIP } from "../utils/isUserTempVIP";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
-import { APIVideoInfo } from "../types/youtubeApi.model";
 import { db, privateDB } from "../databases/databases";
 import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
 import { getFormattedTime } from "../utils/getFormattedTime";
@@ -14,6 +13,7 @@ import { UserID } from "../types/user.model";
 import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
+import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 
 const voteTypes = {
     normal: 0,
@@ -52,20 +52,16 @@ interface VoteData {
     finalResponse: FinalResponse;
 }
 
-function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
-    return config.newLeafURLs ? YouTubeAPI.listVideos(videoID, ignoreCache) : null;
-}
-
 const videoDurationChanged = (segmentDuration: number, APIDuration: number) => (APIDuration > 0 && Math.abs(segmentDuration - APIDuration) > 2);
 
 async function updateSegmentVideoDuration(UUID: SegmentUUID) {
     const { videoDuration, videoID, service } = await db.prepare("get", `select "videoDuration", "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
-    let apiVideoInfo: APIVideoInfo = null;
+    let apiVideoDetails: videoDetails = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
-        apiVideoInfo = await getYouTubeVideoInfo(videoID);
+        apiVideoDetails = await getVideoDetails(videoID);
     }
-    const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
+    const apiVideoDuration = apiVideoDetails?.duration as VideoDuration;
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${videoDuration} to ${apiVideoDuration}`);
         await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ? WHERE "UUID" = ?`, [apiVideoDuration, UUID]);
@@ -74,12 +70,12 @@ async function updateSegmentVideoDuration(UUID: SegmentUUID) {
 
 async function checkVideoDuration(UUID: SegmentUUID) {
     const { videoID, service } = await db.prepare("get", `select "videoID", "service" from "sponsorTimes" where "UUID" = ?`, [UUID]);
-    let apiVideoInfo: APIVideoInfo = null;
+    let apiVideoDetails: videoDetails = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
-        apiVideoInfo = await getYouTubeVideoInfo(videoID, true);
+        apiVideoDetails = await getVideoDetails(videoID, true);
     }
-    const apiVideoDuration = apiVideoInfo?.data?.lengthSeconds as VideoDuration;
+    const apiVideoDuration = apiVideoDetails?.duration as VideoDuration;
     // if no videoDuration return early
     if (isNaN(apiVideoDuration)) return;
     // fetch latest submission
@@ -129,7 +125,8 @@ async function sendWebhooks(voteData: VoteData) {
         }
 
         if (config.newLeafURLs !== null) {
-            const { err, data } = await YouTubeAPI.listVideos(submissionInfoRow.videoID);
+            const videoID = submissionInfoRow.videoID;
+            const { err, data } = await YouTubeAPI.listVideos(videoID);
             if (err) return;
 
             const isUpvote = voteData.incrementAmount > 0;
@@ -141,8 +138,8 @@ async function sendWebhooks(voteData: VoteData) {
                 "video": {
                     "id": submissionInfoRow.videoID,
                     "title": data?.title,
-                    "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}`,
-                    "thumbnail": getMaxResThumbnail(data) || null,
+                    "url": `https://www.youtube.com/watch?v=${videoID}`,
+                    "thumbnail": getMaxResThumbnail(videoID),
                 },
                 "submission": {
                     "UUID": voteData.UUID,
@@ -187,7 +184,7 @@ async function sendWebhooks(voteData: VoteData) {
                                     `${getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission)}${voteData.row.locked ? " (Locked)" : ""}`,
                         },
                         "thumbnail": {
-                            "url": getMaxResThumbnail(data) || "",
+                            "url": getMaxResThumbnail(videoID),
                         },
                     }],
                 })

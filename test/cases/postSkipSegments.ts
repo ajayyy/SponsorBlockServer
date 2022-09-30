@@ -141,7 +141,6 @@ describe("postSkipSegments", () => {
                     title: "Example Title",
                     channelID: "ExampleChannel",
                     published: 123,
-                    genreUrl: ""
                 };
                 assert.ok(partialDeepEquals(videoInfo, expectedVideoInfo));
 

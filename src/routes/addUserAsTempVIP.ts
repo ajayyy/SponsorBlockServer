@@ -1,7 +1,5 @@
 import { VideoID } from "../types/segments.model";
-import { YouTubeAPI } from "../utils/youtubeApi";
-import { APIVideoInfo } from "../types/youtubeApi.model";
-import { config } from "../config";
+import { getVideoDetails } from "../utils/getVideoDetails";
 import { getHashCache } from "../utils/getHashCache";
 import { privateDB } from "../databases/databases";
 import { Request, Response } from "express";
@@ -20,15 +18,11 @@ interface AddUserAsTempVIPRequest extends Request {
     }
 }
 
-function getYouTubeVideoInfo(videoID: VideoID, ignoreCache = false): Promise<APIVideoInfo> {
-    return (config.newLeafURLs) ? YouTubeAPI.listVideos(videoID, ignoreCache) : null;
-}
-
 const getChannelInfo = async (videoID: VideoID): Promise<{id: string | null, name: string | null }> => {
-    const videoInfo = await getYouTubeVideoInfo(videoID);
+    const videoInfo = await getVideoDetails(videoID);
     return {
-        id: videoInfo?.data?.authorId,
-        name: videoInfo?.data?.author
+        id: videoInfo?.authorId,
+        name: videoInfo?.authorName
     };
 };
 
