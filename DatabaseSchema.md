@@ -3,7 +3,6 @@
 [vipUsers](#vipUsers)  
 [sponsorTimes](#sponsorTimes)  
 [userNames](#userNames)  
-[userNameLogs](#userNameLogs)  
 [categoryVotes](#categoryVotes)  
 [lockCategories](#lockCategories)  
 [warnings](#warnings)  
@@ -51,7 +50,7 @@
 | sponsorTime_timeSubmitted | timeSubmitted |
 | sponsorTime_userID | userID |
 | sponsorTimes_UUID | UUID |
-| sponsorTimes_hashedVideoID_gin| hashedVideoID, category |
+| sponsorTimes_hashedVideoID | hashedVideoID, category |
 | sponsorTimes_videoID | videoID, service, category, timeSubmitted |
 
 ### userNames
@@ -65,16 +64,6 @@
 | index | field |
 | -- | :--: |
 | userNames_userID | userID |
-
-### userNameLogs
-
-| Name | Type | |
-| -- | :--: | -- |
-| userID | TEXT | not null |
-| newUserName | TEXT | not null |
-| oldUserName | TEXT | not null |
-| updatedByAdmin | BOOLEAN | not null |
-| updatedAt | INTEGER | not null |
 
 ### categoryVotes
 
@@ -137,7 +126,6 @@
 | channelID | TEXT | not null |
 | title | TEXT | not null |
 | published | REAL | not null |
-| genreUrl | TEXT | not null |
 
 | index | field |
 | -- | :--: |
@@ -204,13 +192,15 @@
 
 # Private 
 
-[vote](#vote)  
+[votes](#votes)  
 [categoryVotes](#categoryVotes)  
 [sponsorTimes](#sponsorTimes)  
 [config](#config)  
-[tempVipLog](#tempVipLog)
+[ratings](#ratings)  
+[tempVipLog](#tempVipLog)  
+[userNameLogs](#userNameLogs)  
 
-### vote
+### votes
 
 | Name | Type | |
 | -- | :--: | -- |
@@ -218,6 +208,7 @@
 | userID | TEXT | not null |
 | hashedIP | TEXT | not null |
 | type | INTEGER | not null |
+| originalVoteType | INTEGER | not null | # Since type was reused to also specify the number of votes removed when less than 0, this is being used for the actual type
 
 | index | field |
 | -- | :--: |
@@ -279,4 +270,14 @@
 | issuerUserID | TEXT | not null |
 | targetUserID | TEXT | not null |
 | enabled | BOOLEAN | not null |
+| updatedAt | INTEGER | not null |
+
+### userNameLogs
+
+| Name | Type | |
+| -- | :--: | -- |
+| userID | TEXT | not null |
+| newUserName | TEXT | not null |
+| oldUserName | TEXT | not null |
+| updatedByAdmin | BOOLEAN | not null |
 | updatedAt | INTEGER | not null |

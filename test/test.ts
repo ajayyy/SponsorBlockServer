@@ -33,7 +33,7 @@ async function init() {
     // Instantiate a Mocha instance.
     const mocha = new Mocha();
 
-    const testDirs = ["./test/cases", "./test/cases/ratings"];
+    const testDirs = ["./test/cases"];
 
     // Add each .ts file to the mocha instance
     testDirs.forEach(testDir => {

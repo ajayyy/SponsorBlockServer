@@ -1,13 +1,22 @@
 import { PoolConfig } from "pg";
 import * as redis from "redis";
-import { CacheOptions } from "@ajayyy/lru-diskcache";
 
 interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;
+    expiryTime: number;
+    getTimeout: number;
 }
 
-interface CustomPostgresConfig extends PoolConfig {
+export interface CustomPostgresConfig extends PoolConfig {
     enabled: boolean;
+    maxTries: number;
+    maxConcurrentRequests: number;
+}
+
+export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
+    weight: number;
+    readTimeout: number;
+    fallbackOnFail: boolean;
 }
 
 export interface SBSConfig {
@@ -21,8 +30,11 @@ export interface SBSConfig {
     discordFailedReportChannelWebhookURL?: string;
     discordFirstTimeSubmissionsWebhookURL?: string;
     discordCompletelyIncorrectReportWebhookURL?: string;
+    discordMaliciousReportWebhookURL?: string;
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
+    minReputationToSubmitChapter: number;
+    minReputationToSubmitFiller: number;
     userCounterURL?: string;
     proxySubmission?: string;
     behindProxy: string | boolean;
@@ -43,7 +55,6 @@ export interface SBSConfig {
     rateLimit: {
         vote: RateLimitConfig;
         view: RateLimitConfig;
-        rate: RateLimitConfig;
     };
     mysql?: any;
     privateMysql?: any;
@@ -52,9 +63,19 @@ export interface SBSConfig {
     redis?: RedisConfig;
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: CustomPostgresConfig;
+    postgresReadOnly?: CustomPostgresReadOnlyConfig;
     dumpDatabase?: DumpDatabase;
-    diskCache: CacheOptions;
+    diskCacheURL: string;
     crons: CronJobOptions;
+    patreon: {
+        clientId: string,
+        clientSecret: string,
+        minPrice: number,
+        redirectUri: string
+    }
+    gumroad: {
+        productPermalinks: string[],
+    }
 }
 
 export interface WebhookConfig {

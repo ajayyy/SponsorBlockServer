@@ -1,8 +1,8 @@
 import { config } from "../config";
 import { Logger } from "./logger";
 import { createClient } from "redis";
-import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@node-redis/client/dist/lib/commands";
-import { ClientCommandOptions } from "@node-redis/client/dist/lib/client";
+import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@redis/client/dist/lib/commands";
+import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 
 interface RedisSB {
@@ -11,7 +11,7 @@ interface RedisSB {
     setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
-    sendCommand(args: RedisCommandArguments, options?: ClientCommandOptions): Promise<RedisReply>;
+    sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
     quit(): Promise<void>;
 }
 
@@ -28,20 +28,19 @@ let exportClient: RedisSB = {
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
-    client.connect();
-    exportClient = client;
+    void client.connect(); // void as we don't care about the promise
+    exportClient = client as RedisSB;
 
-    const timeoutDuration = 200;
     const get = client.get.bind(client);
     exportClient.get = (key) => new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(), timeoutDuration);
+        const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
         get(key).then((reply) => {
-            clearTimeout(timeout);
+            if (timeout !== null) clearTimeout(timeout);
             resolve(reply);
         }).catch((err) => reject(err));
     });
     exportClient.increment = (key) => new Promise((resolve, reject) =>
-        client.multi()
+        void client.multi()
             .incr(key)
             .expire(key, 60)
             .exec()
@@ -49,7 +48,10 @@ if (config.redis?.enabled) {
             .catch((err) => reject(err))
     );
     client.on("error", function(error) {
-        Logger.error(error);
+        Logger.error(`Redis Error: ${error}`);
+    });
+    client.on("reconnect", () => {
+        Logger.info("Redis: trying to reconnect");
     });
 }
 

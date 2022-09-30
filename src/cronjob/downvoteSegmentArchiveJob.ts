@@ -57,7 +57,7 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
 
 const DownvoteSegmentArchiveJob = new CronJob(
     jobConfig?.schedule || "0 0 * * * 0",
-    () => archiveDownvoteSegment(jobConfig?.timeThresholdInDays, jobConfig?.voteThreshold)
+    () => void archiveDownvoteSegment(jobConfig?.timeThresholdInDays, jobConfig?.voteThreshold)
 );
 
 if (serverConfig?.crons?.enabled && jobConfig && !jobConfig.schedule) {

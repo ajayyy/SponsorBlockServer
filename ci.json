@@ -17,10 +17,12 @@
         "port": 5432
     },
     "redis": {
+        "enabled": true,
         "socket": {
             "host": "localhost",
             "port": 6379
-        }
+        },
+        "expiryTime": 86400
     },
     "createDatabaseIfNotExist": true,
     "schemaFolder": "./databases",
@@ -67,5 +69,6 @@
           "max": 20,
           "statusCode": 200
         }
-    }
+    },
+    "minReputationToSubmitFiller": -1
 }

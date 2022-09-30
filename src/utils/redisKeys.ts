@@ -1,5 +1,5 @@
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { HashedUserID, UserID } from "../types/user.model";
+import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { HashedValue } from "../types/hash.model";
 import { Logger } from "./logger";
 
@@ -46,4 +46,8 @@ export function videoLabelsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Se
     if (hashedVideoIDPrefix.length !== 4) Logger.warn(`Redis skip segment hash-prefix key is not length 4! ${hashedVideoIDPrefix}`);
 
     return `labels.v1.${service}.${hashedVideoIDPrefix}`;
+}
+
+export function userFeatureKey (userID: HashedUserID, feature: Feature): string {
+    return `user.${userID}.feature.${feature}`;
 }

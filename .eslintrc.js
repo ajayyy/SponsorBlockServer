@@ -29,4 +29,18 @@ module.exports = {
         "semi": "warn",
         "no-console": "warn"
     },
+    overrides: [
+        {
+            files: ["src/**/*.ts"],
+
+            parserOptions: {
+                project: ["./tsconfig.json"],
+            },
+
+            rules: {
+                "@typescript-eslint/no-misused-promises": "warn",
+                "@typescript-eslint/no-floating-promises" : "warn"
+            }
+        },
+    ],
 };

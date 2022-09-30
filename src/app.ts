@@ -43,13 +43,13 @@ import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
-import { postRating } from "./routes/ratings/postRating";
-import { getRating } from "./routes/ratings/getRating";
-import { postClearCache as ratingPostClearCache } from "./routes/ratings/postClearCache";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
 import { endpoint as getVideoLabels } from "./routes/getVideoLabel";
 import { getVideoLabelsByHash } from "./routes/getVideoLabelByHash";
+import { addFeature } from "./routes/addFeature";
+import { generateTokenRequest } from "./routes/generateToken";
+import { verifyTokenRequest } from "./routes/verifyToken";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -77,15 +77,14 @@ export function createServer(callback: () => void): Server {
     return app.listen(config.port, callback);
 }
 
+/* eslint-disable @typescript-eslint/no-misused-promises */
 function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
-    const postRateEndpoints: RequestHandler[] = [postRating];
     if (config.rateLimit) {
         if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote, voteGetUserID));
         if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
-        if (config.rateLimit.rate) postRateEndpoints.unshift(rateLimitMiddleware(config.rateLimit.rate));
     }
 
     //add the get function
@@ -198,11 +197,10 @@ function setupRoutes(router: Router) {
 
     router.get("/api/lockReason", getLockReason);
 
-    // ratings
-    router.get("/api/ratings/rate/:prefix", getRating);
-    router.get("/api/ratings/rate", getRating);
-    router.post("/api/ratings/rate", postRateEndpoints);
-    router.post("/api/ratings/clearCache", ratingPostClearCache);
+    router.post("/api/feature", addFeature);
+
+    router.get("/api/generateToken/:type", generateTokenRequest);
+    router.get("/api/verifyToken", verifyTokenRequest);
 
     // labels
     router.get("/api/videoLabels", getVideoLabels);
@@ -219,3 +217,4 @@ function setupRoutes(router: Router) {
         });
     }
 }
+/* eslint-enable @typescript-eslint/no-misused-promises */

@@ -9,6 +9,8 @@ describe("postWarning", () => {
     const endpoint = "/api/warnUser";
     const getWarning = (userID: string) => db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [userID]);
 
+    const warnedUser = getHash("warning-0");
+
     before(async () => {
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash("warning-vip")]);
     });
@@ -16,7 +18,7 @@ describe("postWarning", () => {
     it("Should be able to create warning if vip (exp 200)", (done) => {
         const json = {
             issuerUserID: "warning-vip",
-            userID: "warning-0",
+            userID: warnedUser,
             reason: "warning-reason-0"
         };
         client.post(endpoint, json)
@@ -37,7 +39,7 @@ describe("postWarning", () => {
     it("Should be not be able to create a duplicate warning if vip", (done) => {
         const json = {
             issuerUserID: "warning-vip",
-            userID: "warning-0",
+            userID: warnedUser,
         };
 
         client.post(endpoint, json)
@@ -57,7 +59,7 @@ describe("postWarning", () => {
     it("Should be able to remove warning if vip", (done) => {
         const json = {
             issuerUserID: "warning-vip",
-            userID: "warning-0",
+            userID: warnedUser,
             enabled: false
         };
 
@@ -100,7 +102,7 @@ describe("postWarning", () => {
     it("Should re-enable disabled warning", (done) => {
         const json = {
             issuerUserID: "warning-vip",
-            userID: "warning-0",
+            userID: warnedUser,
             enabled: true
         };
 
@@ -110,6 +112,43 @@ describe("postWarning", () => {
                 const data = await getWarning(json.userID);
                 const expected = {
                     enabled: 1
+                };
+                assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to remove your own warning", (done) => {
+        const json = {
+            userID: "warning-0",
+            enabled: false
+        };
+
+        client.post(endpoint, json)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const data = await getWarning(warnedUser);
+                const expected = {
+                    enabled: 0
+                };
+                assert.ok(partialDeepEquals(data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to add your own warning", (done) => {
+        const json = {
+            userID: "warning-0"
+        };
+
+        client.post(endpoint, json)
+            .then(async res => {
+                assert.strictEqual(res.status, 403);
+                const data = await getWarning(warnedUser);
+                const expected = {
+                    enabled: 0
                 };
                 assert.ok(partialDeepEquals(data, expected));
                 done();

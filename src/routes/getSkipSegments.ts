@@ -11,11 +11,16 @@ import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
+import { promiseOrTimeout } from "../utils/promise";
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
-        if (segment.votes < -1 && !segment.required) {
+        if (segment.required) {
+            return true; //required - always send
+        }
+
+        if (segment.hidden || segment.votes < -1) {
             return false; //too untrustworthy, just ignore it
         }
 
@@ -27,17 +32,25 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
         if (cache.shadowHiddenSegmentIPs[videoID] === undefined) cache.shadowHiddenSegmentIPs[videoID] = {};
         if (cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] === undefined) {
+            if (cache.userHashedIP === undefined && cache.userHashedIPPromise === undefined) {
+                cache.userHashedIPPromise = getHashCache((getIP(req) + config.globalSalt) as IPAddress);
+            }
+
             const service = getService(req?.query?.service as string);
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
-                [videoID, segment.timeSubmitted, service]) as Promise<{ hashedIP: HashedIP }[]>;
-            cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service));
+                [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
+            try {
+                cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await promiseOrTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
+            } catch (e) {
+                // give up on shadowhide for now
+                cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = null;
+            }
         }
 
         const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
 
         if (ipList?.length > 0 && cache.userHashedIP === undefined) {
-            //hash the IP only if it's strictly necessary
-            cache.userHashedIP = await getHashCache((getIP(req) + config.globalSalt) as IPAddress);
+            cache.userHashedIP = await cache.userHashedIPPromise;
         }
         //if this isn't their ip, don't send it to them
         const shouldShadowHide = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
@@ -133,7 +146,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                 return acc;
             }, {});
 
-        for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
+        await Promise.all(Object.entries(segmentPerVideoID).map(async ([videoID, videoData]) => {
             const data: VideoData = {
                 hash: videoData.hash,
                 segments: [],
@@ -153,7 +166,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             if (data.segments.length > 0) {
                 segments[videoID] = data;
             }
-        }
+        }));
 
         return segments;
     } catch (err) {
@@ -166,9 +179,10 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
-            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
-            [`${hashedVideoIDPrefix}%`, service]
+            `SELECT "videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID", "timeSubmitted", "description" FROM "sponsorTimes"
+            WHERE "hashedVideoID" LIKE ? AND "service" = ? ORDER BY "startTime"`,
+            [`${hashedVideoIDPrefix}%`, service],
+            { useReplica: true }
         ) as Promise<DBSegment[]>;
 
     if (hashedVideoIDPrefix.length === 4) {
@@ -182,9 +196,10 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     const fetchFromDB = () => db
         .prepare(
             "all",
-            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
-            WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 ORDER BY "startTime"`,
-            [videoID, service]
+            `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "videoDuration", "hidden", "reputation", "shadowHidden", "timeSubmitted", "description" FROM "sponsorTimes" 
+            WHERE "videoID" = ? AND "service" = ? ORDER BY "startTime"`,
+            [videoID, service],
+            { useReplica: true }
         ) as Promise<DBSegment[]>;
 
     return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service));
@@ -275,6 +290,9 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
 async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
+    const reputationPromises = segments.map(segment =>
+        segment.userID ? getReputation(segment.userID).catch((e) => Logger.error(e)) : null);
+
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
     //1. As long as the segments' startTime fall inside the currentGroup, we keep adding them to that group
@@ -283,7 +301,8 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
     let overlappingSegmentsGroups: OverlappingSegmentGroup[] = [];
     let currentGroup: OverlappingSegmentGroup;
     let cursor = -1; //-1 to make sure that, even if the 1st segment starts at 0, a new group is created
-    for (const segment of segments) {
+    for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
         if (segment.startTime >= cursor) {
             currentGroup = { segments: [], votes: 0, reputation: 0, locked: false, required: false };
             overlappingSegmentsGroups.push(currentGroup);
@@ -295,7 +314,7 @@ async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSeg
             currentGroup.votes += segment.votes;
         }
 
-        if (segment.userID) segment.reputation = Math.min(segment.reputation, await getReputation(segment.userID));
+        if (segment.userID) segment.reputation = Math.min(segment.reputation, (await reputationPromises[i]) || Infinity);
         if (segment.reputation > 0) {
             currentGroup.reputation += segment.reputation;
         }

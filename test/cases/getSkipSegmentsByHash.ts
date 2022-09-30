@@ -150,7 +150,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaf`, { params: { categories: `["sponsor","intro"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 2);
                 assert.strictEqual(data[0].segments.length, 2);
                 assert.strictEqual(data[1].segments.length, 1);
@@ -163,15 +163,15 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaf`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 const expected = [{
                     segments: [{
                         category: "sponsor",
-                        UUID: "getSegmentsByHash-01",
+                        UUID: "getSegmentsByHash-01"
                     }]
                 }, {
                     segments: [{
-                        category: "sponsor",
+                        category: "sponsor"
                     }]
                 }];
                 assert.strictEqual(data.length, 2);
@@ -187,7 +187,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaf`, { params: { actionType: "skip" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 2);
                 assert.strictEqual(data[0].segments.length, 1);
                 assert.strictEqual(data[1].segments.length, 1);
@@ -211,7 +211,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaf?actionType=skip&actionType=mute`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 2);
                 assert.strictEqual(data[0].segments.length, 2);
                 assert.strictEqual(data[1].segments.length, 1);
@@ -237,7 +237,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaf?actionTypes=["skip","mute"]`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 2);
                 const expected = [{
                     segments: [{
@@ -261,7 +261,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaf`, { params: { service: "PeerTube" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -279,7 +279,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/c962`, { params: { category: "poi_highlight", actionType: "poi" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 assert.strictEqual(data[0].segments.length, 1);
                 assert.strictEqual(data[0].segments[0].category, "poi_highlight");
@@ -293,7 +293,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/c962`, { params: { category: "poi_highlight" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 assert.strictEqual(data[0].segments.length, 1);
                 assert.strictEqual(data[0].segments[0].category, "poi_highlight");
@@ -317,7 +317,7 @@ describe("getSkipSegmentsByHash", () => {
                 client.get(`${endpoint}/${getHash(testID, 1).substring(0, 3)}`)
                     .then(res => {
                         assert.strictEqual(res.status, 200);
-                        const data = res.data;
+                        const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                         assert.strictEqual(data.length, 1);
                         const expected = [{
                             segments: [{
@@ -337,7 +337,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/fdaff4?&category=sponsor&category=intro`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -360,7 +360,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/d518?requiredSegments=["requiredSegmentVid-2","requiredSegmentVid-3"]`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -380,7 +380,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/d518?requiredSegment=requiredSegmentVid-2&requiredSegment=requiredSegmentVid-3`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 assert.strictEqual(data[0].segments.length, 2);
                 const expected = [{
@@ -400,7 +400,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/7258?category=chapter&actionType=chapter`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -432,7 +432,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/6613?actionType=skip&actionType=mute`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -490,7 +490,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/3061?categories=["sponsor","music_offtopic"]`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -510,7 +510,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/ab0c?actionType=skip&actionType=mute`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{
@@ -551,7 +551,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/278f`, { params: { category: ["sponsor", "selfpromo"], actionType: "full" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 assert.strictEqual(data[0].segments.length, 1);
                 assert.strictEqual(data[0].segments[0].category, "selfpromo");
@@ -566,7 +566,7 @@ describe("getSkipSegmentsByHash", () => {
         client.get(`${endpoint}/17bf?requiredSegments=["${requiredSegment1.slice(0,8)}","${requiredSegment2.slice(0,8)}"]`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const data = res.data;
+                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
                 assert.strictEqual(data.length, 1);
                 const expected = [{
                     segments: [{

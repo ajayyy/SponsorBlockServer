@@ -21,6 +21,7 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
             SUM(CASE WHEN "category" = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",
             SUM(CASE WHEN "category" = 'filler' THEN 1 ELSE 0 END) as "categorySumFiller",
             SUM(CASE WHEN "category" = 'exclusive_access' THEN 1 ELSE 0 END) as "categorySumExclusiveAccess",
+            SUM(CASE WHEN "category" = 'chapter' THEN 1 ELSE 0 END) as "categorySumChapter",
         `;
     }
     if (fetchActionTypeStats) {
@@ -29,15 +30,16 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
             SUM(CASE WHEN "actionType" = 'mute' THEN 1 ELSE 0 END) as "typeSumMute",
             SUM(CASE WHEN "actionType" = 'full' THEN 1 ELSE 0 END) as "typeSumFull",
             SUM(CASE WHEN "actionType" = 'poi' THEN 1 ELSE 0 END) as "typeSumPoi",
+            SUM(CASE WHEN "actionType" = 'chapter' THEN 1 ELSE 0 END) as "typeSumChapter",
         `;
     }
     try {
         const row = await db.prepare("get", `
-            SELECT SUM(((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views") as "minutesSaved",
+            SELECT SUM(CASE WHEN "actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views" END) as "minutesSaved",
             ${additionalQuery}
             count(*) as "segmentCount"
             FROM "sponsorTimes"
-            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" !=1`,
+            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`,
         [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, userID]);
         const source = (row.minutesSaved != null) ? row : {};
         const handler = { get: (target: Record<string, any>, name: string) => target?.[name] || 0 };
@@ -60,6 +62,7 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
                 poi_highlight: proxy.categorySumHighlight,
                 filler: proxy.categorySumFiller,
                 exclusive_access: proxy.categorySumExclusiveAccess,
+                chapter: proxy.categorySumChapter,
             };
         }
         if (fetchActionTypeStats) {
@@ -67,7 +70,8 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
                 skip: proxy.typeSumSkip,
                 mute: proxy.typeSumMute,
                 full: proxy.typeSumFull,
-                poi: proxy.typeSumPoi
+                poi: proxy.typeSumPoi,
+                chapter: proxy.typeSumChapter,
             };
         }
         return result;

@@ -28,9 +28,9 @@ export async function getReputation(userID: UserID): Promise<number> {
                 THEN 1 ELSE 0 END) AS "nonSelfDownvotedSubmissions",
             SUM(CASE WHEN "timeSubmitted" > 1596240000000 THEN "votes" ELSE 0 END) AS "votedSum",
             SUM(locked) AS "lockedSum",
-            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "actionType" != 'full' AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
-            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "actionType" != 'full' AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions",
-            SUM(CASE WHEN "votes" > 0 AND "actionType" != 'full' 
+            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
+            SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions",
+            SUM(CASE WHEN "votes" > 0
                 AND NOT EXISTS (
                     SELECT * FROM "sponsorTimes" as c 
                     WHERE (c."votes" > "a"."votes" OR  c."locked" > "a"."locked") AND 
@@ -40,7 +40,7 @@ export async function getReputation(userID: UserID): Promise<number> {
                     SELECT * FROM "lockCategories" as l 
                     WHERE l."videoID" = "a"."videoID" AND l."service" = "a"."service" AND l."category" = "a"."category" LIMIT 1)
                 THEN 1 ELSE 0 END) AS "mostUpvotedInLockedVideoSum"
-        FROM "sponsorTimes" as "a" WHERE "userID" = ?`, [userID, weekAgo, pastDate, userID]) as Promise<ReputationDBResult>;
+        FROM "sponsorTimes" as "a" WHERE "userID" = ? AND "actionType" != 'full'`, [userID, weekAgo, pastDate, userID], { useReplica: true }) as Promise<ReputationDBResult>;
 
     const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
 
@@ -55,19 +55,21 @@ function convertRange(value: number, currentMin: number, currentMax: number, tar
 }
 
 export function calculateReputationFromMetrics(metrics: ReputationDBResult): number {
+    if (!metrics) return 0;
+
     // Grace period
     if (metrics.totalSubmissions < 5) {
         return 0;
     }
 
     const downvoteRatio = metrics.downvotedSubmissions / metrics.totalSubmissions;
-    if (downvoteRatio > 0.3) {
-        return convertRange(Math.min(downvoteRatio, 0.7), 0.3, 0.7, -0.5, -2.5);
+    if (downvoteRatio > 0.5) {
+        return convertRange(Math.min(downvoteRatio, 0.7), 0.5, 0.7, -0.5, -2.5);
     }
 
     const nonSelfDownvoteRatio = metrics.nonSelfDownvotedSubmissions / metrics.totalSubmissions;
-    if (nonSelfDownvoteRatio > 0.05) {
-        return convertRange(Math.min(nonSelfDownvoteRatio, 0.4), 0.05, 0.4, -0.5, -2.5);
+    if (nonSelfDownvoteRatio > 0.3) {
+        return convertRange(Math.min(nonSelfDownvoteRatio, 0.4), 0.3, 0.4, -0.5, -2.5);
     }
 
     if (metrics.votedSum < 5) {

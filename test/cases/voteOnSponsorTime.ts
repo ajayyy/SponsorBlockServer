@@ -59,6 +59,8 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 12, 0, 1, "category-change-uuid-6", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 14, 0, 0, "category-change-uuid-7", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-2", 7, 14, 0, 0, "category-warnvote-uuid-0", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-2", 8, 13, 0, 0, "category-banvote-uuid-0", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["duration-update", 1, 10, 0, 0, "duration-update-uuid-1", "testman", 0, 0, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["full-video", 1, 10, 0, 0, "full-video-uuid-1", "testman", 0, 0, "sponsor", "full", 0, 0]);
         // videoDuration change
@@ -67,13 +69,14 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 12, 0, 0, "duration-changed-uuid-3", "testman", 20, 0, "sponsor", "skip", 0, 0]);
         // add videoDuration to duration-changed-uuid-2
         await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
+        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "chapter-uuid-1", "testman", 0, 0, "chapter", "chapter", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "non-chapter-uuid-2", "testman", 0, 0, "sponsor", "skip", 0, 0]);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 1000), warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 2000), warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 3601000), warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 1000)), warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash,  1]);
@@ -223,6 +226,30 @@ describe("voteOnSponsorTime", () => {
             .catch(err => done(err));
     });
 
+    it("should be able to completely downvote chapter using malicious", (done) => {
+        const UUID = "chapter-uuid-1";
+        postVote(randomID2, UUID, 30)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, -2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should not be able to completely downvote non-chapter using malicious", (done) => {
+        const UUID = "non-chapter-uuid-2";
+        postVote(randomID2, UUID, 30)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to vote for a category and it should add your vote to the database", (done) => {
         const UUID = "vote-uuid-4";
         postVoteCategory(randomID2, UUID, "intro")
@@ -256,6 +283,18 @@ describe("voteOnSponsorTime", () => {
     it("Should not able to change to highlight category", (done) => {
         const UUID = "incorrect-category";
         postVoteCategory(randomID2, UUID, "highlight")
+            .then(async res => {
+                assert.strictEqual(res.status, 400);
+                const row = await getSegmentCategory(UUID);
+                assert.strictEqual(row.category, "sponsor");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not able to change to chapter category", (done) => {
+        const UUID = "incorrect-category";
+        postVoteCategory(randomID2, UUID, "chapter")
             .then(async res => {
                 assert.strictEqual(res.status, 400);
                 const row = await getSegmentCategory(UUID);
@@ -414,6 +453,32 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentCategory(UUID);
                 assert.strictEqual(row.category, category);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to vote for a category of a segment (Too many warning)", (done) => {
+        const UUID = "category-warnvote-uuid-0";
+        const category = "preview";
+        postVoteCategory("warn-voteuser01", UUID, category)
+            .then(res => {
+                assert.strictEqual(res.status, 403);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to vote for a category as a shadowbanned user, but it shouldn't add your vote to the database", (done) => {
+        const UUID = "category-banvote-uuid-0";
+        const category = "preview";
+        postVoteCategory("randomID4", UUID, category)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentCategory(UUID);
+                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
+                assert.strictEqual(row.category, "intro");
+                assert.strictEqual(categoryRows.length, 0);
                 done();
             })
             .catch(err => done(err));
@@ -627,5 +692,19 @@ describe("voteOnSponsorTime", () => {
                 assert.strictEqual(row.votes, 1);
                 done();
             });
+    });
+
+    it("Should not be able to revive full video segment as non-vip", (done) => {
+        const UUID = "full-video-uuid-1";
+        postVote("VIPUser", UUID, 0).then(() => {
+            postVote("randomID3", UUID, 1)
+                .then(async res => {
+                    assert.strictEqual(res.status, 200);
+                    const row = await getSegmentVotes(UUID);
+                    assert.strictEqual(row.votes, -2);
+                    done();
+                })
+                .catch(err => done(err));
+        });
     });
 });

@@ -22,17 +22,15 @@ function checkExpiredWarning(warning: warningEntry): boolean {
 }
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
-    // exit early if no body passed in
-    if (!req.body.userID && !req.body.issuerUserID) return res.status(400).json({ "message": "Missing parameters" });
-    // Collect user input data
-    const issuerUserID: HashedUserID = await getHashCache(<UserID> req.body.issuerUserID);
-    const userID: UserID = req.body.userID;
+    if (!req.body.userID) return res.status(400).json({ "message": "Missing parameters" });
+
+    const issuerUserID: HashedUserID = req.body.issuerUserID ? await getHashCache(req.body.issuerUserID as UserID) : null;
+    const userID: HashedUserID = issuerUserID ? req.body.userID : await getHashCache(req.body.userID as UserID);
     const issueTime = new Date().getTime();
     const enabled: boolean = req.body.enabled ?? true;
     const reason: string = req.body.reason ?? "";
 
-    // Ensure user is a VIP
-    if (!await isUserVIP(issuerUserID)) {
+    if ((!issuerUserID && enabled) || (issuerUserID && !await isUserVIP(issuerUserID))) {
         Logger.warn(`Permission violation: User ${issuerUserID} attempted to warn user ${userID}.`);
         return res.status(403).json({ "message": "Not a VIP" });
     }
@@ -52,8 +50,8 @@ export async function postWarning(req: Request, res: Response): Promise<Response
         // check if warning is still within issue time and warning is not enabled
         } else if (checkExpiredWarning(previousWarning) ) {
             await db.prepare(
-                "run", 'UPDATE "warnings" SET "enabled" = 1 WHERE "userID" = ? AND "issueTime" = ?',
-                [userID, previousWarning.issueTime]
+                "run", 'UPDATE "warnings" SET "enabled" = 1, "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
+                [reason, userID, previousWarning.issueTime]
             );
             resultStatus = "re-enabled";
         } else {

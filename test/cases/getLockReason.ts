@@ -31,7 +31,7 @@ describe("getLockReason", () => {
     });
 
     after(async () => {
-        const deleteUserNameQuery = 'DELETE FROM "userNames" WHERE  "userID" = ? AND  "userName" = ? LIMIT 1';
+        const deleteUserNameQuery = 'DELETE FROM "userNames" WHERE "userID" = ? AND "userName" = ?';
         await db.prepare("run", deleteUserNameQuery, [vipUserID1, vipUserName1]);
         await db.prepare("run", deleteUserNameQuery, [vipUserID2, vipUserName2]);
     });

@@ -1,34 +1,45 @@
-import LRU from "@ajayyy/lru-diskcache";
+import axios, { AxiosError } from "axios";
 import { config } from "../config";
+import { Logger } from "./logger";
 
-let DiskCache: LRU<string, string>;
+class DiskCache {
+    async set(key: string, value: unknown): Promise<boolean> {
+        if (!config.diskCacheURL) return false;
 
-if (config.diskCache) {
-    DiskCache = new LRU("./databases/cache", config.diskCache);
-    DiskCache.init();
-} else {
-    DiskCache = {
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-        // constructor(rootPath, options): {};
+        try {
+            const result = await axios.post(`${config.diskCacheURL}/api/v1/item`, {
+                key,
+                value
+            });
 
-        init(): void { return; },
+            return result.status === 200;
+        } catch (err) {
+            const response = (err as AxiosError).response;
+            if (!response || response.status !== 404) {
+                Logger.error(`DiskCache: Error setting key ${key}: ${err}`);
+            }
 
-        reset(): void { return; },
+            return false;
+        }
+    }
 
-        has(key: string): boolean { return false; },
+    async get(key: string): Promise<unknown> {
+        if (!config.diskCacheURL) return null;
 
-        get(key: string, opts?: {encoding?: string}): string { return null; },
+        try {
+            const result = await axios.get(`${config.diskCacheURL}/api/v1/item?key=${key}`, { timeout: 500 });
 
-        // Returns size
-        set(key: string, dataOrSteam: string): Promise<number> { return new Promise(() => 0); },
+            return result.status === 200 ? result.data : null;
+        } catch (err) {
+            const response = (err as AxiosError).response;
+            if (!response || response.status !== 404) {
+                Logger.error(`DiskCache: Error getting key ${key}: ${err}`);
+            }
 
-        del(key: string): void { return; },
-
-        size(): number { return 0; },
-
-        prune(): void {return; },
-        /* eslint-enable @typescript-eslint/no-unused-vars */
-    };
+            return null;
+        }
+    }
 }
 
-export default DiskCache;
+const diskCache = new DiskCache();
+export default diskCache;

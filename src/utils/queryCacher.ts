@@ -1,8 +1,9 @@
 import redis from "../utils/redis";
 import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey } from "./redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import { Feature, HashedUserID, UserID } from "../types/user.model";
+import { config } from "../config";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
@@ -16,7 +17,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.set(key, JSON.stringify(data));
+    redis.setEx(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return data;
 }
@@ -52,7 +53,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
     if (valuesToBeFetched.length > 0) {
         data = await fetchFromDB(valuesToBeFetched);
 
-        new Promise(() => {
+        void new Promise(() => {
             const newResults: Record<string, T[]> = {};
             for (const item of data) {
                 const splitValue = (item as unknown as Record<string, string>)[splitKey];
@@ -67,7 +68,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
             }
 
             for (const key in newResults) {
-                redis.set(key, JSON.stringify(newResults[key]));
+                redis.setEx(key, config.redis?.expiryTime, JSON.stringify(newResults[key])).catch((err) => Logger.error(err));
             }
         });
     }
@@ -77,22 +78,27 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
 
 function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; userID?: UserID; }): void {
     if (videoInfo) {
-        redis.del(skipSegmentsKey(videoInfo.videoID, videoInfo.service));
-        redis.del(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service));
-        redis.del(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service));
-        if (videoInfo.userID) redis.del(reputationKey(videoInfo.userID));
+        redis.del(skipSegmentsKey(videoInfo.videoID, videoInfo.service)).catch((err) => Logger.error(err));
+        redis.del(skipSegmentGroupsKey(videoInfo.videoID, videoInfo.service)).catch((err) => Logger.error(err));
+        redis.del(skipSegmentsHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
+        if (videoInfo.userID) redis.del(reputationKey(videoInfo.userID)).catch((err) => Logger.error(err));
     }
 }
 
 function clearRatingCache(videoInfo: { hashedVideoID: VideoIDHash; service: Service;}): void {
     if (videoInfo) {
-        redis.del(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service));
+        redis.del(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
     }
+}
+
+function clearFeatureCache(userID: HashedUserID, feature: Feature): void {
+    redis.del(userFeatureKey(userID, feature)).catch((err) => Logger.error(err));
 }
 
 export const QueryCacher = {
     get,
     getAndSplit,
     clearSegmentCache,
-    clearRatingCache
+    clearRatingCache,
+    clearFeatureCache
 };

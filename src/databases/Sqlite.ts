@@ -93,9 +93,7 @@ export class Sqlite implements IDatabase {
     }
 
     private static processUpgradeQuery(query: string): string {
-        const result = query.replace(/^.*--!sqlite-ignore/gm, "");
-
-        return result;
+        return query.replace(/^.*--!sqlite-ignore/gm, "");
     }
 }
 

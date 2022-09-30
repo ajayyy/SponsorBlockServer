@@ -17,12 +17,13 @@ if (config.mysql) {
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
-            user: config.postgres?.user,
-            host: config.postgres?.host,
+            ...config.postgres,
             database: "sponsorTimes",
-            password: config.postgres?.password,
-            port: config.postgres?.port,
-        }
+        },
+        postgresReadOnly: config.postgresReadOnly ? {
+            ...config.postgresReadOnly,
+            database: "sponsorTimes"
+        } : null
     });
 
     privateDB = new Postgres({
@@ -32,12 +33,13 @@ if (config.mysql) {
         readOnly: config.readOnly,
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
-            user: config.postgres?.user,
-            host: config.postgres?.host,
-            database: "privateDB",
-            password: config.postgres?.password,
-            port: config.postgres?.port,
-        }
+            ...config.postgres,
+            database: "privateDB"
+        },
+        postgresReadOnly: config.postgresReadOnly ? {
+            ...config.postgresReadOnly,
+            database: "privateDB"
+        } : null
     });
 } else {
     db = new Sqlite({

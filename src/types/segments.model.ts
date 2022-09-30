@@ -101,6 +101,7 @@ export interface VideoData {
 export interface SegmentCache {
     shadowHiddenSegmentIPs: SBRecord<VideoID, SBRecord<string, {hashedIP: HashedIP}[]>>,
     userHashedIP?: HashedIP
+    userHashedIPPromise?: Promise<HashedIP>;
 }
 
 export interface DBLock {
@@ -119,4 +120,13 @@ export enum SortableFields {
     endTime = "endTime",
     votes = "votes",
     views = "views",
+}
+
+
+export enum VoteType {
+    Downvote = 0,
+    Upvote = 1,
+    ExtraDownvote = 2,
+    Undo = 20,
+    Malicious = 30
 }

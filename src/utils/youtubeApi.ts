@@ -17,7 +17,7 @@ export class YouTubeAPI {
 
                 if (data) {
                     Logger.debug(`YouTube API: cache used for video information: ${videoID}`);
-                    return { err: null, data: JSON.parse(data) };
+                    return { err: null, data: data as APIVideoData };
                 }
             } catch (err) {
                 return { err: err as string | boolean, data: null };
@@ -38,9 +38,9 @@ export class YouTubeAPI {
                     return { err: data.error, data: null };
                 }
                 const apiResult = data as APIVideoData;
-                DiskCache.set(cacheKey, JSON.stringify(apiResult))
-                    .catch((err: any) => Logger.warn(err))
-                    .then(() => Logger.debug(`YouTube API: video information cache set for: ${videoID}`));
+                DiskCache.set(cacheKey, apiResult)
+                    .then(() => Logger.debug(`YouTube API: video information cache set for: ${videoID}`))
+                    .catch((err: any) => Logger.warn(err));
 
                 return { err: false, data: apiResult };
             } else {
@@ -52,6 +52,5 @@ export class YouTubeAPI {
     }
 }
 
-export function getMaxResThumbnail(apiInfo: APIVideoData): string | void {
-    return apiInfo?.videoThumbnails?.find((elem) => elem.quality === "maxres")?.second__originalUrl;
-}
+export const getMaxResThumbnail = (videoID: string): string =>
+    `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;

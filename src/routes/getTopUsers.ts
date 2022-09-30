@@ -4,6 +4,7 @@ import { config } from "../config";
 import { Request, Response } from "express";
 
 const MILLISECONDS_IN_MINUTE = 60000;
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 const getTopUsersWithCache = createMemoryCache(generateTopUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
@@ -34,7 +35,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
         SUM(((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views") as "minutesSaved",
         SUM("votes") as "userVotes", ${additionalFields} COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
-        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
+        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "sponsorTimes"."actionType" != 'chapter' AND "shadowBannedUsers"."userID" IS NULL
         GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 20
         ORDER BY "${sortBy}" DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds]);
 

@@ -1,7 +1,7 @@
 import fs from "fs";
 import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
-import { isBoolean, isNumber } from "lodash";
+import { isNumber } from "lodash";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_POSTGRES ? "ci.json"
@@ -20,7 +20,7 @@ addDefaults(config, {
     privateDBSchema: "./databases/_private.db.sql",
     readOnly: false,
     webhooks: [],
-    categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight"],
+    categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight", "chapter"],
     categorySupport: {
         sponsor: ["skip", "mute", "full"],
         selfpromo: ["skip", "mute", "full"],
@@ -42,6 +42,9 @@ addDefaults(config, {
     discordNeuralBlockRejectWebhookURL: null,
     discordFailedReportChannelWebhookURL: null,
     discordReportChannelWebhookURL: null,
+    discordMaliciousReportWebhookURL: null,
+    minReputationToSubmitChapter: 0,
+    minReputationToSubmitFiller: 0,
     getTopUsersCacheTimeMinutes: 240,
     globalSalt: null,
     mode: "",
@@ -59,12 +62,6 @@ addDefaults(config, {
             max: 10,
             statusCode: 200,
             message: "OK",
-        },
-        rate: {
-            windowMs: 900000,
-            max: 20,
-            statusCode: 200,
-            message: "Success",
         }
     },
     userCounterURL: null,
@@ -76,7 +73,25 @@ addDefaults(config, {
         user: "",
         host: "",
         password: "",
-        port: 5432
+        port: 5432,
+        max: 10,
+        idleTimeoutMillis: 10000,
+        maxTries: 3,
+        maxConcurrentRequests: 3500
+    },
+    postgresReadOnly: {
+        enabled: false,
+        weight: 1,
+        user: "",
+        host: "",
+        password: "",
+        port: 5432,
+        readTimeout: 250,
+        max: 10,
+        idleTimeoutMillis: 10000,
+        maxTries: 3,
+        fallbackOnFail: true,
+        maxConcurrentRequests: 3500
     },
     dumpDatabase: {
         enabled: false,
@@ -112,9 +127,7 @@ addDefaults(config, {
             name: "ratings"
         }]
     },
-    diskCache: {
-        max: 10737418240
-    },
+    diskCacheURL: null,
     crons: null,
     redis: {
         enabled: false,
@@ -122,7 +135,18 @@ addDefaults(config, {
             host: "",
             port: 0
         },
-        disableOfflineQueue: true
+        disableOfflineQueue: true,
+        expiryTime: 24 * 60 * 60,
+        getTimeout: 40
+    },
+    patreon: {
+        clientId: "",
+        clientSecret: "",
+        minPrice: 0,
+        redirectUri: "https://sponsor.ajay.app/api/generateToken/patreon"
+    },
+    gumroad: {
+        productPermalinks: ["sponsorblock"]
     }
 });
 loadFromEnv(config);
@@ -167,12 +191,12 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
         const fullKey = (prefix ? `${prefix}_` : "") + key;
         const data = config[key];
 
-        if (typeof data === "object" && !Array.isArray(data)) {
+        if (data && typeof data === "object" && !Array.isArray(data)) {
             loadFromEnv(data, fullKey);
         } else if (process.env[fullKey]) {
             const value = process.env[fullKey];
             if (isNumber(value)) {
-                config[key] = parseInt(value, 10);
+                config[key] = parseFloat(value);
             } else if (value.toLowerCase() === "true" || value.toLowerCase() === "false") {
                 config[key] = value === "true";
             } else if (key === "newLeafURLs") {

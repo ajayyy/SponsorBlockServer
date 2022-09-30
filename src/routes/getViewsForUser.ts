@@ -15,7 +15,7 @@ export async function getViewsForUser(req: Request, res: Response): Promise<Resp
     userID = await getHashCache(userID);
 
     try {
-        const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID], { useReplica: true });
 
         //increase the view count by one
         if (row.viewCount != null) {
