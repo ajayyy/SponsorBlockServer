@@ -2,6 +2,7 @@ import assert from "assert";
 import { db } from "../../src/databases/databases";
 import { client } from "../utils/httpClient";
 import { config } from "../../src/config";
+import sinon from "sinon";
 let dbVersion: number;
 
 describe("getStatus", () => {
@@ -121,5 +122,17 @@ describe("getStatus", () => {
                 done();
             })
             .catch(err => done(err));
+    });
+
+    it("Should return commit unkown if not present", (done) => {
+        sinon.stub((global as any), "HEADCOMMIT").value(undefined);
+        client.get(`${endpoint}/commit`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                assert.strictEqual(res.data, "test"); // commit should be test
+                done();
+            })
+            .catch(err => done(err));
+        sinon.restore();
     });
 });

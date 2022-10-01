@@ -50,7 +50,17 @@ describe("generateToken test", function() {
             patreonLicense = extractLicenseKey(res.data);
             assert.ok(validatelicenseKeyRegex(patreonLicense));
             done();
-        });
+        }).catch(err => done(err));
+    });
+
+    it("Should create patreon token for invalid patron", function (done) {
+        mock.onGet(/identity/).reply(200, patreon.formerIdentityFail);
+        if (!config?.patreon) this.skip();
+        getGenerateToken("patreon", "patreon_code", "").then(res => {
+            patreonLicense = extractLicenseKey(res.data);
+            assert.ok(validatelicenseKeyRegex(patreonLicense));
+            done();
+        }).catch(err => done(err));
     });
 
     it("Should be able to create new local token", function (done) {
@@ -58,28 +68,28 @@ describe("generateToken test", function() {
             assert.ok(validatelicenseKeyRegex(licenseKey));
             localLicense = licenseKey;
             done();
-        });
+        }).catch(err => done(err));
     });
 
     it("Should return 400 if missing code parameter", function (done) {
         getGenerateToken("patreon", null, "").then(res => {
             assert.strictEqual(res.status, 400);
             done();
-        });
+        }).catch(err => done(err));
     });
 
     it("Should return 403 if missing adminuserID parameter", function (done) {
         getGenerateToken("local", "fake-code", null).then(res => {
             assert.strictEqual(res.status, 403);
             done();
-        });
+        }).catch(err => done(err));
     });
 
     it("Should return 403 for invalid adminuserID parameter", function (done) {
         getGenerateToken("local", "fake-code", "fakeAdminID").then(res => {
             assert.strictEqual(res.status, 403);
             done();
-        });
+        }).catch(err => done(err));
     });
 });
 
@@ -96,7 +106,7 @@ describe("verifyToken static tests", function() {
         getVerifyToken(null).then(res => {
             assert.strictEqual(res.status, 400);
             done();
-        });
+        }).catch(err => done(err));
     });
 });
 
