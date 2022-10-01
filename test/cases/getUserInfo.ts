@@ -21,6 +21,7 @@ describe("getUserInfo", () => {
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 0, 36000, 2,"uuid000009", getHash("getuserinfo_user_03"), 8, 10, "sponsor", "skip", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo3", 1, 11, 2,   "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", "skip", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo4", 1, 11, 2,   "uuid000010", getHash("getuserinfo_user_04"), 9, 10, "chapter", "chapter", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo5", 1, 11, 2,   "uuid000011", getHash("getuserinfo_user_05"), 9, 10, "sponsor", "skip", 0]);
 
 
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
