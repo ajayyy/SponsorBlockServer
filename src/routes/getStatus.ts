@@ -11,9 +11,10 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
     value = Array.isArray(value) ? value[0] : value;
     let processTime, redisProcessTime = -1;
     try {
+        const dbStartTime = Date.now();
         const dbVersion = await promiseOrTimeout(db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"]), 5000)
             .then(e => {
-                processTime = Date.now() - startTime;
+                processTime = Date.now() - dbStartTime;
                 return e.value;
             })
             .catch(e => {
@@ -21,9 +22,10 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
                 return -1;
             });
         let statusRequests: unknown = 0;
+        const redisStartTime = Date.now();
         const numberRequests = await promiseOrTimeout(redis.increment("statusRequest"), 5000)
             .then(e => {
-                redisProcessTime = Date.now() - startTime;
+                redisProcessTime = Date.now() - redisStartTime;
                 return e;
             }).catch(e => {
                 Logger.error(`status: redis increment timed out ${e}`);
