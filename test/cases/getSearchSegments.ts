@@ -80,6 +80,67 @@ describe("getSearchSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should be able to filter by category with categories string", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", categories: `["selfpromo"]` } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 1);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-downvote");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to filter by category with categories array", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest0", category: ["selfpromo"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                const segments = data.segments;
+                assert.strictEqual(data.segmentCount, 1);
+                assert.strictEqual(data.page, 0);
+                assert.strictEqual(segments[0].UUID, "search-downvote");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to filter by category with actionTypes JSON", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest5", actionTypes: `["mute"]` } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.segmentCount, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to filter by category with actionType array", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest5", actionType: ["mute"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.segmentCount, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to filter by category with actionType string", (done) => {
+        client.get(endpoint, { params: { videoID: "searchTest5", actionType: "mute" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.segmentCount, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to filter by lock status", (done) => {
         client.get(endpoint, { params: { videoID: "searchTest0", locked: false } })
             .then(res => {
