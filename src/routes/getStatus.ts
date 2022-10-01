@@ -16,7 +16,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
                 processTime = Date.now() - startTime;
                 return e.value;
             })
-            .catch(e => {
+            .catch(e => /* istanbul ignore next */ {
                 Logger.error(`status: SQL query timed out: ${e}`);
                 return -1;
             });
@@ -25,7 +25,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             .then(e => {
                 redisProcessTime = Date.now() - startTime;
                 return e;
-            }).catch(e => {
+            }).catch(e => /* istanbul ignore next */ {
                 Logger.error(`status: redis increment timed out ${e}`);
                 return [-1];
             });
@@ -33,7 +33,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
 
         const statusValues: Record<string, any> = {
             uptime: process.uptime(),
-            commit: (global as any).HEADCOMMIT || "unknown",
+            commit: (global as any)?.HEADCOMMIT ?? "unknown",
             db: Number(dbVersion),
             startTime,
             processTime,
