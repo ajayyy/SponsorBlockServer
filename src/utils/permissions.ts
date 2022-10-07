@@ -9,7 +9,7 @@ import { getReputation } from "./reputation";
 
 interface CanSubmitResult {
     canSubmit: boolean;
-    reason?: string;
+    reason: string;
 }
 
 async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
@@ -32,7 +32,8 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
             };
         default:
             return {
-                canSubmit: true
+                canSubmit: true,
+                reason: ""
             };
     }
 }
