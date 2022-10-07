@@ -27,7 +27,8 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
                     lowDownvotes(userID),
                     (async () => (await getReputation(userID)) > config.minReputationToSubmitChapter)(),
                     hasFeature(userID, Feature.ChapterSubmitter)
-                ])
+                ]),
+                reason: "Submitting chapters requires a minimum reputation. You can ask on Discord/Matrix to get permission with less reputation."
             };
         default:
             return {
