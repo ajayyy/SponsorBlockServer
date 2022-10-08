@@ -59,7 +59,7 @@ async function updateSegmentVideoDuration(UUID: SegmentUUID) {
     let apiVideoDetails: videoDetails = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
-        apiVideoDetails = await getVideoDetails(videoID);
+        apiVideoDetails = await getVideoDetails(videoID, true);
     }
     const apiVideoDuration = apiVideoDetails?.duration as VideoDuration;
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
