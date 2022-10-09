@@ -178,11 +178,11 @@ export class Postgres implements IDatabase {
 
     private getPool(type: string, options: QueryOption): Pool {
         const readAvailable = this.poolRead && options.useReplica && this.isReadQuery(type);
-        const ignroreReadDueToFailure = this.config.postgresReadOnly.fallbackOnFail
+        const ignoreReadDueToFailure = this.config.postgresReadOnly.fallbackOnFail
             && this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.config.postgresReadOnly.fallbackOnFail
             && this.lastPoolFail > Date.now() - 1000 * 30;
-        if (readAvailable && !ignroreReadDueToFailure && (options.forceReplica || readDueToFailure ||
+        if (readAvailable && !ignoreReadDueToFailure && (options.forceReplica || readDueToFailure ||
                 Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
             return this.poolRead;
         } else {

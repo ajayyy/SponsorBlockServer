@@ -139,6 +139,15 @@ addDefaults(config, {
         expiryTime: 24 * 60 * 60,
         getTimeout: 40
     },
+    redisRead: {
+        enabled: false,
+        socket: {
+            host: "",
+            port: 0
+        },
+        disableOfflineQueue: true,
+        weight: 1
+    },
     patreon: {
         clientId: "",
         clientSecret: "",

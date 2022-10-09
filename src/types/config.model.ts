@@ -7,6 +7,11 @@ interface RedisConfig extends redis.RedisClientOptions {
     getTimeout: number;
 }
 
+interface RedisReadOnlyConfig extends redis.RedisClientOptions {
+    enabled: boolean;
+    weight: number;
+}
+
 export interface CustomPostgresConfig extends PoolConfig {
     enabled: boolean;
     maxTries: number;
@@ -61,6 +66,7 @@ export interface SBSConfig {
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: RedisConfig;
+    redisRead?: RedisReadOnlyConfig;
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: CustomPostgresConfig;
     postgresReadOnly?: CustomPostgresReadOnlyConfig;

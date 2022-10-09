@@ -25,19 +25,35 @@ let exportClient: RedisSB = {
     quit: () => new Promise((resolve) => resolve(null)),
 };
 
+let lastClientFail = 0;
+let lastReadFail = 0;
+
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
+    const readClient = config.redisRead?.enabled ? createClient(config.redisRead) : null;
     void client.connect(); // void as we don't care about the promise
+    void readClient?.connect();
     exportClient = client as RedisSB;
 
+
     const get = client.get.bind(client);
+    const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
         const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
-        get(key).then((reply) => {
+        const chosenGet = pickChoice(get, getRead);
+        chosenGet(key).then((reply) => {
             if (timeout !== null) clearTimeout(timeout);
             resolve(reply);
-        }).catch((err) => reject(err));
+        }).catch((err) => {
+            if (chosenGet === get) {
+                lastClientFail = Date.now();
+            } else {
+                lastReadFail = Date.now();
+            }
+
+            reject(err);
+        });
     });
     exportClient.increment = (key) => new Promise((resolve, reject) =>
         void client.multi()
@@ -48,11 +64,31 @@ if (config.redis?.enabled) {
             .catch((err) => reject(err))
     );
     client.on("error", function(error) {
+        lastClientFail = Date.now();
         Logger.error(`Redis Error: ${error}`);
     });
     client.on("reconnect", () => {
         Logger.info("Redis: trying to reconnect");
     });
+    readClient?.on("error", function(error) {
+        lastReadFail = Date.now();
+        Logger.error(`Redis Read-Only Error: ${error}`);
+    });
+    readClient?.on("reconnect", () => {
+        Logger.info("Redis Read-Only: trying to reconnect");
+    });
+}
+
+function pickChoice<T>(client: T, readClient: T): T {
+    const readAvailable = !!readClient;
+    const ignoreReadDueToFailure = lastReadFail > Date.now() - 1000 * 30;
+    const readDueToFailure = lastClientFail > Date.now() - 1000 * 30;
+    if (readAvailable && !ignoreReadDueToFailure && (readDueToFailure ||
+            Math.random() > 1 / (config.redisRead?.weight + 1))) {
+        return readClient;
+    } else {
+        return client;
+    }
 }
 
 export default exportClient;
