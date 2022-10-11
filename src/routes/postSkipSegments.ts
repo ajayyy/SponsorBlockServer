@@ -22,6 +22,7 @@ import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
+import { CompareSegment, segmentOverlapping } from "../utils/segments";
 
 type CheckResult = {
     pass: boolean,
@@ -261,7 +262,7 @@ function fetchOverlappingSegmentCanditates(videoID: VideoID, service: Service, s
                 [videoID, service],
                 { useReplica: true }
             );
-        default:
+        case ActionType.Chapter:
             return db.prepare(
                 "all",
                 `SELECT "startTime", "endTime", "votes", "locked", "category", "actionType", "description" FROM "sponsorTimes"
@@ -270,6 +271,8 @@ function fetchOverlappingSegmentCanditates(videoID: VideoID, service: Service, s
                 [videoID, service, segment.actionType],
                 { useReplica: true }
             );
+        default:
+            return new Promise((resolve) => resolve([]));
     }
 }
 
@@ -278,30 +281,28 @@ async function checkSegmentOverlap(videoID: VideoID, service: Service, incomingS
 
     if (candidates.length === 0) return null; // Can't overlap if there are no segments
 
+    const errorEnding = (c: string) => `has already been submitted.\n` +
+        `If this is what you tried to submit, please make sure you have the ${c} category enabled and try refreshing the segment list.\n`;
+
     if (incomingSegment.actionType === ActionType.Poi || incomingSegment.actionType === ActionType.Full) {
         const bestSegment = candidates[0]; // fetchOverlappingSegmentCanditates returns only one segment for these
-        return `\nA ${bestSegment.actionType} ${bestSegment.category} segment ${incomingSegment.actionType === ActionType.Poi ? `at ${getFormattedTime(bestSegment.startTime)} ` : ""}has already been submitted.\n` +
-        `If this is what you tried to submit, please make sure you have the ${bestSegment.category} category enabled and try refreshing the segment list.\n`;
+        return `\nA ${bestSegment.actionType} ${bestSegment.category} segment ${incomingSegment.actionType === ActionType.Poi ? `at ${getFormattedTime(bestSegment.startTime)} ` : ""}${errorEnding(bestSegment.category)}`;
     }
-    const startTime = parseFloat(incomingSegment.segment[0]);
-    const endTime = parseFloat(incomingSegment.segment[1]);
-    const bestSegment = candidates.find((segment) => {
-        const overlap = Math.min(segment.endTime, endTime) - Math.max(segment.startTime, startTime);
-        const overallDuration = Math.max(segment.endTime, endTime) - Math.min(segment.startTime, startTime);
-        const overlapPercent = overlap / overallDuration;
-        return (overlapPercent >= 0.1 && segment.actionType === incomingSegment.actionType && segment.actionType !== ActionType.Chapter)
-            || (overlapPercent >= 0.6 && segment.actionType !== incomingSegment.actionType)
-            || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && incomingSegment.actionType === ActionType.Chapter);
-    });
 
+    const compareSegment: CompareSegment = {
+        startTime: parseFloat(incomingSegment.segment[0]),
+        endTime: parseFloat(incomingSegment.segment[1]),
+        category: incomingSegment.category,
+        actionType: incomingSegment.actionType,
+    };
+    const bestSegment = candidates.find((segment) => segmentOverlapping(segment, compareSegment));
     if (!bestSegment) return null; // Overlap not found
 
-    if (bestSegment.actionType === ActionType.Chapter)
-        return `\nA "${bestSegment.description}" chapter at ${getFormattedTime(bestSegment.startTime)}-${getFormattedTime(bestSegment.endTime)} has already been submitted.\n` +
-            `If this is what you tried to submit, please make sure you have the ${bestSegment.category} category enabled and try refreshing the segment list.\n`;
+    const segmentType = bestSegment.actionType === ActionType.Chapter
+        ? `"${bestSegment.description}" chapter`
+        : `${bestSegment.actionType} ${bestSegment.category} segment`;
 
-    return `\nA ${bestSegment.actionType} ${bestSegment.category} segment at ${getFormattedTime(bestSegment.startTime)}-${getFormattedTime(bestSegment.endTime)} has already been submitted.\n` +
-        `If this is what you tried to submit, please make sure you have the ${bestSegment.category} category enabled and try refreshing the segment list.\n`;
+    return `\nA ${segmentType} at ${getFormattedTime(bestSegment.startTime)}-${getFormattedTime(bestSegment.endTime)}${errorEnding(bestSegment.category)}`;
 }
 
 async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
@@ -336,9 +337,9 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 errorMessage:
                     `Users have voted that new segments aren't needed for the following category: ` +
                     `'${segments[i].category}'\n` +
-                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
-                    (overlapMessage ?? (segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
-                        "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")) +
+                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ``}\n` +
+                    `${overlapMessage ?? (segments[i].category === "sponsor" ? `\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. ` +
+                        `Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n` : ``)}` +
                     `\nIf you believe this is incorrect, please contact someone on chat.sponsor.ajay.app, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
             };
         }
