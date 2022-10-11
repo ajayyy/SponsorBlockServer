@@ -14,6 +14,7 @@ import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
+import { deleteLockCategories } from "./deleteLockCategories";
 
 const voteTypes = {
     normal: 0,
@@ -59,7 +60,7 @@ async function updateSegmentVideoDuration(UUID: SegmentUUID) {
     let apiVideoDetails: videoDetails = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
-        apiVideoDetails = await getVideoDetails(videoID);
+        apiVideoDetails = await getVideoDetails(videoID, true);
     }
     const apiVideoDuration = apiVideoDetails?.duration as VideoDuration;
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
@@ -95,6 +96,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
             AND "hidden" = 0 AND "shadowHidden" = 0 AND 
             "actionType" != 'full' AND "votes" > -2`,
         [videoID, service, latestSubmission.timeSubmitted]);
+        deleteLockCategories(videoID, null, null, service).catch(Logger.error);
     }
 }
 
@@ -219,7 +221,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
         [UUID], { useReplica: true })) as {category: Category, actionType: ActionType, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID, locked: number};
 
     if (!config.categorySupport[category]?.includes(segmentInfo.actionType) || segmentInfo.actionType === ActionType.Full) {
-        return { status: 400, message: `Not allowed to change to ${category} when for segment of type ${segmentInfo.actionType}`};
+        return { status: 400, message: `Not allowed to change to ${category} when for segment of type ${segmentInfo.actionType}` };
     }
     if (!config.categoryList.includes(category)) {
         return { status: 400, message: "Category doesn't exist." };
