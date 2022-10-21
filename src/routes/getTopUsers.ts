@@ -33,7 +33,7 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
     }
 
     const rows = await db.prepare("all", `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
-        SUM(CASE WHEN "sponsorTimes"."actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 6) * "sponsorTimes"."views" END) as "minutesSaved",
+        SUM(CASE WHEN "sponsorTimes"."actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views" END) as "minutesSaved",
         SUM("votes") as "userVotes", ${additionalFields} COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
         WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
