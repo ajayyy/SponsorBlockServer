@@ -33,6 +33,8 @@ export class Postgres implements IDatabase {
     private poolRead: Pool;
     private lastPoolReadFail = 0;
 
+    activePostgresRequests = 0;
+
     constructor(private config: DatabaseConfig) {}
 
     async init(): Promise<void> {
@@ -108,6 +110,7 @@ export class Postgres implements IDatabase {
             tries++;
 
             try {
+                this.activePostgresRequests++;
                 lastPool = this.getPool(type, options);
 
                 pendingQueries.push(savePromiseState(lastPool.query({ text: query, values: params })));
@@ -115,6 +118,7 @@ export class Postgres implements IDatabase {
                 if (options.useReplica && maxTries() - tries > 1) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
                 const queryResult = await nextFulfilment(currentPromises);
 
+                this.activePostgresRequests--;
                 switch (type) {
                     case "get": {
                         const value = queryResult.rows[0];
@@ -142,6 +146,7 @@ export class Postgres implements IDatabase {
             }
         } while (this.isReadQuery(type) && tries < maxTries());
 
+        this.activePostgresRequests--;
         throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }
 

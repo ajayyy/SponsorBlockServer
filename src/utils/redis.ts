@@ -27,6 +27,7 @@ let exportClient: RedisSB = {
 
 let lastClientFail = 0;
 let lastReadFail = 0;
+let activeRequests = 0;
 
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
@@ -40,10 +41,13 @@ if (config.redis?.enabled) {
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
+        activeRequests++;
         const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
         const chosenGet = pickChoice(get, getRead);
         chosenGet(key).then((reply) => {
             if (timeout !== null) clearTimeout(timeout);
+
+            activeRequests--;
             resolve(reply);
         }).catch((err) => {
             if (chosenGet === get) {
@@ -52,6 +56,7 @@ if (config.redis?.enabled) {
                 lastReadFail = Date.now();
             }
 
+            activeRequests--;
             reject(err);
         });
     });
@@ -89,6 +94,10 @@ function pickChoice<T>(client: T, readClient: T): T {
     } else {
         return client;
     }
+}
+
+export function getRedisActiveRequests(): number {
+    return activeRequests;
 }
 
 export default exportClient;

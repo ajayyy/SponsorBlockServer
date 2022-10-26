@@ -2,8 +2,9 @@ import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import os from "os";
-import redis from "../utils/redis";
+import redis, { getRedisActiveRequests } from "../utils/redis";
 import { promiseOrTimeout } from "../utils/promise";
+import { Postgres } from "../databases/Postgres";
 
 export async function getStatus(req: Request, res: Response): Promise<Response> {
     const startTime = Date.now();
@@ -42,7 +43,9 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             redisProcessTime,
             loadavg: os.loadavg().slice(1), // only return 5 & 15 minute load average
             statusRequests,
-            hostname: os.hostname()
+            hostname: os.hostname(),
+            activePostgresRequests: (db as Postgres)?.activePostgresRequests,
+            activeRedisRequests: getRedisActiveRequests(),
         };
         return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
     } catch (err) {
