@@ -138,8 +138,12 @@ export class Postgres implements IDatabase {
                 if (lastPool === this.pool) {
                     // Only applies if it is get or all request
                     options.forceReplica = true;
-                } else if (lastPool === this.poolRead && maxTries() - tries <= 1) {
-                    options.useReplica = false;
+                } else if (lastPool === this.poolRead) {
+                    this.lastPoolReadFail = Date.now();
+
+                    if (maxTries() - tries <= 1) {
+                        options.useReplica = false;
+                    }
                 }
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
