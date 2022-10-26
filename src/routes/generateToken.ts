@@ -15,7 +15,7 @@ interface GenerateTokenRequest extends Request {
 
 export async function generateTokenRequest(req: GenerateTokenRequest, res: Response): Promise<Response> {
     const { query: { code, adminUserID }, params: { type } } = req;
-    const adminUserIDHash = await getHashCache(adminUserID);
+    const adminUserIDHash = adminUserID ? (await getHashCache(adminUserID)) : null;
 
     if (!code || !type) {
         return res.status(400).send("Invalid request");
