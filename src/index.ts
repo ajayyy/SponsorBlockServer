@@ -12,7 +12,13 @@ async function init() {
         process.exit(1);
     });
 
-    await initDb();
+    try {
+        await initDb();
+    } catch (e) {
+        Logger.error(`Init Db: ${e}`);
+        process.exit(1);
+    }
+
     // edge case clause for creating compatible .db files, do not enable
     if (config.mode === "init-db-and-exit") process.exit(0);
     // do not enable init-db-only mode for usage.
@@ -27,4 +33,4 @@ async function init() {
     }).setTimeout(15000);
 }
 
-init().catch((err) => Logger.error(err));
+init().catch((err) => Logger.error(`Index.js: ${err}`));
