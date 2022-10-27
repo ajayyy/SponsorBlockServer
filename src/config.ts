@@ -89,7 +89,8 @@ addDefaults(config, {
         max: 10,
         idleTimeoutMillis: 10000,
         maxTries: 3,
-        fallbackOnFail: true
+        fallbackOnFail: true,
+        stopRetryThreshold: 800
     },
     dumpDatabase: {
         enabled: false,

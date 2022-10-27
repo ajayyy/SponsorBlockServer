@@ -21,6 +21,7 @@ export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
     weight: number;
     readTimeout: number;
     fallbackOnFail: boolean;
+    stopRetryThreshold: number;
 }
 
 export interface SBSConfig {
