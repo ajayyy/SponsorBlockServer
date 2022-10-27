@@ -53,19 +53,23 @@ export class Postgres implements IDatabase {
         });
 
         if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
-            this.poolRead = new Pool({
-                ...this.config.postgresReadOnly
-            });
-            this.poolRead.on("error", (err, client) => {
-                Logger.error(err.stack);
-                this.lastPoolReadFail = Date.now();
+            try {
+                this.poolRead = new Pool({
+                    ...this.config.postgresReadOnly
+                });
+                this.poolRead.on("error", (err, client) => {
+                    Logger.error(err.stack);
+                    this.lastPoolReadFail = Date.now();
 
-                try {
-                    client.release(true);
-                } catch (err) {
-                    Logger.error(`poolRead (postgres): ${err}`);
-                }
-            });
+                    try {
+                        client.release(true);
+                    } catch (err) {
+                        Logger.error(`poolRead (postgres): ${err}`);
+                    }
+                });
+            } catch (e) {
+                Logger.error(`poolRead (postgres): ${e}`);
+            }
         }
 
         if (!this.config.readOnly) {
