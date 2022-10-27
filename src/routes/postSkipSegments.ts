@@ -46,22 +46,25 @@ async function sendWebhookNotification(userID: string, videoID: string, UUID: st
     }
 
     dispatchEvent(scopeName, {
-        "video": {
-            "id": videoID,
-            "title": youtubeData?.title,
-            "thumbnail": getMaxResThumbnail(videoID),
-            "url": `https://www.youtube.com/watch?v=${videoID}`,
+        user: {
+            status: "new"
         },
-        "submission": {
-            "UUID": UUID,
-            "category": segmentInfo.category,
-            "startTime": submissionStart,
-            "endTime": submissionEnd,
-            "user": {
-                "UUID": userID,
-                "username": userName,
+        video: {
+            id: (videoID as VideoID),
+            title: youtubeData?.title,
+            url: `https://www.youtube.com/watch?v=${videoID}`,
+            thumbnail: getMaxResThumbnail(videoID),
+        },
+        submission: {
+            UUID: UUID as SegmentUUID,
+            category: segmentInfo.category,
+            startTime: submissionStart,
+            endTime: submissionEnd,
+            user: {
+                UUID: userID as HashedUserID,
+                username: userName,
             },
-        },
+        }
     });
 }
 
@@ -71,6 +74,7 @@ async function sendWebhooks(apiVideoDetails: videoDetails, userID: string, video
 
         const startTime = parseFloat(segmentInfo.segment[0]);
         const endTime = parseFloat(segmentInfo.segment[1]);
+        const webhookData = 
         sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, apiVideoDetails, {
             submissionStart: startTime,
             submissionEnd: endTime,
@@ -78,7 +82,7 @@ async function sendWebhooks(apiVideoDetails: videoDetails, userID: string, video
 
         // If it is a first time submission
         // Then send a notification to discord
-        if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
+        if (!config.discordFirstTimeSubmissionsWebhookURL || userSubmissionCountRow.submissionCount > 1) return;
 
         axios.post(config.discordFirstTimeSubmissionsWebhookURL, {
             embeds: [{

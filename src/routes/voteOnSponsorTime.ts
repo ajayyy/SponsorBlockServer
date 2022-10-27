@@ -4,8 +4,8 @@ import { isUserVIP } from "../utils/isUserVIP";
 import { isUserTempVIP } from "../utils/isUserTempVIP";
 import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
 import { db, privateDB } from "../databases/databases";
-import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
-import { getFormattedTime } from "../utils/getFormattedTime";
+import { dispatchEvent, getVoteAuthorRaw, createDiscordVoteEmbed } from "../utils/webhookUtils";
+import { WebhookData } from "../types/webhook.model";
 import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
@@ -35,7 +35,7 @@ interface FinalResponse {
 }
 
 interface VoteData {
-    UUID: string;
+    UUID: SegmentUUID;
     nonAnonUserID: string;
     originalType: VoteType;
     voteTypeEnum: number;
@@ -47,7 +47,7 @@ interface VoteData {
         views: number;
         locked: boolean;
     };
-    category: string;
+    category: Category;
     incrementAmount: number;
     oldIncrementAmount: number;
     finalResponse: FinalResponse;
@@ -101,7 +101,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
 }
 
 async function sendWebhooks(voteData: VoteData) {
-    const submissionInfoRow = await db.prepare("get", `SELECT "s"."videoID", "s"."userID", s."startTime", s."endTime", s."category", u."userName",
+    const submissionInfoRow = await db.prepare("get", `SELECT "s"."videoID", "s"."userID", s."startTime", s."endTime", s."category",  u."userName",
         (select count(1) from "sponsorTimes" where "userID" = s."userID") count,
         (select count(1) from "sponsorTimes" where "userID" = s."userID" and votes <= -2) disregarded
         FROM "sponsorTimes" s left join "userNames" u on s."userID" = u."userID" where s."UUID"=?`,
@@ -133,62 +133,44 @@ async function sendWebhooks(voteData: VoteData) {
 
             const isUpvote = voteData.incrementAmount > 0;
             // Send custom webhooks
-            dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
-                "user": {
-                    "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
+            const webhookData: WebhookData = {
+                user: {
+                    status: getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
                 },
-                "video": {
-                    "id": submissionInfoRow.videoID,
-                    "title": data?.title,
-                    "url": `https://www.youtube.com/watch?v=${videoID}`,
-                    "thumbnail": getMaxResThumbnail(videoID),
+                video: {
+                    id: submissionInfoRow.videoID,
+                    title: data?.title,
+                    url: `https://www.youtube.com/watch?v=${videoID}`,
+                    thumbnail: getMaxResThumbnail(videoID),
                 },
-                "submission": {
-                    "UUID": voteData.UUID,
-                    "views": voteData.row.views,
-                    "category": voteData.category,
-                    "startTime": submissionInfoRow.startTime,
-                    "endTime": submissionInfoRow.endTime,
-                    "user": {
-                        "UUID": submissionInfoRow.userID,
-                        "username": submissionInfoRow.userName,
-                        "submissions": {
-                            "total": submissionInfoRow.count,
-                            "ignored": submissionInfoRow.disregarded,
+                submission: {
+                    UUID: voteData.UUID as SegmentUUID,
+                    views: voteData.row.views,
+                    locked: voteData.row.locked,
+                    category: voteData.category as Category,
+                    startTime: submissionInfoRow.startTime,
+                    endTime: submissionInfoRow.endTime,
+                    user: {
+                        UUID: submissionInfoRow.userID,
+                        username: submissionInfoRow.userName,
+                        submissions: {
+                            total: submissionInfoRow.count,
+                            ignored: submissionInfoRow.disregarded,
                         },
                     },
                 },
-                "votes": {
-                    "before": voteData.row.votes,
-                    "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
+                votes: {
+                    before: voteData.row.votes,
+                    after: (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
                 },
-            });
+                authorName: voteData.finalResponse?.webhookMessage ?? voteData.finalResponse?.finalMessage
+            };
+            dispatchEvent(isUpvote ? "vote.up" : "vote.down", webhookData);
 
             // Send discord message
             if (webhookURL !== null && !isUpvote) {
                 axios.post(webhookURL, {
-                    "embeds": [{
-                        "title": data?.title,
-                        "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}s#requiredSegment=${voteData.UUID}`,
-                        "description": `**${voteData.row.votes} Votes Prior | \
-                            ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
-                            Views**\n\n**Locked**: ${voteData.row.locked}\n\n**Submission ID:** ${voteData.UUID}\
-                            \n**Category:** ${submissionInfoRow.category}\
-                            \n\n**Submitted by:** ${submissionInfoRow.userName}\n${submissionInfoRow.userID}\
-                            \n\n**Total User Submissions:** ${submissionInfoRow.count}\
-                            \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}\
-                            \n\n**Timestamp:** \
-                            ${getFormattedTime(submissionInfoRow.startTime)} to ${getFormattedTime(submissionInfoRow.endTime)}`,
-                        "color": 10813440,
-                        "author": {
-                            "name": voteData.finalResponse?.webhookMessage ??
-                                    voteData.finalResponse?.finalMessage ??
-                                    `${getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission)}${voteData.row.locked ? " (Locked)" : ""}`,
-                        },
-                        "thumbnail": {
-                            "url": getMaxResThumbnail(videoID),
-                        },
-                    }],
+                    "embeds": [createDiscordVoteEmbed(webhookData)],
                 })
                     .then(res => {
                         if (res.status >= 400) {
