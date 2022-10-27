@@ -335,7 +335,8 @@ describe("getSearchSegments", () => {
                     locked: 1,
                     hidden: 0,
                     shadowHidden: 0,
-                    userID: "searchTestUser"
+                    userID: "searchTestUser",
+                    description: ""
                 };
                 assert.deepStrictEqual(segment0, expected);
                 done();

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { config } from "../config";
 import { createAndSaveToken, TokenType } from "../utils/tokenUtils";
-
+import { getHashCache } from "../utils/getHashCache";
 
 interface GenerateTokenRequest extends Request {
     query: {
@@ -15,12 +15,13 @@ interface GenerateTokenRequest extends Request {
 
 export async function generateTokenRequest(req: GenerateTokenRequest, res: Response): Promise<Response> {
     const { query: { code, adminUserID }, params: { type } } = req;
+    const adminUserIDHash = adminUserID ? (await getHashCache(adminUserID)) : null;
 
     if (!code || !type) {
         return res.status(400).send("Invalid request");
     }
 
-    if (type === TokenType.patreon || (type === TokenType.local && adminUserID === config.adminUserID)) {
+    if (type === TokenType.patreon || (type === TokenType.local && adminUserIDHash === config.adminUserID)) {
         const licenseKey = await createAndSaveToken(type, code);
 
         /* istanbul ignore else */

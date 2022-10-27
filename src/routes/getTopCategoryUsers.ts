@@ -26,7 +26,7 @@ async function generateTopCategoryUsersStats(sortBy: string, category: string) {
         SUM("votes") as "userVotes", COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
         WHERE "sponsorTimes"."category" = ? AND "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
-        GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 20
+        GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 2
         ORDER BY "${sortBy}" DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, category]);
 
     if (rows) {

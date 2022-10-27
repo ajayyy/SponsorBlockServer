@@ -14,6 +14,7 @@ import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
+import { deleteLockCategories } from "./deleteLockCategories";
 
 const voteTypes = {
     normal: 0,
@@ -59,7 +60,7 @@ async function updateSegmentVideoDuration(UUID: SegmentUUID) {
     let apiVideoDetails: videoDetails = null;
     if (service == Service.YouTube) {
         // don't use cache since we have no information about the video length
-        apiVideoDetails = await getVideoDetails(videoID);
+        apiVideoDetails = await getVideoDetails(videoID, true);
     }
     const apiVideoDuration = apiVideoDetails?.duration as VideoDuration;
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
@@ -95,6 +96,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
             AND "hidden" = 0 AND "shadowHidden" = 0 AND 
             "actionType" != 'full' AND "votes" > -2`,
         [videoID, service, latestSubmission.timeSubmitted]);
+        deleteLockCategories(videoID, null, null, service).catch(Logger.error);
     }
 }
 

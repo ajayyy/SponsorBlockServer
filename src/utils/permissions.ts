@@ -9,7 +9,7 @@ import { getReputation } from "./reputation";
 
 interface CanSubmitResult {
     canSubmit: boolean;
-    reason?: string;
+    reason: string;
 }
 
 async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
@@ -27,11 +27,13 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
                     lowDownvotes(userID),
                     (async () => (await getReputation(userID)) > config.minReputationToSubmitChapter)(),
                     hasFeature(userID, Feature.ChapterSubmitter)
-                ])
+                ]),
+                reason: "Submitting chapters requires a minimum reputation. You can ask on Discord/Matrix to get permission with less reputation."
             };
         default:
             return {
-                canSubmit: true
+                canSubmit: true,
+                reason: ""
             };
     }
 }

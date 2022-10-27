@@ -28,14 +28,15 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
             SUM(CASE WHEN category = 'poi_highlight' THEN 1 ELSE 0 END) as "categorySumHighlight",
             SUM(CASE WHEN category = 'filler' THEN 1 ELSE 0 END) as "categorySumFiller",
             SUM(CASE WHEN category = 'exclusive_access' THEN 1 ELSE 0 END) as "categorySumExclusiveAccess",
+            SUM(CASE WHEN category = 'chapter' THEN 1 ELSE 0 END) as "categorySumChapter",
         `;
     }
 
     const rows = await db.prepare("all", `SELECT COUNT(*) as "totalSubmissions", SUM(views) as "viewCount",
-        SUM(((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views") as "minutesSaved",
+        SUM(CASE WHEN "sponsorTimes"."actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "sponsorTimes"."endTime" - "sponsorTimes"."startTime" > ? THEN ? ELSE "sponsorTimes"."endTime" - "sponsorTimes"."startTime" END) / 60) * "sponsorTimes"."views" END) as "minutesSaved",
         SUM("votes") as "userVotes", ${additionalFields} COALESCE("userNames"."userName", "sponsorTimes"."userID") as "userName" FROM "sponsorTimes" LEFT JOIN "userNames" ON "sponsorTimes"."userID"="userNames"."userID"
         LEFT JOIN "shadowBannedUsers" ON "sponsorTimes"."userID"="shadowBannedUsers"."userID"
-        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "sponsorTimes"."actionType" != 'chapter' AND "shadowBannedUsers"."userID" IS NULL
+        WHERE "sponsorTimes"."votes" > -1 AND "sponsorTimes"."shadowHidden" != 1 AND "shadowBannedUsers"."userID" IS NULL
         GROUP BY COALESCE("userName", "sponsorTimes"."userID") HAVING SUM("votes") > 20
         ORDER BY "${sortBy}" DESC LIMIT 100`, [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds]);
 
@@ -55,7 +56,8 @@ async function generateTopUsersStats(sortBy: string, categoryStatsEnabled = fals
                 row.categorySumPreview,
                 row.categorySumHighlight,
                 row.categorySumFiller,
-                row.categorySumExclusiveAccess
+                row.categorySumExclusiveAccess,
+                row.categorySumChapter
             ]);
         }
     }

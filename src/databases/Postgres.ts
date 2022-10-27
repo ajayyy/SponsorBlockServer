@@ -33,8 +33,7 @@ export class Postgres implements IDatabase {
     private poolRead: Pool;
     private lastPoolReadFail = 0;
 
-    private concurrentRequests = 0;
-    private concurrentReadRequests = 0;
+    activePostgresRequests = 0;
 
     constructor(private config: DatabaseConfig) {}
 
@@ -54,19 +53,23 @@ export class Postgres implements IDatabase {
         });
 
         if (this.config.postgresReadOnly && this.config.postgresReadOnly.enabled) {
-            this.poolRead = new Pool({
-                ...this.config.postgresReadOnly
-            });
-            this.poolRead.on("error", (err, client) => {
-                Logger.error(err.stack);
-                this.lastPoolReadFail = Date.now();
+            try {
+                this.poolRead = new Pool({
+                    ...this.config.postgresReadOnly
+                });
+                this.poolRead.on("error", (err, client) => {
+                    Logger.error(err.stack);
+                    this.lastPoolReadFail = Date.now();
 
-                try {
-                    client.release(true);
-                } catch (err) {
-                    Logger.error(`poolRead (postgres): ${err}`);
-                }
-            });
+                    try {
+                        client.release(true);
+                    } catch (err) {
+                        Logger.error(`poolRead (postgres): ${err}`);
+                    }
+                });
+            } catch (e) {
+                Logger.error(`poolRead (postgres): ${e}`);
+            }
         }
 
         if (!this.config.readOnly) {
@@ -102,22 +105,6 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        if (this.config.readOnly) {
-            if (this.concurrentReadRequests > this.config.postgresReadOnly?.maxConcurrentRequests) {
-                Logger.error(`prepare (postgres): cancelling read query because too many concurrent requests, query: ${query}`);
-                throw new Error("Too many concurrent requests");
-            }
-
-            this.concurrentReadRequests++;
-        } else {
-            if (this.concurrentRequests > this.config.postgres.maxConcurrentRequests) {
-                Logger.error(`prepare (postgres): cancelling query because too many concurrent requests, query: ${query}`);
-                throw new Error("Too many concurrent requests");
-            }
-
-            this.concurrentRequests++;
-        }
-
         const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
         let tries = 0;
         let lastPool: Pool = null;
@@ -127,6 +114,7 @@ export class Postgres implements IDatabase {
             tries++;
 
             try {
+                this.activePostgresRequests++;
                 lastPool = this.getPool(type, options);
 
                 pendingQueries.push(savePromiseState(lastPool.query({ text: query, values: params })));
@@ -134,12 +122,7 @@ export class Postgres implements IDatabase {
                 if (options.useReplica && maxTries() - tries > 1) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
                 const queryResult = await nextFulfilment(currentPromises);
 
-                if (this.config.readOnly) {
-                    this.concurrentReadRequests--;
-                } else {
-                    this.concurrentRequests--;
-                }
-
+                this.activePostgresRequests--;
                 switch (type) {
                     case "get": {
                         const value = queryResult.rows[0];
@@ -159,30 +142,30 @@ export class Postgres implements IDatabase {
                 if (lastPool === this.pool) {
                     // Only applies if it is get or all request
                     options.forceReplica = true;
-                } else if (lastPool === this.poolRead && maxTries() - tries <= 1) {
-                    options.useReplica = false;
+                } else if (lastPool === this.poolRead) {
+                    this.lastPoolReadFail = Date.now();
+
+                    if (maxTries() - tries <= 1) {
+                        options.useReplica = false;
+                    }
                 }
 
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
-        } while (this.isReadQuery(type) && tries < maxTries());
+        } while (this.isReadQuery(type) && tries < maxTries()
+            && this.activePostgresRequests < this.config.postgresReadOnly.stopRetryThreshold);
 
-        if (this.config.readOnly) {
-            this.concurrentReadRequests--;
-        } else {
-            this.concurrentRequests--;
-        }
-
+        this.activePostgresRequests--;
         throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }
 
     private getPool(type: string, options: QueryOption): Pool {
         const readAvailable = this.poolRead && options.useReplica && this.isReadQuery(type);
-        const ignroreReadDueToFailure = this.config.postgresReadOnly.fallbackOnFail
+        const ignoreReadDueToFailure = this.config.postgresReadOnly.fallbackOnFail
             && this.lastPoolReadFail > Date.now() - 1000 * 30;
         const readDueToFailure = this.config.postgresReadOnly.fallbackOnFail
             && this.lastPoolFail > Date.now() - 1000 * 30;
-        if (readAvailable && !ignroreReadDueToFailure && (options.forceReplica || readDueToFailure ||
+        if (readAvailable && !ignoreReadDueToFailure && (options.forceReplica || readDueToFailure ||
                 Math.random() > 1 / (this.config.postgresReadOnly.weight + 1))) {
             return this.poolRead;
         } else {
