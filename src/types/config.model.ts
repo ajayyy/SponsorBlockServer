@@ -67,6 +67,7 @@ export interface SBSConfig {
     maximumPrefix?: string;
     redis?: RedisConfig;
     redisRead?: RedisReadOnlyConfig;
+    redisRateLimit: boolean;
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: CustomPostgresConfig;
     postgresReadOnly?: CustomPostgresReadOnlyConfig;

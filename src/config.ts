@@ -147,6 +147,7 @@ addDefaults(config, {
         disableOfflineQueue: true,
         weight: 1
     },
+    redisRateLimit: true,
     patreon: {
         clientId: "",
         clientSecret: "",
