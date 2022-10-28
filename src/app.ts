@@ -45,6 +45,8 @@ import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
 import { getTopCategoryUsers } from "./routes/getTopCategoryUsers";
 import { addUserAsTempVIP } from "./routes/addUserAsTempVIP";
+import { endpoint as getVideoLabels } from "./routes/getVideoLabel";
+import { getVideoLabelsByHash } from "./routes/getVideoLabelByHash";
 import { addFeature } from "./routes/addFeature";
 import { generateTokenRequest } from "./routes/generateToken";
 import { verifyTokenRequest } from "./routes/verifyToken";
@@ -199,6 +201,10 @@ function setupRoutes(router: Router) {
 
     router.get("/api/generateToken/:type", generateTokenRequest);
     router.get("/api/verifyToken", verifyTokenRequest);
+
+    // labels
+    router.get("/api/videoLabels", getVideoLabels);
+    router.get("/api/videoLabels/:prefix", getVideoLabelsByHash);
 
     /* istanbul ignore next */
     if (config.postgres?.enabled) {
