@@ -14,7 +14,7 @@ type searchSegmentResponse = {
 function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): Promise<DBSegment[]> {
     return db.prepare(
         "all",
-        `SELECT "UUID", "timeSubmitted", "startTime", "endTime", "category", "actionType", "votes", "views", "locked", "hidden", "shadowHidden", "userID" FROM "sponsorTimes" 
+        `SELECT "UUID", "timeSubmitted", "startTime", "endTime", "category", "actionType", "votes", "views", "locked", "hidden", "shadowHidden", "userID", "description" FROM "sponsorTimes" 
         WHERE "videoID" = ? AND "service" = ? ORDER BY "timeSubmitted"`,
         [videoID, service]
     ) as Promise<DBSegment[]>;
@@ -128,12 +128,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
 
     const segments = await getSegmentsFromDBByVideoID(videoID, service);
 
-    if (segments === null || segments === undefined) {
-        res.sendStatus(500);
-        return false;
-    }
-
-    if (segments.length === 0) {
+    if (!segments?.length) {
         res.sendStatus(404);
         return false;
     }
@@ -155,6 +150,7 @@ function filterSegments(segments: DBSegment[], filters: Record<string, any>, pag
     );
 
     if (sortBy !== SortableFields.timeSubmitted) {
+        /* istanbul ignore next */
         filteredSegments.sort((a,b) => {
             const key = sortDir === "desc" ? 1 : -1;
             if (a[sortBy] < b[sortBy]) {
@@ -187,6 +183,7 @@ async function endpoint(req: Request, res: Response): Promise<Response> {
             return res.send(segmentResponse);
         }
     } catch (err) {
+        /* istanbul ignore next */
         if (err instanceof SyntaxError) {
             return res.status(400).send("Invalid array in parameters");
         } else return res.sendStatus(500);

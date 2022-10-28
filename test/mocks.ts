@@ -1,23 +1,24 @@
 import express from "express";
 import { config } from "../src/config";
 import { Server } from "http";
+import { UserCounter } from "./mocks/UserCounter";
 
 const app = express();
 
-app.post("/ReportChannelWebhook", (req, res) => {
+app.post("/webhook/ReportChannel", (req, res) => {
     res.sendStatus(200);
 });
 
-app.post("/FirstTimeSubmissionsWebhook", (req, res) => {
+app.post("/webhook/FirstTimeSubmissions", (req, res) => {
     res.sendStatus(200);
 });
 
-app.post("/CompletelyIncorrectReportWebhook", (req, res) => {
+app.post("/webhook/CompletelyIncorrectReport", (req, res) => {
     res.sendStatus(200);
 });
 
 // Testing NeuralBlock
-app.post("/NeuralBlockRejectWebhook", (req, res) => {
+app.post("/webhook/NeuralBlockReject", (req, res) => {
     res.sendStatus(200);
 });
 
@@ -46,6 +47,9 @@ app.get("/NeuralBlock/api/getSponsorSegments", (req, res) => {
 app.post("/CustomWebhook", (req, res) => {
     res.sendStatus(200);
 });
+
+// mocks
+app.use("/UserCounter", UserCounter);
 
 export function createMockServer(callback: () => void): Server {
     return app.listen(config.mockPort, callback);

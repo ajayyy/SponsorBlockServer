@@ -37,7 +37,7 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
             service
         });
 
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

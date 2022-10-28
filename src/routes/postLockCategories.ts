@@ -37,7 +37,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
 
     if (!userIsVIP) {
         res.status(403).json({
-            message: "Must be a VIP to mark videos.",
+            message: "Must be a VIP to lock videos.",
         });
         return;
     }
@@ -66,7 +66,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
     for (const lock of locksToApply) {
         try {
             await db.prepare("run", `INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service") VALUES(?, ?, ?, ?, ?, ?, ?)`, [videoID, userID, lock.actionType, lock.category, hashedVideoID, reason, service]);
-        } catch (err) {
+        } catch (err) /* istanbul ignore next */ {
             Logger.error(`Error submitting 'lockCategories' marker for category '${lock.category}' and actionType '${lock.actionType}' for video '${videoID}' (${service})`);
             Logger.error(err as string);
             res.status(500).json({
@@ -82,7 +82,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
                 await db.prepare("run",
                     'UPDATE "lockCategories" SET "reason" = ?, "userID" = ? WHERE "videoID" = ? AND "actionType" = ? AND "category" = ? AND "service" = ?',
                     [reason, userID, videoID, lock.actionType, lock.category, service]);
-            } catch (err) {
+            } catch (err) /* istanbul ignore next */  {
                 Logger.error(`Error submitting 'lockCategories' marker for category '${lock.category}' and actionType '${lock.actionType}' for video '${videoID}' (${service})`);
                 Logger.error(err as string);
                 res.status(500).json({

@@ -21,7 +21,7 @@ export async function getIsUserVIP(req: Request, res: Response): Promise<Respons
             hashedUserID: hashedUserID,
             vip: vipState,
         });
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

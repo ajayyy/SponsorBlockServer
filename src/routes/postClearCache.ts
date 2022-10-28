@@ -47,7 +47,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
         return res.status(200).json({
             message: `Cache cleared on video ${videoID}`
         });
-    } catch(err) {
+    } catch(err) /* istanbul ignore next */ {
         return res.sendStatus(500);
     }
 }

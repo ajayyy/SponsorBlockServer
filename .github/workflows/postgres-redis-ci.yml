@@ -26,4 +26,6 @@ jobs:
         env:
           TEST_POSTGRES: true
         timeout-minutes: 5
-        run: npm test
+        run: npx nyc --silent npm test
+      - name: Generate coverage report
+        run: npm run cover:report

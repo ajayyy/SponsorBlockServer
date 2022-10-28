@@ -166,17 +166,77 @@ describe("getLockCategoriesByHash", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to get by actionType", (done) => {
-        getLockCategories(fakeHash.substring(0,5), [ActionType.Full])
+    it("should return 400 if invalid actionTypes", (done) => {
+        client.get(`${endpoint}/aaaa`, { params: { actionTypes: 3 } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("should return 400 if invalid actionTypes JSON", (done) => {
+        client.get(`${endpoint}/aaaa`, { params: { actionTypes: "{3}" } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get single lock", (done) => {
+        const videoID = "getLockHash2";
+        const hash = getHash(videoID, 1);
+        getLockCategories(hash.substring(0,6))
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
-                    videoID: "fakehash-2",
-                    hash: fakeHash,
+                    videoID,
+                    hash,
                     categories: [
-                        "sponsor"
+                        "preview"
                     ],
-                    reason: "fake2-notshown"
+                    reason: "2-reason"
+                }];
+                assert.deepStrictEqual(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get by actionType not in array", (done) => {
+        const videoID = "getLockHash2";
+        const hash = getHash(videoID, 1);
+        client.get(`${endpoint}/${hash.substring(0,6)}`, { params: { actionType: ActionType.Skip } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [{
+                    videoID,
+                    hash,
+                    categories: [
+                        "preview"
+                    ],
+                    reason: "2-reason"
+                }];
+                assert.deepStrictEqual(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get by no actionType", (done) => {
+        const videoID = "getLockHash2";
+        const hash = getHash(videoID, 1);
+        client.get(`${endpoint}/${hash.substring(0,6)}`)
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [{
+                    videoID,
+                    hash,
+                    categories: [
+                        "preview"
+                    ],
+                    reason: "2-reason"
                 }];
                 assert.deepStrictEqual(res.data, expected);
                 done();

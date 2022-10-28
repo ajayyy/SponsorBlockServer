@@ -76,8 +76,7 @@ addDefaults(config, {
         port: 5432,
         max: 10,
         idleTimeoutMillis: 10000,
-        maxTries: 3,
-        maxConcurrentRequests: 3500
+        maxTries: 3
     },
     postgresReadOnly: {
         enabled: false,
@@ -91,7 +90,7 @@ addDefaults(config, {
         idleTimeoutMillis: 10000,
         maxTries: 3,
         fallbackOnFail: true,
-        maxConcurrentRequests: 3500
+        stopRetryThreshold: 800
     },
     dumpDatabase: {
         enabled: false,
@@ -139,6 +138,16 @@ addDefaults(config, {
         expiryTime: 24 * 60 * 60,
         getTimeout: 40
     },
+    redisRead: {
+        enabled: false,
+        socket: {
+            host: "",
+            port: 0
+        },
+        disableOfflineQueue: true,
+        weight: 1
+    },
+    redisRateLimit: true,
     patreon: {
         clientId: "",
         clientSecret: "",

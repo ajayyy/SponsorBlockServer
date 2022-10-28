@@ -18,6 +18,7 @@ async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
     const result = await axios.post(url, data, {
         timeout: 3500
     });
+    /* istanbul ignore else */
     if (result.status === 200) {
         return result.data.videoDetails;
     } else {
@@ -39,6 +40,7 @@ export async function getPlayerData (videoID: string, ignoreCache = false): Prom
                 return data as innerTubeVideoDetails;
             }
         } catch (err) {
+            /* istanbul ignore next */
             return Promise.reject(err);
         }
     }

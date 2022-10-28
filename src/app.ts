@@ -82,7 +82,7 @@ function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
-    if (config.rateLimit) {
+    if (config.rateLimit && config.redisRateLimit) {
         if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote, voteGetUserID));
         if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
     }
@@ -206,6 +206,7 @@ function setupRoutes(router: Router) {
     router.get("/api/videoLabels", getVideoLabels);
     router.get("/api/videoLabels/:prefix", getVideoLabelsByHash);
 
+    /* istanbul ignore next */
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
