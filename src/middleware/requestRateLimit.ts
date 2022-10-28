@@ -32,8 +32,7 @@ export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (r
                 }
             },
             store: config.redis?.enabled ? new RedisStore({
-                sendCommand: (...args: string[]) => config.redisRateLimit ? redis.sendCommand(args).catch((err) => Logger.error(err)) as Promise<RedisReply>
-                    : Promise.resolve(null) as Promise<RedisReply>,
+                sendCommand: (...args: string[]) => redis.sendCommand(args).catch((err) => Logger.error(err)) as Promise<RedisReply>,
             }) : null,
         });
     } catch (e) {

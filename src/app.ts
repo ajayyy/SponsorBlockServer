@@ -80,7 +80,7 @@ function setupRoutes(router: Router) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
-    if (config.rateLimit) {
+    if (config.rateLimit && config.redisRateLimit) {
         if (config.rateLimit.vote) voteEndpoints.unshift(rateLimitMiddleware(config.rateLimit.vote, voteGetUserID));
         if (config.rateLimit.view) viewEndpoints.unshift(rateLimitMiddleware(config.rateLimit.view));
     }
