@@ -13,8 +13,8 @@ jobs:
 
     steps:
       # Initialization
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
       - run: npm install
       - name: Run Tests
         timeout-minutes: 5
