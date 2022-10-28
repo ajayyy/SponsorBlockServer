@@ -187,10 +187,34 @@ describe("shadowBanUser", () => {
         })
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const videoRow = await getShadowBanSegmentCategory(userID, 1);
+                const videoRow = await getShadowBanSegmentCategory(userID, 0);
                 const shadowRow = await getShadowBan(userID);
                 assert.ok(shadowRow); // ban still exists
-                assert.strictEqual(videoRow.length, 1); // videos should be hidden
+                assert.strictEqual(videoRow.length, 0); // videos should be hidden
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to un-shadowban user to restore old submissions", (done) => {
+        const userID = "shadowBanned4";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: false,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const videoRow = await getShadowBanSegmentCategory(userID, 0);
+                const shadowRow = await getShadowBan(userID);
+                assert.ok(!shadowRow); // ban still exists
+                assert.strictEqual(videoRow.length, 1); // videos should be visible
                 assert.strictEqual(videoRow[0].category, "sponsor");
                 done();
             })

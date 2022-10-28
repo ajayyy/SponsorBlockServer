@@ -25,7 +25,7 @@ export async function getViewsForUser(req: Request, res: Response): Promise<Resp
         } else {
             return res.sendStatus(404);
         }
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

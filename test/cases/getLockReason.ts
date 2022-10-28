@@ -55,6 +55,45 @@ describe("getLockReason", () => {
             .catch(err => done(err));
     });
 
+    it("Should be able to get with actionTypes array", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", category: "selfpromo", actionTypes: '["full"]' } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [
+                    { category: "selfpromo", locked: 1, reason: "selfpromo-reason", userID: vipUserID2, userName: vipUserName2 }
+                ];
+                assert.deepStrictEqual(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get with actionType", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", category: "selfpromo", actionType: "full" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [
+                    { category: "selfpromo", locked: 1, reason: "selfpromo-reason", userID: vipUserID2, userName: vipUserName2 }
+                ];
+                assert.deepStrictEqual(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get with actionType array", (done) => {
+        client.get(endpoint, { params: { videoID: "getLockReason", category: "selfpromo", actionType: ["full"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = [
+                    { category: "selfpromo", locked: 1, reason: "selfpromo-reason", userID: vipUserID2, userName: vipUserName2 }
+                ];
+                assert.deepStrictEqual(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to get empty locks", (done) => {
         client.get(endpoint, { params: { videoID: "getLockReason", category: "intro" } })
             .then(res => {
@@ -118,8 +157,10 @@ describe("getLockReason", () => {
             })
             .catch(err => done(err));
     });
+});
 
-    it("should return 400 if no videoID specified", (done) => {
+describe("getLockReason 400", () => {
+    it("Should return 400 with missing videoID", (done) => {
         client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 400);
@@ -128,15 +169,37 @@ describe("getLockReason", () => {
             .catch(err => done(err));
     });
 
-    it("should be able to get by actionType", (done) => {
-        client.get(endpoint, { params: { videoID: "getLockReason", actionType: "full" } })
+    it("Should return 400 with invalid actionTypes ", (done) => {
+        client.get(endpoint, { params: { videoID: "valid-videoid", actionTypes: 3 } })
             .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = [
-                    { category: "selfpromo", locked: 1, reason: "sponsor-reason", userID: vipUserID2, userName: vipUserName2 },
-                    { category: "sponsor", locked: 0, reason: "", userID: "", userName: "" }
-                ];
-                partialDeepEquals(res.data, expected);
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 with invalid actionTypes JSON ", (done) => {
+        client.get(endpoint, { params: { videoID: "valid-videoid", actionTypes: "{3}" } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 with invalid categories", (done) => {
+        client.get(endpoint, { params: { videoID: "valid-videoid", categories: 3 } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 with invalid categories JSON", (done) => {
+        client.get(endpoint, { params: { videoID: "valid-videoid", categories: "{3}" } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
                 done();
             })
             .catch(err => done(err));

@@ -28,7 +28,7 @@ async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ min
                 segmentCount: 0,
             };
         }
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return null;
     }
 }
@@ -37,7 +37,7 @@ async function dbGetIgnoredSegmentCount(userID: HashedUserID): Promise<number> {
     try {
         const row = await db.prepare("get", `SELECT COUNT(*) as "ignoredSegmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID], { useReplica: true });
         return row?.ignoredSegmentCount ?? 0;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return null;
     }
 }
@@ -46,7 +46,7 @@ async function dbGetUsername(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         return row?.userName ?? userID;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return false;
     }
 }
@@ -55,7 +55,7 @@ async function dbGetViewsForUser(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID], { useReplica: true });
         return row?.viewCount ?? 0;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return false;
     }
 }
@@ -64,7 +64,7 @@ async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT SUM("views") as "ignoredViewCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID], { useReplica: true });
         return row?.ignoredViewCount ?? 0;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return false;
     }
 }
@@ -73,7 +73,7 @@ async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
         const row = await db.prepare("get", `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID], { useReplica: true });
         return row?.total ?? 0;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(`Couldn't get warnings for user ${userID}. returning 0`);
         return 0;
     }
@@ -83,7 +83,7 @@ async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUI
     try {
         const row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID], { useReplica: true });
         return row?.UUID ?? null;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return null;
     }
 }
@@ -92,7 +92,7 @@ async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<st
     try {
         const row = await db.prepare("get", `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 ORDER BY "issueTime" DESC LIMIT 1`, [userID], { useReplica: true });
         return row?.reason ?? "";
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(`Couldn't get reason for user ${userID}. returning blank`);
         return "";
     }
@@ -102,7 +102,7 @@ async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
     try {
         const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID], { useReplica: true });
         return row?.userCount > 0 ?? false;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return false;
     }
 }
@@ -194,7 +194,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     try {
         return await getUserInfo(req, res);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         if (err instanceof SyntaxError) { // catch JSON.parse error
             return res.status(400).send("Invalid values JSON");
         } else return res.sendStatus(500);

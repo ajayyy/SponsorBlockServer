@@ -32,18 +32,24 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
         return res.status(400).send("No videoID provided");
     }
     let categories: Category[] = [];
-    const actionTypes: ActionType[] = req.query.actionTypes
-        ? JSON.parse(req.query.actionTypes as string)
-        : req.query.actionType
-            ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
-                : [req.query.actionType]
-            : [ActionType.Skip, ActionType.Mute];
-    const possibleCategories = filterActionType(actionTypes);
-    if (!Array.isArray(actionTypes)) {
-        //invalid request
-        return res.status(400).send("actionTypes parameter does not match format requirements");
+    let actionTypes: ActionType[] = [];
+    try {
+        actionTypes = req.query.actionTypes
+            ? JSON.parse(req.query.actionTypes as string)
+            : req.query.actionType
+                ? Array.isArray(req.query.actionType)
+                    ? req.query.actionType
+                    : [req.query.actionType]
+                : [ActionType.Skip, ActionType.Mute];
+        if (!Array.isArray(actionTypes)) {
+            //invalid request
+            return res.status(400).send("actionTypes parameter does not match format requirements");
+        }
+    } catch (error) {
+        return res.status(400).send("Bad parameter: actionTypes (invalid JSON)");
     }
+    const possibleCategories = filterActionType(actionTypes);
+
     try {
         categories = req.query.categories
             ? JSON.parse(req.query.categories as string)
@@ -63,11 +69,6 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
         ? possibleCategories
         : categories.filter(x =>
             possibleCategories.includes(x));
-
-    if (!videoID || !Array.isArray(actionTypes)) {
-        //invalid request
-        return res.sendStatus(400);
-    }
 
     try {
         // Get existing lock categories markers
@@ -115,7 +116,7 @@ export async function getLockReason(req: Request, res: Response): Promise<Respon
         }
 
         return res.send(results);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

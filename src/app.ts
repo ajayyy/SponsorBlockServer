@@ -200,6 +200,7 @@ function setupRoutes(router: Router) {
     router.get("/api/generateToken/:type", generateTokenRequest);
     router.get("/api/verifyToken", verifyTokenRequest);
 
+    /* istanbul ignore next */
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));

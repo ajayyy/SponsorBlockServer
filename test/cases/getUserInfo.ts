@@ -21,6 +21,7 @@ describe("getUserInfo", () => {
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 0, 36000, 2,"uuid000009", getHash("getuserinfo_user_03"), 8, 10, "sponsor", "skip", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo3", 1, 11, 2,   "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", "skip", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo4", 1, 11, 2,   "uuid000010", getHash("getuserinfo_user_04"), 9, 10, "chapter", "chapter", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo5", 1, 11, 2,   "uuid000011", getHash("getuserinfo_user_05"), 9, 10, "sponsor", "skip", 0]);
 
 
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
@@ -264,6 +265,15 @@ describe("getUserInfo", () => {
             .catch(err => done(err));
     });
 
+    it("Should throw 400 with invalid array", (done) => {
+        client.get(endpoint, { params: { userID: "x", values: 123 } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
     it("Should return 200 on userID not found", (done) => {
         client.get(endpoint, { params: { userID: "notused-userid" } })
             .then(res => {
@@ -307,6 +317,30 @@ describe("getUserInfo", () => {
                 done();
             })
             .catch(err => done(err));
+    });
+
+    it("Should be able to get permissions", (done) => {
+        client.get(endpoint, { params: { userID: "getuserinfo_user_01", value: "permissions" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    permissions: {
+                        sponsor: true,
+                        selfpromo: true,
+                        exclusive_access: true,
+                        interaction: true,
+                        intro: true,
+                        outro: true,
+                        preview: true,
+                        music_offtopic: true,
+                        filler: true,
+                        poi_highlight: true,
+                        chapter: false,
+                    },
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
+                done(); // pass
+            });
     });
 
     it("Should ignore chapters for saved time calculations", (done) => {

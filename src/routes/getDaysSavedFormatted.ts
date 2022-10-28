@@ -7,7 +7,11 @@ export async function getDaysSavedFormatted(req: Request, res: Response): Promis
     if (row !== undefined) {
         //send this result
         return res.send({
-            daysSaved: row.daysSaved.toFixed(2),
+            daysSaved: row.daysSaved?.toFixed(2) ?? "0",
+        });
+    } else {
+        return res.send({
+            daysSaved: 0
         });
     }
 }

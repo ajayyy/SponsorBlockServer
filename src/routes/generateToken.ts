@@ -24,6 +24,7 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
     if (type === TokenType.patreon || (type === TokenType.local && adminUserIDHash === config.adminUserID)) {
         const licenseKey = await createAndSaveToken(type, code);
 
+        /* istanbul ignore else */
         if (licenseKey) {
             return res.status(200).send(`
                 <h1>
@@ -45,5 +46,7 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
                 </h1>
             `);
         }
+    } else {
+        return res.sendStatus(403);
     }
 }

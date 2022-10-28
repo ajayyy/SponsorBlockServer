@@ -3,6 +3,9 @@ import { Request } from "express";
 import { IPAddress } from "../types/segments.model";
 
 export function getIP(req: Request): IPAddress {
+    // if in testing mode, return immediately
+    if (config.mode === "test") return "127.0.0.1" as IPAddress;
+
     if (config.behindProxy === true || config.behindProxy === "true") {
         config.behindProxy = "X-Forwarded-For";
     }
@@ -15,6 +18,6 @@ export function getIP(req: Request): IPAddress {
         case "X-Real-IP":
             return req.headers["x-real-ip"] as IPAddress;
         default:
-            return (req.connection?.remoteAddress || req.socket?.remoteAddress) as IPAddress;
+            return req.socket?.remoteAddress as IPAddress;
     }
 }

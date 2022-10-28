@@ -67,8 +67,6 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     // Get all video id's that match hash prefix
     const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, requiredSegments, service);
 
-    if (!segments) return res.status(404).json([]);
-
     const output = Object.entries(segments).map(([videoID, data]) => ({
         videoID,
         hash: data.hash,
