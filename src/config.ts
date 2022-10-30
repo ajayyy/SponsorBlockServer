@@ -136,7 +136,8 @@ addDefaults(config, {
         },
         disableOfflineQueue: true,
         expiryTime: 24 * 60 * 60,
-        getTimeout: 40
+        getTimeout: 40,
+        maxConnections: 15000
     },
     redisRead: {
         enabled: false,

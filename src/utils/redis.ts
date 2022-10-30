@@ -41,7 +41,13 @@ if (config.redis?.enabled) {
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
+        if (activeRequests > config.redis.maxConnections) {
+            reject("Too many active requests");
+            return;
+        }
+
         activeRequests++;
+
         const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
         const chosenGet = pickChoice(get, getRead);
         chosenGet(key).then((reply) => {

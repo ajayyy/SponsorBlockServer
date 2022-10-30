@@ -5,6 +5,7 @@ interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;
     expiryTime: number;
     getTimeout: number;
+    maxConnections: number;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {
