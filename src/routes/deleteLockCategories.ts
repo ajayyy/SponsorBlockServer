@@ -35,6 +35,7 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
         || !categories
         || !Array.isArray(categories)
         || categories.length === 0
+        || actionTypes && !Array.isArray(actionTypes)
         || actionTypes.length === 0
     ) {
         return res.status(400).json({
@@ -48,7 +49,7 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
 
     if (!userIsVIP) {
         return res.status(403).json({
-            message: "Must be a VIP to mark videos.",
+            message: "Must be a VIP to lock videos.",
         });
     }
 

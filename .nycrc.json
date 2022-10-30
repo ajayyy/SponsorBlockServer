@@ -1,5 +1,14 @@
 {
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "check-coverage": false,
+  "ski-full": true,
+  "reporter": ["text", "html"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
-    "src/routes/addUnlitedVideo.ts"
+    "src/routes/addUnlistedVideo.ts",
+    "src/cronjob/downvoteSegmentArchiveJob.ts",
+    "src/databases/*"
   ]
 }

@@ -56,7 +56,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
             return res.sendStatus(200);
         }
     }
-    catch (error) {
+    catch (error) /* istanbul ignore next */ {
         Logger.error(error as string);
         return res.sendStatus(500);
     }
@@ -83,7 +83,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         await logUserNameChange(userID, userName, oldUserName, adminUserIDInput !== undefined);
 
         return res.sendStatus(200);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

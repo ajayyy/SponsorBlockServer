@@ -7,7 +7,7 @@ const isValidSegmentUUID = (str: string): boolean => /^([a-f0-9]{64}|[a-f0-9]{8}
 async function getSegmentFromDBByUUID(UUID: SegmentUUID): Promise<DBSegment> {
     try {
         return await db.prepare("get", `SELECT * FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return null;
     }
 }
@@ -62,7 +62,7 @@ async function endpoint(req: Request, res: Response): Promise<Response> {
             //send result
             return res.send(DBSegments);
         }
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         if (err instanceof SyntaxError) { // catch JSON.parse error
             return res.status(400).send("UUIDs parameter does not match format requirements.");
         } else return res.sendStatus(500);

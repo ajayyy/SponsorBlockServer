@@ -58,12 +58,11 @@ export async function createAndSaveToken(type: TokenType, code?: string): Promis
 
                     return licenseKey;
                 }
-            } catch (e) {
+                break;
+            } catch (e) /* istanbul ignore next */ {
                 Logger.error(`token creation: ${e}`);
                 return null;
             }
-
-            break;
         }
         case TokenType.local: {
             const licenseKey = generateToken();
@@ -74,7 +73,6 @@ export async function createAndSaveToken(type: TokenType, code?: string): Promis
             return licenseKey;
         }
     }
-
     return null;
 }
 
@@ -102,15 +100,12 @@ export async function refreshToken(type: TokenType, licenseKey: string, refreshT
 
                     return true;
                 }
-            } catch (e) {
+            } catch (e) /* istanbul ignore next */ {
                 Logger.error(`token refresh: ${e}`);
                 return false;
             }
-
-            break;
         }
     }
-
     return false;
 }
 
@@ -136,9 +131,8 @@ export async function getPatreonIdentity(accessToken: string): Promise<PatreonId
         if (identityRequest.status === 200) {
             return identityRequest.data;
         }
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         Logger.error(`identity request: ${e}`);
     }
-
     return null;
 }

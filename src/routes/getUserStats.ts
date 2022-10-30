@@ -75,7 +75,7 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
             };
         }
         return result;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return null;
     }
@@ -85,7 +85,7 @@ async function dbGetUsername(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         return row?.userName ?? userID;
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return false;
     }
 }

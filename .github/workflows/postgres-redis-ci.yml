@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build the docker-compose stack
         env:
           PG_USER: ci_db_user
@@ -20,10 +20,12 @@ jobs:
         run: docker-compose -f docker/docker-compose-ci.yml up -d
       - name: Check running containers
         run: docker ps
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
       - run: npm install
       - name: Run Tests
         env:
           TEST_POSTGRES: true
         timeout-minutes: 5
-        run: npm test
+        run: npx nyc --silent npm test
+      - name: Generate coverage report
+        run: npm run cover:report

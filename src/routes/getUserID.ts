@@ -12,7 +12,7 @@ function getFuzzyUserID(userName: string): Promise<{userName: string, userID: Us
     try {
         return db.prepare("all", `SELECT "userName", "userID" FROM "userNames" WHERE "userName"
         LIKE ? ESCAPE '\\' LIMIT 10`, [userName]);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */ {
         return null;
     }
 }
@@ -20,7 +20,7 @@ function getFuzzyUserID(userName: string): Promise<{userName: string, userID: Us
 function getExactUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     try {
         return db.prepare("all", `SELECT "userName", "userID" from "userNames" WHERE "userName" = ? LIMIT 10`, [userName]);
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */{
         return null;
     }
 }
@@ -42,6 +42,7 @@ export async function getUserID(req: Request, res: Response): Promise<Response> 
         : await getFuzzyUserID(userName);
 
     if (results === undefined || results === null) {
+        /* istanbul ignore next */
         return res.sendStatus(500);
     } else if (results.length === 0) {
         return res.sendStatus(404);

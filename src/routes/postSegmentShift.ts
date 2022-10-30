@@ -91,7 +91,7 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
                     break;
             }
         }
-    } catch (err) {
+    } catch (err) /* istanbul ignore next */  {
         Logger.error(err as string);
         return res.sendStatus(500);
     }

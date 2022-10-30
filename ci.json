@@ -4,11 +4,12 @@
     "globalSalt": "testSalt",
     "adminUserID": "4bdfdc9cddf2c7d07a8a87b57bf6d25389fb75d1399674ee0e0938a6a60f4c3b",
     "newLeafURLs": ["placeholder"],
-    "discordReportChannelWebhookURL": "http://127.0.0.1:8081/ReportChannelWebhook",
-    "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/FirstTimeSubmissionsWebhook",
-    "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/CompletelyIncorrectReportWebhook",
-    "discordNeuralBlockRejectWebhookURL": "http://127.0.0.1:8081/NeuralBlockRejectWebhook",
+    "discordReportChannelWebhookURL": "http://127.0.0.1:8081/webhook/ReportChannel",
+    "discordFirstTimeSubmissionsWebhookURL": "http://127.0.0.1:8081/webhook/FirstTimeSubmissions",
+    "discordCompletelyIncorrectReportWebhookURL": "http://127.0.0.1:8081/webhook/CompletelyIncorrectReport",
+    "discordNeuralBlockRejectWebhookURL": "http://127.0.0.1:8081/webhook/NeuralBlockReject",
     "neuralBlockURL": "http://127.0.0.1:8081/NeuralBlock",
+    "userCounterURL": "http://127.0.0.1:8081/UserCounter",
     "behindProxy": true,
     "postgres": {
         "user": "ci_db_user",
@@ -69,6 +70,11 @@
           "max": 20,
           "statusCode": 200
         }
+    },
+    "patreon": {
+        "clientId": "testClientID",
+        "clientSecret": "testClientSecret",
+        "redirectUri": "http://127.0.0.1/fake/callback"
     },
     "minReputationToSubmitFiller": -1
 }
