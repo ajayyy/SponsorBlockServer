@@ -7,7 +7,7 @@ let mock: MockAdapter;
 import * as patreon from "../mocks/patreonMock";
 import * as gumroad from "../mocks/gumroadMock";
 import { client } from "../utils/httpClient";
-import { validatelicenseKeyRegex } from "../../src/routes/verifyToken";
+import { validateLicenseKeyRegex } from "../../src/routes/verifyToken";
 
 const generateEndpoint = "/api/generateToken";
 const getGenerateToken = (type: string, code: string | null, adminUserID: string | null) => client({
@@ -48,7 +48,7 @@ describe("generateToken test", function() {
         if (!config?.patreon) this.skip();
         getGenerateToken("patreon", "patreon_code", "").then(res => {
             patreonLicense = extractLicenseKey(res.data);
-            assert.ok(validatelicenseKeyRegex(patreonLicense));
+            assert.ok(validateLicenseKeyRegex(patreonLicense));
             done();
         }).catch(err => done(err));
     });
@@ -58,14 +58,14 @@ describe("generateToken test", function() {
         if (!config?.patreon) this.skip();
         getGenerateToken("patreon", "patreon_code", "").then(res => {
             patreonLicense = extractLicenseKey(res.data);
-            assert.ok(validatelicenseKeyRegex(patreonLicense));
+            assert.ok(validateLicenseKeyRegex(patreonLicense));
             done();
         }).catch(err => done(err));
     });
 
     it("Should be able to create new local token", function (done) {
         createAndSaveToken(TokenType.local).then((licenseKey) => {
-            assert.ok(validatelicenseKeyRegex(licenseKey));
+            assert.ok(validateLicenseKeyRegex(licenseKey));
             localLicense = licenseKey;
             done();
         }).catch(err => done(err));

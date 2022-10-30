@@ -3,11 +3,11 @@ import { config } from "../../src/config";
 import axios from "axios";
 import * as tokenUtils from "../../src/utils/tokenUtils";
 import MockAdapter from "axios-mock-adapter";
-import { validatelicenseKeyRegex } from "../../src/routes/verifyToken";
+import { validateLicenseKeyRegex } from "../../src/routes/verifyToken";
 let mock: MockAdapter;
 import * as patreon from "../mocks/patreonMock";
 
-const validateToken = validatelicenseKeyRegex;
+const validateToken = validateLicenseKeyRegex;
 
 describe("tokenUtils test", function() {
     before(function() {
