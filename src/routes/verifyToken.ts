@@ -11,7 +11,7 @@ interface VerifyTokenRequest extends Request {
     }
 }
 
-export const validatelicenseKeyRegex = (token: string) =>
+export const validateLicenseKeyRegex = (token: string) =>
     new RegExp(/[A-Za-z0-9]{40}|[A-Za-z0-9-]{35}/).test(token);
 
 export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response): Promise<Response> {
@@ -19,7 +19,7 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
 
     if (!licenseKey) {
         return res.status(400).send("Invalid request");
-    } else if (!validatelicenseKeyRegex(licenseKey)) {
+    } else if (!validateLicenseKeyRegex(licenseKey)) {
         // fast check for invalid licence key
         return res.status(200).send({
             allowed: false
@@ -67,7 +67,7 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
 async function checkAllGumroadProducts(licenseKey: string): Promise<boolean> {
     for (const link of config.gumroad.productPermalinks) {
         try {
-            const result = await axios.post("https://api.gumroad.com/v2/licenses/verify", {
+            const result = await axios.post("https://api.gumroad.com/v2/licenses/verify", null, {
                 params: { product_permalink: link, license_key: licenseKey }
             });
 
