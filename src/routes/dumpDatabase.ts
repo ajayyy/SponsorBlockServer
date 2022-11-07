@@ -124,7 +124,7 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
     if (showPage) {
         res.send(`${styleHeader}
             <h1>SponsorBlock database dumps</h1>${licenseHeader}
-            <h3>How this works</h3>
+            <s><h3>How this works</h3>
 
             Send a request to <code>https://sponsor.ajay.app/database.json</code>, or visit this page to get a list of urls and the update status database dump to run.
             Then, you can download the csv files below, or use the links returned from the JSON request. 
@@ -135,6 +135,11 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             If you want a live dump, please do not continually fetch this url. 
             Please instead use the <a href="https://github.com/mchangrh/sb-mirror">sb-mirror</a> project.
             This can automatically fetch new data and will not require a redownload each time, saving bandwidth.
+            </s>
+
+            <h3>Please use sb-mirror</h3>
+
+            For bandwidth reasons, CSV downloads have been disabled. Please use the <a href="https://github.com/mchangrh/sb-mirror">sb-mirror</a> project.
 
             <h3>Links</h3>
             <table>

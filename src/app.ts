@@ -211,7 +211,7 @@ function setupRoutes(router: Router) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
         router.get("/database/*", downloadFile);
-        router.use("/download", express.static(appExportPath));
+        router.use("/download", (req, res) => res.status(404).send("CSV downloads disabled. Please use sb-mirror rsync"));
     } else {
         router.get("/database.db", function (req: Request, res: Response) {
             res.sendFile("./databases/sponsorTimes.db", { root: "./" });
