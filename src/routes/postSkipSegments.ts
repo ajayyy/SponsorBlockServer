@@ -9,7 +9,7 @@ import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
+import { ActionType, Category, DBSegment, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
@@ -22,6 +22,7 @@ import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
+import { CompareSegment, segmentOverlapping } from "../utils/segments";
 
 type CheckResult = {
     pass: boolean,
@@ -238,6 +239,72 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
     return CHECK_PASS;
 }
 
+function fetchOverlappingSegmentCanditates(videoID: VideoID, service: Service, segment: IncomingSegment): Promise<DBSegment[]> {
+    switch (segment.actionType) {
+        case ActionType.Poi:
+        case ActionType.Full: // There can only be one of those per video, return only the most likely one to be shown
+            return db.prepare(
+                "all",
+                `SELECT "startTime", "endTime", "votes", "locked", "category", "actionType" FROM "sponsorTimes"
+                WHERE "videoID" = ? AND "service" = ? AND "actionType" = ? AND "votes" > -2 AND "hidden" = 0 AND "shadowHidden" = 0
+                ORDER BY "locked" DESC, "votes" DESC, "reputation" DESC
+                LIMIT 1`,
+                [videoID, service, segment.actionType],
+                { useReplica: true }
+            );
+        case ActionType.Skip:
+        case ActionType.Mute:
+            return db.prepare(
+                "all",
+                `SELECT "startTime", "endTime", "votes", "locked", "category", "actionType" FROM "sponsorTimes"
+                WHERE "videoID" = ? AND "service" = ? AND ("actionType" = 'skip' OR "actionType" = 'mute') AND "votes" > -2 AND "hidden" = 0 AND "shadowHidden" = 0
+                ORDER BY "locked" DESC, "votes" DESC, "reputation" DESC`,
+                [videoID, service],
+                { useReplica: true }
+            );
+        case ActionType.Chapter:
+            return db.prepare(
+                "all",
+                `SELECT "startTime", "endTime", "votes", "locked", "category", "actionType", "description" FROM "sponsorTimes"
+                WHERE "videoID" = ? AND "service" = ? AND "actionType" = ? AND "votes" > -2 AND "hidden" = 0 AND "shadowHidden" = 0
+                ORDER BY "locked" DESC, "votes" DESC, "reputation" DESC`,
+                [videoID, service, segment.actionType],
+                { useReplica: true }
+            );
+        default:
+            return new Promise((resolve) => resolve([]));
+    }
+}
+
+async function checkSegmentOverlap(videoID: VideoID, service: Service, incomingSegment: IncomingSegment): Promise<string> {
+    const candidates = await fetchOverlappingSegmentCanditates(videoID, service, incomingSegment);
+
+    if (candidates.length === 0) return null; // Can't overlap if there are no segments
+
+    const errorEnding = (c: string) => `has already been submitted.\n` +
+        `If this is what you tried to submit, please make sure you have the ${c} category enabled and try refreshing the segment list.\n`;
+
+    if (incomingSegment.actionType === ActionType.Poi || incomingSegment.actionType === ActionType.Full) {
+        const bestSegment = candidates[0]; // fetchOverlappingSegmentCanditates returns only one segment for these
+        return `\nA ${bestSegment.actionType} ${bestSegment.category} segment ${incomingSegment.actionType === ActionType.Poi ? `at ${getFormattedTime(bestSegment.startTime)} ` : ""}${errorEnding(bestSegment.category)}`;
+    }
+
+    const compareSegment: CompareSegment = {
+        startTime: parseFloat(incomingSegment.segment[0]),
+        endTime: parseFloat(incomingSegment.segment[1]),
+        category: incomingSegment.category,
+        actionType: incomingSegment.actionType,
+    };
+    const bestSegment = candidates.find((segment) => segmentOverlapping(segment, compareSegment));
+    if (!bestSegment) return null; // Overlap not found
+
+    const segmentType = bestSegment.actionType === ActionType.Chapter
+        ? `"${bestSegment.description}" chapter`
+        : `${bestSegment.actionType} ${bestSegment.category} segment`;
+
+    return `\nA ${segmentType} at ${getFormattedTime(bestSegment.startTime)}-${getFormattedTime(bestSegment.endTime)}${errorEnding(bestSegment.category)}`;
+}
+
 async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
     segments: IncomingSegment[], service: Service, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
@@ -261,6 +328,8 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 userID
             });
 
+            const overlapMessage = await checkSegmentOverlap(videoID, service, segments[i]);
+
             Logger.warn(`Caught a submission for a locked category. userID: '${userID}', videoID: '${videoID}', category: '${segments[i].category}', times: ${segments[i].segment}`);
             return {
                 pass: false,
@@ -268,9 +337,9 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 errorMessage:
                     `Users have voted that new segments aren't needed for the following category: ` +
                     `'${segments[i].category}'\n` +
-                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
-                    `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
-                    "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
+                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ``}\n` +
+                    `${overlapMessage ?? (segments[i].category === "sponsor" ? `\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. ` +
+                        `Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n` : ``)}` +
                     `\nIf you believe this is incorrect, please contact someone on chat.sponsor.ajay.app, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`
             };
         }

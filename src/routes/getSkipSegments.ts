@@ -12,6 +12,7 @@ import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
 import { promiseOrTimeout } from "../utils/promise";
+import { segmentOverlapping } from "../utils/segments";
 
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
@@ -353,14 +354,7 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
             const bestGroup = result.find((group) => {
                 // At least one segment in the group must have high % overlap or the same action type
                 // Since POI and Full video segments will always have <= 0 overlap, they will always be in their own groups
-                return group.segments.some((compareSegment) => {
-                    const overlap = Math.min(segment.endTime, compareSegment.endTime) - Math.max(segment.startTime, compareSegment.startTime);
-                    const overallDuration = Math.max(segment.endTime, compareSegment.endTime) - Math.min(segment.startTime, compareSegment.startTime);
-                    const overlapPercent = overlap / overallDuration;
-                    return (overlapPercent >= 0.1 && segment.actionType === compareSegment.actionType && segment.category === compareSegment.category && segment.actionType !== ActionType.Chapter)
-                        || (overlapPercent >= 0.6 && segment.actionType !== compareSegment.actionType && segment.category === compareSegment.category)
-                        || (overlapPercent >= 0.8 && segment.actionType === ActionType.Chapter && compareSegment.actionType === ActionType.Chapter);
-                });
+                return group.segments.some((compareSegment) => segmentOverlapping(segment, compareSegment));
             });
 
             if (bestGroup) {
