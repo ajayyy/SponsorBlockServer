@@ -98,8 +98,8 @@ if (config.redis?.enabled) {
             writeRequests--;
             resolve(reply);
 
-            readResponseTime.push(Date.now() - start);
-            if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
+            writeResponseTime.push(Date.now() - start);
+            if (writeResponseTime.length > maxStoredTimes) writeResponseTime.shift();
         }).catch((err) => {
             activeRequests--;
             writeRequests--;
