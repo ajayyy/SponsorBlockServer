@@ -5,6 +5,13 @@ import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } fro
 import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 
+export interface RedisStats {
+    activeRequests: number;
+    writeRequests: number;
+    avgReadTime: number;
+    avgWriteTime: number;
+}
+
 interface RedisSB {
     get(key: RedisCommandArgument): Promise<string>;
     set(key: RedisCommandArgument, value: RedisCommandArgument): Promise<string>;
@@ -28,6 +35,11 @@ let exportClient: RedisSB = {
 let lastClientFail = 0;
 let lastReadFail = 0;
 let activeRequests = 0;
+let writeRequests = 0;
+
+const readResponseTime: number[] = [];
+const writeResponseTime: number[] = [];
+const maxStoredTimes = 200;
 
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
@@ -47,6 +59,7 @@ if (config.redis?.enabled) {
             return;
         }
 
+        const start = Date.now();
         activeRequests++;
 
         const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
@@ -56,6 +69,9 @@ if (config.redis?.enabled) {
 
             activeRequests--;
             resolve(reply);
+
+            readResponseTime.push(Date.now() - start);
+            if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
         }).catch((err) => {
             if (chosenGet === get) {
                 lastClientFail = Date.now();
@@ -73,13 +89,20 @@ if (config.redis?.enabled) {
             return;
         }
 
+        const start = Date.now();
         activeRequests++;
+        writeRequests++;
 
         set(key, value).then((reply) => {
             activeRequests--;
+            writeRequests--;
             resolve(reply);
+
+            readResponseTime.push(Date.now() - start);
+            if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
         }).catch((err) => {
             activeRequests--;
+            writeRequests--;
             reject(err);
         });
     });
@@ -119,8 +142,13 @@ function pickChoice<T>(client: T, readClient: T): T {
     }
 }
 
-export function getRedisActiveRequests(): number {
-    return activeRequests;
+export function getRedisStats(): RedisStats {
+    return {
+        activeRequests,
+        writeRequests,
+        avgReadTime: readResponseTime.length > 0 ? readResponseTime.reduce((a, b) => a + b, 0) / readResponseTime.length : 0,
+        avgWriteTime: writeResponseTime.length > 0 ? writeResponseTime.reduce((a, b) => a + b, 0) / writeResponseTime.length : 0,
+    };
 }
 
 export default exportClient;

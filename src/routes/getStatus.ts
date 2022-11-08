@@ -2,7 +2,7 @@ import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import os from "os";
-import redis, { getRedisActiveRequests } from "../utils/redis";
+import redis, { getRedisStats } from "../utils/redis";
 import { promiseOrTimeout } from "../utils/promise";
 import { Postgres } from "../databases/Postgres";
 
@@ -45,7 +45,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             statusRequests,
             hostname: os.hostname(),
             activePostgresRequests: (db as Postgres)?.activePostgresRequests,
-            activeRedisRequests: getRedisActiveRequests(),
+            redisStats: getRedisStats(),
         };
         return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
     } catch (err) /* istanbul ignore next */ {
