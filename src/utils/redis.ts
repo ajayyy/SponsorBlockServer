@@ -39,6 +39,7 @@ if (config.redis?.enabled) {
 
 
     const get = client.get.bind(client);
+    const set = client.set.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
         if (activeRequests > config.redis.maxConnections) {
@@ -62,6 +63,22 @@ if (config.redis?.enabled) {
                 lastReadFail = Date.now();
             }
 
+            activeRequests--;
+            reject(err);
+        });
+    });
+    exportClient.set = (key, value) => new Promise((resolve, reject) => {
+        if (activeRequests > config.redis.maxConnections) {
+            reject("Too many active requests");
+            return;
+        }
+
+        activeRequests++;
+
+        set(key, value).then((reply) => {
+            activeRequests--;
+            resolve(reply);
+        }).catch((err) => {
             activeRequests--;
             reject(err);
         });
