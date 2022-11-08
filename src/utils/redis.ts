@@ -68,7 +68,7 @@ if (config.redis?.enabled) {
         });
     });
     exportClient.set = (key, value) => new Promise((resolve, reject) => {
-        if (activeRequests > config.redis.maxConnections) {
+        if (activeRequests > config.redis.maxWriteConnections) {
             reject("Too many active requests");
             return;
         }
