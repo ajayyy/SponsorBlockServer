@@ -51,7 +51,6 @@ if (config.redis?.enabled) {
 
 
     const get = client.get.bind(client);
-    const set = client.set.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
         if (activeRequests > config.redis.maxConnections) {
@@ -83,29 +82,34 @@ if (config.redis?.enabled) {
             reject(err);
         });
     });
-    exportClient.set = (key, value) => new Promise((resolve, reject) => {
-        if (activeRequests > config.redis.maxWriteConnections) {
-            reject("Too many active requests");
-            return;
-        }
 
-        const start = Date.now();
-        activeRequests++;
-        writeRequests++;
+    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string> , params: T): Promise<string> =>
+        new Promise((resolve, reject) => {
+            if (activeRequests > config.redis.maxWriteConnections) {
+                reject("Too many active requests");
+                return;
+            }
 
-        set(key, value).then((reply) => {
-            activeRequests--;
-            writeRequests--;
-            resolve(reply);
+            const start = Date.now();
+            activeRequests++;
+            writeRequests++;
 
-            writeResponseTime.push(Date.now() - start);
-            if (writeResponseTime.length > maxStoredTimes) writeResponseTime.shift();
-        }).catch((err) => {
-            activeRequests--;
-            writeRequests--;
-            reject(err);
+            func(...params).then((reply) => {
+                activeRequests--;
+                writeRequests--;
+                resolve(reply);
+
+                writeResponseTime.push(Date.now() - start);
+                if (writeResponseTime.length > maxStoredTimes) writeResponseTime.shift();
+            }).catch((err) => {
+                activeRequests--;
+                writeRequests--;
+                reject(err);
+            });
         });
-    });
+
+    exportClient.set = (key, value) => setFun(client.set.bind(client), [key, value]);
+    exportClient.setEx = (key, seconds, value) => setFun(client.setEx.bind(client), [key, seconds, value]);
     exportClient.increment = (key) => new Promise((resolve, reject) =>
         void client.multi()
             .incr(key)
