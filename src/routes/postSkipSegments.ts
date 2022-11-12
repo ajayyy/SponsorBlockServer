@@ -266,7 +266,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 pass: false,
                 errorCode: 403,
                 errorMessage:
-                    `Users have voted that all the necessary segments have been submitted for the following category: ` +
+                    `Users have voted that all the segments required for this video have already been submitted for the following category: ` +
                     `'${segments[i].category}'\n` +
                     `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}\n'` : ""}` +
                     `You may need to refresh if you don't see the segments.\n` +
