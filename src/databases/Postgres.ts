@@ -105,7 +105,7 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
-        if (this.config.postgres.maxActiveRequests
+        if (this.config.postgres.maxActiveRequests && this.isReadQuery(type)
                 && this.activePostgresRequests > this.config.postgres.maxActiveRequests) {
             throw new Error("Too many active postgres requests");
         }
