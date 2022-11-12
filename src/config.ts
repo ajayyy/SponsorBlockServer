@@ -77,7 +77,7 @@ addDefaults(config, {
         max: 10,
         idleTimeoutMillis: 10000,
         maxTries: 3,
-        maxActiveRequests: -1
+        maxActiveRequests: 0
     },
     postgresReadOnly: {
         enabled: false,
