@@ -76,7 +76,8 @@ addDefaults(config, {
         port: 5432,
         max: 10,
         idleTimeoutMillis: 10000,
-        maxTries: 3
+        maxTries: 3,
+        maxActiveRequests: -1
     },
     postgresReadOnly: {
         enabled: false,

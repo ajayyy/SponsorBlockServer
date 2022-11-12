@@ -19,6 +19,10 @@ export interface CustomPostgresConfig extends PoolConfig {
     maxTries: number;
 }
 
+export interface CustomWritePostgresConfig extends CustomPostgresConfig {
+    maxActiveRequests: number;
+}
+
 export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
     weight: number;
     readTimeout: number;
@@ -71,7 +75,7 @@ export interface SBSConfig {
     redisRead?: RedisReadOnlyConfig;
     redisRateLimit: boolean;
     maxRewardTimePerSegmentInSeconds?: number;
-    postgres?: CustomPostgresConfig;
+    postgres?: CustomWritePostgresConfig;
     postgresReadOnly?: CustomPostgresReadOnlyConfig;
     dumpDatabase?: DumpDatabase;
     diskCacheURL: string;

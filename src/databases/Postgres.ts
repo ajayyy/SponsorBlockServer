@@ -3,7 +3,7 @@ import { IDatabase, QueryOption, QueryType } from "./IDatabase";
 import { Client, Pool, QueryResult, types } from "pg";
 
 import fs from "fs";
-import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
+import { CustomPostgresReadOnlyConfig, CustomWritePostgresConfig } from "../types/config.model";
 import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promise";
 
 // return numeric (pg_type oid=1700) as float
@@ -22,7 +22,7 @@ export interface DatabaseConfig {
     fileNamePrefix: string,
     readOnly: boolean,
     createDbIfNotExists: boolean,
-    postgres: CustomPostgresConfig,
+    postgres: CustomWritePostgresConfig,
     postgresReadOnly: CustomPostgresReadOnlyConfig
 }
 
@@ -104,6 +104,10 @@ export class Postgres implements IDatabase {
         }
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
+
+        if (this.activePostgresRequests > this.config.postgres.maxActiveRequests) {
+            throw new Error("Too many active postgres requests");
+        }
 
         const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
         let tries = 0;
