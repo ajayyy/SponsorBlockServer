@@ -53,7 +53,7 @@ if (config.redis?.enabled) {
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
-        if (activeRequests > config.redis.maxConnections) {
+        if (config.redis.maxConnections && activeRequests > config.redis.maxConnections) {
             reject("Too many active requests");
             return;
         }
@@ -85,7 +85,7 @@ if (config.redis?.enabled) {
 
     const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string> , params: T): Promise<string> =>
         new Promise((resolve, reject) => {
-            if (activeRequests > config.redis.maxWriteConnections) {
+            if (config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections) {
                 reject("Too many active requests");
                 return;
             }
