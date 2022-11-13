@@ -108,8 +108,8 @@ if (config.redis?.enabled) {
             });
         });
 
-    exportClient.set = (key, value) => setFun(client.set.bind(client), [key, value]);
-    exportClient.setEx = (key, seconds, value) => setFun(client.setEx.bind(client), [key, seconds, value]);
+    // exportClient.set = (key, value) => setFun(client.set.bind(client), [key, value]);
+    // exportClient.setEx = (key, seconds, value) => setFun(client.setEx.bind(client), [key, seconds, value]);
     exportClient.increment = (key) => new Promise((resolve, reject) =>
         void client.multi()
             .incr(key)
