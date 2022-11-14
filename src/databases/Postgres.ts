@@ -155,12 +155,12 @@ export class Postgres implements IDatabase {
                     }
                 }
 
+                this.activePostgresRequests--;
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
         } while (this.isReadQuery(type) && tries < maxTries()
             && this.activePostgresRequests < this.config.postgresReadOnly.stopRetryThreshold);
 
-        this.activePostgresRequests--;
         throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }
 
