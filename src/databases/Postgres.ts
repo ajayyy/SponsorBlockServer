@@ -125,6 +125,7 @@ export class Postgres implements IDatabase {
                 pendingQueries.push(savePromiseState(lastPool.query({ text: query, values: params })));
                 const currentPromises = [...pendingQueries];
                 if (options.useReplica && maxTries() - tries > 1) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
+                else if (this.config.postgres.timeout) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgres.timeout)));
                 const queryResult = await nextFulfilment(currentPromises);
 
                 this.activePostgresRequests--;
