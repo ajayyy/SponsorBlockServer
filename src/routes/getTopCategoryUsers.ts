@@ -34,7 +34,7 @@ async function generateTopCategoryUsersStats(sortBy: string, category: string) {
             userNames.push(row.userName);
             viewCounts.push(row.viewCount);
             totalSubmissions.push(row.totalSubmissions);
-            minutesSaved.push(row.minutesSaved);
+            minutesSaved.push(category === "chapter" ? 0 : row.minutesSaved);
         }
     }
 
