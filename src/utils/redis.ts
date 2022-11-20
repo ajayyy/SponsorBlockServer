@@ -42,12 +42,14 @@ const writeResponseTime: number[] = [];
 let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
 
+export let connectionPromise = Promise.resolve();
+
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
     const readClient = config.redisRead?.enabled ? createClient(config.redisRead) : null;
-    void client.connect(); // void as we don't care about the promise
-    void readClient?.connect();
+    connectionPromise = client.connect();
+    void readClient?.connect(); // void as we don't care about the promise
     exportClient = client as RedisSB;
 
 
