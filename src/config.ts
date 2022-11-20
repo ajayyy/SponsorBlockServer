@@ -140,7 +140,8 @@ addDefaults(config, {
         expiryTime: 24 * 60 * 60,
         getTimeout: 40,
         maxConnections: 15000,
-        maxWriteConnections: 1000
+        maxWriteConnections: 1000,
+        disableHashCache: false
     },
     redisRead: {
         enabled: false,

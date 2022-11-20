@@ -7,6 +7,7 @@ interface RedisConfig extends redis.RedisClientOptions {
     getTimeout: number;
     maxConnections: number;
     maxWriteConnections: number;
+    disableHashCache: boolean;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {
