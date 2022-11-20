@@ -83,10 +83,10 @@ if (config.redis?.enabled) {
         });
     });
 
-    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string> , params: T): Promise<string> =>
+    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string>, params: T): Promise<string> =>
         new Promise((resolve, reject) => {
             if (config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections) {
-                reject("Too many active requests");
+                reject("Too many active requests to write");
                 return;
             }
 
@@ -108,8 +108,10 @@ if (config.redis?.enabled) {
             });
         });
 
-    // exportClient.set = (key, value) => setFun(client.set.bind(client), [key, value]);
-    // exportClient.setEx = (key, seconds, value) => setFun(client.setEx.bind(client), [key, seconds, value]);
+    const set = client.set.bind(client);
+    const setEx = client.setEx.bind(client);
+    exportClient.set = (key, value) => setFun(set, [key, value]);
+    exportClient.setEx = (key, seconds, value) => setFun(setEx, [key, seconds, value]);
     exportClient.increment = (key) => new Promise((resolve, reject) =>
         void client.multi()
             .incr(key)
