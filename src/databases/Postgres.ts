@@ -235,4 +235,8 @@ export class Postgres implements IDatabase {
 
         return result;
     }
+
+    highLoad() {
+        return this.activePostgresRequests > this.config.postgres.highLoadThreshold;
+    }
 }

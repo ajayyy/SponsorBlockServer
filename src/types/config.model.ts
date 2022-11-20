@@ -25,6 +25,7 @@ export interface CustomPostgresConfig extends PoolConfig {
 export interface CustomWritePostgresConfig extends CustomPostgresConfig {
     maxActiveRequests: number;
     timeout: number;
+    highLoadThreshold: number;
 }
 
 export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {

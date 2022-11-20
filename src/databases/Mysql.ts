@@ -32,4 +32,8 @@ export class Mysql implements IDatabase {
         }
     }
 
+    highLoad() {
+        return false;
+    }
+
 }
