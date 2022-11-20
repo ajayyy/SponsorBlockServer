@@ -39,6 +39,7 @@ let writeRequests = 0;
 
 const readResponseTime: number[] = [];
 const writeResponseTime: number[] = [];
+let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
 
 if (config.redis?.enabled) {
@@ -69,8 +70,13 @@ if (config.redis?.enabled) {
             activeRequests--;
             resolve(reply);
 
-            readResponseTime.push(Date.now() - start);
+            const responseTime = Date.now() - start;
+            readResponseTime.push(responseTime);
             if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
+            if (config.redis.stopWritingAfterResponseTime
+                    && responseTime > config.redis.stopWritingAfterResponseTime) {
+                lastResponseTimeLimit = Date.now();
+            }
         }).catch((err) => {
             if (chosenGet === get) {
                 lastClientFail = Date.now();
@@ -85,7 +91,9 @@ if (config.redis?.enabled) {
 
     const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string>, params: T): Promise<string> =>
         new Promise((resolve, reject) => {
-            if (config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections) {
+            if ((config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections)
+                || (config.redis.responseTimePause
+                        && Date.now() - lastResponseTimeLimit < config.redis.responseTimePause)) {
                 reject("Too many active requests to write");
                 return;
             }

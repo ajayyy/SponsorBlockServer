@@ -141,6 +141,8 @@ addDefaults(config, {
         getTimeout: 40,
         maxConnections: 15000,
         maxWriteConnections: 1000,
+        stopWritingAfterResponseTime: 20,
+        responseTimePause: 1000,
         disableHashCache: false
     },
     redisRead: {
