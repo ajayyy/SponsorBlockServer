@@ -56,6 +56,10 @@ export async function getTopCategoryUsers(req: Request, res: Response): Promise<
         return res.sendStatus(400);
     }
 
+    if (db.highLoad()) {
+        return res.status(503).send("Disabled for load reasons");
+    }
+
     //setup which sort type to use
     let sortBy = "";
     if (sortType == 0) {

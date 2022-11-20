@@ -88,6 +88,10 @@ export async function getTopUsers(req: Request, res: Response): Promise<Response
         return res.sendStatus(400);
     }
 
+    if (db.highLoad()) {
+        return res.status(503).send("Disabled for load reasons");
+    }
+
     const stats = await getTopUsersWithCache(sortBy, categoryStatsEnabled);
 
     //send this result
