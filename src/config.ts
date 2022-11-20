@@ -141,6 +141,7 @@ addDefaults(config, {
         getTimeout: 40,
         maxConnections: 15000,
         maxWriteConnections: 1000,
+        commandsQueueMaxLength: 3000,
         stopWritingAfterResponseTime: 50,
         responseTimePause: 1000,
         disableHashCache: false
