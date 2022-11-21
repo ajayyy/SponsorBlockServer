@@ -39,21 +39,24 @@ let writeRequests = 0;
 
 const readResponseTime: number[] = [];
 const writeResponseTime: number[] = [];
+let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
+
+export let connectionPromise = Promise.resolve();
 
 if (config.redis?.enabled) {
     Logger.info("Connected to redis");
     const client = createClient(config.redis);
     const readClient = config.redisRead?.enabled ? createClient(config.redisRead) : null;
-    void client.connect(); // void as we don't care about the promise
-    void readClient?.connect();
+    connectionPromise = client.connect();
+    void readClient?.connect(); // void as we don't care about the promise
     exportClient = client as RedisSB;
 
 
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
-        if (activeRequests > config.redis.maxConnections) {
+        if (config.redis.maxConnections && activeRequests > config.redis.maxConnections) {
             reject("Too many active requests");
             return;
         }
@@ -69,8 +72,13 @@ if (config.redis?.enabled) {
             activeRequests--;
             resolve(reply);
 
-            readResponseTime.push(Date.now() - start);
+            const responseTime = Date.now() - start;
+            readResponseTime.push(responseTime);
             if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
+            if (config.redis.stopWritingAfterResponseTime
+                    && responseTime > config.redis.stopWritingAfterResponseTime) {
+                lastResponseTimeLimit = Date.now();
+            }
         }).catch((err) => {
             if (chosenGet === get) {
                 lastClientFail = Date.now();
@@ -83,10 +91,12 @@ if (config.redis?.enabled) {
         });
     });
 
-    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string> , params: T): Promise<string> =>
+    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string>, params: T): Promise<string> =>
         new Promise((resolve, reject) => {
-            if (activeRequests > config.redis.maxWriteConnections) {
-                reject("Too many active requests");
+            if ((config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections)
+                || (config.redis.responseTimePause
+                        && Date.now() - lastResponseTimeLimit < config.redis.responseTimePause)) {
+                reject("Too many active requests to write");
                 return;
             }
 
@@ -108,8 +118,10 @@ if (config.redis?.enabled) {
             });
         });
 
-    exportClient.set = (key, value) => setFun(client.set.bind(client), [key, value]);
-    exportClient.setEx = (key, seconds, value) => setFun(client.setEx.bind(client), [key, seconds, value]);
+    const set = client.set.bind(client);
+    const setEx = client.setEx.bind(client);
+    exportClient.set = (key, value) => setFun(set, [key, value]);
+    exportClient.setEx = (key, seconds, value) => setFun(setEx, [key, seconds, value]);
     exportClient.increment = (key) => new Promise((resolve, reject) =>
         void client.multi()
             .incr(key)

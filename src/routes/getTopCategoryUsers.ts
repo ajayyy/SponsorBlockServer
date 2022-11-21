@@ -34,7 +34,7 @@ async function generateTopCategoryUsersStats(sortBy: string, category: string) {
             userNames.push(row.userName);
             viewCounts.push(row.viewCount);
             totalSubmissions.push(row.totalSubmissions);
-            minutesSaved.push(row.minutesSaved);
+            minutesSaved.push(category === "chapter" ? 0 : row.minutesSaved);
         }
     }
 
@@ -54,6 +54,10 @@ export async function getTopCategoryUsers(req: Request, res: Response): Promise<
     if (sortType == undefined || !config.categoryList.includes(category) ) {
         //invalid request
         return res.sendStatus(400);
+    }
+
+    if (db.highLoad()) {
+        return res.status(503).send("Disabled for load reasons");
     }
 
     //setup which sort type to use

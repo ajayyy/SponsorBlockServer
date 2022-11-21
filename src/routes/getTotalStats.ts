@@ -12,13 +12,26 @@ let firefoxUsersCache = 0;
 let apiUsersCache = 0;
 let lastUserCountCheck = 0;
 
+interface DBStatsData {
+    userCount: number,
+    viewCount: number,
+    totalSubmissions: number,
+    minutesSaved: number
+}
+
+let lastFetch: DBStatsData = {
+    userCount: 0,
+    viewCount: 0,
+    totalSubmissions: 0,
+    minutesSaved: 0
+};
+
 updateExtensionUsers();
 
 export async function getTotalStats(req: Request, res: Response): Promise<void> {
-    const userCountQuery = `(SELECT COUNT(*) FROM (SELECT DISTINCT "userID" from "sponsorTimes") t) "userCount",`;
 
-    const row = await db.prepare("get", `SELECT ${req.query.countContributingUsers ? userCountQuery : ""} COUNT(*) as "totalSubmissions",
-        SUM("views") as "viewCount", SUM(("endTime" - "startTime") / 60 * "views") as "minutesSaved" FROM "sponsorTimes" WHERE "shadowHidden" != 1 AND "votes" >= 0 AND "actionType" != 'chapter'`, []);
+    const row = await getStats(!!req.query.countContributingUsers);
+    lastFetch = row;
 
     if (row !== undefined) {
         const extensionUsers = chromeUsersCache + firefoxUsersCache;
@@ -42,6 +55,18 @@ export async function getTotalStats(req: Request, res: Response): Promise<void> 
         }
     }
 }
+
+function getStats(countContributingUsers: boolean): Promise<DBStatsData> {
+    if (db.highLoad()) {
+        return Promise.resolve(lastFetch);
+    } else {
+        const userCountQuery = `(SELECT COUNT(*) FROM (SELECT DISTINCT "userID" from "sponsorTimes") t) "userCount",`;
+
+        return db.prepare("get", `SELECT ${countContributingUsers ? userCountQuery : ""} COUNT(*) as "totalSubmissions",
+            SUM("views") as "viewCount", SUM(("endTime" - "startTime") / 60 * "views") as "minutesSaved" FROM "sponsorTimes" WHERE "shadowHidden" != 1 AND "votes" >= 0 AND "actionType" != 'chapter'`, []);
+    }
+}
+
 
 function updateExtensionUsers() {
     if (config.userCounterURL) {
@@ -68,7 +93,7 @@ function updateExtensionUsers() {
                     const userDownloadsStartIndex = body.indexOf(matchingString);
                     if (userDownloadsStartIndex >= 0) {
                         const closingQuoteIndex = body.indexOf('"', userDownloadsStartIndex + matchingStringLen);
-                        const userDownloadsStr = body.substr(userDownloadsStartIndex + matchingStringLen, closingQuoteIndex - userDownloadsStartIndex).replace(",","").replace(".","");
+                        const userDownloadsStr = body.substr(userDownloadsStartIndex + matchingStringLen, closingQuoteIndex - userDownloadsStartIndex).replace(",", "").replace(".", "");
                         chromeUsersCache = parseInt(userDownloadsStr);
                     }
                     else {

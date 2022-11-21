@@ -4,6 +4,7 @@ import { createServer } from "./app";
 import { Logger } from "./utils/logger";
 import { startAllCrons } from "./cronjob";
 import { getCommit } from "./utils/getCommit";
+import { connectionPromise } from "./utils/redis";
 
 async function init() {
     process.on("unhandledRejection", (error: any) => {
@@ -14,6 +15,7 @@ async function init() {
 
     try {
         await initDb();
+        await connectionPromise;
     } catch (e) {
         Logger.error(`Init Db: ${e}`);
         process.exit(1);

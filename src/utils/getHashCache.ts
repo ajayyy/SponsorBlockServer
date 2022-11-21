@@ -3,6 +3,7 @@ import { shaHashKey } from "../utils/redisKeys";
 import { HashedValue } from "../types/hash.model";
 import { Logger } from "../utils/logger";
 import { getHash } from "../utils/getHash";
+import { config } from "../config";
 
 const defaultedHashTimes = 5000;
 const cachedHashTimes = defaultedHashTimes - 1;
@@ -19,20 +20,25 @@ export async function getHashCache<T extends string>(value: T, times = defaulted
 async function getFromRedis<T extends string>(key: HashedValue): Promise<T & HashedValue> {
     const redisKey = shaHashKey(key);
 
-    try {
-        const reply = await redis.get(redisKey);
+    if (!config.redis?.disableHashCache) {
+        try {
+            const reply = await redis.get(redisKey);
 
-        if (reply) {
-            Logger.debug(`Got data from redis: ${reply}`);
-            return reply as T & HashedValue;
+            if (reply) {
+                Logger.debug(`Got data from redis: ${reply}`);
+                return reply as T & HashedValue;
+            }
+        } catch (err) {
+            Logger.error(err as string);
         }
-    } catch (err) {
-        Logger.error(err as string);
     }
 
     // Otherwise, calculate it
     const data = getHash(key, cachedHashTimes);
-    redis.set(redisKey, data).catch((err) => Logger.error(err));
+
+    if (!config.redis?.disableHashCache) {
+        redis.set(redisKey, data).catch((err) => Logger.error(err));
+    }
 
     return data as T & HashedValue;
 }

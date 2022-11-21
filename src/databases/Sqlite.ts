@@ -95,6 +95,10 @@ export class Sqlite implements IDatabase {
     private static processUpgradeQuery(query: string): string {
         return query.replace(/^.*--!sqlite-ignore/gm, "");
     }
+
+    highLoad() {
+        return false;
+    }
 }
 
 export interface SqliteConfig {

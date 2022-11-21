@@ -76,7 +76,10 @@ addDefaults(config, {
         port: 5432,
         max: 10,
         idleTimeoutMillis: 10000,
-        maxTries: 3
+        maxTries: 3,
+        maxActiveRequests: 0,
+        timeout: 60000,
+        highLoadThreshold: 10
     },
     postgresReadOnly: {
         enabled: false,
@@ -138,7 +141,11 @@ addDefaults(config, {
         expiryTime: 24 * 60 * 60,
         getTimeout: 40,
         maxConnections: 15000,
-        maxWriteConnections: 1000
+        maxWriteConnections: 1000,
+        commandsQueueMaxLength: 3000,
+        stopWritingAfterResponseTime: 50,
+        responseTimePause: 1000,
+        disableHashCache: false
     },
     redisRead: {
         enabled: false,

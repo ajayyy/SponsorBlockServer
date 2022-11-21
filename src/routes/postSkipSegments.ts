@@ -266,9 +266,10 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 pass: false,
                 errorCode: 403,
                 errorMessage:
-                    `Users have voted that new segments aren't needed for the following category: ` +
+                    `Users have voted that all the segments required for this video have already been submitted for the following category: ` +
                     `'${segments[i].category}'\n` +
-                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'` : ""}\n` +
+                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}\n'` : ""}` +
+                    `You may need to refresh if you don't see the segments.\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
                     `\nIf you believe this is incorrect, please contact someone on chat.sponsor.ajay.app, discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app`

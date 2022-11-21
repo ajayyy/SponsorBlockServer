@@ -3,7 +3,7 @@ import { IDatabase, QueryOption, QueryType } from "./IDatabase";
 import { Client, Pool, QueryResult, types } from "pg";
 
 import fs from "fs";
-import { CustomPostgresConfig, CustomPostgresReadOnlyConfig } from "../types/config.model";
+import { CustomPostgresReadOnlyConfig, CustomWritePostgresConfig } from "../types/config.model";
 import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promise";
 
 // return numeric (pg_type oid=1700) as float
@@ -22,7 +22,7 @@ export interface DatabaseConfig {
     fileNamePrefix: string,
     readOnly: boolean,
     createDbIfNotExists: boolean,
-    postgres: CustomPostgresConfig,
+    postgres: CustomWritePostgresConfig,
     postgresReadOnly: CustomPostgresReadOnlyConfig
 }
 
@@ -105,6 +105,11 @@ export class Postgres implements IDatabase {
 
         Logger.debug(`prepare (postgres): type: ${type}, query: ${query}, params: ${params}`);
 
+        if (this.config.postgres.maxActiveRequests && this.isReadQuery(type)
+                && this.activePostgresRequests > this.config.postgres.maxActiveRequests) {
+            throw new Error("Too many active postgres requests");
+        }
+
         const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
         let tries = 0;
         let lastPool: Pool = null;
@@ -120,6 +125,7 @@ export class Postgres implements IDatabase {
                 pendingQueries.push(savePromiseState(lastPool.query({ text: query, values: params })));
                 const currentPromises = [...pendingQueries];
                 if (options.useReplica && maxTries() - tries > 1) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
+                else if (this.config.postgres.timeout) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgres.timeout)));
                 const queryResult = await nextFulfilment(currentPromises);
 
                 this.activePostgresRequests--;
@@ -150,12 +156,12 @@ export class Postgres implements IDatabase {
                     }
                 }
 
+                this.activePostgresRequests--;
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
         } while (this.isReadQuery(type) && tries < maxTries()
             && this.activePostgresRequests < this.config.postgresReadOnly.stopRetryThreshold);
 
-        this.activePostgresRequests--;
         throw new Error(`prepare (postgres): ${type} ${query} failed after ${tries} tries`);
     }
 
@@ -228,5 +234,9 @@ export class Postgres implements IDatabase {
         result = result.replace(/integer/gmi, "NUMERIC");
 
         return result;
+    }
+
+    highLoad() {
+        return this.activePostgresRequests > this.config.postgres.highLoadThreshold;
     }
 }

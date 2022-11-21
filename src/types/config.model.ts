@@ -7,6 +7,9 @@ interface RedisConfig extends redis.RedisClientOptions {
     getTimeout: number;
     maxConnections: number;
     maxWriteConnections: number;
+    stopWritingAfterResponseTime: number;
+    responseTimePause: number;
+    disableHashCache: boolean;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {
@@ -17,6 +20,12 @@ interface RedisReadOnlyConfig extends redis.RedisClientOptions {
 export interface CustomPostgresConfig extends PoolConfig {
     enabled: boolean;
     maxTries: number;
+}
+
+export interface CustomWritePostgresConfig extends CustomPostgresConfig {
+    maxActiveRequests: number;
+    timeout: number;
+    highLoadThreshold: number;
 }
 
 export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
@@ -71,7 +80,7 @@ export interface SBSConfig {
     redisRead?: RedisReadOnlyConfig;
     redisRateLimit: boolean;
     maxRewardTimePerSegmentInSeconds?: number;
-    postgres?: CustomPostgresConfig;
+    postgres?: CustomWritePostgresConfig;
     postgresReadOnly?: CustomPostgresReadOnlyConfig;
     dumpDatabase?: DumpDatabase;
     diskCacheURL: string;

@@ -3,6 +3,7 @@ import { getSegmentsByHash } from "./getSkipSegments";
 import { Request, Response } from "express";
 import { ActionType, Category, SegmentUUID, VideoIDHash, Service } from "../types/segments.model";
 import { getService } from "../utils/getService";
+import { Logger } from "../utils/logger";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -67,10 +68,16 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     // Get all video id's that match hash prefix
     const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, requiredSegments, service);
 
-    const output = Object.entries(segments).map(([videoID, data]) => ({
-        videoID,
-        hash: data.hash,
-        segments: data.segments,
-    }));
-    return res.status(output.length === 0 ? 404 : 200).json(output);
+    try {
+        const output = Object.entries(segments).map(([videoID, data]) => ({
+            videoID,
+            hash: data.hash,
+            segments: data.segments,
+        }));
+        return res.status(output.length === 0 ? 404 : 200).json(output);
+    } catch(e) {
+        Logger.error(`skip segments by hash error: ${e}`);
+
+        return res.status(500).send("Internal server error");
+    }
 }
