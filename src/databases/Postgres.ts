@@ -16,6 +16,13 @@ types.setTypeParser(20, function(val) {
     return parseInt(val, 10);
 });
 
+interface PostgresStats {
+    activeRequests: number;
+    avgReadTime: number;
+    avgWriteTime: number;
+    avgFailedTime: number;
+}
+
 export interface DatabaseConfig {
     dbSchemaFileName: string,
     dbSchemaFolder: string,
@@ -34,6 +41,10 @@ export class Postgres implements IDatabase {
     private lastPoolReadFail = 0;
 
     activePostgresRequests = 0;
+    readResponseTime: number[] = [];
+    writeResponseTime: number[] = [];
+    failedResponseTime: number[] = [];
+    maxStoredTimes = 200;
 
     constructor(private config: DatabaseConfig) {}
 
@@ -110,6 +121,7 @@ export class Postgres implements IDatabase {
             throw new Error("Too many active postgres requests");
         }
 
+        const start = Date.now();
         const pendingQueries: PromiseWithState<QueryResult<any>>[] = [];
         let tries = 0;
         let lastPool: Pool = null;
@@ -127,6 +139,8 @@ export class Postgres implements IDatabase {
                 if (options.useReplica && maxTries() - tries > 1) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgresReadOnly.readTimeout)));
                 else if (this.config.postgres.timeout) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgres.timeout)));
                 const queryResult = await nextFulfilment(currentPromises);
+
+                this.updateResponseTime(type, start);
 
                 this.activePostgresRequests--;
                 switch (type) {
@@ -156,6 +170,7 @@ export class Postgres implements IDatabase {
                     }
                 }
 
+                this.updateResponseTime(type, start, this.failedResponseTime);
                 this.activePostgresRequests--;
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
@@ -234,6 +249,25 @@ export class Postgres implements IDatabase {
         result = result.replace(/integer/gmi, "NUMERIC");
 
         return result;
+    }
+
+    private updateResponseTime(type: string, start: number, customArray?: number[]): void {
+        const responseTime = Date.now() - start;
+
+        const array = customArray ?? (this.isReadQuery(type) ?
+            this.readResponseTime : this.writeResponseTime);
+
+        array.push(responseTime);
+        if (array.length > this.maxStoredTimes) array.shift();
+    }
+
+    getStats(): PostgresStats {
+        return {
+            activeRequests: this.activePostgresRequests,
+            avgReadTime: this.readResponseTime.length > 0 ? this.readResponseTime.reduce((a, b) => a + b, 0) / this.readResponseTime.length : 0,
+            avgWriteTime: this.writeResponseTime.length > 0 ? this.writeResponseTime.reduce((a, b) => a + b, 0) / this.writeResponseTime.length : 0,
+            avgFailedTime: this.failedResponseTime.length > 0 ? this.failedResponseTime.reduce((a, b) => a + b, 0) / this.failedResponseTime.length : 0
+        };
     }
 
     highLoad() {

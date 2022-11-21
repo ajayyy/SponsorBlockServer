@@ -44,7 +44,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             loadavg: os.loadavg().slice(1), // only return 5 & 15 minute load average
             statusRequests,
             hostname: os.hostname(),
-            activePostgresRequests: (db as Postgres)?.activePostgresRequests,
+            postgresStats: (db as Postgres)?.getStats(),
             redisStats: getRedisStats(),
         };
         return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
