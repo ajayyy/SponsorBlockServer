@@ -291,7 +291,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 //Segments with less than -1 votes are already ignored before this function is called
 async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
     const reputationPromises = segments.map(segment =>
-        segment.userID ? getReputation(segment.userID).catch((e) => Logger.error(e)) : null);
+        segment.userID && !db.highLoad() ? getReputation(segment.userID).catch((e) => Logger.error(e)) : null);
 
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
