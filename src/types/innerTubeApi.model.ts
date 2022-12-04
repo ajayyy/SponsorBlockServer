@@ -1,7 +1,7 @@
 export interface innerTubeVideoDetails {
     "videoId": string,
     "title": string,
-    "lengthSeconds": string, // yes, don't ask.
+    "lengthSeconds"?: string, // yes, don't ask.
     "channelId": string,
     "isOwnerViewing": boolean,
     "shortDescription": string,

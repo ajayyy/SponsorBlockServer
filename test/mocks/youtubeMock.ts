@@ -63,6 +63,11 @@ export class YouTubeApiMock {
                     lengthSeconds: 100,
                 } as APIVideoData
             };
+        } else if (obj.id === "private-video") {
+            return {
+                err: false,
+                data: {} as APIVideoData
+            };
         } else {
             return {
                 err: false,
