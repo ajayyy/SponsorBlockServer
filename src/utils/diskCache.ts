@@ -1,15 +1,23 @@
 import axios, { AxiosError } from "axios";
+import { Agent } from "http";
 import { config } from "../config";
 import { Logger } from "./logger";
+
+const httpAgent = new Agent({ keepAlive: true });
 
 class DiskCache {
     async set(key: string, value: unknown): Promise<boolean> {
         if (!config.diskCacheURL) return false;
 
         try {
-            const result = await axios.post(`${config.diskCacheURL}/api/v1/item`, {
-                key,
-                value
+            const result = await axios({
+                method: "post",
+                url: `${config.diskCacheURL}/api/v1/item`,
+                data: {
+                    key,
+                    value
+                },
+                httpAgent
             });
 
             return result.status === 200;
