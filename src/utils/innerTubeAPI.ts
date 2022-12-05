@@ -3,6 +3,30 @@ import { Logger } from "./logger";
 import { innerTubeVideoDetails } from "../types/innerTubeApi.model";
 import DiskCache from "./diskCache";
 
+const privateResponse = (videoId: string): innerTubeVideoDetails => ({
+    videoId,
+    title: "",
+    channelId: "",
+    // exclude video duration
+    isOwnerViewing: false,
+    shortDescription: "",
+    isCrawlable: false,
+    thumbnail: {
+        thumbnails: [{
+            url: "https://s.ytimg.com/yts/img/meh7-vflGevej7.png",
+            width: 140,
+            height: 100
+        }]
+    },
+    allowRatings: false,
+    viewCount: "0", // yes, don't ask
+    author: "",
+    isPrivate: true,
+    isUnpluggedCorpus: true,
+    isLiveContent: false,
+    publishDate: ""
+});
+
 async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
     // start subrequest
     const url = "https://www.youtube.com/youtubei/v1/player";
@@ -20,9 +44,9 @@ async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
     });
     /* istanbul ignore else */
     if (result.status === 200) {
-        return result.data.videoDetails;
+        return result.data?.videoDetails ?? privateResponse(videoID);
     } else {
-        return Promise.reject(result.status);
+        return Promise.reject(`Innertube returned non-200 response: ${result.status}`);
     }
 }
 

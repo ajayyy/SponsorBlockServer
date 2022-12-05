@@ -1292,4 +1292,20 @@ describe("postSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should successfully submit if video is private", (done) => {
+        const videoID = "private-video";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 1,
+            endTime: 5,
+            category: "sponsor",
+            userID: submitUserTwo
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

@@ -1,10 +1,10 @@
-FROM node:16-alpine as builder
+FROM node:18-alpine as builder
 RUN apk add --no-cache --virtual .build-deps python3 make g++
 COPY package.json package-lock.json tsconfig.json entrypoint.sh ./
 COPY src src
 RUN npm ci && npm run tsc
 
-FROM node:16-alpine as app
+FROM node:18-alpine as app
 WORKDIR /usr/src/app
 RUN apk add --no-cache git postgresql-client
 COPY --from=builder ./node_modules ./node_modules

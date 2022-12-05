@@ -46,4 +46,9 @@ describe("innertube API test", function() {
         const videoDetail = await getVideoDetails(videoID);
         assert.ok(videoDetail);
     });
+    it("Should not fail when getting data for private video", async function () {
+        const privateVideoId = "ZuibAax0VD8";
+        const videoDetail = await getVideoDetails(privateVideoId);
+        assert.ok(videoDetail);
+    });
 });
