@@ -52,6 +52,7 @@ export interface SBSConfig {
     minReputationToSubmitChapter: number;
     minReputationToSubmitFiller: number;
     userCounterURL?: string;
+    userCounterRatio: number;
     proxySubmission?: string;
     behindProxy: string | boolean;
     db: string;

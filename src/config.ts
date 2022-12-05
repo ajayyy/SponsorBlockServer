@@ -65,6 +65,7 @@ addDefaults(config, {
         }
     },
     userCounterURL: null,
+    userCounterRatio: 10,
     newLeafURLs: null,
     maxRewardTimePerSegmentInSeconds: 600,
     poiMinimumStartTime: 2,
