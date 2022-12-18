@@ -34,7 +34,7 @@ async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
         context: {
             client: {
                 clientName: "WEB",
-                clientVersion: "2.20221215.04.0"
+                clientVersion: "2.20221215.04.01"
             }
         },
         videoId: videoID
