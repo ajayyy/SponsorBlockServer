@@ -166,7 +166,8 @@ addDefaults(config, {
     },
     gumroad: {
         productPermalinks: ["sponsorblock"]
-    }
+    },
+    minUserIDLength: 30
 });
 loadFromEnv(config);
 migrate(config);

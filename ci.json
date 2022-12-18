@@ -76,5 +76,6 @@
         "clientSecret": "testClientSecret",
         "redirectUri": "http://127.0.0.1/fake/callback"
     },
-    "minReputationToSubmitFiller": -1
+    "minReputationToSubmitFiller": -1,
+    "minUserIDLength": 0
 }
