@@ -37,6 +37,49 @@ CREATE TABLE IF NOT EXISTS "config" (
 	"value" TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "titles" (
+	"videoID"	TEXT NOT NULL,
+	"title"	TEXT NOT NULL,
+	"original" BOOLEAN NOT NULL,
+	"userID"	TEXT NOT NULL,
+	"service"	TEXT NOT NULL,
+	"hashedVideoID"	TEXT NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL,
+	"UUID"	TEXT NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS "titleVotes" (
+	"UUID"	TEXT NOT NULL PRIMARY KEY,
+	"votes"	INTEGER NOT NULL default 0,
+	"locked"	INTEGER NOT NULL default 0,
+	"shadowHidden"	INTEGER NOT NULL default 0,
+	FOREIGN KEY("UUID") REFERENCES "titles"("UUID")
+);
+
+CREATE TABLE IF NOT EXISTS "thumbnails" (
+	"videoID"	TEXT NOT NULL,
+	"original" INTEGER default 0,
+	"userID"	TEXT NOT NULL,
+	"service"	TEXT NOT NULL,
+	"hashedVideoID"	TEXT NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL,
+	"UUID"	TEXT NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS "thumbnailTimestamps" (
+	"UUID"	TEXT NOT NULL PRIMARY KEY,
+	"timestamp"	INTEGER NOT NULL default 0
+	FOREIGN KEY("UUID") REFERENCES "thumbnails"("UUID")
+);
+
+CREATE TABLE IF NOT EXISTS "thumbnailVotes" (
+	"UUID"	TEXT NOT NULL PRIMARY KEY,
+	"votes"	INTEGER NOT NULL default 0,
+	"locked"	INTEGER NOT NULL default 0,
+		"shadowHidden"	INTEGER NOT NULL default 0,
+	FOREIGN KEY("UUID") REFERENCES "thumbnails"("UUID")
+);
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
 
