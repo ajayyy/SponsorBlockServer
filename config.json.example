@@ -66,5 +66,6 @@
         {
             "name": "vipUsers"
         }]
-    }
+    },
+    "minUserIDLength": 30 // minimum length of UserID to be accepted
 }

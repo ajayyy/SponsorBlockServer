@@ -22,6 +22,7 @@ import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
+import * as youtubeID from "../utils/youtubeID";
 
 type CheckResult = {
     pass: boolean,
@@ -185,15 +186,23 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
 }
 
 async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID: HashedUserID
-    , segments: IncomingSegment[], videoDurationParam: number, userAgent: string): Promise<CheckResult> {
+    , segments: IncomingSegment[], videoDurationParam: number, userAgent: string, service: Service): Promise<CheckResult> {
     const invalidFields = [];
     const errors = [];
     if (typeof videoID !== "string" || videoID?.length == 0) {
         invalidFields.push("videoID");
     }
-    if (typeof userID !== "string" || userID?.length < 30) {
+    if (service === Service.YouTube && config.mode !== "test") {
+        const sanitizedVideoID = youtubeID.validate(videoID) ? videoID : youtubeID.sanitize(videoID);
+        if (!youtubeID.validate(sanitizedVideoID)) {
+            invalidFields.push("videoID");
+            errors.push("YouTube videoID could not be extracted");
+        }
+    }
+    const minLength = config.minUserIDLength;
+    if (typeof userID !== "string" || userID?.length < minLength) {
         invalidFields.push("userID");
-        if (userID?.length < 30) errors.push(`userID must be at least 30 characters long`);
+        if (userID?.length < minLength) errors.push(`userID must be at least ${minLength} characters long`);
     }
     if (!Array.isArray(segments) || segments.length == 0) {
         invalidFields.push("segments");
@@ -484,7 +493,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     //hash the userID
     const userID = await getHashCache(paramUserID || "");
 
-    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent);
+    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
