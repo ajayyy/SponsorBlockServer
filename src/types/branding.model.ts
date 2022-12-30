@@ -45,7 +45,6 @@ export interface BrandingResult {
 }
 
 export interface BrandingHashDBResult {
-    hash: VideoIDHash;
     branding: {
         titles: TitleDBResult[],
         thumbnails: ThumbnailDBResult[]
@@ -53,6 +52,5 @@ export interface BrandingHashDBResult {
 }
 
 export interface BrandingHashResult {
-    hash: VideoIDHash;
     branding: BrandingResult;
 }

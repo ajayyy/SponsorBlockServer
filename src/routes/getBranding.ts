@@ -81,7 +81,6 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         const dbResult: Record<VideoID, BrandingHashDBResult> = {};
         const initResult = (submission: BrandingDBSubmission) => {
             dbResult[submission.videoID] = dbResult[submission.videoID] || {
-                hash: submission.hashedVideoID,
                 branding: {
                     titles: [],
                     thumbnails: []
@@ -110,7 +109,6 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
     await Promise.all(Object.keys(branding).map(async (key) => {
         const castedKey = key as VideoID;
         processedResult[castedKey] = {
-            hash: branding[castedKey].hash,
             branding: await filterAndSortBranding(branding[castedKey].branding.titles, branding[castedKey].branding.thumbnails, ip, cache)
         };
     }));
