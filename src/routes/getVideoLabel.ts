@@ -54,7 +54,6 @@ async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Servic
 
         for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
             const data: VideoData = {
-                hash: videoData.hash,
                 segments: chooseSegment(videoData.segments),
             };
 

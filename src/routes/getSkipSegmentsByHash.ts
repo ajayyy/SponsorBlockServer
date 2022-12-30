@@ -71,7 +71,6 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     try {
         const output = Object.entries(segments).map(([videoID, data]) => ({
             videoID,
-            hash: data.hash,
             segments: data.segments,
         }));
         return res.status(output.length === 0 ? 404 : 200).json(output);
