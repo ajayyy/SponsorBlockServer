@@ -22,12 +22,22 @@ const user07PrivateUserID = "setUsername_07";
 const username07 = "Username 07";
 const user08PrivateUserID = "setUsername_08";
 
+// private = public cases
+// user09 - username === privateID
+const user09PrivateUserID = "setUsername_09";
+// user 10/11 - user 11 username === user 10 privateID
+const user10PrivateUserID = "setUsername_10_collision";
+const username10 = "setUsername_10";
+const user11PrivateUserID = "setUsername_11";
+const user12PrivateUserID = "setUsername_12";
+const username12 = "Username 12";
+
 async function addUsername(userID: string, userName: string, locked = 0) {
     await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
     await addLogUserNameChange(userID, userName);
 }
 
-async function getUsernameInfo(userID: string): Promise<{ userName: string, locked: string }> {
+async function getUsernameInfo(userID: string): Promise<{ userName: string, locked: string}> {
     const row = await db.prepare("get", 'SELECT "userName", "locked" FROM "userNames" WHERE "userID" = ?', [userID]);
     if (!row) {
         return null;
@@ -88,6 +98,10 @@ describe("setUsername", () => {
         await addUsername(getHash(user05PrivateUserID), username05, 0);
         await addUsername(getHash(user06PrivateUserID), username06, 0);
         await addUsername(getHash(user07PrivateUserID), username07, 1);
+        await addUsername(getHash(user07PrivateUserID), username07, 0);
+        await addUsername(getHash(user10PrivateUserID), username10, 0);
+        // user11 skipped
+        await addUsername(getHash(user12PrivateUserID), username12, 0);
     });
 
     it("Should be able to set username that has never been set", (done) => {
@@ -240,6 +254,44 @@ describe("setUsername", () => {
                 const usernameInfo = await getUsernameInfo(getHash(user08PrivateUserID));
                 assert.strictEqual(usernameInfo, null);
                 done();
-            });
+            })
+            .catch((err) => done(err));
+    });
+
+    it("Should return error if trying to set username to privateID", (done) => {
+        const privateID = user09PrivateUserID;
+        postSetUserName(privateID, privateID)
+            .then(async (res) => {
+                assert.strictEqual(res.status, 400);
+                const usernameInfo = await getUsernameInfo(getHash(privateID));
+                assert.strictEqual(usernameInfo, null);
+                done();
+            })
+            .catch((err) => done(err));
+    });
+
+    it("Should return error if trying to set username to someone else's privateID", (done) => {
+        const privateID = user11PrivateUserID;
+        postSetUserName(privateID, user10PrivateUserID)
+            .then(async (res) => {
+                assert.strictEqual(res.status, 400);
+                const usernameInfo = await getUsernameInfo(getHash(privateID)); // user 10's privateID
+                assert.strictEqual(usernameInfo, null);
+                done();
+            })
+            .catch((err) => done(err));
+    });
+
+    it("Should not return error if trying to set username to someone else's publicID", (done) => {
+        const privateID = user12PrivateUserID;
+        const user10PublicID = getHash(user10PrivateUserID);
+        postSetUserName(privateID, user10PublicID)
+            .then(async (res) => {
+                assert.strictEqual(res.status, 200);
+                const usernameInfo = await getUsernameInfo(getHash(privateID)); // user 10's publicID
+                assert.strictEqual(usernameInfo.userName, user10PublicID);
+                done();
+            })
+            .catch((err) => done(err));
     });
 });
