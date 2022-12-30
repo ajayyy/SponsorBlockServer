@@ -98,7 +98,6 @@ describe("setUsername", () => {
         await addUsername(getHash(user05PrivateUserID), username05, 0);
         await addUsername(getHash(user06PrivateUserID), username06, 0);
         await addUsername(getHash(user07PrivateUserID), username07, 1);
-        await addUsername(getHash(user07PrivateUserID), username07, 0);
         await addUsername(getHash(user10PrivateUserID), username10, 0);
         // user11 skipped
         await addUsername(getHash(user12PrivateUserID), username12, 0);
