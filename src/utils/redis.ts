@@ -19,6 +19,7 @@ interface RedisSB {
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
     sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
+    ttl(key: RedisCommandArgument): Promise<number>;
     quit(): Promise<void>;
 }
 
@@ -30,6 +31,7 @@ let exportClient: RedisSB = {
     increment: () => new Promise((resolve) => resolve(null)),
     sendCommand: () => new Promise((resolve) => resolve(null)),
     quit: () => new Promise((resolve) => resolve(null)),
+    ttl: () => new Promise((resolve) => resolve(null)),
 };
 
 let lastClientFail = 0;
