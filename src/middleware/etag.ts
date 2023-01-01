@@ -5,6 +5,7 @@ import { skipSegmentsHashKey, skipSegmentsKey, videoLabelsHashKey, videoLabelsKe
 
 type hashType = "skipSegments" | "skipSegmentsHash" | "videoLabel" | "videoLabelHash";
 type ETag = `${hashType};${VideoIDHash};${Service};${number}`;
+type hashKey = string | VideoID | VideoIDHash;
 
 export function cacheMiddlware(req: Request, res: Response, next: NextFunction): void {
     const reqEtag = req.get("If-None-Match") as string;
@@ -25,7 +26,7 @@ export function cacheMiddlware(req: Request, res: Response, next: NextFunction):
         .catch(next);
 }
 
-function getLastModified(hashType: hashType, hashKey: (VideoID | VideoIDHash), service: Service): Promise<Date | null> {
+function getLastModified(hashType: hashType, hashKey: hashKey, service: Service): Promise<Date | null> {
     let redisKey: string | null;
     if (hashType === "skipSegments") redisKey = skipSegmentsKey(hashKey as VideoID, service);
     else if (hashType === "skipSegmentsHash") redisKey = skipSegmentsHashKey(hashKey as VideoIDHash, service);
@@ -35,7 +36,7 @@ function getLastModified(hashType: hashType, hashKey: (VideoID | VideoIDHash), s
     return QueryCacher.getKeyLastModified(redisKey);
 }
 
-export async function getEtag(hashType: hashType, hashKey: VideoIDHash, service: Service): Promise<ETag> {
+export async function getEtag(hashType: hashType, hashKey: hashKey, service: Service): Promise<ETag> {
     const lastModified = await getLastModified(hashType, hashKey, service);
     return `${hashType};${hashKey};${service};${lastModified.getTime()}` as ETag;
 }
