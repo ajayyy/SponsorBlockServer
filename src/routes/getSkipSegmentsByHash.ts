@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { ActionType, Category, SegmentUUID, VideoIDHash, Service } from "../types/segments.model";
 import { getService } from "../utils/getService";
 import { Logger } from "../utils/logger";
+import { getEtag } from "../middleware/etag";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -69,6 +70,9 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, requiredSegments, service);
 
     try {
+        await getEtag("skipSegmentsHash", hashPrefix, service)
+            .then(etag => res.set("ETag", etag))
+            .catch(() => null);
         const output = Object.entries(segments).map(([videoID, data]) => ({
             videoID,
             segments: data.segments,

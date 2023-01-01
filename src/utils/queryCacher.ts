@@ -87,6 +87,17 @@ function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoID
     }
 }
 
+async function getKeyLastModified(key: string): Promise<Date> {
+    if (!config.redis?.enabled) return Promise.reject("ETag - Redis not enabled");
+    return await redis.ttl(key)
+        .then(ttl => {
+            const sinceLive = config.redis?.expiryTime - ttl;
+            const now = Math.floor(Date.now() / 1000);
+            return new Date((now-sinceLive) * 1000);
+        })
+        .catch(() => Promise.reject("ETag - Redis error"));
+}
+
 function clearRatingCache(videoInfo: { hashedVideoID: VideoIDHash; service: Service;}): void {
     if (videoInfo) {
         redis.del(ratingHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
@@ -101,6 +112,7 @@ export const QueryCacher = {
     get,
     getAndSplit,
     clearSegmentCache,
+    getKeyLastModified,
     clearRatingCache,
-    clearFeatureCache
+    clearFeatureCache,
 };

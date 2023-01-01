@@ -50,6 +50,7 @@ import { getVideoLabelsByHash } from "./routes/getVideoLabelByHash";
 import { addFeature } from "./routes/addFeature";
 import { generateTokenRequest } from "./routes/generateToken";
 import { verifyTokenRequest } from "./routes/verifyToken";
+import { cacheMiddlware } from "./middleware/etag";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -57,11 +58,13 @@ export function createServer(callback: () => void): Server {
 
     const router = ExpressPromiseRouter();
     app.use(router);
+    app.set("etag", false); // disable built in etag
 
     //setup CORS correctly
     router.use(corsMiddleware);
     router.use(loggerMiddleware);
     router.use("/api/", apiCspMiddleware);
+    router.use(cacheMiddlware);
     router.use(express.json());
 
     if (config.userCounterURL) router.use(userCounter);
