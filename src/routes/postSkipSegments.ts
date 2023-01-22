@@ -348,7 +348,7 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
             return {
                 pass: false,
                 errorCode: 403,
-                errorMessage: `Hi, currently there are server issues and you might have not recieved segments even though they exist. Sorry about this, I'm working on it. Request rejected by auto moderator: ${autoModerateResult} If this is an issue, send a message on Discord.`
+                errorMessage: `Submissions rejected: ${autoModerateResult} If this is an issue, send a message on Discord.`
             };
         }
     }
