@@ -14,21 +14,6 @@ export class Sqlite implements IDatabase {
 
     // eslint-disable-next-line require-await
     async prepare(type: QueryType, query: string, params: any[] = []): Promise<any[]> {
-        if (query.includes(";")) {
-            const promises = [];
-            let paramsCount = 0;
-            for (const q of query.split(";")) {
-                if (q.trim() !== "") {
-                    const currentParamCount = q.match(/\?/g)?.length ?? 0;
-                    promises.push(this.prepare(type, q, params.slice(paramsCount, paramsCount + currentParamCount)));
-
-                    paramsCount += currentParamCount;
-                }
-            }
-
-            return (await Promise.all(promises)).flat();
-        }
-
         // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
         const preparedQuery = this.db.prepare(Sqlite.processQuery(query));
 

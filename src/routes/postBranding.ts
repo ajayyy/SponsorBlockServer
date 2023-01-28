@@ -29,8 +29,8 @@ export async function postBranding(req: Request, res: Response) {
 
     if (!videoID || !userID || userID.length < 30 || !service
         || ((!title || !title.title)
-        && (!thumbnail || thumbnail.original == null
-            || (!thumbnail.original && !(thumbnail as TimeThumbnailSubmission).timestamp)))) {
+            && (!thumbnail || thumbnail.original == null
+                || (!thumbnail.original && !(thumbnail as TimeThumbnailSubmission).timestamp)))) {
         res.status(400).send("Bad Request");
         return;
     }
@@ -53,9 +53,11 @@ export async function postBranding(req: Request, res: Response) {
                 if (existingUUID) {
                     await updateVoteTotals(BrandingType.Title, existingVote, UUID, isVip);
                 } else {
-                    await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-                        INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0);`,
-                    [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID, UUID, isVip ? 1 : 0]);
+                    await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
+
+                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0);`,
+                        [UUID, isVip ? 1 : 0]);
                 }
             }
         })(), (async () => {
@@ -70,13 +72,17 @@ export async function postBranding(req: Request, res: Response) {
                 if (existingUUID) {
                     await updateVoteTotals(BrandingType.Thumbnail, existingVote, UUID, isVip);
                 } else {
-                    await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?);
-                        INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0);
-                        ${thumbnail.original ? "" : `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`}`,
-                    [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID, UUID,
-                        isVip ? 1 : 0, thumbnail.original ? null : UUID, thumbnail.original ? null : (thumbnail as TimeThumbnailSubmission).timestamp]);
-                }
+                    await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
+                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0)`,
+                        [UUID, isVip ? 1 : 0]);
+
+                    if (!thumbnail.original) {
+                        await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
+                            [UUID, (thumbnail as TimeThumbnailSubmission).timestamp]);
+                    }
+                }
             }
         })()]);
 
