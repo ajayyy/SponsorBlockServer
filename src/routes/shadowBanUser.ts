@@ -17,6 +17,10 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     const enabled = req.query.enabled === undefined
         ? true
         : req.query.enabled === "true";
+    const lookForIPs = req.query.lookForIPs === "true";
+    const banUsers = req.query.banUsers === undefined
+        ? true
+        : req.query.banUsers === "true";
 
     //if enabled is false and the old submissions should be made visible again
     const unHideOldSubmissions = req.query.unHideOldSubmissions !== "false";
@@ -38,91 +42,116 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     }
 
     if (userID) {
-        //check to see if this user is already shadowbanned
-        const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+        const result = await banUser(userID, enabled, unHideOldSubmissions, type, categories);
+        if (result) {
+            res.sendStatus(result);
+        }
 
-        if (enabled && row.userCount == 0) {
-            //add them to the shadow ban list
+        if (enabled && lookForIPs) {
+            const ipLoggingFixedTime = 1674590916069;
+            const timeSubmitted = (await db.prepare("all", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "timeSubmitted" > ? AND "userID" = ?`, [ipLoggingFixedTime, userID])) as { timeSubmitted: number }[];
+            const ips = (await Promise.all(timeSubmitted.map((s) => {
+                return privateDB.prepare("all", `SELECT "hashedIP" FROM "sponsorTimes" WHERE "timeSubmitted" = ?`, [s.timeSubmitted]) as Promise<{ hashedIP: HashedIP }[]>;
+            }))).flat();
 
-            //add it to the table
-            await db.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES(?)`, [userID]);
-
-            //find all previous submissions and hide them
-            if (unHideOldSubmissions) {
-                await unHideSubmissionsByUser(categories, userID, type);
-            }
-        } else if (!enabled && row.userCount > 0) {
-            //remove them from the shadow ban list
-            await db.prepare("run", `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
-
-            //find all previous submissions and unhide them
-            if (unHideOldSubmissions) {
-                const segmentsToIgnore = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st
-                    JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category AND "st"."service" = "ns"."service" WHERE "st"."userID" = ?`
-                , [userID])).map((item: { UUID: string }) => item.UUID);
-                const allSegments = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
-                    .map((item: { UUID: string }) => item.UUID);
-
-                await Promise.all(allSegments.filter((item: { uuid: string }) => {
-                    return segmentsToIgnore.indexOf(item) === -1;
-                }).map(async (UUID: string) => {
-                    // collect list for unshadowbanning
-                    (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" >= 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
-                        .forEach((videoInfo: { category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID }) => {
-                            QueryCacher.clearSegmentCache(videoInfo);
-                        }
-                        );
-
-                    return db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]);
-                }));
-            }
-            // already shadowbanned
-        } else if (enabled && row.userCount > 0) {
-            // apply unHideOldSubmissions if applicable
-            if (unHideOldSubmissions) {
-                await unHideSubmissionsByUser(categories, userID, type);
-                return res.sendStatus(200);
-            }
-
-            // otherwise ban already exists, send 409
-            return res.sendStatus(409);
+            await Promise.all(ips.map((ip) => {
+                return banIP(ip.hashedIP, enabled, unHideOldSubmissions, type, categories, true);
+            }));
         }
     } else if (hashedIP) {
-        //check to see if this user is already shadowbanned
-        const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
-
-        if (enabled && row.userCount == 0) {
-            //add them to the shadow ban list
-
-            //add it to the table
-            await db.prepare("run", `INSERT INTO "shadowBannedIPs" VALUES(?)`, [hashedIP]);
-
-            //find all previous submissions and hide them
-            if (unHideOldSubmissions) {
-                await unHideSubmissionsByIP(categories, hashedIP, type);
-            }
-        } else if (!enabled) {
-            if (row.userCount > 0) {
-                //remove them from the shadow ban list
-                await db.prepare("run", `DELETE FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
-            }
-
-            //find all previous submissions and unhide them
-            if (unHideOldSubmissions) {
-                await unHideSubmissionsByIP(categories, hashedIP, "0");
-            }
-        } else if (enabled && row.userCount > 0) {
-            // apply unHideOldSubmissions if applicable
-            if (unHideOldSubmissions) {
-                await unHideSubmissionsByIP(categories, hashedIP, type);
-                return res.sendStatus(200);
-            }
-
-            // otherwise ban already exists, send 409
-            return res.sendStatus(409);
+        const result = await banIP(hashedIP, enabled, unHideOldSubmissions, type, categories, banUsers);
+        if (result) {
+            res.sendStatus(result);
         }
     }
     return res.sendStatus(200);
+}
+
+async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[]): Promise<number> {
+    //check to see if this user is already shadowbanned
+    const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+
+    if (enabled && row.userCount == 0) {
+        //add them to the shadow ban list
+
+        //add it to the table
+        await db.prepare("run", `INSERT INTO "shadowBannedUsers" VALUES(?)`, [userID]);
+
+        //find all previous submissions and hide them
+        if (unHideOldSubmissions) {
+            await unHideSubmissionsByUser(categories, userID, type);
+        }
+    } else if (enabled && row.userCount > 0) {
+        // apply unHideOldSubmissions if applicable
+        if (unHideOldSubmissions) {
+            await unHideSubmissionsByUser(categories, userID, type);
+        } else {
+            // otherwise ban already exists, send 409
+            return 409;
+        }
+    } else if (!enabled && row.userCount > 0) {
+        //remove them from the shadow ban list
+        await db.prepare("run", `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+
+        //find all previous submissions and unhide them
+        if (unHideOldSubmissions) {
+            const segmentsToIgnore = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st
+                JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category AND "st"."service" = "ns"."service" WHERE "st"."userID" = ?`
+            , [userID])).map((item: { UUID: string }) => item.UUID);
+            const allSegments = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
+                .map((item: { UUID: string }) => item.UUID);
+
+            await Promise.all(allSegments.filter((item: { uuid: string }) => {
+                return segmentsToIgnore.indexOf(item) === -1;
+            }).map(async (UUID: string) => {
+                // collect list for unshadowbanning
+                (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" >= 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
+                    .forEach((videoInfo: { category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID }) => {
+                        QueryCacher.clearSegmentCache(videoInfo);
+                    }
+                    );
+
+                return db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]);
+            }));
+        }
+        // already shadowbanned
+    }
+
+    return 200;
+}
+
+async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[], banUsers: boolean): Promise<number> {
+    //check to see if this user is already shadowbanned
+    const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
+
+    if (enabled) {
+        if (row.userCount == 0) {
+            await db.prepare("run", `INSERT INTO "shadowBannedIPs" VALUES(?)`, [hashedIP]);
+        }
+
+        //find all previous submissions and hide them
+        if (unHideOldSubmissions) {
+            const users = await unHideSubmissionsByIP(categories, hashedIP, type);
+            await Promise.all([...users].map((user) => {
+                return banUser(user, enabled, unHideOldSubmissions, type, categories);
+            }))
+        } else if (row.userCount > 0) {
+            // Nothing to do, and already added
+            return 409;
+        }
+    } else if (!enabled) {
+        if (row.userCount > 0) {
+            //remove them from the shadow ban list
+            await db.prepare("run", `DELETE FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
+        }
+
+        //find all previous submissions and unhide them
+        if (unHideOldSubmissions) {
+            await unHideSubmissionsByIP(categories, hashedIP, "0");
+        }
+    }
+
+    return 200;
 }
 
 async function unHideSubmissionsByUser(categories: string[], userID: UserID, type = "1") {
@@ -139,15 +168,17 @@ async function unHideSubmissionsByUser(categories: string[], userID: UserID, typ
         });
 }
 
-async function unHideSubmissionsByIP(categories: string[], hashedIP: HashedIP, type = "1") {
+async function unHideSubmissionsByIP(categories: string[], hashedIP: HashedIP, type = "1"): Promise<Set<UserID>> {
     if (!["0", "1", "2"].includes(type)) return;
 
     const submissions = await privateDB.prepare("all", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "hashedIP" = ?`, [hashedIP]) as { timeSubmitted: number }[];
 
+    const users: Set<UserID> = new Set();
     await Promise.all(submissions.map(async (submission) => {
-        (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "timeSubmitted" = ? AND "shadowHidden" >= 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [submission.timeSubmitted]))
+        (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "timeSubmitted" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [submission.timeSubmitted]))
             .forEach((videoInfo: { category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID }) => {
                 QueryCacher.clearSegmentCache(videoInfo);
+                users.add(videoInfo.userID);
             }
             );
 
@@ -155,4 +186,6 @@ async function unHideSubmissionsByIP(categories: string[], hashedIP: HashedIP, t
             AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
             "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [submission.timeSubmitted]);
     }));
+
+    return users;
 }
