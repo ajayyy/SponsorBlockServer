@@ -50,6 +50,8 @@ import { getVideoLabelsByHash } from "./routes/getVideoLabelByHash";
 import { addFeature } from "./routes/addFeature";
 import { generateTokenRequest } from "./routes/generateToken";
 import { verifyTokenRequest } from "./routes/verifyToken";
+import { getBranding, getBrandingByHashEndpoint } from "./routes/getBranding";
+import { postBranding } from "./routes/postBranding";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -205,6 +207,10 @@ function setupRoutes(router: Router) {
     // labels
     router.get("/api/videoLabels", getVideoLabels);
     router.get("/api/videoLabels/:prefix", getVideoLabelsByHash);
+
+    router.get("/api/branding", getBranding);
+    router.get("/api/branding/:prefix", getBrandingByHashEndpoint);
+    router.post("/api/branding", postBranding);
 
     /* istanbul ignore next */
     if (config.postgres?.enabled) {

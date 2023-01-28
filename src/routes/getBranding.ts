@@ -186,7 +186,7 @@ export async function getBranding(req: Request, res: Response) {
     return res.status(status).json(result);
 }
 
-export async function getBrandingByHash(req: Request, res: Response) {
+export async function getBrandingByHashEndpoint(req: Request, res: Response) {
     let hashPrefix = req.params.prefix as VideoIDHash;
     if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix

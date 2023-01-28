@@ -1,4 +1,5 @@
-import { VideoID, VideoIDHash } from "./segments.model";
+import { Service, VideoID, VideoIDHash } from "./segments.model";
+import { UserID } from "./user.model";
 
 export type BrandingUUID = string & { readonly __brandingUUID: unique symbol };
 
@@ -53,4 +54,28 @@ export interface BrandingHashDBResult {
 
 export interface BrandingHashResult {
     branding: BrandingResult;
+}
+
+export interface OriginalThumbnailSubmission {
+    original: true;
+}
+
+export interface TimeThumbnailSubmission {
+    timestamp: number;
+    original: false;
+}
+
+export type ThumbnailSubmission = OriginalThumbnailSubmission | TimeThumbnailSubmission;
+
+export interface TitleSubmission {
+    title: string;
+    original: boolean;
+}
+
+export interface BrandingSubmission {
+    title: TitleSubmission;
+    thumbnail: ThumbnailSubmission;
+    videoID: VideoID;
+    userID: UserID;
+    service: Service;
 }
