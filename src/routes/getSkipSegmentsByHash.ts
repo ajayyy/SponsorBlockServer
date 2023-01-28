@@ -1,9 +1,10 @@
 import { hashPrefixTester } from "../utils/hashPrefixTester";
 import { getSegmentsByHash } from "./getSkipSegments";
 import { Request, Response } from "express";
-import { ActionType, Category, SegmentUUID, VideoIDHash, Service } from "../types/segments.model";
-import { getService } from "../utils/getService";
+import { VideoIDHash } from "../types/segments.model";
 import { Logger } from "../utils/logger";
+import { parseSkipSegments } from "../utils/parseSkipSegments";
+import { getEtag } from "../middleware/etag";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
@@ -12,63 +13,19 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
 
-    let categories: Category[] = [];
-    try {
-        categories = req.query.categories
-            ? JSON.parse(req.query.categories as string)
-            : req.query.category
-                ? Array.isArray(req.query.category)
-                    ? req.query.category
-                    : [req.query.category]
-                : ["sponsor"];
-        if (!Array.isArray(categories)) {
-            return res.status(400).send("Categories parameter does not match format requirements.");
-        }
-    } catch(error) {
-        return res.status(400).send("Bad parameter: categories (invalid JSON)");
+    const parseResult = parseSkipSegments(req);
+    if (parseResult.errors.length > 0) {
+        return res.status(400).send(parseResult.errors);
     }
-
-    let actionTypes: ActionType[] = [];
-    try {
-        actionTypes = req.query.actionTypes
-            ? JSON.parse(req.query.actionTypes as string)
-            : req.query.actionType
-                ? Array.isArray(req.query.actionType)
-                    ? req.query.actionType
-                    : [req.query.actionType]
-                : [ActionType.Skip];
-        if (!Array.isArray(actionTypes)) {
-            return res.status(400).send("actionTypes parameter does not match format requirements.");
-        }
-    } catch(error) {
-        return res.status(400).send("Bad parameter: actionTypes (invalid JSON)");
-    }
-
-    let requiredSegments: SegmentUUID[] = [];
-    try {
-        requiredSegments = req.query.requiredSegments
-            ? JSON.parse(req.query.requiredSegments as string)
-            : req.query.requiredSegment
-                ? Array.isArray(req.query.requiredSegment)
-                    ? req.query.requiredSegment
-                    : [req.query.requiredSegment]
-                : [];
-        if (!Array.isArray(requiredSegments)) {
-            return res.status(400).send("requiredSegments parameter does not match format requirements.");
-        }
-    } catch(error) {
-        return res.status(400).send("Bad parameter: requiredSegments (invalid JSON)");
-    }
-
-    const service: Service = getService(req.query.service, req.body.service);
-
-    // filter out none string elements, only flat array with strings is valid
-    categories = categories.filter((item: any) => typeof item === "string");
+    const { categories, actionTypes, requiredSegments, service } = parseResult;
 
     // Get all video id's that match hash prefix
     const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, requiredSegments, service);
 
     try {
+        await getEtag("skipSegmentsHash", hashPrefix, service)
+            .then(etag => res.set("ETag", etag))
+            .catch(() => null);
         const output = Object.entries(segments).map(([videoID, data]) => ({
             videoID,
             segments: data.segments,

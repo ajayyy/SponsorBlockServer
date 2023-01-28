@@ -1,7 +1,6 @@
 import express, { Request, RequestHandler, Response, Router } from "express";
 import { config } from "./config";
 import { oldSubmitSponsorTimes } from "./routes/oldSubmitSponsorTimes";
-import { oldGetVideoSponsorTimes } from "./routes/oldGetVideoSponsorTimes";
 import { postSegmentShift } from "./routes/postSegmentShift";
 import { postWarning } from "./routes/postWarning";
 import { getIsUserVIP } from "./routes/getIsUserVIP";
@@ -21,13 +20,13 @@ import { viewedVideoSponsorTime } from "./routes/viewedVideoSponsorTime";
 import { voteOnSponsorTime, getUserID as voteGetUserID } from "./routes/voteOnSponsorTime";
 import { getSkipSegmentsByHash } from "./routes/getSkipSegmentsByHash";
 import { postSkipSegments } from "./routes/postSkipSegments";
-import { endpoint as getSkipSegments } from "./routes/getSkipSegments";
+import { getSkipSegments, oldGetVideoSponsorTimes } from "./routes/getSkipSegments";
 import { userCounter } from "./middleware/userCounter";
 import { loggerMiddleware } from "./middleware/logger";
 import { corsMiddleware } from "./middleware/cors";
 import { apiCspMiddleware } from "./middleware/apiCsp";
 import { rateLimitMiddleware } from "./middleware/requestRateLimit";
-import dumpDatabase, { appExportPath, downloadFile } from "./routes/dumpDatabase";
+import dumpDatabase from "./routes/dumpDatabase";
 import { endpoint as getSegmentInfo } from "./routes/getSegmentInfo";
 import { postClearCache } from "./routes/postClearCache";
 import { addUnlistedVideo } from "./routes/addUnlistedVideo";
@@ -50,6 +49,7 @@ import { getVideoLabelsByHash } from "./routes/getVideoLabelByHash";
 import { addFeature } from "./routes/addFeature";
 import { generateTokenRequest } from "./routes/generateToken";
 import { verifyTokenRequest } from "./routes/verifyToken";
+import { cacheMiddlware } from "./middleware/etag";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -57,11 +57,13 @@ export function createServer(callback: () => void): Server {
 
     const router = ExpressPromiseRouter();
     app.use(router);
+    app.set("etag", false); // disable built in etag
 
     //setup CORS correctly
     router.use(corsMiddleware);
     router.use(loggerMiddleware);
     router.use("/api/", apiCspMiddleware);
+    router.use(cacheMiddlware);
     router.use(express.json());
 
     if (config.userCounterURL) router.use(userCounter);

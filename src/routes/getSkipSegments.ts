@@ -12,7 +12,8 @@ import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
 import { getService } from "../utils/getService";
 import { promiseOrTimeout } from "../utils/promise";
-
+import { parseSkipSegments } from "../utils/parseSkipSegments";
+import { getEtag } from "../middleware/etag";
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
@@ -86,9 +87,6 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
     }
 
     try {
-        categories = categories.filter((category) => !/[^a-z|_|-]/.test(category));
-        if (categories.length === 0) return null;
-
         const segments: DBSegment[] = (await getSegmentsFromDBByVideoID(videoID, service))
             .map((segment: DBSegment) => {
                 if (filterRequiredSegments(segment.UUID, requiredSegments)) segment.required = true;
@@ -138,9 +136,6 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
 
     try {
         type SegmentPerVideoID = SBRecord<VideoID, { segments: DBSegment[] }>;
-
-        categories = categories.filter((category) => !(/[^a-z|_|-]/.test(category)));
-        if (categories.length === 0) return null;
 
         const segmentPerVideoID: SegmentPerVideoID = (await getSegmentsFromDBByHash(hashedVideoIDPrefix, service))
             .reduce((acc: SegmentPerVideoID, segment: DBSegment) => {
@@ -396,75 +391,59 @@ function splitPercentOverlap(groups: OverlappingSegmentGroup[]): OverlappingSegm
     });
 }
 
-/**
- *
- * Returns what would be sent to the client.
- * Will respond with errors if required. Returns false if it errors.
- *
- * @param req
- * @param res
- *
- * @returns
- */
-async function handleGetSegments(req: Request, res: Response): Promise<Segment[] | false> {
+async function getSkipSegments(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
     if (!videoID) {
-        res.status(400).send("videoID not specified");
-        return false;
-    }
-    // Default to sponsor
-    // If using params instead of JSON, only one category can be pulled
-    const categories: Category[] = req.query.categories
-        ? JSON.parse(req.query.categories as string)
-        : req.query.category
-            ? Array.isArray(req.query.category)
-                ? req.query.category
-                : [req.query.category]
-            : ["sponsor"];
-    if (!Array.isArray(categories)) {
-        res.status(400).send("Categories parameter does not match format requirements.");
-        return false;
+        return res.status(400).send("videoID not specified");
     }
 
-    const actionTypes: ActionType[] = req.query.actionTypes
-        ? JSON.parse(req.query.actionTypes as string)
-        : req.query.actionType
-            ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
-                : [req.query.actionType]
-            : [ActionType.Skip];
-    if (!Array.isArray(actionTypes)) {
-        res.status(400).send("actionTypes parameter does not match format requirements.");
-        return false;
+    const parseResult = parseSkipSegments(req);
+    if (parseResult.errors.length > 0) {
+        return res.status(400).send(parseResult.errors);
     }
 
-    const requiredSegments: SegmentUUID[] = req.query.requiredSegments
-        ? JSON.parse(req.query.requiredSegments as string)
-        : req.query.requiredSegment
-            ? Array.isArray(req.query.requiredSegment)
-                ? req.query.requiredSegment
-                : [req.query.requiredSegment]
-            : [];
-    if (!Array.isArray(requiredSegments)) {
-        res.status(400).send("requiredSegments parameter does not match format requirements.");
-        return false;
-    }
-
-    const service = getService(req.query.service, req.body.service);
-
+    const { categories, actionTypes, requiredSegments, service } = parseResult;
     const segments = await getSegmentsByVideoID(req, videoID, categories, actionTypes, requiredSegments, service);
 
     if (segments === null || segments === undefined) {
-        res.sendStatus(500);
-        return false;
+        return res.sendStatus(500);
+    } else if (segments.length === 0) {
+        return res.sendStatus(404);
     }
 
-    if (segments.length === 0) {
-        res.sendStatus(404);
-        return false;
+    await getEtag("skipSegments", (videoID as string), service)
+        .then(etag => res.set("ETag", etag))
+        .catch(() => null);
+    return res.send(segments);
+}
+
+async function oldGetVideoSponsorTimes(req: Request, res: Response): Promise<Response> {
+    const videoID = req.query.videoID as VideoID;
+    if (!videoID) {
+        return res.status(400).send("videoID not specified");
     }
 
-    return segments;
+    const segments = await getSegmentsByVideoID(req, videoID, ["sponsor"] as Category[], [ActionType.Skip], [], Service.YouTube);
+
+    if (segments === null || segments === undefined) {
+        return res.sendStatus(500);
+    } else if (segments.length === 0) {
+        return res.sendStatus(404);
+    }
+
+    // Convert to old outputs
+    const sponsorTimes = [];
+    const UUIDs = [];
+
+    for (const segment of segments) {
+        sponsorTimes.push(segment.segment);
+        UUIDs.push(segment.UUID);
+    }
+
+    return res.send({
+        sponsorTimes,
+        UUIDs,
+    });
 }
 
 const filterRequiredSegments = (UUID: SegmentUUID, requiredSegments: SegmentUUID[]): boolean => {
@@ -474,25 +453,9 @@ const filterRequiredSegments = (UUID: SegmentUUID, requiredSegments: SegmentUUID
     return false;
 };
 
-async function endpoint(req: Request, res: Response): Promise<Response> {
-    try {
-        const segments = await handleGetSegments(req, res);
-
-        // If false, res.send has already been called
-        if (segments) {
-            //send result
-            return res.send(segments);
-        }
-    } catch (err) /* istanbul ignore next */ {
-        if (err instanceof SyntaxError) {
-            return res.status(400).send("Categories parameter does not match format requirements.");
-        } else return res.sendStatus(500);
-    }
-}
-
 export {
     getSegmentsByVideoID,
     getSegmentsByHash,
-    endpoint,
-    handleGetSegments
+    getSkipSegments,
+    oldGetVideoSponsorTimes
 };
