@@ -6,11 +6,13 @@ import { Category, Service, VideoID, VideoIDHash } from "../types/segments.model
 import { UserID } from "../types/user.model";
 import { QueryCacher } from "../utils/queryCacher";
 import { isUserVIP } from "../utils/isUserVIP";
+import { parseCategories } from "../utils/parseParams";
 
 export async function shadowBanUser(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
     const hashedIP = req.query.hashedIP as string;
     const adminUserIDInput = req.query.adminUserID as UserID;
+    const type = req.query.type as string ?? "1";
 
     const enabled = req.query.enabled === undefined
         ? true
@@ -19,10 +21,9 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     //if enabled is false and the old submissions should be made visible again
     const unHideOldSubmissions = req.query.unHideOldSubmissions !== "false";
 
-    const categories: string[] = req.query.categories ? JSON.parse(req.query.categories as string) : config.categoryList;
-    categories.filter((category) => typeof category === "string" && !(/[^a-z|_|-]/.test(category)));
+    const categories: Category[] = parseCategories(req, config.categoryList as Category[]);
 
-    if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined)) {
+    if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined || !["1", "2"].includes(type))) {
         //invalid request
         return res.sendStatus(400);
     }
@@ -48,7 +49,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
 
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
-                await unHideSubmissions(categories, userID);
+                await unHideSubmissions(categories, userID, type);
             }
         } else if (!enabled && row.userCount > 0) {
             //remove them from the shadow ban list
@@ -66,7 +67,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
                     return segmentsToIgnore.indexOf(item) === -1;
                 }).map(async (UUID: string) => {
                     // collect list for unshadowbanning
-                    (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" = 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
+                    (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" >= 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
                         .forEach((videoInfo: {category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID}) => {
                             QueryCacher.clearSegmentCache(videoInfo);
                         }
@@ -79,7 +80,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
         } else if (enabled && row.userCount > 0) {
             // apply unHideOldSubmissions if applicable
             if (unHideOldSubmissions) {
-                await unHideSubmissions(categories, userID);
+                await unHideSubmissions(categories, userID, type);
                 return res.sendStatus(200);
             }
 
@@ -100,7 +101,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
 
             //find all previous submissions and hide them
             if (unHideOldSubmissions) {
-                await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "timeSubmitted" IN
+                await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = ${type} WHERE "timeSubmitted" IN
                     (SELECT "privateDB"."timeSubmitted" FROM "sponsorTimes" LEFT JOIN "privateDB"."sponsorTimes" as "privateDB" ON "sponsorTimes"."timeSubmitted"="privateDB"."timeSubmitted"
                     WHERE "privateDB"."hashedIP" = ?)`, [hashedIP]);
             }
@@ -117,8 +118,10 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     return res.sendStatus(200);
 }
 
-async function unHideSubmissions(categories: string[], userID: UserID) {
-    await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = 1 WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
+async function unHideSubmissions(categories: string[], userID: UserID, type = "1") {
+    if (!["1", "2"].includes(type)) return;
+    
+    await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = ${type} WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                     AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
                     "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
 

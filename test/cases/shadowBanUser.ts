@@ -11,25 +11,35 @@ describe("shadowBanUser", () => {
 
     const endpoint = "/api/shadowBanUser";
     const VIPuserID = "shadow-ban-vip";
+    const video = "shadowBanVideo";
+    const videohash = getHash(video, 1);
 
     before(async () => {
-        const insertQuery = `INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        await db.prepare("run", insertQuery, ["testtesttest", 1, 11, 2, 0, "shadow-1-uuid-0", "shadowBanned", 0, 50, "sponsor", "YouTube", 100, 0, 0, getHash("testtesttest", 1)]);
-        await db.prepare("run", insertQuery, ["testtesttest2", 1, 11, 2, 0, "shadow-1-uuid-0-1", "shadowBanned", 0, 50, "sponsor", "PeerTube", 120, 0, 0, getHash("testtesttest2", 1)]);
-        await db.prepare("run", insertQuery, ["testtesttest", 20, 33, 2, 0, "shadow-1-uuid-2", "shadowBanned", 0, 50, "intro", "YouTube", 101, 0, 0, getHash("testtesttest", 1)]);
+        const insertQuery = `INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-10", "shadowBanned", 0, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-11", "shadowBanned", 0, 50, "sponsor", "PeerTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-12", "shadowBanned", 0, 50, "intro", "YouTube", 0, videohash]);
 
-        await db.prepare("run", insertQuery, ["testtesttest", 1, 11, 2, 0, "shadow-2-uuid-0", "shadowBanned2", 0, 50, "sponsor", "YouTube", 100, 0, 0, getHash("testtesttest", 1)]);
-        await db.prepare("run", insertQuery, ["testtesttest2", 1, 11, 2, 0, "shadow-2-uuid-0-1", "shadowBanned2", 0, 50, "sponsor", "PeerTube", 120, 0, 0, getHash("testtesttest2", 1)]);
-        await db.prepare("run", insertQuery, ["testtesttest", 20, 33, 2, 0, "shadow-2-uuid-2", "shadowBanned2", 0, 50, "intro", "YouTube", 101, 0, 0, getHash("testtesttest", 1)]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-20", "shadowBanned2", 0, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-21", "shadowBanned2", 0, 50, "sponsor", "PeerTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-22", "shadowBanned2", 0, 50, "intro", "YouTube", 0, videohash]);
 
-        await db.prepare("run", insertQuery, ["testtesttest", 1, 11, 2, 0, "shadow-3-uuid-0", "shadowBanned3", 0, 50, "sponsor", "YouTube", 100, 0, 1, getHash("testtesttest", 1)]);
-        await db.prepare("run", insertQuery, ["testtesttest2", 1, 11, 2, 0, "shadow-3-uuid-0-1", "shadowBanned3", 0, 50, "sponsor", "PeerTube", 120, 0, 1, getHash("testtesttest2", 1)]);
-        await db.prepare("run", insertQuery, ["testtesttest", 20, 33, 2, 0, "shadow-3-uuid-2", "shadowBanned3", 0, 50, "intro", "YouTube", 101, 0, 1, getHash("testtesttest", 1)]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-30", "shadowBanned3", 0, 50, "sponsor", "YouTube", 1, videohash]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-31", "shadowBanned3", 0, 50, "sponsor", "PeerTube", 1, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-32", "shadowBanned3", 0, 50, "intro", "YouTube", 1, videohash]);
 
-        await db.prepare("run", insertQuery, ["testtesttest", 21, 34, 2, 0, "shadow-4-uuid-1", "shadowBanned4", 0, 50, "sponsor", "YouTube", 101, 0, 0, getHash("testtesttest", 1)]);
+        await db.prepare("run", insertQuery, [video, 21, 34, 2, 0, "shadow-40", "shadowBanned4", 0, 50, "sponsor", "YouTube", 0, videohash]);
+
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-50", "shadowBanned5", 0, 50, "sponsor", "YouTube", 0, videohash]);
+
+        await db.prepare("run", insertQuery, [video, 10, 10, 2, 1, "shadow-60", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, ["lockedVideo", 10, 10, 2, 1, "shadow-61", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, getHash("lockedVideo", 1)]);
 
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned3"]);
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned4"]);
+
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "service") VALUES (?, ?, ?, ?, ?)`,
+            [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube"]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
     });
@@ -216,6 +226,82 @@ describe("shadowBanUser", () => {
                 assert.ok(!shadowRow); // ban still exists
                 assert.strictEqual(videoRow.length, 1); // videos should be visible
                 assert.strictEqual(videoRow[0].category, "sponsor");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to shadowban user with different type", (done) => {
+        const userID = "shadowBanned5";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true,
+                type: "2"
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const type2Videos = await getShadowBanSegmentCategory(userID, 2);
+                const type1Videos = await getShadowBanSegmentCategory(userID, 1);
+                const type0Videos = await getShadowBanSegmentCategory(userID, 0);
+                const shadowRow = await getShadowBan(userID);
+                assert.ok(shadowRow); // ban still exists
+                assert.ok(type2Videos.length > 0); // videos at type 2
+                assert.strictEqual(type1Videos.length, 0); // no videos at type 1
+                assert.strictEqual(type0Videos.length, 0); // no videos at type 0
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to shadowban user with invalid type", (done) => {
+        const userID = "shadowBanned5";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true,
+                type: "3"
+            }
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should exclude locked segments when shadowbanning and removing segments", (done) => {
+        const userID = "shadowBanned6";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const type1Videos = await getShadowBanSegmentCategory(userID, 2);
+                const type0Videos = await getShadowBanSegmentCategory(userID, 0);
+                const shadowRow = await getShadowBan(userID);
+                assert.ok(shadowRow); // ban exists
+                assert.strictEqual(type1Videos.length, 0); // no banned videos
+                assert.strictEqual(type0Videos.length, 1); // video still visible
                 done();
             })
             .catch(err => done(err));

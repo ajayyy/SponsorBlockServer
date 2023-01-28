@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { db } from "../databases/databases";
 import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "../types/segments.model";
 import { getService } from "../utils/getService";
+import { parseActionTypes, parseCategories } from "../utils/parseParams";
+
 const maxSegmentsPerPage = 100;
 const defaultSegmentsPerPage = 10;
 
@@ -73,25 +75,13 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         return false;
     }
     // Default to sponsor
-    const categories: Category[] = req.query.categories
-        ? JSON.parse(req.query.categories as string)
-        : req.query.category
-            ? Array.isArray(req.query.category)
-                ? req.query.category
-                : [req.query.category]
-            : [];
+    const categories: Category[] = parseCategories(req, []);
     if (!Array.isArray(categories)) {
         res.status(400).send("Categories parameter does not match format requirements.");
         return false;
     }
 
-    const actionTypes: ActionType[] = req.query.actionTypes
-        ? JSON.parse(req.query.actionTypes as string)
-        : req.query.actionType
-            ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
-                : [req.query.actionType]
-            : [ActionType.Skip];
+    const actionTypes: ActionType[] = parseActionTypes(req, [ActionType.Skip]);
     if (!Array.isArray(actionTypes)) {
         res.status(400).send("actionTypes parameter does not match format requirements.");
         return false;

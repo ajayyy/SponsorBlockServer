@@ -3,17 +3,12 @@ import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import { ActionType, Category, VideoID } from "../types/segments.model";
 import { getService } from "../utils/getService";
+import { parseActionTypes } from "../utils/parseParams";
 
 export async function getLockCategories(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
     const service = getService(req.query.service as string);
-    const actionTypes: ActionType[] = req.query.actionTypes
-        ? JSON.parse(req.query.actionTypes as string)
-        : req.query.actionType
-            ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
-                : [req.query.actionType]
-            : [ActionType.Skip, ActionType.Mute];
+    const actionTypes: ActionType[] = parseActionTypes(req, [ActionType.Skip, ActionType.Mute]);
     if (!videoID || !Array.isArray(actionTypes)) {
         //invalid request
         return res.sendStatus(400);
