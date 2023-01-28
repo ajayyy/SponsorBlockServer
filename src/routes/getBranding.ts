@@ -2,13 +2,14 @@ import { Request, Response } from "express";
 import { isEmpty } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
-import { BrandingDBSubmission, BrandingHashDBResult, BrandingHashResult, BrandingResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
+import { BrandingDBSubmission, BrandingHashDBResult, BrandingResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
 import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
 import { shuffleArray } from "../utils/array";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { getService } from "../utils/getService";
 import { hashPrefixTester } from "../utils/hashPrefixTester";
+import { Logger } from "../utils/logger";
 import { promiseOrTimeout } from "../utils/promise";
 import { QueryCacher } from "../utils/queryCacher";
 import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys";
@@ -21,7 +22,7 @@ enum BrandingSubmissionType {
 export async function getVideoBranding(videoID: VideoID, service: Service, ip: IPAddress): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "title"."UUID", "title"."videoID", "title"."hashedVideoID
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
         WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
         [videoID, service],
@@ -52,10 +53,10 @@ export async function getVideoBranding(videoID: VideoID, service: Service, ip: I
     return filterAndSortBranding(await branding.titles, await branding.thumbnails, ip, cache);
 }
 
-export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress): Promise<Record<VideoID, BrandingHashResult>> {
+export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress): Promise<Record<VideoID, BrandingResult>> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "title"."UUID", "title"."videoID", "title"."hashedVideoID
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
         WHERE "titles"."hashedVideoID" LIKE ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
         [`${videoHashPrefix}%`, service],
@@ -81,20 +82,18 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         const dbResult: Record<VideoID, BrandingHashDBResult> = {};
         const initResult = (submission: BrandingDBSubmission) => {
             dbResult[submission.videoID] = dbResult[submission.videoID] || {
-                branding: {
-                    titles: [],
-                    thumbnails: []
-                }
+                titles: [],
+                thumbnails: []
             };
         };
 
         (await branding.titles).map((title) => {
             initResult(title);
-            dbResult[title.videoID].branding.titles.push(title);
+            dbResult[title.videoID].titles.push(title);
         });
         (await branding.thumbnails).map((thumbnail) => {
             initResult(thumbnail);
-            dbResult[thumbnail.videoID].branding.thumbnails.push(thumbnail);
+            dbResult[thumbnail.videoID].thumbnails.push(thumbnail);
         });
 
         return dbResult;
@@ -105,18 +104,16 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         currentIP: null as Promise<HashedIP> | null
     };
 
-    const processedResult: Record<VideoID, BrandingHashResult> = {};
+    const processedResult: Record<VideoID, BrandingResult> = {};
     await Promise.all(Object.keys(branding).map(async (key) => {
         const castedKey = key as VideoID;
-        processedResult[castedKey] = {
-            branding: await filterAndSortBranding(branding[castedKey].branding.titles, branding[castedKey].branding.thumbnails, ip, cache)
-        };
+        processedResult[castedKey] = await filterAndSortBranding(branding[castedKey].titles, branding[castedKey].thumbnails, ip, cache);
     }));
 
     return processedResult;
 }
 
-async function filterAndSortBranding(dbTitles: TitleDBResult[], dbThumbnails: ThumbnailDBResult[], ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null}): Promise<BrandingResult> {
+async function filterAndSortBranding(dbTitles: TitleDBResult[], dbThumbnails: ThumbnailDBResult[], ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null }): Promise<BrandingResult> {
     const shouldKeepTitles = shouldKeepSubmission(dbTitles, BrandingSubmissionType.Title, ip, cache);
     const shouldKeepThumbnails = shouldKeepSubmission(dbThumbnails, BrandingSubmissionType.Thumbnail, ip, cache);
 
@@ -164,7 +161,7 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
             return submitterIP.hashedIP !== hashedIP;
         } catch (e) {
             // give up on shadow hide for now
-            return true;
+            return false;
         }
     }));
 
@@ -173,35 +170,41 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
 
 export async function getBranding(req: Request, res: Response) {
     const videoID: VideoID = req.query.videoID as VideoID;
-    const service: Service = getService(req.query.service, req.body.service);
+    const service: Service = getService(req.query.service as string);
 
     if (!videoID) {
         return res.status(400).send("Missing parameter: videoID");
     }
 
     const ip = getIP(req);
-    const result = await getVideoBranding(videoID, service, ip);
+    try {
+        const result = await getVideoBranding(videoID, service, ip);
 
-    const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
-    return res.status(status).json(result);
+        const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
+        return res.status(status).json(result);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.status(500).send("Internal server error");
+    }
 }
 
 export async function getBrandingByHashEndpoint(req: Request, res: Response) {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
+    if (!hashPrefix || !hashPrefixTester(hashPrefix) || hashPrefix.length !== 4) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
 
-    const service: Service = getService(req.query.service, req.body.service);
-
-    if (!hashPrefix || hashPrefix.length !== 4) {
-        return res.status(400).send("Hash prefix does not match format requirements.");
-    }
-
+    const service: Service = getService(req.query.service as string);
     const ip = getIP(req);
-    const result = await getVideoBrandingByHash(hashPrefix, service, ip);
 
-    const status = !isEmpty(result) ? 200 : 404;
-    return res.status(status).json(result);
+    try {
+        const result = await getVideoBrandingByHash(hashPrefix, service, ip);
+
+        const status = !isEmpty(result) ? 200 : 404;
+        return res.status(status).json(result);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.status(500).send([]);
+    }
 }

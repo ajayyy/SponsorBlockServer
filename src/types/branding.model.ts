@@ -46,14 +46,8 @@ export interface BrandingResult {
 }
 
 export interface BrandingHashDBResult {
-    branding: {
-        titles: TitleDBResult[],
-        thumbnails: ThumbnailDBResult[]
-    };
-}
-
-export interface BrandingHashResult {
-    branding: BrandingResult;
+    titles: TitleDBResult[],
+    thumbnails: ThumbnailDBResult[]
 }
 
 export interface OriginalThumbnailSubmission {
