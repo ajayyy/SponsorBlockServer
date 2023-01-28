@@ -30,57 +30,73 @@ describe("getBranding", () => {
         params
     });
 
-    before(() => {
+    before(async () => {
         const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)`;
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)`;
 
-        db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]);
-        db.prepare("run", titleQuery, [videoID1, "title2", 0, "userID2", Service.YouTube, videoID1Hash, 1, "UUID2"]);
-        db.prepare("run", titleQuery, [videoID1, "title3", 1, "userID3", Service.YouTube, videoID1Hash, 1, "UUID3"]);
-        db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0]);
-        db.prepare("run", titleVotesQuery, ["UUID2", 2, 0, 0]);
-        db.prepare("run", titleVotesQuery, ["UUID3", 1, 0, 0]);
-        db.prepare("run", thumbnailQuery, [videoID1, 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1T"]);
-        db.prepare("run", thumbnailQuery, [videoID1, 1, "userID2", Service.YouTube, videoID1Hash, 1, "UUID2T"]);
-        db.prepare("run", thumbnailQuery, [videoID1, 0, "userID3", Service.YouTube, videoID1Hash, 1, "UUID3T"]);
-        db.prepare("run", thumbnailTimestampsQuery, ["UUID1T", 1]);
-        db.prepare("run", thumbnailTimestampsQuery, ["UUID3T", 3]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID1T", 3, 0, 0]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID2T", 2, 0, 0]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID3T", 1, 0, 0]);
+        await Promise.all([
+            db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
+            db.prepare("run", titleQuery, [videoID1, "title2", 0, "userID2", Service.YouTube, videoID1Hash, 1, "UUID2"]),
+            db.prepare("run", titleQuery, [videoID1, "title3", 1, "userID3", Service.YouTube, videoID1Hash, 1, "UUID3"]),
+            db.prepare("run", thumbnailQuery, [videoID1, 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1T"]),
+            db.prepare("run", thumbnailQuery, [videoID1, 1, "userID2", Service.YouTube, videoID1Hash, 1, "UUID2T"]),
+            db.prepare("run", thumbnailQuery, [videoID1, 0, "userID3", Service.YouTube, videoID1Hash, 1, "UUID3T"]),
+        ]);
 
-        db.prepare("run", titleQuery, [videoID2Locked, "title1", 0, "userID1", Service.YouTube, videoID2LockedHash, 1, "UUID11"]);
-        db.prepare("run", titleQuery, [videoID2Locked, "title2", 0, "userID2", Service.YouTube, videoID2LockedHash, 1, "UUID21"]);
-        db.prepare("run", titleQuery, [videoID2Locked, "title3", 1, "userID3", Service.YouTube, videoID2LockedHash, 1, "UUID31"]);
-        db.prepare("run", titleVotesQuery, ["UUID11", 3, 0, 0]);
-        db.prepare("run", titleVotesQuery, ["UUID21", 2, 0, 0]);
-        db.prepare("run", titleVotesQuery, ["UUID31", 1, 1, 0]);
-        db.prepare("run", thumbnailQuery, [videoID2Locked, 0, "userID1", Service.YouTube, videoID2LockedHash, 1, "UUID11T"]);
-        db.prepare("run", thumbnailQuery, [videoID2Locked, 1, "userID2", Service.YouTube, videoID2LockedHash, 1, "UUID21T"]);
-        db.prepare("run", thumbnailQuery, [videoID2Locked, 0, "userID3", Service.YouTube, videoID2LockedHash, 1, "UUID31T"]);
-        db.prepare("run", thumbnailTimestampsQuery, ["UUID11T", 1]);
-        db.prepare("run", thumbnailTimestampsQuery, ["UUID31T", 3]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID11T", 3, 0, 0]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID21T", 2, 0, 0]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID31T", 1, 1, 0]);
+        await Promise.all([
+            db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID2", 2, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID3", 1, 0, 0]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID1T", 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID3T", 3]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID1T", 3, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID2T", 2, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID3T", 1, 0, 0])
+        ]);
 
-        db.prepare("run", titleQuery, [videoID2ShadowHide, "title1", 0, "userID1", Service.YouTube, videoID2ShadowHideHash, 1, "UUID12"]);
-        db.prepare("run", titleQuery, [videoID2ShadowHide, "title2", 0, "userID2", Service.YouTube, videoID2ShadowHideHash, 1, "UUID22"]);
-        db.prepare("run", titleQuery, [videoID2ShadowHide, "title3", 1, "userID3", Service.YouTube, videoID2ShadowHideHash, 1, "UUID32"]);
-        db.prepare("run", titleVotesQuery, ["UUID12", 3, 0, 0]);
-        db.prepare("run", titleVotesQuery, ["UUID22", 2, 0, 0]);
-        db.prepare("run", titleVotesQuery, ["UUID32", 1, 0, 1]);
-        db.prepare("run", thumbnailQuery, [videoID2ShadowHide, 0, "userID1", Service.YouTube, videoID2ShadowHideHash, 1, "UUID12T"]);
-        db.prepare("run", thumbnailQuery, [videoID2ShadowHide, 1, "userID2", Service.YouTube, videoID2ShadowHideHash, 1, "UUID22T"]);
-        db.prepare("run", thumbnailQuery, [videoID2ShadowHide, 0, "userID3", Service.YouTube, videoID2ShadowHideHash, 1, "UUID32T"]);
-        db.prepare("run", thumbnailTimestampsQuery, ["UUID12T", 1]);
-        db.prepare("run", thumbnailTimestampsQuery, ["UUID32T", 3]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID12T", 3, 0, 0]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID22T", 2, 0, 0]);
-        db.prepare("run", thumbnailVotesQuery, ["UUID32T", 1, 0, 1]);
+        await Promise.all([
+            db.prepare("run", titleQuery, [videoID2Locked, "title1", 0, "userID1", Service.YouTube, videoID2LockedHash, 1, "UUID11"]),
+            db.prepare("run", titleQuery, [videoID2Locked, "title2", 0, "userID2", Service.YouTube, videoID2LockedHash, 1, "UUID21"]),
+            db.prepare("run", titleQuery, [videoID2Locked, "title3", 1, "userID3", Service.YouTube, videoID2LockedHash, 1, "UUID31"]),
+            db.prepare("run", thumbnailQuery, [videoID2Locked, 0, "userID1", Service.YouTube, videoID2LockedHash, 1, "UUID11T"]),
+            db.prepare("run", thumbnailQuery, [videoID2Locked, 1, "userID2", Service.YouTube, videoID2LockedHash, 1, "UUID21T"]),
+            db.prepare("run", thumbnailQuery, [videoID2Locked, 0, "userID3", Service.YouTube, videoID2LockedHash, 1, "UUID31T"])
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleVotesQuery, ["UUID11", 3, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID21", 2, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID31", 1, 1, 0]),
+
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID11T", 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID31T", 3]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID11T", 3, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID21T", 2, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID31T", 1, 1, 0]),
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleQuery, [videoID2ShadowHide, "title1", 0, "userID1", Service.YouTube, videoID2ShadowHideHash, 1, "UUID12"]),
+            db.prepare("run", titleQuery, [videoID2ShadowHide, "title2", 0, "userID2", Service.YouTube, videoID2ShadowHideHash, 1, "UUID22"]),
+            db.prepare("run", titleQuery, [videoID2ShadowHide, "title3", 1, "userID3", Service.YouTube, videoID2ShadowHideHash, 1, "UUID32"]),
+            db.prepare("run", thumbnailQuery, [videoID2ShadowHide, 0, "userID1", Service.YouTube, videoID2ShadowHideHash, 1, "UUID12T"]),
+            db.prepare("run", thumbnailQuery, [videoID2ShadowHide, 1, "userID2", Service.YouTube, videoID2ShadowHideHash, 1, "UUID22T"]),
+            db.prepare("run", thumbnailQuery, [videoID2ShadowHide, 0, "userID3", Service.YouTube, videoID2ShadowHideHash, 1, "UUID32T"])
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleVotesQuery, ["UUID12", 3, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID22", 2, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID32", 1, 0, 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID12T", 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID32T", 3]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID12T", 3, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID22T", 2, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID32T", 1, 0, 1])
+        ]);
     });
 
     it("should get top titles and thumbnails", async () => {
