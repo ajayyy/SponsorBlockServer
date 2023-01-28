@@ -1,4 +1,4 @@
-import { db } from "../../src/databases/databases";
+import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { Category } from "../../src/types/segments.model";
@@ -8,6 +8,8 @@ describe("shadowBanUser", () => {
     const getShadowBan = (userID: string) => db.prepare("get", `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
     const getShadowBanSegments = (userID: string, status: number) => db.prepare("all", `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
     const getShadowBanSegmentCategory = (userID: string, status: number): Promise<{shadowHidden: number, category: Category}[]> => db.prepare("all", `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
+
+    const getIPShadowBan = (hashedIP: string) => db.prepare("get", `SELECT * FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
 
     const endpoint = "/api/shadowBanUser";
     const VIPuserID = "shadow-ban-vip";
@@ -35,6 +37,10 @@ describe("shadowBanUser", () => {
         await db.prepare("run", insertQuery, [video, 10, 10, 2, 1, "shadow-60", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, videohash]);
         await db.prepare("run", insertQuery, ["lockedVideo", 10, 10, 2, 1, "shadow-61", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, getHash("lockedVideo", 1)]);
 
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-70", "shadowBanned7", 383848, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-71", "shadowBanned7", 2332, 50, "intro", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-72", "shadowBanned7", 4923, 50, "interaction", "YouTube", 0, videohash]);
+
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned3"]);
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned4"]);
 
@@ -42,6 +48,11 @@ describe("shadowBanUser", () => {
             [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube"]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
+
+        const privateInsertQuery = `INSERT INTO "sponsorTimes" ("videoID", "hashedIP", "timeSubmitted", "service") VALUES(?, ?, ?, ?)`;
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP7", 383848, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP7", 2332, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP7", 4923, "YouTube"]);
     });
 
     it("Should be able to ban user and hide submissions", (done) => {
@@ -302,6 +313,84 @@ describe("shadowBanUser", () => {
                 assert.ok(shadowRow); // ban exists
                 assert.strictEqual(type1Videos.length, 0); // no banned videos
                 assert.strictEqual(type0Videos.length, 1); // video still visible
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to ban user by IP and hide submissions of a specific category", (done) => {
+        const hashedIP = "shadowBannedIP7";
+        const userID = "shadowBanned7";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                hashedIP,
+                categories: `["sponsor", "intro"]`,
+                adminUserID: VIPuserID,
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const videoRow = await getShadowBanSegments(userID, 1);
+                const normalShadowRow = await getShadowBan(userID);
+                const ipShadowRow = await getIPShadowBan(hashedIP);
+                assert.ok(ipShadowRow);
+                assert.ok(!normalShadowRow);
+                assert.strictEqual(videoRow.length, 2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to unban user by IP", (done) => {
+        const hashedIP = "shadowBannedIP7";
+        const userID = "shadowBanned7";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                hashedIP,
+                enabled: false,
+                unHideOldSubmissions: false,
+                adminUserID: VIPuserID,
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const videoRow = await getShadowBanSegments(userID, 1);
+                const normalShadowRow = await getShadowBan(userID);
+                const ipShadowRow = await getIPShadowBan(hashedIP);
+                assert.ok(!ipShadowRow);
+                assert.ok(!normalShadowRow);
+                assert.strictEqual(videoRow.length, 2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to unban user by IP and unhide specific category", (done) => {
+        const hashedIP = "shadowBannedIP7";
+        const userID = "shadowBanned7";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                hashedIP,
+                enabled: false,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true,
+                adminUserID: VIPuserID,
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const videoRow = await getShadowBanSegments(userID, 1);
+                const normalShadowRow = await getShadowBan(userID);
+                const ipShadowRow = await getIPShadowBan(hashedIP);
+                assert.ok(!ipShadowRow);
+                assert.ok(!normalShadowRow);
+                assert.strictEqual(videoRow.length, 1);
                 done();
             })
             .catch(err => done(err));

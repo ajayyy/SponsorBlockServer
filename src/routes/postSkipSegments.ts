@@ -541,14 +541,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // }
 
         //check to see if this user is shadowbanned
-        const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
+        const shadowBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]))?.userCount
+            || (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ? LIMIT 1`, [hashedIP]))?.userCount;
         const startingVotes = 0;
         const reputation = await getReputation(userID);
 
         for (const segmentInfo of segments) {
             // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
             if (segmentInfo.ignoreSegment
-                || (shadowBanRow.userCount && segmentInfo.actionType === ActionType.Full)) {
+                || (shadowBanCount && segmentInfo.actionType === ActionType.Full)) {
                 continue;
             }
 
@@ -565,7 +566,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                     ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description")
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0
-                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanRow.userCount, hashedVideoID, userAgent, segmentInfo.description
+                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanCount, hashedVideoID, userAgent, segmentInfo.description
                 ],
                 );
 
