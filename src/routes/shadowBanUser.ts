@@ -132,9 +132,12 @@ async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmissions:
         //find all previous submissions and hide them
         if (unHideOldSubmissions) {
             const users = await unHideSubmissionsByIP(categories, hashedIP, type);
-            await Promise.all([...users].map((user) => {
-                return banUser(user, enabled, unHideOldSubmissions, type, categories);
-            }))
+
+            if (banUsers) {
+                await Promise.all([...users].map((user) => {
+                    return banUser(user, enabled, unHideOldSubmissions, type, categories);
+                }));
+            }
         } else if (row.userCount > 0) {
             // Nothing to do, and already added
             return 409;
