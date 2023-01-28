@@ -10,6 +10,7 @@ import { getIP } from "../utils/getIP";
 import { getService } from "../utils/getService";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Logger } from "../utils/logger";
+import crypto from "crypto";
 
 enum BrandingType {
     Title,
