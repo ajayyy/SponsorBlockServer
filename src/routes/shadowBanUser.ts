@@ -23,7 +23,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
 
     const categories: Category[] = parseCategories(req, config.categoryList as Category[]);
 
-    if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined || type !== "1" && type !== "2")) {
+    if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined || !["1", "2"].includes(type))) {
         //invalid request
         return res.sendStatus(400);
     }
@@ -119,6 +119,8 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
 }
 
 async function unHideSubmissions(categories: string[], userID: UserID, type = "1") {
+    if (!["1", "2"].includes(type)) return;
+    
     await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = ${type} WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                     AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
                     "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
