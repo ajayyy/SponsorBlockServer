@@ -22,6 +22,7 @@ import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
+import * as youtubeID from "../utils/youtubeID";
 
 type CheckResult = {
     pass: boolean,
@@ -185,15 +186,23 @@ async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
 }
 
 async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID: HashedUserID
-    , segments: IncomingSegment[], videoDurationParam: number, userAgent: string): Promise<CheckResult> {
+    , segments: IncomingSegment[], videoDurationParam: number, userAgent: string, service: Service): Promise<CheckResult> {
     const invalidFields = [];
     const errors = [];
     if (typeof videoID !== "string" || videoID?.length == 0) {
         invalidFields.push("videoID");
     }
-    if (typeof userID !== "string" || userID?.length < 30) {
+    if (service === Service.YouTube && config.mode !== "test") {
+        const sanitizedVideoID = youtubeID.validate(videoID) ? videoID : youtubeID.sanitize(videoID);
+        if (!youtubeID.validate(sanitizedVideoID)) {
+            invalidFields.push("videoID");
+            errors.push("YouTube videoID could not be extracted");
+        }
+    }
+    const minLength = config.minUserIDLength;
+    if (typeof userID !== "string" || userID?.length < minLength) {
         invalidFields.push("userID");
-        if (userID?.length < 30) errors.push(`userID must be at least 30 characters long`);
+        if (userID?.length < minLength) errors.push(`userID must be at least ${minLength} characters long`);
     }
     if (!Array.isArray(segments) || segments.length == 0) {
         invalidFields.push("segments");
@@ -335,7 +344,7 @@ async function checkByAutoModerator(videoID: any, userID: any, segments: Array<a
             return {
                 pass: false,
                 errorCode: 403,
-                errorMessage: `Hi, currently there are server issues and you might have not recieved segments even though they exist. Sorry about this, I'm working on it. Request rejected by auto moderator: ${autoModerateResult} If this is an issue, send a message on Discord.`
+                errorMessage: `Submissions rejected: ${autoModerateResult} If this is an issue, send a message on Discord.`
             };
         }
     }
@@ -484,7 +493,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     //hash the userID
     const userID = await getHashCache(paramUserID || "");
 
-    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent);
+    const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
     }
@@ -546,7 +555,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             //this can just be a hash of the data
             //it's better than generating an actual UUID like what was used before
             //also better for duplication checking
-            const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType,
+                segmentInfo.description, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
             const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;

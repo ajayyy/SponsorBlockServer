@@ -325,7 +325,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         return { status: 400 };
     }
     // Ignore this vote, invalid
-    if (paramUserID.length < 30 && config.mode !== "test") {
+    if (paramUserID.length < config.minUserIDLength) {
         return { status: 200 };
     }
 

@@ -2,9 +2,9 @@ import { db } from "../databases/databases";
 import { Request, Response } from "express";
 
 export async function viewedVideoSponsorTime(req: Request, res: Response): Promise<Response> {
-    const UUID = req.query.UUID;
+    const UUID = req.query?.UUID;
 
-    if (UUID == undefined) {
+    if (!UUID) {
         //invalid request
         return res.sendStatus(400);
     }

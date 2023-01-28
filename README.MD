@@ -35,3 +35,7 @@ If you want to make changes, run `npm run dev` to automatically reload the serve
 # API Docs
 
 Available [here](https://wiki.sponsor.ajay.app/index.php/API_Docs)
+
+# License
+
+This is licensed under AGPL-3.0-only.

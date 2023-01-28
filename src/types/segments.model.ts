@@ -45,6 +45,9 @@ export interface Segment {
     segment: number[];
     UUID: SegmentUUID;
     videoDuration: VideoDuration;
+    locked: boolean;
+    votes: number;
+    description: string;
 }
 
 export enum Visibility {
@@ -94,7 +97,6 @@ export interface VotableObjectWithWeight extends VotableObject {
 }
 
 export interface VideoData {
-    hash: VideoIDHash;
     segments: Segment[];
 }
 

@@ -7,10 +7,11 @@ export function getSubmissionUUID(
     videoID: VideoID,
     category: Category,
     actionType: ActionType,
+    description: string,
     userID: UserID,
     startTime: number,
     endTime: number,
     service: Service
 ) : HashedValue {
-    return `${getHash(`${videoID}${startTime}${endTime}${userID}${category}${actionType}${service}`, 1)}6` as HashedValue;
+    return `${getHash(`${videoID}${startTime}${endTime}${userID}${description}${category}${actionType}${service}`, 1)}7` as HashedValue;
 }

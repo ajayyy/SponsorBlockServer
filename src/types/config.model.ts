@@ -94,7 +94,8 @@ export interface SBSConfig {
     }
     gumroad: {
         productPermalinks: string[],
-    }
+    },
+    minUserIDLength: number
 }
 
 export interface WebhookConfig {

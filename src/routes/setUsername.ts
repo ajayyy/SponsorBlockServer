@@ -32,6 +32,11 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     // eslint-disable-next-line no-control-regex
     userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
+    // check privateID against publicID
+    if (!await checkPrivateUsername(userName, userID)) {
+        return res.sendStatus(400);
+    }
+
     if (adminUserIDInput != undefined) {
         //this is the admin controlling the other users account, don't hash the controling account's ID
         adminUserIDInput = await getHashCache(adminUserIDInput);
@@ -87,4 +92,14 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         Logger.error(err as string);
         return res.sendStatus(500);
     }
+}
+
+async function checkPrivateUsername(username: string, userID: string): Promise<boolean> {
+    const userIDHash = await getHashCache(userID);
+    const userNameHash = await getHashCache(username);
+    if (userIDHash == userNameHash) return false;
+    const sponsorTimeRow = await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ? LIMIT 1`, [userNameHash]);
+    const userNameRow = await db.prepare("get", `SELECT "userID" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userNameHash]);
+    if ((sponsorTimeRow || userNameRow)?.userID) return false;
+    return true;
 }

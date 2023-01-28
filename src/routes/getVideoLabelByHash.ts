@@ -20,7 +20,6 @@ export async function getVideoLabelsByHash(req: Request, res: Response): Promise
 
     const output = Object.entries(segments).map(([videoID, data]) => ({
         videoID,
-        hash: data.hash,
         segments: data.segments,
     }));
     return res.status(output.length === 0 ? 404 : 200).json(output);
