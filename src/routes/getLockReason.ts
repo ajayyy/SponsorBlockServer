@@ -2,9 +2,8 @@ import { db } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import { Category, VideoID, ActionType } from "../types/segments.model";
-import { config } from "../config";
+import { filterInvalidCategoryActionType, parseActionTypes, parseCategories } from "../utils/parseParams";
 
-const categorySupportList = config.categorySupport;
 interface lockArray {
     category: Category;
     locked: number,
@@ -13,62 +12,19 @@ interface lockArray {
     userName: string,
 }
 
-const filterActionType = (actionTypes: ActionType[]) => {
-    const filterCategories = new Set();
-    for (const [key, value] of Object.entries(categorySupportList)) {
-        for (const type of actionTypes) {
-            if (value.includes(type)) {
-                filterCategories.add(key as Category);
-            }
-        }
-    }
-    return [...filterCategories];
-};
-
 export async function getLockReason(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
-    if (!videoID) {
-        // invalid request
-        return res.status(400).send("No videoID provided");
-    }
-    let categories: Category[] = [];
-    let actionTypes: ActionType[] = [];
-    try {
-        actionTypes = req.query.actionTypes
-            ? JSON.parse(req.query.actionTypes as string)
-            : req.query.actionType
-                ? Array.isArray(req.query.actionType)
-                    ? req.query.actionType
-                    : [req.query.actionType]
-                : [ActionType.Skip, ActionType.Mute];
-        if (!Array.isArray(actionTypes)) {
-            //invalid request
-            return res.status(400).send("actionTypes parameter does not match format requirements");
-        }
-    } catch (error) {
-        return res.status(400).send("Bad parameter: actionTypes (invalid JSON)");
-    }
-    const possibleCategories = filterActionType(actionTypes);
+    const actionTypes = parseActionTypes(req, [ActionType.Skip, ActionType.Mute]);
+    const categories = parseCategories(req, []);
 
-    try {
-        categories = req.query.categories
-            ? JSON.parse(req.query.categories as string)
-            : req.query.category
-                ? Array.isArray(req.query.category)
-                    ? req.query.category
-                    : [req.query.category]
-                : []; // default to empty, will be set to all
-        if (!Array.isArray(categories)) {
-            return res.status(400).send("Categories parameter does not match format requirements.");
-        }
-    } catch(error) {
-        return res.status(400).send("Bad parameter: categories (invalid JSON)");
-    }
+    // invalid requests
+    const errors = [];
+    if (!videoID) errors.push("No videoID provided");
+    if (!Array.isArray(actionTypes)) errors.push("actionTypes parameter does not match format requirements");
+    if (!Array.isArray(categories)) errors.push("Categories parameter does not match format requirements.");
+    if (errors.length) return res.status(400).send(errors.join(", "));
     // only take valid categories
-    const searchCategories = (categories.length === 0 )
-        ? possibleCategories
-        : categories.filter(x =>
-            possibleCategories.includes(x));
+    const searchCategories = filterInvalidCategoryActionType(categories, actionTypes);
 
     try {
         // Get existing lock categories markers

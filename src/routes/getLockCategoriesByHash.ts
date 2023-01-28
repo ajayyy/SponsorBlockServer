@@ -3,6 +3,7 @@ import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import { hashPrefixTester } from "../utils/hashPrefixTester";
 import { ActionType, Category, VideoID, VideoIDHash } from "../types/segments.model";
+import { parseActionTypes } from "../utils/parseParams";
 
 interface LockResultByHash {
     videoID: VideoID,
@@ -44,25 +45,13 @@ const mergeLocks = (source: DBLock[], actionTypes: ActionType[]): LockResultByHa
 
 export async function getLockCategoriesByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    let actionTypes: ActionType[] = [];
-    try {
-        actionTypes = req.query.actionTypes
-            ? JSON.parse(req.query.actionTypes as string)
-            : req.query.actionType
-                ? Array.isArray(req.query.actionType)
-                    ? req.query.actionType
-                    : [req.query.actionType]
-                : [ActionType.Skip, ActionType.Mute];
-        if (!Array.isArray(actionTypes)) {
-            //invalid request
-            return res.sendStatus(400);
-        }
-    } catch (err) {
+    const actionTypes: ActionType[] = parseActionTypes(req, [ActionType.Skip, ActionType.Mute]);
+    if (!Array.isArray(actionTypes)) {
         //invalid request
-        return res.status(400).send("Invalid request: JSON parse error (actionTypes)");
+        return res.sendStatus(400);
     }
-    if (!hashPrefixTester(req.params.prefix)) {
 
+    if (!hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
