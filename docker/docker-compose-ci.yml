@@ -1,7 +1,7 @@
 version: '3'
 services:
   postgres:
-    container_name: somethingelse
+    container_name: database-co
     image: postgres:alpine
     environment:
       - POSTGRES_USER=${PG_USER}
@@ -9,6 +9,7 @@ services:
     ports:
       - 5432:5432
   redis:
+    container_name: redis-ci
     image: redis:alpine
     ports:
       - 6379:6379
