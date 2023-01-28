@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS "config" (
 CREATE TABLE IF NOT EXISTS "titles" (
 	"videoID"	TEXT NOT NULL,
 	"title"	TEXT NOT NULL,
-	"original" BOOLEAN NOT NULL,
+	"original" INTEGER default 0,
 	"userID"	TEXT NOT NULL,
 	"service"	TEXT NOT NULL,
 	"hashedVideoID"	TEXT NOT NULL,
