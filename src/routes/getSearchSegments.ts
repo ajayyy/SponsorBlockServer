@@ -76,14 +76,12 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
     }
     // Default to sponsor
     const categories: Category[] = parseCategories(req, []);
-    console.log(categories)
     if (!Array.isArray(categories)) {
         res.status(400).send("Categories parameter does not match format requirements.");
         return false;
     }
 
     const actionTypes: ActionType[] = parseActionTypes(req, [ActionType.Skip]);
-    console.log(actionTypes)
     if (!Array.isArray(actionTypes)) {
         res.status(400).send("actionTypes parameter does not match format requirements.");
         return false;
@@ -176,7 +174,6 @@ async function endpoint(req: Request, res: Response): Promise<Response> {
         }
     } catch (err) {
         /* istanbul ignore next */
-        console.log(err)
         if (err instanceof SyntaxError) {
             return res.status(400).send("Invalid array in parameters");
         } else return res.sendStatus(500);

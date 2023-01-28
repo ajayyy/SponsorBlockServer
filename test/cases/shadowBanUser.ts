@@ -32,8 +32,14 @@ describe("shadowBanUser", () => {
 
         await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-50", "shadowBanned5", 0, 50, "sponsor", "YouTube", 0, videohash]);
 
+        await db.prepare("run", insertQuery, [video, 10, 10, 2, 1, "shadow-60", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, ["lockedVideo", 10, 10, 2, 1, "shadow-61", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, getHash("lockedVideo", 1)]);
+
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned3"]);
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned4"]);
+
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "service") VALUES (?, ?, ?, ?, ?)`,
+            [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube"]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
     });
@@ -270,6 +276,32 @@ describe("shadowBanUser", () => {
         })
             .then(res => {
                 assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should exclude locked segments when shadowbanning and removing segments", (done) => {
+        const userID = "shadowBanned6";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const type1Videos = await getShadowBanSegmentCategory(userID, 2);
+                const type0Videos = await getShadowBanSegmentCategory(userID, 0);
+                const shadowRow = await getShadowBan(userID);
+                assert.ok(shadowRow); // ban exists
+                assert.strictEqual(type1Videos.length, 0); // no banned videos
+                assert.strictEqual(type0Videos.length, 1); // video still visible
                 done();
             })
             .catch(err => done(err));
