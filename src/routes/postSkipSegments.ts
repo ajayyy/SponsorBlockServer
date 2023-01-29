@@ -23,6 +23,7 @@ import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
+import { banUser } from "./shadowBanUser";
 
 type CheckResult = {
     pass: boolean,
@@ -541,10 +542,17 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // }
 
         //check to see if this user is shadowbanned
-        const shadowBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]))?.userCount
-            || (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ? LIMIT 1`, [hashedIP]))?.userCount;
+        const userBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]))?.userCount;
+        const ipBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ? LIMIT 1`, [hashedIP]))?.userCount;
+        const shadowBanCount = userBanCount || ipBanCount;
         const startingVotes = 0;
         const reputation = await getReputation(userID);
+
+        if (!userBanCount && ipBanCount) {
+            // Make sure the whole user is banned
+            banUser(userID, true, true, "1", config.categoryList as Category[])
+                .catch((e) => Logger.error(`Error banning user after submitting from a banned IP: ${e}`));
+        }
 
         for (const segmentInfo of segments) {
             // Full segments are always rejected since there can only be one, so shadow hide wouldn't work

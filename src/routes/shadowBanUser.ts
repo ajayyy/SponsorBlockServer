@@ -70,7 +70,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     return res.sendStatus(200);
 }
 
-async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[]): Promise<number> {
+export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[]): Promise<number> {
     //check to see if this user is already shadowbanned
     const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
@@ -123,7 +123,7 @@ async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: b
     return 200;
 }
 
-async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[], banUsers: boolean): Promise<number> {
+export async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[], banUsers: boolean): Promise<number> {
     //check to see if this user is already shadowbanned
     const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
 
