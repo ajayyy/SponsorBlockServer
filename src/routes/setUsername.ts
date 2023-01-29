@@ -33,7 +33,12 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
     // check privateID against publicID
+    /*
     if (!await checkPrivateUsername(userName, userID)) {
+        return res.sendStatus(400);
+    }
+    */
+    if (userName == userID) {
         return res.sendStatus(400);
     }
 
