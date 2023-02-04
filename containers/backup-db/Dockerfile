@@ -4,7 +4,7 @@ RUN apk add restic --repository http://dl-cdn.alpinelinux.org/alpine/latest-stab
 
 COPY ./backup.sh /usr/src/app/backup.sh
 RUN chmod +x /usr/src/app/backup.sh
-COPY ./backup.sh /usr/src/app/forget.sh
+COPY ./forget.sh /usr/src/app/forget.sh
 RUN chmod +x /usr/src/app/forget.sh
 
 RUN echo '30  *  *  *  *    /usr/src/app/backup.sh' >> /etc/crontabs/root
