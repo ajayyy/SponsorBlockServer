@@ -4,6 +4,8 @@ import { createClient } from "redis";
 import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@redis/client/dist/lib/commands";
 import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
+import { db } from "../databases/databases";
+import { Postgres } from "../databases/Postgres";
 
 export interface RedisStats {
     activeRequests: number;
@@ -99,7 +101,7 @@ if (config.redis?.enabled) {
             if ((config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections)
                 || (config.redis.responseTimePause
                         && Date.now() - lastResponseTimeLimit < config.redis.responseTimePause)) {
-                reject(`Too many active requests to write due to ${activeRequests} requests and ${Date.now() - lastResponseTimeLimit}ms since last response time limit`);
+                reject(`Too many active requests to write due to ${activeRequests} requests and ${Date.now() - lastResponseTimeLimit}ms since last limit. ${(db as Postgres)?.getStats?.()?.activeRequests} active db requests with ${(db as Postgres)?.getStats?.()?.avgReadTime}ms`);
                 return;
             }
 
