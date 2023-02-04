@@ -15,7 +15,7 @@ interface ReputationDBResult {
 }
 
 export async function getReputation(userID: UserID): Promise<number> {
-    const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
+    const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 7; // 45 days ago
     const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
     // 1596240000000 is August 1st 2020, a little after auto upvote was disabled
     const fetchFromDB = () => db.prepare("get",
