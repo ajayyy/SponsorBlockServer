@@ -79,6 +79,7 @@ if (config.redis?.enabled) {
             if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
             if (config.redis.stopWritingAfterResponseTime
                     && responseTime > config.redis.stopWritingAfterResponseTime) {
+                Logger.error(`Hit response time limit at ${responseTime}ms`);
                 lastResponseTimeLimit = Date.now();
             }
         }).catch((err) => {
