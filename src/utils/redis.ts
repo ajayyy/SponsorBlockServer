@@ -98,7 +98,7 @@ if (config.redis?.enabled) {
             if ((config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections)
                 || (config.redis.responseTimePause
                         && Date.now() - lastResponseTimeLimit < config.redis.responseTimePause)) {
-                reject("Too many active requests to write");
+                reject(`Too many active requests to write due to ${activeRequests} requests and ${Date.now() - lastResponseTimeLimit}ms since last response time limit`);
                 return;
             }
 
