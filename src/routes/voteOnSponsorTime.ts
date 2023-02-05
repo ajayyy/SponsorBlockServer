@@ -96,7 +96,7 @@ async function checkVideoDuration(UUID: SegmentUUID) {
             AND "hidden" = 0 AND "shadowHidden" = 0 AND 
             "actionType" != 'full' AND "votes" > -2`,
         [videoID, service, latestSubmission.timeSubmitted]);
-        deleteLockCategories(videoID, null, null, service).catch(Logger.error);
+        deleteLockCategories(videoID, null, null, service).catch((e) => Logger.error(`delete lock categories after vote: ${e}`));
     }
 }
 
@@ -411,7 +411,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     // no restrictions on checkDuration
     // check duration of all submissions on this video
     if (type <= 0) {
-        checkVideoDuration(UUID).catch(Logger.error);
+        checkVideoDuration(UUID).catch((e) => Logger.error(`checkVideoDuration: ${e}`));
     }
 
     try {
@@ -524,7 +524,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 incrementAmount,
                 oldIncrementAmount,
                 finalResponse
-            }).catch(Logger.error);
+            }).catch((e) => Logger.error(`Sending vote webhook: ${e}`));
         }
         return { status: finalResponse.finalStatus, message: finalResponse.finalMessage ?? undefined };
     } catch (err) {

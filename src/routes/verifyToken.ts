@@ -32,7 +32,7 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
         const identity = await getPatreonIdentity(tokens.accessToken);
 
         if (tokens.expiresIn < 15 * 24 * 60 * 60) {
-            refreshToken(TokenType.patreon, licenseKey, tokens.refreshToken).catch(Logger.error);
+            refreshToken(TokenType.patreon, licenseKey, tokens.refreshToken).catch((e) => Logger.error(`refresh token: ${e}`));
         }
 
         /* istanbul ignore else */
