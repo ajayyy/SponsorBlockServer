@@ -519,7 +519,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
-    if (!isVIP || !isTempVIP) {
+    if (!(isVIP || isTempVIP)) {
         const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
         if (!autoModerateCheckResult.pass) {
             return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
