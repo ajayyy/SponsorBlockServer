@@ -59,6 +59,11 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0);`,
                         [UUID, isVip ? 1 : 0]);
                 }
+
+                if (isVip) {
+                    // unlock all other titles
+                    await db.prepare("run", `UPDATE "titleVotes" SET "locked" = 0 WHERE "UUID" != ?`, [UUID]);
+                }
             }
         })(), (async () => {
             if (thumbnail) {
@@ -81,6 +86,11 @@ export async function postBranding(req: Request, res: Response) {
                     if (!thumbnail.original) {
                         await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
                             [UUID, (thumbnail as TimeThumbnailSubmission).timestamp]);
+                    }
+
+                    if (isVip) {
+                        // unlock all other titles
+                        await db.prepare("run", `UPDATE "thumbnailVotes" SET "locked" = 0 WHERE "UUID" != ?`, [UUID]);
                     }
                 }
             }
