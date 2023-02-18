@@ -23,6 +23,7 @@ import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
+import { banUser } from "./shadowBanUser";
 
 type CheckResult = {
     pass: boolean,
@@ -78,7 +79,7 @@ async function sendWebhooks(apiVideoDetails: videoDetails, userID: string, video
         sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, apiVideoDetails, {
             submissionStart: startTime,
             submissionEnd: endTime,
-        }, segmentInfo).catch(Logger.error);
+        }, segmentInfo).catch((e) => Logger.error(`sending webhooks: ${e}`));
 
         // If it is a first time submission
         // Then send a notification to discord
@@ -252,7 +253,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
 }
 
 async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
-    segments: IncomingSegment[], service: Service, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+    segments: IncomingSegment[], service: Service, isVIP: boolean, isTempVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -312,11 +313,11 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         }
 
         // Check for POI segments before some seconds
-        if (!isVIP && segments[i].actionType === ActionType.Poi && startTime < config.poiMinimumStartTime) {
+        if (!(isVIP || isTempVIP) && segments[i].actionType === ActionType.Poi && startTime < config.poiMinimumStartTime) {
             return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400 };
         }
 
-        if (!isVIP && segments[i].category === "sponsor"
+        if (!(isVIP || isTempVIP) && segments[i].category === "sponsor"
                 && segments[i].actionType !== ActionType.Full && (endTime - startTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
@@ -391,7 +392,7 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
             await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "UUID" = ?`, [submission.UUID]);
         }
         lockedCategoryList = [];
-        deleteLockCategories(videoID, null, null, service).catch(Logger.error);
+        deleteLockCategories(videoID, null, null, service).catch((e) => Logger.error(`deleting lock categories: ${e}`));
     }
 
     return {
@@ -508,7 +509,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
-    const isVIP = (await isUserVIP(userID)) || (await isUserTempVIP(userID, videoID));
+    const isVIP = (await isUserVIP(userID));
+    const isTempVIP = (await isUserTempVIP(userID, videoID));
     const rawIP = getIP(req);
 
     const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
@@ -516,12 +518,12 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const { lockedCategoryList, apiVideoDetails } = newData;
 
     // Check if all submissions are correct
-    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, lockedCategoryList);
+    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
     if (!segmentCheckResult.pass) {
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
-    if (!isVIP) {
+    if (!(isVIP || isTempVIP)) {
         const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
         if (!autoModerateCheckResult.pass) {
             return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
@@ -545,14 +547,22 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // }
 
         //check to see if this user is shadowbanned
-        const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
+        const userBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]))?.userCount;
+        const ipBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ? LIMIT 1`, [hashedIP]))?.userCount;
+        const shadowBanCount = userBanCount || ipBanCount;
         const startingVotes = 0;
         const reputation = await getReputation(userID);
+
+        if (!userBanCount && ipBanCount) {
+            // Make sure the whole user is banned
+            banUser(userID, true, true, "1", config.categoryList as Category[])
+                .catch((e) => Logger.error(`Error banning user after submitting from a banned IP: ${e}`));
+        }
 
         for (const segmentInfo of segments) {
             // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
             if (segmentInfo.ignoreSegment
-                || (shadowBanRow.userCount && segmentInfo.actionType === ActionType.Full)) {
+                || (shadowBanCount && segmentInfo.actionType === ActionType.Full)) {
                 continue;
             }
 
@@ -569,7 +579,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                     ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description")
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0
-                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanRow.userCount, hashedVideoID, userAgent, segmentInfo.description
+                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanCount, hashedVideoID, userAgent, segmentInfo.description
                 ],
                 );
 
@@ -607,7 +617,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 
     for (let i = 0; i < segments.length; i++) {
-        sendWebhooks(apiVideoDetails, userID, videoID, UUIDs[i], segments[i], service).catch(Logger.error);
+        sendWebhooks(apiVideoDetails, userID, videoID, UUIDs[i], segments[i], service).catch((e) => Logger.error(`call send webhooks ${e}`));
     }
     return res.json(newSegments);
 }

@@ -27,7 +27,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
 
         //check if shadowHidden
         //this means it is hidden to everyone but the original ip that submitted it
-        if (segment.shadowHidden != Visibility.HIDDEN) {
+        if (segment.shadowHidden === Visibility.VISIBLE) {
             return true;
         }
 

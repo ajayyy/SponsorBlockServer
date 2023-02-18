@@ -208,7 +208,7 @@ describe("reputation", () => {
         assert.strictEqual(data, 0.19310344827586207);
     });
 
-    it("user with high reputation and locked segments", async () => {
+    it("user with high reputation and locked segmentsssss", async () => {
         const metrics = {
             totalSubmissions: 8,
             downvotedSubmissions: 1,
@@ -217,11 +217,11 @@ describe("reputation", () => {
             lockedSum: 4,
             semiOldUpvotedSubmissions: 5,
             oldUpvotedSubmissions: 5,
-            mostUpvotedInLockedVideoSum: 0
+            mostUpvotedInLockedVideoSum: 4
         };
         const data = await getReputation(userHashHighAndLocked);
         assert.strictEqual(data, calculateReputationFromMetrics(metrics));
-        assert.strictEqual(data, 1.793103448275862);
+        assert.strictEqual(data, 3.393103448275862);
     });
 
     it("user with most upvoted segments in locked video", async () => {

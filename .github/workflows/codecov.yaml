@@ -1,14 +1,14 @@
-name: PostgreSQL + Redis CI
+name: Codecov
 
 on:
   push:
     branches:
       - master
   pull_request:
-
+  
 jobs:
-  test:
-    name: Run Tests with PostgreSQL and Redis
+  codecov:
+    name: Run Codecov
     runs-on: ubuntu-latest
 
     steps:
@@ -23,9 +23,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: npm install
-      - name: Run Tests
+      - run: npm ci
+      - name: Generate sqlite coverage reports
+        run: npx nyc --reporter=lcov npm test
+      - name: Generate postgres coverage reports
         env:
           TEST_POSTGRES: true
         timeout-minutes: 5
-        run: npx nyc --silent npm test
+        run: npx nyc --reporter=lcov npm test
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3

@@ -18,6 +18,9 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 32773:6379
+    sysctls:
+      - net.core.somaxconn=324000
+      - net.ipv4.tcp_max_syn_backlog=3240000
     restart: always
   newleaf:
     image: abeltramo/newleaf:latest

@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS "categoryVotes" (
 	"votes"	INTEGER NOT NULL default 0
 );
 
+CREATE TABLE IF NOT EXISTS "shadowBannedIPs" (
+	"hashedIP"	TEXT NOT NULL PRIMARY KEY
+);
+
 CREATE TABLE IF NOT EXISTS "config" (
 	"key" TEXT NOT NULL UNIQUE,
 	"value" TEXT NOT NULL

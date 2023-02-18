@@ -15,7 +15,7 @@ interface ReputationDBResult {
 }
 
 export async function getReputation(userID: UserID): Promise<number> {
-    const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
+    const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 7; // 45 days ago
     const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
     // 1596240000000 is August 1st 2020, a little after auto upvote was disabled
     const fetchFromDB = () => db.prepare("get",
@@ -31,14 +31,14 @@ export async function getReputation(userID: UserID): Promise<number> {
             SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "semiOldUpvotedSubmissions",
             SUM(CASE WHEN "timeSubmitted" < ? AND "timeSubmitted" > 1596240000000 AND "votes" > 0 THEN 1 ELSE 0 END) AS "oldUpvotedSubmissions",
             SUM(CASE WHEN "votes" > 0
-                AND NOT EXISTS (
-                    SELECT * FROM "sponsorTimes" as c 
-                    WHERE (c."votes" > "a"."votes" OR  c."locked" > "a"."locked") AND 
-                        c."videoID" = "a"."videoID" AND 
-                        c."category" = "a"."category" LIMIT 1) 
                 AND EXISTS (
                     SELECT * FROM "lockCategories" as l 
                     WHERE l."videoID" = "a"."videoID" AND l."service" = "a"."service" AND l."category" = "a"."category" LIMIT 1)
+                AND ("locked" > 0 OR NOT EXISTS (
+                    SELECT * FROM "sponsorTimes" as c 
+                    WHERE (c."votes" > "a"."votes" OR  c."locked" > "a"."locked") AND 
+                        c."videoID" = "a"."videoID" AND 
+                        c."category" = "a"."category" LIMIT 1) )
                 THEN 1 ELSE 0 END) AS "mostUpvotedInLockedVideoSum"
         FROM "sponsorTimes" as "a" WHERE "userID" = ? AND "actionType" != 'full'`, [userID, weekAgo, pastDate, userID], { useReplica: true }) as Promise<ReputationDBResult>;
 

@@ -52,7 +52,8 @@ export interface Segment {
 
 export enum Visibility {
     VISIBLE = 0,
-    HIDDEN = 1
+    HIDDEN = 1,
+    MORE_HIDDEN = 2
 }
 
 export interface DBSegment {
