@@ -13,11 +13,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Build the docker-compose stack
+        env:
+          PG_USER: ci_db_user
+          PG_PASS: ci_db_pass
+        run: docker-compose -f docker/docker-compose-ci.yml up -d
+      - name: Check running containers
+        run: docker ps
       - uses: actions/setup-node@v3
         with:
           node-version: 18
       - run: npm ci
-      - name: Generate coverage reports
+      - name: Generate sqlite coverage reports
+        run: npx nyc --reporter=lcov npm test
+      - name: Generate postgres coverage reports
+        env:
+          TEST_POSTGRES: true
+        timeout-minutes: 5
         run: npx nyc --reporter=lcov npm test
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
