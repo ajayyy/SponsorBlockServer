@@ -1,38 +1,72 @@
 import { config } from "../config";
 import { Logger } from "../utils/logger";
+import { authorType, WebhookData } from "../types/webhook.model";
+import { getFormattedTime } from "../utils/getFormattedTime";
 import axios from "axios";
 
-function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
-    if (isOwnSubmission) {
-        return "self";
-    } else if (isTempVIP) {
-        return "temp vip";
-    } else if (isVIP) {
-        return "vip";
-    } else if (submissionCount === 0) {
-        return "new";
-    } else {
-        return "other";
-    }
+function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): authorType {
+    if (isOwnSubmission) return authorType.Self;
+    else if (isTempVIP) return authorType.TempVIP;
+    else if (isVIP) return authorType.VIP;
+    else if (submissionCount === 0) authorType.New;
+    else return authorType.Other;
 }
 
-function getVoteAuthor(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
-    if (isOwnSubmission) {
-        return "Report by Submitter";
-    } else if (isTempVIP) {
-        return "Report by Temp VIP";
-    } else if (isVIP) {
-        return "Report by VIP User";
-    } else if (submissionCount === 0) {
-        return "Report by New User";
-    }
+const voteAuthorMap: Record<authorType, string> = {
+    [authorType.Self]: "Report by Submitter",
+    [authorType.TempVIP]: "Report by Temp VIP",
+    [authorType.VIP]: "Report by VIP User",
+    [authorType.New]: "Report by New User",
+    [authorType.Other]: ""
+};
 
-    return "";
-}
+const youtubeUrlCreator = (videoId: string, startTime: number, uuid: string): string => {
+    const startTimeNumber = Math.max(0, startTime - 2);
+    const startTimeParam = startTime > 0 ? `&t=${startTimeNumber}s` : "";
+    return `https://www.youtube.com/watch?v=${videoId}${startTimeParam}#requiredSegment=${uuid}`;
+};
 
-function dispatchEvent(scope: string, data: Record<string, unknown>): void {
+const createDiscordVoteEmbed = (data: WebhookData) => ({
+    title: data.video.title,
+    url: youtubeUrlCreator(data.video.id, data.submission.startTime, data.submission.UUID),
+    description: `**${data.votes.before} Votes Prior | \
+        ${(data.votes.after)} Votes Now | ${data.submission.views} \
+        Views**\n\n**Locked**: ${data.submission.locked}\n\n**Submission ID:** ${data.submission.UUID}\
+        \n**Category:** ${data.submission.category}\
+        \n\n**Submitted by:** ${data.submission.user.username}\n${data.submission.user.userID}\
+        \n\n**Total User Submissions:** ${data.submission.user.submissions.total}\
+        \n**Ignored User Submissions:** ${data.submission.user.submissions.ignored}\
+        \n\n**Timestamp:** \
+        ${getFormattedTime(data.submission.startTime)} to ${getFormattedTime(data.submission.endTime)}`,
+    color: 10813440,
+    author: {
+        name: data.authorName ?? `${voteAuthorMap[data.user.status]}${data.submission.locked ? " (Locked)" : ""}`,
+    },
+    thumbnail: {
+        url: data.video.thumbnail,
+    },
+});
+
+export const createDiscordSegmentEmbed = (data: WebhookData) => ({
+    title: data.video.title,
+    url: youtubeUrlCreator(data.video.id, data.submission.startTime, data.submission.UUID),
+    description: `Submission ID: ${data.submission.UUID}\
+        \n\nTimestamp: \
+        ${getFormattedTime(data.submission.startTime)} to ${getFormattedTime(data.submission.endTime)}\
+        \n\nCategory: ${data.submission.category}`,
+    color: 10813440,
+    author: {
+        name: data.submission.user.userID,
+    },
+    thumbnail: {
+        url: data.video.thumbnail
+    },
+});
+
+
+function dispatchEvent(scope: string, data: WebhookData): void {
     const webhooks = config.webhooks;
-    if (webhooks === undefined || webhooks.length === 0) return;
+    if (!webhooks?.length) return;
     Logger.debug("Dispatching webhooks");
 
     for (const webhook of webhooks) {
@@ -59,6 +93,6 @@ function dispatchEvent(scope: string, data: Record<string, unknown>): void {
 
 export {
     getVoteAuthorRaw,
-    getVoteAuthor,
     dispatchEvent,
+    createDiscordVoteEmbed
 };

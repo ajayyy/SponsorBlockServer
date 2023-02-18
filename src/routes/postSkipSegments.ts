@@ -6,8 +6,7 @@ import { getSubmissionUUID } from "../utils/getSubmissionUUID";
 import { getHash } from "../utils/getHash";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
-import { getFormattedTime } from "../utils/getFormattedTime";
-import { dispatchEvent } from "../utils/webhookUtils";
+import { createDiscordSegmentEmbed, dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
 import { ActionType, Category, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
@@ -24,6 +23,7 @@ import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
 import { banUser } from "./shadowBanUser";
+import { authorType } from "../types/webhook.model";
 
 type CheckResult = {
     pass: boolean,
@@ -37,67 +37,44 @@ const CHECK_PASS: CheckResult = {
     errorCode: 0
 };
 
-async function sendWebhookNotification(userID: string, videoID: string, UUID: string, submissionCount: number, youtubeData: videoDetails, { submissionStart, submissionEnd }: { submissionStart: number; submissionEnd: number; }, segmentInfo: any) {
-    const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
-    const userName = row !== undefined ? row.userName : null;
-
-    let scopeName = "submissions.other";
-    if (submissionCount <= 1) {
-        scopeName = "submissions.new";
-    }
-
-    dispatchEvent(scopeName, {
-        "video": {
-            "id": videoID,
-            "title": youtubeData?.title,
-            "thumbnail": getMaxResThumbnail(videoID),
-            "url": `https://www.youtube.com/watch?v=${videoID}`,
-        },
-        "submission": {
-            "UUID": UUID,
-            "category": segmentInfo.category,
-            "startTime": submissionStart,
-            "endTime": submissionEnd,
-            "user": {
-                "UUID": userID,
-                "username": userName,
-            },
-        },
-    });
-}
-
 async function sendWebhooks(apiVideoDetails: videoDetails, userID: string, videoID: string, UUID: string, segmentInfo: any, service: Service) {
     if (apiVideoDetails && service == Service.YouTube) {
         const userSubmissionCountRow = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID]);
+        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
+        const username = row?.userName ?? null;
 
         const startTime = parseFloat(segmentInfo.segment[0]);
         const endTime = parseFloat(segmentInfo.segment[1]);
-        sendWebhookNotification(userID, videoID, UUID, userSubmissionCountRow.submissionCount, apiVideoDetails, {
-            submissionStart: startTime,
-            submissionEnd: endTime,
-        }, segmentInfo).catch((e) => Logger.error(`sending webhooks: ${e}`));
+        const newUser = userSubmissionCountRow.submissionCount <= 1;
+        const webhookData = {
+            user: {
+                status: newUser ? authorType.New : authorType.Other
+            },
+            video: {
+                id: (videoID as VideoID),
+                title: apiVideoDetails?.title,
+                url: `https://www.youtube.com/watch?v=${videoID}`,
+                thumbnail: getMaxResThumbnail(videoID),
+            },
+            submission: {
+                UUID: UUID as SegmentUUID,
+                category: segmentInfo.category,
+                startTime: startTime,
+                endTime: endTime,
+                user: {
+                    userID: userID as HashedUserID,
+                    username,
+                },
+            }
+        };
+        const discordEmbed = createDiscordSegmentEmbed(webhookData);
+        dispatchEvent(newUser ? "submissions.new": "submissions.other", webhookData);
 
         // If it is a first time submission
         // Then send a notification to discord
-        if (config.discordFirstTimeSubmissionsWebhookURL === null || userSubmissionCountRow.submissionCount > 1) return;
+        if (!config.discordFirstTimeSubmissionsWebhookURL || userSubmissionCountRow.submissionCount > 1) return;
 
-        axios.post(config.discordFirstTimeSubmissionsWebhookURL, {
-            embeds: [{
-                title: apiVideoDetails.title,
-                url: `https://www.youtube.com/watch?v=${videoID}&t=${(parseInt(startTime.toFixed(0)) - 2)}s#requiredSegment=${UUID}`,
-                description: `Submission ID: ${UUID}\
-                    \n\nTimestamp: \
-                    ${getFormattedTime(startTime)} to ${getFormattedTime(endTime)}\
-                    \n\nCategory: ${segmentInfo.category}`,
-                color: 10813440,
-                author: {
-                    name: userID,
-                },
-                thumbnail: {
-                    url: getMaxResThumbnail(videoID),
-                },
-            }],
-        })
+        axios.post(config.discordFirstTimeSubmissionsWebhookURL, { embeds: [discordEmbed] })
             .then(res => {
                 if (res.status >= 400) {
                     Logger.error("Error sending first time submission Discord hook");
