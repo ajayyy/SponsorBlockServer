@@ -249,7 +249,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
 }
 
 async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, userID: HashedUserID, videoID: VideoID,
-    segments: IncomingSegment[], service: Service, isVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
+    segments: IncomingSegment[], service: Service, isVIP: boolean, isTempVIP: boolean, lockedCategoryList: Array<any>): Promise<CheckResult> {
 
     for (let i = 0; i < segments.length; i++) {
         if (segments[i] === undefined || segments[i].segment === undefined || segments[i].category === undefined) {
@@ -309,11 +309,11 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         }
 
         // Check for POI segments before some seconds
-        if (!isVIP && segments[i].actionType === ActionType.Poi && startTime < config.poiMinimumStartTime) {
+        if (!(isVIP || isTempVIP) && segments[i].actionType === ActionType.Poi && startTime < config.poiMinimumStartTime) {
             return { pass: false, errorMessage: `POI cannot be that early`, errorCode: 400 };
         }
 
-        if (!isVIP && segments[i].category === "sponsor"
+        if (!(isVIP || isTempVIP) && segments[i].category === "sponsor"
                 && segments[i].actionType !== ActionType.Full && (endTime - startTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
@@ -505,7 +505,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
-    const isVIP = (await isUserVIP(userID)) || (await isUserTempVIP(userID, videoID));
+    const isVIP = (await isUserVIP(userID));
+    const isTempVIP = (await isUserTempVIP(userID, videoID));
     const rawIP = getIP(req);
 
     const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
@@ -513,12 +514,12 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     const { lockedCategoryList, apiVideoDetails } = newData;
 
     // Check if all submissions are correct
-    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, lockedCategoryList);
+    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
     if (!segmentCheckResult.pass) {
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
-    if (!isVIP) {
+    if (!(isVIP || isTempVIP)) {
         const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
         if (!autoModerateCheckResult.pass) {
             return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
