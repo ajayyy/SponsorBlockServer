@@ -95,11 +95,10 @@ export async function setUsername(req: Request, res: Response): Promise<Response
 }
 
 async function checkPrivateUsername(username: string, userID: string): Promise<boolean> {
-    const userIDHash = await getHashCache(userID);
+    if (username == userID) return false;
+    if (username.length <= config.minUserIDLength) return true; // don't check for cross matches <= 30 characters
     const userNameHash = await getHashCache(username);
-    if (userIDHash == userNameHash) return false;
-    const sponsorTimeRow = await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ? LIMIT 1`, [userNameHash]);
     const userNameRow = await db.prepare("get", `SELECT "userID" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userNameHash]);
-    if ((sponsorTimeRow || userNameRow)?.userID) return false;
+    if (userNameRow?.userID) return false;
     return true;
 }
