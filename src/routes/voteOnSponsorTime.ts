@@ -151,7 +151,7 @@ async function sendWebhooks(voteData: VoteData) {
                     startTime: submissionInfoRow.startTime,
                     endTime: submissionInfoRow.endTime,
                     user: {
-                        UUID: submissionInfoRow.userID,
+                        userID: submissionInfoRow.userID,
                         username: submissionInfoRow.userName,
                         submissions: {
                             total: submissionInfoRow.count,

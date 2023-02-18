@@ -20,30 +20,49 @@ const voteAuthorMap: Record<authorType, string> = {
     [authorType.Other]: ""
 };
 
-const createDiscordVoteEmbed = (data: WebhookData) => {
-    const startTime = Math.max(0, data.submission.startTime - 2);
-    const startTimeParam = startTime > 0 ? `&t=${startTime}s` : "";
-    return {
-        title: data.video.title,
-        url: `https://www.youtube.com/watch?v=${data.video.id}${startTimeParam}#requiredSegment=${data.submission.UUID}`,
-        description: `**${data.votes.before} Votes Prior | \
-            ${(data.votes.after)} Votes Now | ${data.submission.views} \
-            Views**\n\n**Locked**: ${data.submission.locked}\n\n**Submission ID:** ${data.submission.UUID}\
-            \n**Category:** ${data.submission.category}\
-            \n\n**Submitted by:** ${data.submission.user.username}\n${data.submission.user.UUID}\
-            \n\n**Total User Submissions:** ${data.submission.user.submissions.total}\
-            \n**Ignored User Submissions:** ${data.submission.user.submissions.ignored}\
-            \n\n**Timestamp:** \
-            ${getFormattedTime(data.submission.startTime)} to ${getFormattedTime(data.submission.endTime)}`,
-        color: 10813440,
-        author: {
-            name: data.authorName ?? `${voteAuthorMap[data.user.status]}${data.submission.locked ? " (Locked)" : ""}`,
-        },
-        thumbnail: {
-            url: data.video.thumbnail,
-        },
-    };
+const youtubeUrlCreator = (videoId: string, startTime: number, uuid: string): string => {
+    const startTimeNumber = Math.max(0, startTime - 2);
+    const startTimeParam = startTime > 0 ? `&t=${startTimeNumber}s` : "";
+    return `https://www.youtube.com/watch?v=${videoId}${startTimeParam}#requiredSegment=${uuid}`;
 };
+
+const createDiscordVoteEmbed = (data: WebhookData) => ({
+    title: data.video.title,
+    url: youtubeUrlCreator(data.video.id, data.submission.startTime, data.submission.UUID),
+    description: `**${data.votes.before} Votes Prior | \
+        ${(data.votes.after)} Votes Now | ${data.submission.views} \
+        Views**\n\n**Locked**: ${data.submission.locked}\n\n**Submission ID:** ${data.submission.UUID}\
+        \n**Category:** ${data.submission.category}\
+        \n\n**Submitted by:** ${data.submission.user.username}\n${data.submission.user.userID}\
+        \n\n**Total User Submissions:** ${data.submission.user.submissions.total}\
+        \n**Ignored User Submissions:** ${data.submission.user.submissions.ignored}\
+        \n\n**Timestamp:** \
+        ${getFormattedTime(data.submission.startTime)} to ${getFormattedTime(data.submission.endTime)}`,
+    color: 10813440,
+    author: {
+        name: data.authorName ?? `${voteAuthorMap[data.user.status]}${data.submission.locked ? " (Locked)" : ""}`,
+    },
+    thumbnail: {
+        url: data.video.thumbnail,
+    },
+});
+
+export const createDiscordSegmentEmbed = (data: WebhookData) => ({
+    title: data.video.title,
+    url: youtubeUrlCreator(data.video.id, data.submission.startTime, data.submission.UUID),
+    description: `Submission ID: ${data.submission.UUID}\
+        \n\nTimestamp: \
+        ${getFormattedTime(data.submission.startTime)} to ${getFormattedTime(data.submission.endTime)}\
+        \n\nCategory: ${data.submission.category}`,
+    color: 10813440,
+    author: {
+        name: data.submission.user.userID,
+    },
+    thumbnail: {
+        url: data.video.thumbnail
+    },
+});
+
 
 function dispatchEvent(scope: string, data: WebhookData): void {
     const webhooks = config.webhooks;

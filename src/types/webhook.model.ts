@@ -32,7 +32,7 @@ export interface WebhookData {
         startTime: number,
         endTime: number,
         user: {
-            UUID: HashedUserID,
+            userID: HashedUserID,
             username: string | HashedUserID,
             submissions?: {
                 total: number,
