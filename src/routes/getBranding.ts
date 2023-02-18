@@ -38,10 +38,9 @@ export async function getVideoBranding(videoID: VideoID, service: Service, ip: I
         { useReplica: true }
     ) as Promise<ThumbnailDBResult[]>;
 
-    // eslint-disable-next-line require-await
     const getBranding = async () => ({
-        titles: getTitles(),
-        thumbnails: getThumbnails()
+        titles: await getTitles(),
+        thumbnails: await getThumbnails()
     });
 
     const branding = await QueryCacher.get(getBranding, brandingKey(videoID, service));
@@ -50,7 +49,7 @@ export async function getVideoBranding(videoID: VideoID, service: Service, ip: I
         currentIP: null as Promise<HashedIP> | null
     };
 
-    return filterAndSortBranding(await branding.titles, await branding.thumbnails, ip, cache);
+    return filterAndSortBranding(branding.titles, branding.thumbnails, ip, cache);
 }
 
 export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress): Promise<Record<VideoID, BrandingResult>> {
