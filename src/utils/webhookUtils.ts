@@ -5,39 +5,19 @@ import { getFormattedTime } from "../utils/getFormattedTime";
 import axios from "axios";
 
 function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): authorType {
-    if (isOwnSubmission) {
-        return "self";
-    } else if (isTempVIP) {
-        return "temp vip";
-    } else if (isVIP) {
-        return "vip";
-    } else if (submissionCount === 0) {
-        return "new";
-    } else {
-        return "other";
-    }
-}
-
-function getVoteAuthor(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
-    if (isOwnSubmission) {
-        return "Report by Submitter";
-    } else if (isTempVIP) {
-        return "Report by Temp VIP";
-    } else if (isVIP) {
-        return "Report by VIP User";
-    } else if (submissionCount === 0) {
-        return "Report by New User";
-    }
-
-    return "";
+    if (isOwnSubmission) return authorType.Self;
+    else if (isTempVIP) return authorType.TempVIP;
+    else if (isVIP) return authorType.VIP;
+    else if (submissionCount === 0) authorType.New;
+    else return authorType.Other;
 }
 
 const voteAuthorMap: Record<authorType, string> = {
-    "self": "Report by Submitter",
-    "temp vip": "Report by Temp VIP",
-    "vip": "Report by VIP User",
-    "new": "Report by New User",
-    "other": ""
+    [authorType.Self]: "Report by Submitter",
+    [authorType.TempVIP]: "Report by Temp VIP",
+    [authorType.VIP]: "Report by VIP User",
+    [authorType.New]: "Report by New User",
+    [authorType.Other]: ""
 };
 
 const createDiscordVoteEmbed = (data: WebhookData) => {
@@ -67,7 +47,7 @@ const createDiscordVoteEmbed = (data: WebhookData) => {
 
 function dispatchEvent(scope: string, data: WebhookData): void {
     const webhooks = config.webhooks;
-    if (webhooks === undefined || webhooks.length === 0) return;
+    if (!webhooks?.length) return;
     Logger.debug("Dispatching webhooks");
 
     for (const webhook of webhooks) {
@@ -94,7 +74,6 @@ function dispatchEvent(scope: string, data: WebhookData): void {
 
 export {
     getVoteAuthorRaw,
-    getVoteAuthor,
     dispatchEvent,
     createDiscordVoteEmbed
 };

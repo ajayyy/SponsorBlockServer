@@ -2,11 +2,17 @@ import * as segments from "./segments.model";
 import { HashedUserID } from "./user.model";
 
 export enum voteType {
-    "up" = "vote.up",
-    "down" = "vote.down",
+    up = "vote.up",
+    down = "vote.down",
 }
 
-export type authorType = "self" | "temp vip" | "vip" | "new" | "other";
+export enum authorType {
+    Self = "self",
+    TempVIP = "temp vip",
+    VIP = "vip",
+    New = "new",
+    Other = "other",
+}
 
 export interface WebhookData {
     user: {
