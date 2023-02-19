@@ -1,0 +1,116 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-build:
+    name: Lint with ESLint and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run tsc
+      - name: cache dist build
+        uses: actions/cache/save@v3
+        with:
+          key: dist-${{ github.sha }}
+          path: |
+            ${{ github.workspace }}/dist
+            ${{ github.workspace }}/node_modules
+  test-sqlite:
+    name: Run Tests with SQLite
+    runs-on: ubuntu-latest
+    needs: lint-build
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - id: cache
+        uses: actions/cache/restore@v3
+        with:
+          key: dist-${{ github.sha }}
+          path: |
+            ${{ github.workspace }}/dist
+            ${{ github.workspace }}/node_modules
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Run SQLite Tests
+        timeout-minutes: 5
+        run: npx nyc --silent npm test
+      - name: cache nyc output
+        uses: actions/cache/save@v3
+        with:
+          key: nyc-sqlite-${{ github.sha }}
+          path: ${{ github.workspace }}/.nyc_output
+  test-postgres:
+    name: Run Tests with PostgreSQL and Redis
+    runs-on: ubuntu-latest
+    needs: lint-build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the docker-compose stack
+        env:
+          PG_USER: ci_db_user
+          PG_PASS: ci_db_pass
+        run: docker-compose -f docker/docker-compose-ci.yml up -d
+      - name: Check running containers
+        run: docker ps
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - id: cache
+        uses: actions/cache/restore@v3
+        with:
+          key: dist-${{ github.sha }}
+          path: |
+            ${{ github.workspace }}/dist
+            ${{ github.workspace }}/node_modules
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Run Postgres Tests
+        env:
+          TEST_POSTGRES: true
+        timeout-minutes: 5
+        run: npx nyc --silent npm test
+      - name: cache nyc output
+        uses: actions/cache/save@v3
+        with:
+          key: nyc-postgres-${{ github.sha }}
+          path: ${{ github.workspace }}/.nyc_output
+  codecov:
+    needs: [test-sqlite, test-postgres]
+    name: Run Codecov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - name: restore postgres nyc output
+        uses: actions/cache/restore@v3
+        with:
+          key: nyc-postgres-${{ github.sha }}
+          path: ${{ github.workspace }}/.nyc_output
+      - name: restore sqlite nyc output
+        uses: actions/cache/restore@v3
+        with:
+          key: nyc-sqlite-${{ github.sha }}
+          path: ${{ github.workspace }}/.nyc_output
+      - run: npx nyc report --reporter=lcov
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3

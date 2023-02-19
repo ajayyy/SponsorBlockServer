@@ -18,7 +18,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: npm install
+          cache: npm
+      - run: npm ci
       - name: Set config
         run: |
           echo '{"mode": "init-db-and-exit"}' > config.json
