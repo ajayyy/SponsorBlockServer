@@ -2,6 +2,7 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 import redis from "../../src/utils/redis";
 import crypto from "crypto";
+import { config } from "../../src/config";
 
 const genRandom = (bytes=8) => crypto.pseudoRandomBytes(bytes).toString("hex");
 const validateEtag = (expected: string, actual: string): boolean => {
@@ -11,6 +12,10 @@ const validateEtag = (expected: string, actual: string): boolean => {
 };
 
 describe("eTag", () => {
+    before(function() {
+        if (!config.redis?.enabled) this.skip();
+    });
+
     const endpoint = "/etag";
     it("Should reject weak etag", (done) => {
         const etagKey = `W/test-etag-${genRandom()}`;
@@ -24,6 +29,10 @@ describe("eTag", () => {
 });
 
 describe("304 etag validation", () => {
+    before(function() {
+        if (!config.redis?.enabled) this.skip();
+    });
+
     const endpoint = "/api/skipSegments";
     for (const hashType of ["skipSegments", "skipSegmentsHash", "videoLabel", "videoLabelHash"]) {
         it(`${hashType} etag should return 304`, (done) => {
