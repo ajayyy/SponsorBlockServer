@@ -45,7 +45,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
         const result = await banUser(userID, enabled, unHideOldSubmissions, type, categories);
 
         if (enabled && lookForIPs) {
-            const ipLoggingFixedTime = 1674590916069;
+            const ipLoggingFixedTime = 1675295716000;
             const timeSubmitted = (await db.prepare("all", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "timeSubmitted" > ? AND "userID" = ?`, [ipLoggingFixedTime, userID])) as { timeSubmitted: number }[];
             const ips = (await Promise.all(timeSubmitted.map((s) => {
                 return privateDB.prepare("all", `SELECT "hashedIP" FROM "sponsorTimes" WHERE "timeSubmitted" = ?`, [s.timeSubmitted]) as Promise<{ hashedIP: HashedIP }[]>;
