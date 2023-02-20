@@ -410,6 +410,27 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
+    it("Should be possible to ban self", (done) => {
+        const userID = VIPuserID;
+        const hashUserID = getHash(userID);
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                enabled: true,
+                userID: hashUserID,
+                categories: `["sponsor"]`,
+                unHideOldSubmissions: true,
+                adminUserID: userID,
+            }
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should be able to ban user by userID and other users who used that IP and hide specific category", (done) => {
         const hashedIP = "shadowBannedIP8";
         const userID = "shadowBanned8";
