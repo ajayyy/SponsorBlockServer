@@ -120,7 +120,7 @@ async function sendWebhooks(apiVideoDetails: videoDetails, userID: string, video
 //   false for a pass - it was confusing and lead to this bug - any use of this function in
 //   the future could have the same problem.
 async function autoModerateSubmission(apiVideoDetails: videoDetails,
-    submission: { videoID: VideoID; userID: UserID; segments: IncomingSegment[], service: Service, videoDuration: number }) {
+    submission: { videoID: VideoID; userID: HashedUserID; segments: IncomingSegment[], service: Service, videoDuration: number }) {
     // get duration from API
     const apiDuration = apiVideoDetails.duration;
     // if API fail or returns 0, get duration from client
@@ -156,7 +156,7 @@ async function autoModerateSubmission(apiVideoDetails: videoDetails,
     return false;
 }
 
-async function checkUserActiveWarning(userID: string): Promise<CheckResult> {
+async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult> {
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
     const warnings = (await db.prepare("all",
@@ -337,10 +337,10 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
     return CHECK_PASS;
 }
 
-async function checkByAutoModerator(videoID: any, userID: any, segments: Array<any>, service:string, apiVideoDetails: videoDetails, videoDuration: number): Promise<CheckResult> {
+async function checkByAutoModerator(videoID: VideoID, userID: HashedUserID, segments: IncomingSegment[], service: Service, apiVideoDetails: videoDetails, videoDuration: number): Promise<CheckResult> {
     // Auto moderator check
     if (service == Service.YouTube) {
-        const autoModerateResult = await autoModerateSubmission(apiVideoDetails, { userID, videoID, segments, service, videoDuration });
+        const autoModerateResult = await autoModerateSubmission(apiVideoDetails, { videoID, userID, segments, service, videoDuration });
         if (autoModerateResult) {
             return {
                 pass: false,
@@ -492,7 +492,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
     //hash the userID
-    const userID = await getHashCache(paramUserID || "");
+    if (!paramUserID) {
+        return res.status(400).send("No userID provided");
+    }
+    const userID: HashedUserID = await getHashCache(paramUserID);
 
     const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
     if (!invalidCheckResult.pass) {
