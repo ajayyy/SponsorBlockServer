@@ -70,15 +70,16 @@ export async function getPlayerData (videoID: string, ignoreCache = false): Prom
     }
     try {
         const data = await getFromITube(videoID)
-            .catch(err => {
+            .catch(/* istanbul ignore next */ err => {
                 Logger.warn(`InnerTube API Error for ${videoID}: ${err}`);
                 return Promise.reject(err);
             });
         DiskCache.set(cacheKey, data)
             .then(() => Logger.debug(`InnerTube API: video information cache set for: ${videoID}`))
-            .catch((err: any) => Logger.warn(err));
+            .catch(/* istanbul ignore next */ (err: any) => Logger.warn(err));
         return data;
     } catch (err) {
+        /* istanbul ignore next */
         return Promise.reject(err);
     }
 }

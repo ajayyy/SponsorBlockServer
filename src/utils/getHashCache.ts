@@ -28,7 +28,7 @@ async function getFromRedis<T extends string>(key: HashedValue): Promise<T & Has
                 Logger.debug(`Got data from redis: ${reply}`);
                 return reply as T & HashedValue;
             }
-        } catch (err) {
+        } catch (err) /* istanbul ignore next */ {
             Logger.error(err as string);
         }
     }
@@ -37,7 +37,7 @@ async function getFromRedis<T extends string>(key: HashedValue): Promise<T & Has
     const data = getHash(key, cachedHashTimes);
 
     if (!config.redis?.disableHashCache) {
-        redis.set(redisKey, data).catch((err) => Logger.error(err));
+        redis.set(redisKey, data).catch(/* istanbul ignore next */ (err) => Logger.error(err));
     }
 
     return data as T & HashedValue;
