@@ -338,4 +338,13 @@ describe("getSegmentInfo", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should return 400 if no UUIDs not sent", (done) => {
+        client.get(endpoint)
+            .then(res => {
+                if (res.status !== 400) done(`non 400 response code: ${res.status}`);
+                else done(); // pass
+            })
+            .catch(err => done(err));
+    });
 });

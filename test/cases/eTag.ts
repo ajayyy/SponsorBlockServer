@@ -33,7 +33,7 @@ describe("304 etag validation", () => {
         if (!config.redis?.enabled) this.skip();
     });
 
-    const endpoint = "/api/skipSegments";
+    const endpoint = "/etag";
     for (const hashType of ["skipSegments", "skipSegmentsHash", "videoLabel", "videoLabelHash"]) {
         it(`${hashType} etag should return 304`, (done) => {
             const etagKey = `${hashType};${genRandom};YouTube;${Date.now()}`;
@@ -47,4 +47,20 @@ describe("304 etag validation", () => {
             );
         });
     }
+
+    it(`other etag type should not return 304`, (done) => {
+        const etagKey = `invalidHashType;${genRandom};YouTube;${Date.now()}`;
+        client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
+            assert.strictEqual(res.status, 404);
+            done();
+        }).catch(err => done(err));
+    });
+
+    it(`outdated etag type should not return 304`, (done) => {
+        const etagKey = `skipSegments;${genRandom};YouTube;5000`;
+        client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
+            assert.strictEqual(res.status, 404);
+            done();
+        }).catch(err => done(err));
+    });
 });
