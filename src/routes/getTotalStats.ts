@@ -27,30 +27,32 @@ let lastFetch: DBStatsData = {
     minutesSaved: 0
 };
 
+updateExtensionUsers();
+
 export async function getTotalStats(req: Request, res: Response): Promise<void> {
-    const row = await getStats(!!req.query.countContributingUsers);
+    const countContributingUsers = Boolean(req.query?.countContributingUsers == "true");
+    const row = await getStats(countContributingUsers);
     lastFetch = row;
 
-    if (row !== undefined) {
-        const extensionUsers = chromeUsersCache + firefoxUsersCache;
+    if (!row) res.sendStatus(500);
+    const extensionUsers = chromeUsersCache + firefoxUsersCache;
 
-        //send this result
-        res.send({
-            userCount: row.userCount,
-            activeUsers: extensionUsers,
-            apiUsers: Math.max(apiUsersCache, extensionUsers),
-            viewCount: row.viewCount,
-            totalSubmissions: row.totalSubmissions,
-            minutesSaved: row.minutesSaved,
-        });
+    //send this result
+    res.send({
+        userCount: row.userCount ?? 0,
+        activeUsers: extensionUsers,
+        apiUsers: Math.max(apiUsersCache, extensionUsers),
+        viewCount: row.viewCount,
+        totalSubmissions: row.totalSubmissions,
+        minutesSaved: row.minutesSaved,
+    });
 
-        // Check if the cache should be updated (every ~14 hours)
-        const now = Date.now();
-        if (now - lastUserCountCheck > 5000000) {
-            lastUserCountCheck = now;
+    // Check if the cache should be updated (every ~14 hours)
+    const now = Date.now();
+    if (now - lastUserCountCheck > 5000000) {
+        lastUserCountCheck = now;
 
-            await updateExtensionUsers();
-        }
+        updateExtensionUsers();
     }
 }
 
@@ -66,7 +68,7 @@ function getStats(countContributingUsers: boolean): Promise<DBStatsData> {
 }
 
 
-async function updateExtensionUsers() {
+function updateExtensionUsers() {
     if (config.userCounterURL) {
         axios.get(`${config.userCounterURL}/api/v1/userCount`)
             .then(res => apiUsersCache = Math.max(apiUsersCache, res.data.userCount))
@@ -77,13 +79,18 @@ async function updateExtensionUsers() {
     const chromeExtensionUrl = "https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone";
     const chromeExtId = "mnjggcdmjocbbbhaepdhchncahnbgone";
 
-    firefoxUsersCache = await axios.get(mozillaAddonsUrl)
-        .then(res => res.data.average_daily_users )
+    axios.get(mozillaAddonsUrl)
+        .then(res => firefoxUsersCache = res.data.average_daily_users )
         .catch( /* istanbul ignore next */ () => {
             Logger.debug(`Failing to connect to ${mozillaAddonsUrl}`);
             return 0;
         });
-    chromeUsersCache = await getCWSUsers(chromeExtId) ?? await getChromeUsers(chromeExtensionUrl);
+    getCWSUsers(chromeExtId)
+        .then(res => chromeUsersCache = res)
+        .catch(() =>
+            getChromeUsers(chromeExtensionUrl)
+                .then(res => chromeUsersCache = res)
+        );
 }
 
 function getChromeUsers(chromeExtensionUrl: string): Promise<number> {

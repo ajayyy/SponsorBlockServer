@@ -20,8 +20,8 @@ async function init() {
     // delete old test database
     if (fs.existsSync(config.db)) fs.unlinkSync(config.db);
     if (fs.existsSync(config.privateDB)) fs.unlinkSync(config.privateDB);
-    await resetRedis();
-    await resetPostgres();
+    if (config?.redis?.enabled) await resetRedis();
+    if (config?.postgres) await resetPostgres();
 
     await initDb();
 

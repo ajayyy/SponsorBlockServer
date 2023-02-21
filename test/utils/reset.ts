@@ -6,7 +6,7 @@ import { Pool } from "pg";
 import { Logger } from "../../src/utils/logger";
 
 export async function resetRedis() {
-    if (config.redis) {
+    if (config?.redis?.enabled) {
         const client = createClient(config.redis);
         await client.connect();
         await client.flushAll();
