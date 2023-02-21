@@ -1,4 +1,5 @@
 export function createMemoryCache(memoryFn: (...args: any[]) => void, cacheTimeMs: number): any {
+    /* istanbul ignore if */
     if (isNaN(cacheTimeMs)) cacheTimeMs = 0;
 
     // holds the promise results

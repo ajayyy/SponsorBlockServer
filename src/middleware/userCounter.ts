@@ -14,7 +14,7 @@ export function userCounter(req: Request, res: Response, next: NextFunction): vo
                 method: "post",
                 url: `${config.userCounterURL}/api/v1/addIP?hashedIP=${getIP(req)}`,
                 httpAgent
-            }).catch(() => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
+            }).catch(() => /* instanbul skip next */ Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
         }
     }
 

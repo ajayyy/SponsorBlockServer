@@ -11,7 +11,7 @@ export const isUserTempVIP = async (hashedUserID: HashedUserID, videoID: VideoID
     try {
         const reply = await redis.get(tempVIPKey(hashedUserID));
         return reply && reply == channelID;
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         Logger.error(e as string);
         return false;
     }

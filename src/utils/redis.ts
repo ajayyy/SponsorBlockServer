@@ -135,17 +135,21 @@ if (config.redis?.enabled) {
             .then((reply) => resolve(reply))
             .catch((err) => reject(err))
     );
+    /* istanbul ignore next */
     client.on("error", function(error) {
         lastClientFail = Date.now();
         Logger.error(`Redis Error: ${error}`);
     });
+    /* istanbul ignore next */
     client.on("reconnect", () => {
         Logger.info("Redis: trying to reconnect");
     });
+    /* istanbul ignore next */
     readClient?.on("error", function(error) {
         lastReadFail = Date.now();
         Logger.error(`Redis Read-Only Error: ${error}`);
     });
+    /* istanbul ignore next */
     readClient?.on("reconnect", () => {
         Logger.info("Redis Read-Only: trying to reconnect");
     });

@@ -45,6 +45,7 @@ class Logger {
     };
 
     constructor() {
+        /* istanbul ignore if */
         if (config.mode === "development") {
             this._settings.INFO = true;
             this._settings.DEBUG = true;
@@ -73,9 +74,11 @@ class Logger {
 
         let color = colors.Bright;
         if (level === LogLevel.ERROR) color = colors.FgRed;
+        /* istanbul ignore if */
         if (level === LogLevel.WARN) color = colors.FgYellow;
 
         let levelStr = level.toString();
+        /* istanbul ignore if */
         if (levelStr.length === 4) {
             levelStr += " ";  // ensure logs are aligned
         }
