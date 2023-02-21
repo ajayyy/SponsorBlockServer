@@ -1,10 +1,9 @@
 import assert from "assert";
 import { client } from "../utils/httpClient";
 import redis from "../../src/utils/redis";
-import crypto from "crypto";
 import { config } from "../../src/config";
+import { genRandom } from "../utils/getRandom";
 
-const genRandom = (bytes=8) => crypto.pseudoRandomBytes(bytes).toString("hex");
 const validateEtag = (expected: string, actual: string): boolean => {
     const [actualHashType, actualHashKey, actualService] = actual.split(";");
     const [expectedHashType, expectedHashKey, expectedService] = expected.split(";");

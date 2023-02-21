@@ -3,11 +3,9 @@ import { getHashCache } from "../../src/utils/getHashCache";
 import { shaHashKey } from "../../src/utils/redisKeys";
 import { getHash } from "../../src/utils/getHash";
 import redis from "../../src/utils/redis";
-import crypto from "crypto";
 import assert from "assert";
 import { setTimeout } from "timers/promises";
-
-const genRandom = (bytes=8) => crypto.pseudoRandomBytes(bytes).toString("hex");
+import { genRandom } from "../utils/getRandom";
 
 const rand1Hash = genRandom(24);
 const rand1Hash_Key = getHash(rand1Hash, 1);
