@@ -1,7 +1,5 @@
 import assert from "assert";
 import { client } from "../utils/httpClient";
-import sinon from "sinon";
-import * as getCWSUsers from "../../src/utils/getCWSUsers";
 
 const endpoint = "/api/getTotalStats";
 
@@ -28,9 +26,7 @@ describe("getTotalStats", () => {
         assert.ok(data.minutesSaved >= 0);
     });
 
-    it("Can get total stats with old cws method", async () => {
-        const stub = sinon.stub(getCWSUsers, "getCWSUsers");
-        stub.resolves(undefined);
+    it("Can get total stats with contributing users", async () => {
         const result = await client({ url: `${endpoint}?countContributingUsers=true` });
         const data = result.data;
         assert.ok(data.userCount >= 0);
@@ -39,6 +35,5 @@ describe("getTotalStats", () => {
         assert.ok(data.viewCount >= 0);
         assert.ok(data.totalSubmissions >= 0);
         assert.ok(data.minutesSaved >= 0);
-        stub.restore();
     });
 });
