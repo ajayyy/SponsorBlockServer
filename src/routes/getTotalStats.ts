@@ -67,7 +67,6 @@ function getStats(countContributingUsers: boolean): Promise<DBStatsData> {
     }
 }
 
-
 function updateExtensionUsers() {
     if (config.userCounterURL) {
         axios.get(`${config.userCounterURL}/api/v1/userCount`)
@@ -87,12 +86,13 @@ function updateExtensionUsers() {
         });
     getCWSUsers(chromeExtId)
         .then(res => chromeUsersCache = res)
-        .catch(() =>
+        .catch(/* istanbul ignore next */ () =>
             getChromeUsers(chromeExtensionUrl)
                 .then(res => chromeUsersCache = res)
         );
 }
 
+/* istanbul ignore next */
 function getChromeUsers(chromeExtensionUrl: string): Promise<number> {
     return axios.get(chromeExtensionUrl)
         .then(res => {

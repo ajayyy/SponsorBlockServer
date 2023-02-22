@@ -2,10 +2,12 @@ import { db } from "../databases/databases";
 import { createMemoryCache } from "../utils/createMemoryCache";
 import { config } from "../config";
 import { Request, Response } from "express";
+import { validateCategories } from "../utils/parseParams";
 
 const MILLISECONDS_IN_MINUTE = 60000;
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 const getTopCategoryUsersWithCache = createMemoryCache(generateTopCategoryUsersStats, config.getTopUsersCacheTimeMinutes * MILLISECONDS_IN_MINUTE);
+/* istanbul ignore next */
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
 interface DBSegment {
@@ -38,7 +40,6 @@ async function generateTopCategoryUsersStats(sortBy: string, category: string) {
         }
     }
 
-
     return {
         userNames,
         viewCounts,
@@ -51,7 +52,7 @@ export async function getTopCategoryUsers(req: Request, res: Response): Promise<
     const sortType = parseInt(req.query.sortType as string);
     const category = req.query.category as string;
 
-    if (sortType == undefined || !config.categoryList.includes(category) ) {
+    if (sortType == undefined || !validateCategories([category]) ) {
         //invalid request
         return res.sendStatus(400);
     }

@@ -73,3 +73,6 @@ export const parseActionTypes = (req: Request, fallback: ActionType[]): ActionTy
 
 export const parseRequiredSegments = (req: Request): SegmentUUID[] | undefined =>
     syntaxErrorWrapper(getRequiredSegments, req, []); // never fall back
+
+export const validateCategories = (categories: string[]): boolean =>
+    categories.every((category: string) => config.categoryList.includes(category));
