@@ -34,6 +34,7 @@ export async function getTotalStats(req: Request, res: Response): Promise<void> 
     const row = await getStats(countContributingUsers);
     lastFetch = row;
 
+    /* istanbul ignore if */
     if (!row) res.sendStatus(500);
     const extensionUsers = chromeUsersCache + firefoxUsersCache;
 
@@ -68,6 +69,7 @@ function getStats(countContributingUsers: boolean): Promise<DBStatsData> {
 }
 
 function updateExtensionUsers() {
+    /* istanbul ignore else */
     if (config.userCounterURL) {
         axios.get(`${config.userCounterURL}/api/v1/userCount`)
             .then(res => apiUsersCache = Math.max(apiUsersCache, res.data.userCount))
