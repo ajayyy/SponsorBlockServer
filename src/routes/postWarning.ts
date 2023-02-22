@@ -5,6 +5,7 @@ import { isUserVIP } from "../utils/isUserVIP";
 import { getHashCache } from "../utils/getHashCache";
 import { HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
+import { generateWarningDiscord, warningData, dispatchEvent } from "../utils/webhookUtils";
 
 type warningEntry = {
     userID: HashedUserID,
@@ -20,6 +21,8 @@ function checkExpiredWarning(warning: warningEntry): boolean {
     const expiry =  Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR));
     return warning.issueTime > expiry && !warning.enabled;
 }
+
+const getUsername = (userID: HashedUserID) => db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID], { useReplica: true });
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
     if (!req.body.userID) return res.status(400).json({ "message": "Missing parameters" });
@@ -60,6 +63,27 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     } else {
         await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ?', [userID]);
         resultStatus = "removed from";
+    }
+
+    const targetUsername = await getUsername(userID) ?? null;
+    const issuerUsername = await getUsername(issuerUserID) ?? null;
+    const webhookData = {
+        target: {
+            userID,
+            username: targetUsername
+        },
+        issuer: {
+            userID: issuerUserID,
+            username: issuerUsername
+        },
+        reason
+    } as warningData;
+
+    try {
+        const warning = generateWarningDiscord(webhookData);
+        dispatchEvent("warning", warning);
+    } catch /* istanbul ignore next */ (err) {
+        Logger.error(`Error sending warning to Discord ${err}`);
     }
 
     return res.status(200).json({

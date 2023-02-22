@@ -13,6 +13,10 @@ app.post("/webhook/FirstTimeSubmissions", (req, res) => {
     res.sendStatus(200);
 });
 
+app.post("/webhook/WarningWebhook", (req, res) => {
+    res.sendStatus(200);
+});
+
 app.post("/webhook/CompletelyIncorrectReport", (req, res) => {
     res.sendStatus(200);
 });
