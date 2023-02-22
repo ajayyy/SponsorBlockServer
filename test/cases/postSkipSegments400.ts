@@ -22,6 +22,7 @@ describe("postSkipSegments 400 - missing params", () => {
             })
             .catch(err => done(err));
     });
+
     it("Should return 400 for missing params (JSON method) 2", (done) => {
         postSkipSegmentJSON({
             userID,
@@ -33,6 +34,7 @@ describe("postSkipSegments 400 - missing params", () => {
             })
             .catch(err => done(err));
     });
+
     it("Should return 400 for missing params (JSON method) 3", (done) => {
         postSkipSegmentJSON({
             userID,
@@ -101,6 +103,20 @@ describe("postSkipSegments 400 - missing params", () => {
             videoID,
             startTime: 1,
             endTime: 5,
+            category: "sponsor",
+            userID
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if no segments provided", (done) => {
+        postSkipSegmentJSON({
+            videoID,
+            segments: [],
             category: "sponsor",
             userID
         })
