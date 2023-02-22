@@ -42,6 +42,12 @@
                 "vote.up",
                 "vote.down"
             ]
+        }, {
+            "url": "http://127.0.0.1:8081/WarningWebhook",
+            "key": "superSecretKey",
+            "scopes": [
+                "warning"
+            ]
         }
     ],
     "maxNumberOfActiveWarnings": 3,

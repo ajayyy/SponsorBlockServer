@@ -1,6 +1,7 @@
 import { config } from "../config";
 import { Logger } from "../utils/logger";
 import axios from "axios";
+import { HashedUserID } from "../types/user.model";
 
 function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
@@ -57,8 +58,35 @@ function dispatchEvent(scope: string, data: Record<string, unknown>): void {
     }
 }
 
+interface warningData {
+    target: {
+        userID: HashedUserID
+        username: string | null
+    },
+    issuer: {
+        userID: HashedUserID,
+        username: string | null
+    },
+    reason: string
+}
+
+function generateWarningDiscord(data: warningData) {
+    return {
+        embeds: [
+            {
+                title: "Warning",
+                description: `**User:** ${data.target.username} (${data.target.userID})\n**Issuer:** ${data.issuer.username} (${data.issuer.userID})\n**Reason:** ${data.reason}`,
+                color: 0xff0000,
+                timestamp: new Date().toISOString()
+            }
+        ]
+    };
+}
+
 export {
     getVoteAuthorRaw,
     getVoteAuthor,
     dispatchEvent,
+    generateWarningDiscord,
+    warningData
 };
