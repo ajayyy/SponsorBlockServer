@@ -1,9 +1,7 @@
 import { config } from "../../src/config";
 import redis from "../../src/utils/redis";
-import crypto from "crypto";
 import assert from "assert";
-
-const genRandom = (bytes=8) => crypto.pseudoRandomBytes(bytes).toString("hex");
+import { genRandom } from "../utils/getRandom";
 
 const randKey1 = genRandom();
 const randValue1 = genRandom();

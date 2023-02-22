@@ -34,11 +34,11 @@ async function handleGetSegmentInfo(req: Request, res: Response): Promise<DBSegm
     // deduplicate with set
     UUIDs = [ ...new Set(UUIDs)];
     // if more than 10 entries, slice
-    if (UUIDs.length > 10) UUIDs = UUIDs.slice(0, 10);
-    if (!Array.isArray(UUIDs) || !UUIDs) {
+    if (!Array.isArray(UUIDs) || !UUIDs?.length) {
         res.status(400).send("UUIDs parameter does not match format requirements.");
         return;
     }
+    if (UUIDs.length > 10) UUIDs = UUIDs.slice(0, 10);
     const DBSegments = await getSegmentsByUUID(UUIDs);
     // all uuids failed lookup
     if (!DBSegments?.length) {

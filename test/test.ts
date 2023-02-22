@@ -10,6 +10,7 @@ import { ImportMock } from "ts-mock-imports";
 import * as rateLimitMiddlewareModule from "../src/middleware/requestRateLimit";
 import rateLimit from "express-rate-limit";
 import redis from "../src/utils/redis";
+import { resetRedis, resetPostgres } from "./utils/reset";
 
 async function init() {
     ImportMock.mockFunction(rateLimitMiddlewareModule, "rateLimitMiddleware", rateLimit({
@@ -19,6 +20,8 @@ async function init() {
     // delete old test database
     if (fs.existsSync(config.db)) fs.unlinkSync(config.db);
     if (fs.existsSync(config.privateDB)) fs.unlinkSync(config.privateDB);
+    if (config?.redis?.enabled) await resetRedis();
+    if (config?.postgres) await resetPostgres();
 
     await initDb();
 
@@ -59,6 +62,7 @@ async function init() {
                 server.close();
                 redis.quit();
                 process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
+                process.exit();
             });
         });
     });

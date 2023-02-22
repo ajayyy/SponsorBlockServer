@@ -50,7 +50,6 @@
             ]
         }
     ],
-    "maxNumberOfActiveWarnings": 3,
     "hoursAfterWarningExpires": 24,
     "rateLimit": {
         "vote": {

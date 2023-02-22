@@ -81,4 +81,14 @@ describe("getTopUsers", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should be able to get cached result", (done) => {
+        client.get(endpoint, { params: { sortType: 0 } })// minutesSaved
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                assert.ok(res.data.userNames.indexOf(user1) < res.data.userNames.indexOf(user2), `Actual Order: ${res.data.userNames}`);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

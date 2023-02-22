@@ -486,4 +486,13 @@ describe("getSkipSegments", () => {
             })
             .catch(err => done(err));
     });
+
+    it("Should get 400 for invalid category type", (done) => {
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: 1 } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
 });

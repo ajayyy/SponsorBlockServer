@@ -29,8 +29,17 @@ describe("getTopCategoryUsers", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if invalid sortType provided", (done) => {
+    it("Should return 400 if invalid type of sortType provided", (done) => {
         client.get(endpoint, { params: { sortType: "a" } })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return 400 if invalid sortType number provided", (done) => {
+        client.get(endpoint, { params: { sortType: 15, category: "sponsor" } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
                 done();
@@ -117,6 +126,18 @@ describe("getTopCategoryUsers", () => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(!res.data.userNames.includes(user1), "User 1 should not be present");
                 assert.ok(!res.data.userNames.includes(user2), "User 2 should not be present");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return no time saved for chapters", (done) => {
+        client.get(endpoint, { params: { sortType: 2, category: "chapter" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                for (const timeSaved of res.data.minutesSaved) {
+                    assert.strictEqual(timeSaved, 0, "Time saved should be 0");
+                }
                 done();
             })
             .catch(err => done(err));

@@ -9,16 +9,21 @@ describe("postWarning", () => {
     const endpoint = "/api/warnUser";
     const getWarning = (userID: string) => db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [userID]);
 
-    const warnedUser = getHash("warning-0");
+    const warneduserID = "warning-0";
+    const warnedUserPublicID = getHash(warneduserID);
+    const warningVipOne = "warning-vip-1";
+    const warningVipTwo = "warning-vip-2";
+    const nonVipUser = "warning-non-vip";
 
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash("warning-vip")]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash(warningVipOne)]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash(warningVipTwo)]);
     });
 
     it("Should be able to create warning if vip (exp 200)", (done) => {
         const json = {
-            issuerUserID: "warning-vip",
-            userID: warnedUser,
+            issuerUserID: warningVipOne,
+            userID: warnedUserPublicID,
             reason: "warning-reason-0"
         };
         client.post(endpoint, json)
@@ -38,8 +43,8 @@ describe("postWarning", () => {
 
     it("Should be not be able to create a duplicate warning if vip", (done) => {
         const json = {
-            issuerUserID: "warning-vip",
-            userID: warnedUser,
+            issuerUserID: warningVipOne,
+            userID: warnedUserPublicID,
         };
 
         client.post(endpoint, json)
@@ -58,8 +63,8 @@ describe("postWarning", () => {
 
     it("Should be able to remove warning if vip", (done) => {
         const json = {
-            issuerUserID: "warning-vip",
-            userID: warnedUser,
+            issuerUserID: warningVipOne,
+            userID: warnedUserPublicID,
             enabled: false
         };
 
@@ -78,8 +83,8 @@ describe("postWarning", () => {
 
     it("Should not be able to create warning if not vip (exp 403)", (done) => {
         const json = {
-            issuerUserID: "warning-not-vip",
-            userID: "warning-1",
+            issuerUserID: nonVipUser,
+            userID: warnedUserPublicID,
         };
 
         client.post(endpoint, json)
@@ -101,8 +106,8 @@ describe("postWarning", () => {
 
     it("Should re-enable disabled warning", (done) => {
         const json = {
-            issuerUserID: "warning-vip",
-            userID: warnedUser,
+            issuerUserID: warningVipOne,
+            userID: warnedUserPublicID,
             enabled: true
         };
 
@@ -121,14 +126,14 @@ describe("postWarning", () => {
 
     it("Should be able to remove your own warning", (done) => {
         const json = {
-            userID: "warning-0",
+            userID: warneduserID,
             enabled: false
         };
 
         client.post(endpoint, json)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                const data = await getWarning(warnedUser);
+                const data = await getWarning(warnedUserPublicID);
                 const expected = {
                     enabled: 0
                 };
@@ -138,15 +143,16 @@ describe("postWarning", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to add your own warning", (done) => {
+    it("Should not be able to add your own warning", (done) => {
         const json = {
-            userID: "warning-0"
+            userID: warneduserID,
+            enabled: true
         };
 
         client.post(endpoint, json)
             .then(async res => {
                 assert.strictEqual(res.status, 403);
-                const data = await getWarning(warnedUser);
+                const data = await getWarning(warnedUserPublicID);
                 const expected = {
                     enabled: 0
                 };

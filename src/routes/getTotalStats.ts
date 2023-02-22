@@ -3,6 +3,7 @@ import { config } from "../config";
 import { Request, Response } from "express";
 import axios from "axios";
 import { Logger } from "../utils/logger";
+import { getCWSUsers } from "../utils/getCWSUsers";
 
 // A cache of the number of chrome web store users
 let chromeUsersCache = 0;
@@ -29,30 +30,30 @@ let lastFetch: DBStatsData = {
 updateExtensionUsers();
 
 export async function getTotalStats(req: Request, res: Response): Promise<void> {
-
-    const row = await getStats(!!req.query.countContributingUsers);
+    const countContributingUsers = Boolean(req.query?.countContributingUsers == "true");
+    const row = await getStats(countContributingUsers);
     lastFetch = row;
 
-    if (row !== undefined) {
-        const extensionUsers = chromeUsersCache + firefoxUsersCache;
+    /* istanbul ignore if */
+    if (!row) res.sendStatus(500);
+    const extensionUsers = chromeUsersCache + firefoxUsersCache;
 
-        //send this result
-        res.send({
-            userCount: row.userCount,
-            activeUsers: extensionUsers,
-            apiUsers: Math.max(apiUsersCache, extensionUsers),
-            viewCount: row.viewCount,
-            totalSubmissions: row.totalSubmissions,
-            minutesSaved: row.minutesSaved,
-        });
+    //send this result
+    res.send({
+        userCount: row.userCount ?? 0,
+        activeUsers: extensionUsers,
+        apiUsers: Math.max(apiUsersCache, extensionUsers),
+        viewCount: row.viewCount,
+        totalSubmissions: row.totalSubmissions,
+        minutesSaved: row.minutesSaved,
+    });
 
-        // Check if the cache should be updated (every ~14 hours)
-        const now = Date.now();
-        if (now - lastUserCountCheck > 5000000) {
-            lastUserCountCheck = now;
+    // Check if the cache should be updated (every ~14 hours)
+    const now = Date.now();
+    if (now - lastUserCountCheck > 5000000) {
+        lastUserCountCheck = now;
 
-            updateExtensionUsers();
-        }
+        updateExtensionUsers();
     }
 }
 
@@ -67,42 +68,53 @@ function getStats(countContributingUsers: boolean): Promise<DBStatsData> {
     }
 }
 
-
 function updateExtensionUsers() {
+    /* istanbul ignore else */
     if (config.userCounterURL) {
         axios.get(`${config.userCounterURL}/api/v1/userCount`)
-            .then(res => {
-                apiUsersCache = Math.max(apiUsersCache, res.data.userCount);
-            })
-            .catch(() => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
+            .then(res => apiUsersCache = Math.max(apiUsersCache, res.data.userCount))
+            .catch( /* istanbul ignore next */ () => Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
     }
 
     const mozillaAddonsUrl = "https://addons.mozilla.org/api/v3/addons/addon/sponsorblock/";
     const chromeExtensionUrl = "https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone";
+    const chromeExtId = "mnjggcdmjocbbbhaepdhchncahnbgone";
 
     axios.get(mozillaAddonsUrl)
-        .then(res => {
-            firefoxUsersCache = res.data.average_daily_users;
-            axios.get(chromeExtensionUrl)
-                .then(res => {
-                    const body = res.data;
-                    // 2021-01-05
-                    // [...]<span><meta itemprop="interactionCount" content="UserDownloads:100.000+"/><meta itemprop="opera[...]
-                    const matchingString = '"UserDownloads:';
-                    const matchingStringLen = matchingString.length;
-                    const userDownloadsStartIndex = body.indexOf(matchingString);
-                    if (userDownloadsStartIndex >= 0) {
-                        const closingQuoteIndex = body.indexOf('"', userDownloadsStartIndex + matchingStringLen);
-                        const userDownloadsStr = body.substr(userDownloadsStartIndex + matchingStringLen, closingQuoteIndex - userDownloadsStartIndex).replace(",", "").replace(".", "");
-                        chromeUsersCache = parseInt(userDownloadsStr);
-                    }
-                    else {
-                        lastUserCountCheck = 0;
-                    }
-                })
-                .catch(() => Logger.debug(`Failing to connect to ${chromeExtensionUrl}`));
-        })
-        .catch(() => {
+        .then(res => firefoxUsersCache = res.data.average_daily_users )
+        .catch( /* istanbul ignore next */ () => {
             Logger.debug(`Failing to connect to ${mozillaAddonsUrl}`);
+            return 0;
+        });
+    getCWSUsers(chromeExtId)
+        .then(res => chromeUsersCache = res)
+        .catch(/* istanbul ignore next */ () =>
+            getChromeUsers(chromeExtensionUrl)
+                .then(res => chromeUsersCache = res)
+        );
+}
+
+/* istanbul ignore next */
+function getChromeUsers(chromeExtensionUrl: string): Promise<number> {
+    return axios.get(chromeExtensionUrl)
+        .then(res => {
+            const body = res.data;
+            // 2021-01-05
+            // [...]<span><meta itemprop="interactionCount" content="UserDownloads:100.000+"/><meta itemprop="opera[...]
+            const matchingString = '"UserDownloads:';
+            const matchingStringLen = matchingString.length;
+            const userDownloadsStartIndex = body.indexOf(matchingString);
+            /* istanbul ignore else */
+            if (userDownloadsStartIndex >= 0) {
+                const closingQuoteIndex = body.indexOf('"', userDownloadsStartIndex + matchingStringLen);
+                const userDownloadsStr = body.substr(userDownloadsStartIndex + matchingStringLen, closingQuoteIndex - userDownloadsStartIndex).replace(",", "").replace(".", "");
+                return parseInt(userDownloadsStr);
+            } else {
+                lastUserCountCheck = 0;
+            }
+        })
+        .catch(/* istanbul ignore next */ () => {
+            Logger.debug(`Failing to connect to ${chromeExtensionUrl}`);
+            return 0;
         });
 }

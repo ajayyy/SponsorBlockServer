@@ -25,13 +25,13 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     try {
         await getEtag("skipSegmentsHash", hashPrefix, service)
             .then(etag => res.set("ETag", etag))
-            .catch(() => null);
+            .catch(/* istanbul ignore next */ () => null);
         const output = Object.entries(segments).map(([videoID, data]) => ({
             videoID,
             segments: data.segments,
         }));
         return res.status(output.length === 0 ? 404 : 200).json(output);
-    } catch(e) {
+    } catch (e) /* istanbul ignore next */ {
         Logger.error(`skip segments by hash error: ${e}`);
 
         return res.status(500).send("Internal server error");
