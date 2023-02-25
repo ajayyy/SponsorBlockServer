@@ -296,7 +296,7 @@ describe("shadowBanUser", () => {
                 enabled: true,
                 categories: `["sponsor"]`,
                 unHideOldSubmissions: true,
-                type: "3"
+                type: "bad"
             }
         })
             .then(res => {

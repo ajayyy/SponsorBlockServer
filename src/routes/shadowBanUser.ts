@@ -12,7 +12,10 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     const userID = req.query.userID as UserID;
     const hashedIP = req.query.hashedIP as HashedIP;
     const adminUserIDInput = req.query.adminUserID as UserID;
-    const type = req.query.type as string ?? "1";
+    const type = Number.parseInt(req.query.type as string ?? "1");
+    if (isNaN(type)) {
+        return res.sendStatus(400);
+    }
 
     const enabled = req.query.enabled === undefined
         ? true
@@ -27,7 +30,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
 
     const categories: Category[] = parseCategories(req, config.categoryList as Category[]);
 
-    if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined || !["1", "2"].includes(type))) {
+    if (adminUserIDInput == undefined || (userID == undefined && hashedIP == undefined || type <= 0)) {
         //invalid request
         return res.sendStatus(400);
     }
@@ -70,7 +73,7 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
     return res.sendStatus(200);
 }
 
-export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[]): Promise<number> {
+export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: boolean, type: number, categories: Category[]): Promise<number> {
     //check to see if this user is already shadowbanned
     const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
 
@@ -93,37 +96,22 @@ export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmiss
             return 409;
         }
     } else if (!enabled && row.userCount > 0) {
-        //remove them from the shadow ban list
-        await db.prepare("run", `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
-
         //find all previous submissions and unhide them
         if (unHideOldSubmissions) {
-            const segmentsToIgnore = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st
-                JOIN "lockCategories" ns on "st"."videoID" = "ns"."videoID" AND st.category = ns.category AND "st"."service" = "ns"."service" WHERE "st"."userID" = ?`
-            , [userID])).map((item: { UUID: string }) => item.UUID);
-            const allSegments = (await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" st WHERE "st"."userID" = ?`, [userID]))
-                .map((item: { UUID: string }) => item.UUID);
-
-            await Promise.all(allSegments.filter((item: { uuid: string }) => {
-                return segmentsToIgnore.indexOf(item) === -1;
-            }).map(async (UUID: string) => {
-                // collect list for unshadowbanning
-                (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service", "votes", "views", "userID" FROM "sponsorTimes" WHERE "UUID" = ? AND "shadowHidden" >= 1 AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]))
-                    .forEach((videoInfo: { category: Category, videoID: VideoID, hashedVideoID: VideoIDHash, service: Service, userID: UserID }) => {
-                        QueryCacher.clearSegmentCache(videoInfo);
-                    }
-                    );
-
-                return db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = 0 WHERE "UUID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})`, [UUID]);
-            }));
+            await unHideSubmissionsByUser(categories, userID, 0);
         }
-        // already shadowbanned
+
+        //remove them from the shadow ban list
+        await db.prepare("run", `DELETE FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
+    } else if (row.userCount == 0) { // already shadowbanned
+        // already not shadowbanned
+        return 400;
     }
 
     return 200;
 }
 
-export async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmissions: boolean, type: string, categories: Category[], banUsers: boolean): Promise<number> {
+export async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmissions: boolean, type: number, categories: Category[], banUsers: boolean): Promise<number> {
     //check to see if this user is already shadowbanned
     const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
 
@@ -153,17 +141,15 @@ export async function banIP(hashedIP: HashedIP, enabled: boolean, unHideOldSubmi
 
         //find all previous submissions and unhide them
         if (unHideOldSubmissions) {
-            await unHideSubmissionsByIP(categories, hashedIP, "0");
+            await unHideSubmissionsByIP(categories, hashedIP, 0);
         }
     }
 
     return 200;
 }
 
-async function unHideSubmissionsByUser(categories: string[], userID: UserID, type = "1") {
-    if (!["1", "2"].includes(type)) return;
-
-    await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = ${type} WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
+async function unHideSubmissionsByUser(categories: string[], userID: UserID, type = 1) {
+    await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = '${type}' WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                     AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
                     "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
 
@@ -174,9 +160,7 @@ async function unHideSubmissionsByUser(categories: string[], userID: UserID, typ
         });
 }
 
-async function unHideSubmissionsByIP(categories: string[], hashedIP: HashedIP, type = "1"): Promise<Set<UserID>> {
-    if (!["0", "1", "2"].includes(type)) return;
-
+async function unHideSubmissionsByIP(categories: string[], hashedIP: HashedIP, type = 1): Promise<Set<UserID>> {
     const submissions = await privateDB.prepare("all", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "hashedIP" = ?`, [hashedIP]) as { timeSubmitted: number }[];
 
     const users: Set<UserID> = new Set();
