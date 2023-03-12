@@ -48,3 +48,28 @@ describe("tokenUtils test", function() {
         mock.restore();
     });
 });
+
+describe("tokenUtils failing tests", function() {
+    before(function() {
+        mock = new MockAdapter(axios, { onNoMatch: "throwException" });
+        mock.onPost("https://www.patreon.com/api/oauth2/token").reply(204, patreon.fakeOauth);
+        mock.onGet(/identity/).reply(204, patreon.activeIdentity);
+    });
+
+    it("Should fail if patreon is not correctly stubbed", function (done) {
+        tokenUtils.createAndSaveToken(tokenUtils.TokenType.patreon, "test_code").then((licenseKey) => {
+            assert.strictEqual(licenseKey, null);
+            done();
+        });
+    });
+    it("Should fail if token type is invalid", (done) => {
+        tokenUtils.createAndSaveToken("invalidTokenType" as tokenUtils.TokenType).then((licenseKey) => {
+            assert.strictEqual(licenseKey, null);
+            done();
+        });
+    });
+
+    after(function () {
+        mock.restore();
+    });
+});
