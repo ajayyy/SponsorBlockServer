@@ -78,7 +78,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
             [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
 
-    if (hashedVideoIDPrefix.length === 4) {
+    if (hashedVideoIDPrefix.length === 3) {
         return await QueryCacher.get(fetchFromDB, videoLabelsHashKey(hashedVideoIDPrefix, service));
     }
 
