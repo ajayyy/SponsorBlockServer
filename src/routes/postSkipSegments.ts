@@ -321,7 +321,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
 
         //check if this info has already been submitted before
         const duplicateCheck2Row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "startTime" = ?
-            and "endTime" = ? and "category" = ? and "actionType" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, videoID, service]);
+            and "endTime" = ? and "category" = ? and "actionType" = ? and "description" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, segments[i].description, videoID, service]);
         if (duplicateCheck2Row) {
             if (segments[i].actionType === ActionType.Full) {
                 // Forward as vote
