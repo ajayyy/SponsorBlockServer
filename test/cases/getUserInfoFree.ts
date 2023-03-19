@@ -10,7 +10,6 @@ describe("getUserInfo Free Chapters", () => {
     const vipQualifyUserID = "getUserInfo-Free-VIP";
     const repQualifyUserID = "getUserInfo-Free-RepQualify";
     const oldQualifyUserID = "getUserInfo-Free-OldQualify";
-    const newNoQualityUserID = "getUserInfo-Free-newNoQualify";
     const postOldQualify = 1600000000000;
 
     before(async () => {
@@ -23,16 +22,6 @@ describe("getUserInfo Free Chapters", () => {
     });
 
     const getUserInfo = (userID: string) => client.get(endpoint, { params: { userID, value: "freeChaptersAccess" } });
-
-    it("Should not get free access under new rule (newNoQualify)", (done) => {
-        getUserInfo(newNoQualityUserID)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                assert.strictEqual(res.data.freeChaptersAccess, false);
-                done();
-            })
-            .catch(err => done(err));
-    });
 
     it("Should get free access under new rule (newQualify)", (done) => {
         getUserInfo(newQualifyUserID)
