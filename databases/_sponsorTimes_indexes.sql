@@ -116,3 +116,37 @@ CREATE INDEX IF NOT EXISTS "userFeatures_userID"
     ON public."userFeatures" USING btree
     ("userID" COLLATE pg_catalog."default" ASC NULLS LAST, "feature" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+-- titles
+
+CREATE INDEX IF NOT EXISTS "titles_timeSubmitted"
+    ON public."titles" USING btree
+    ("timeSubmitted" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "titles_videoID"
+    ON public."titles" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "titles_hashedVideoID"
+    ON public."titles" USING btree
+    ("hashedVideoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+-- thumbnails
+
+CREATE INDEX IF NOT EXISTS "thumbnails_timeSubmitted"
+    ON public."thumbnails" USING btree
+    ("timeSubmitted" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "thumbnails_videoID"
+    ON public."thumbnails" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "thumbnails_hashedVideoID"
+    ON public."thumbnails" USING btree
+    ("hashedVideoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
