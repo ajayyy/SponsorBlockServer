@@ -11,6 +11,7 @@ import { getService } from "../utils/getService";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Logger } from "../utils/logger";
 import crypto from "crypto";
+import { QueryCacher } from "../utils/queryCacher";
 
 enum BrandingType {
     Title,
@@ -96,6 +97,7 @@ export async function postBranding(req: Request, res: Response) {
             }
         })()]);
 
+        QueryCacher.clearBrandingCache({ videoID, hashedVideoID, service });
         res.status(200).send("OK");
     } catch (e) {
         Logger.error(e as string);

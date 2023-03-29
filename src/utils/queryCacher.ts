@@ -1,6 +1,6 @@
 import redis from "../utils/redis";
 import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey } from "./redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
@@ -87,6 +87,13 @@ function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoID
     }
 }
 
+function clearBrandingCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoIDHash; service: Service; }): void {
+    if (videoInfo) {
+        redis.del(brandingHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
+        redis.del(brandingKey(videoInfo.videoID, videoInfo.service)).catch((err) => Logger.error(err));
+    }
+}
+
 async function getKeyLastModified(key: string): Promise<Date> {
     if (!config.redis?.enabled) return Promise.reject("ETag - Redis not enabled");
     return await redis.ttl(key)
@@ -112,6 +119,7 @@ export const QueryCacher = {
     get,
     getAndSplit,
     clearSegmentCache,
+    clearBrandingCache,
     getKeyLastModified,
     clearRatingCache,
     clearFeatureCache,
