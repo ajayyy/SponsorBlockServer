@@ -38,7 +38,8 @@ export async function postBranding(req: Request, res: Response) {
 
     try {
         const hashedUserID = await getHashCache(userID);
-        const isVip = await isUserVIP(hashedUserID);
+        // const isVip = await isUserVIP(hashedUserID);
+        const isVip = false; // TODO: In future, reenable locks
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
 
