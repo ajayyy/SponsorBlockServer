@@ -128,6 +128,21 @@ addDefaults(config, {
         },
         {
             name: "ratings"
+        },
+        {
+            name: "titles"
+        },
+        {
+            name: "titleVotes"
+        },
+        {
+            name: "thumbnails"
+        },
+        {
+            name: "thumbnailTimestamps"
+        },
+        {
+            name: "thumbnailVotes"
         }]
     },
     diskCacheURL: null,
