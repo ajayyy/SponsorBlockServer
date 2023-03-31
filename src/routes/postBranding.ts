@@ -63,7 +63,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 if (isVip) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "titleVotes" SET "locked" = 0 WHERE "UUID" != ?`, [UUID]);
+                    await db.prepare("run", `UPDATE "titleVotes" SET "locked" = 0 WHERE "UUID" != ? AND "videoID" = ?`, [UUID, videoID]);
                 }
             }
         })(), (async () => {
@@ -91,7 +91,7 @@ export async function postBranding(req: Request, res: Response) {
 
                     if (isVip) {
                         // unlock all other titles
-                        await db.prepare("run", `UPDATE "thumbnailVotes" SET "locked" = 0 WHERE "UUID" != ?`, [UUID]);
+                        await db.prepare("run", `UPDATE "thumbnailVotes" SET "locked" = 0 WHERE "UUID" != ? AND "videoID" = ?`, [UUID, videoID]);
                     }
                 }
             }
