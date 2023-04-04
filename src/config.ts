@@ -29,7 +29,7 @@ addDefaults(config, {
         intro: ["skip", "mute"],
         outro: ["skip", "mute"],
         preview: ["skip", "mute"],
-        filler: ["skip", "mute"],
+        filler: ["skip", "mute", "full"],
         music_offtopic: ["skip"],
         poi_highlight: ["poi"],
         chapter: ["chapter"]
