@@ -58,7 +58,7 @@ export const videoLabelsKey = (videoID: VideoID, service: Service): string =>
 
 export function videoLabelsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
     hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 3) as VideoIDHash;
-    if (hashedVideoIDPrefix.length !== 4) Logger.warn(`Redis skip segment hash-prefix key is not length 4! ${hashedVideoIDPrefix}`);
+    if (hashedVideoIDPrefix.length !== 3) Logger.warn(`Redis video labels hash-prefix key is not length 3! ${hashedVideoIDPrefix}`);
 
     return `labels.v1.${service}.${hashedVideoIDPrefix}`;
 }
