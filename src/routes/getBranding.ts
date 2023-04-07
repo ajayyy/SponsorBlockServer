@@ -48,7 +48,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 
     // Add trace info to request for debugging purposes
     res.setHeader("X-Start-Time", brandingTrace.startTime);
-    res.setHeader("X-DB-Start-Time", brandingTrace.dbStartTime);
+    if (brandingTrace.dbStartTime) res.setHeader("X-DB-Start-Time", brandingTrace.dbStartTime);
     res.setHeader("X-End-Time", brandingTrace.endTime);
 
     const cache = {
