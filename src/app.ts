@@ -66,7 +66,7 @@ export function createServer(callback: () => void): Server {
     router.use(corsMiddleware);
     router.use(loggerMiddleware);
     router.use("/api/", apiCspMiddleware);
-    router.use(hostHeader)
+    router.use(hostHeader);
     router.use(cacheMiddlware);
     router.use(express.json());
 
