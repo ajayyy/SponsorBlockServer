@@ -21,6 +21,11 @@ interface PostgresStats {
     avgReadTime: number;
     avgWriteTime: number;
     avgFailedTime: number;
+    pool: {
+        total: number;
+        idle: number;
+        waiting: number;
+    }
 }
 
 export interface DatabaseConfig {
@@ -266,7 +271,12 @@ export class Postgres implements IDatabase {
             activeRequests: this.activePostgresRequests,
             avgReadTime: this.readResponseTime.length > 0 ? this.readResponseTime.reduce((a, b) => a + b, 0) / this.readResponseTime.length : 0,
             avgWriteTime: this.writeResponseTime.length > 0 ? this.writeResponseTime.reduce((a, b) => a + b, 0) / this.writeResponseTime.length : 0,
-            avgFailedTime: this.failedResponseTime.length > 0 ? this.failedResponseTime.reduce((a, b) => a + b, 0) / this.failedResponseTime.length : 0
+            avgFailedTime: this.failedResponseTime.length > 0 ? this.failedResponseTime.reduce((a, b) => a + b, 0) / this.failedResponseTime.length : 0,
+            pool: {
+                total: this.pool.totalCount,
+                idle: this.pool.idleCount,
+                waiting: this.pool.waitingCount
+            }
         };
     }
 
