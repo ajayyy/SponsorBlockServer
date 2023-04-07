@@ -19,7 +19,7 @@ enum BrandingSubmissionType {
     Thumbnail = "thumbnail"
 }
 
-export async function getVideoBranding(videoID: VideoID, service: Service, ip: IPAddress): Promise<BrandingResult> {
+export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
         `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID"
@@ -43,7 +43,13 @@ export async function getVideoBranding(videoID: VideoID, service: Service, ip: I
         thumbnails: await getThumbnails()
     });
 
-    const branding = await QueryCacher.get(getBranding, brandingKey(videoID, service));
+    const brandingTrace = await QueryCacher.getTraced(getBranding, brandingKey(videoID, service));
+    const branding = brandingTrace.data;
+
+    // Add trace info to request for debugging purposes
+    res.setHeader("X-Start-Time", brandingTrace.startTime);
+    res.setHeader("X-DB-Start-Time", brandingTrace.dbStartTime);
+    res.setHeader("X-End-Time", brandingTrace.endTime);
 
     const cache = {
         currentIP: null as Promise<HashedIP> | null
@@ -177,7 +183,7 @@ export async function getBranding(req: Request, res: Response) {
 
     const ip = getIP(req);
     try {
-        const result = await getVideoBranding(videoID, service, ip);
+        const result = await getVideoBranding(res, videoID, service, ip);
 
         const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
         return res.status(status).json(result);

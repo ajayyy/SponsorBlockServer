@@ -22,6 +22,41 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     return data;
 }
 
+
+async function getTraced<T>(fetchFromDB: () => Promise<T>, key: string): Promise<{
+    data: T;
+    startTime: number;
+    dbStartTime?: number;
+    endTime: number;
+}> {
+    const startTime = Date.now();
+
+    try {
+        const reply = await redis.get(key);
+        if (reply) {
+            Logger.debug(`Got data from redis: ${reply}`);
+
+            return {
+                data: JSON.parse(reply),
+                startTime: startTime,
+                endTime: Date.now()
+            };
+        }
+    } catch (e) { } //eslint-disable-line no-empty
+
+    const dbStartTime = Date.now();
+    const data = await fetchFromDB();
+
+    redis.setEx(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+
+    return {
+        data,
+        startTime: startTime,
+        dbStartTime: dbStartTime,
+        endTime: Date.now()
+    };
+}
+
 /**
  * Gets from redis for all specified values and splits the result before adding it to redis cache
  */
@@ -117,6 +152,7 @@ function clearFeatureCache(userID: HashedUserID, feature: Feature): void {
 
 export const QueryCacher = {
     get,
+    getTraced,
     getAndSplit,
     clearSegmentCache,
     clearBrandingCache,
