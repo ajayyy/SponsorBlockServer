@@ -52,6 +52,7 @@ import { verifyTokenRequest } from "./routes/verifyToken";
 import { getBranding, getBrandingByHashEndpoint } from "./routes/getBranding";
 import { postBranding } from "./routes/postBranding";
 import { cacheMiddlware } from "./middleware/etag";
+import { hostHeader } from "./middleware/hostHeader";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -65,6 +66,7 @@ export function createServer(callback: () => void): Server {
     router.use(corsMiddleware);
     router.use(loggerMiddleware);
     router.use("/api/", apiCspMiddleware);
+    router.use(hostHeader)
     router.use(cacheMiddlware);
     router.use(express.json());
 
