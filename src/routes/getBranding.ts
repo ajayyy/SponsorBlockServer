@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { isEmpty } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
+import { Postgres } from "../databases/Postgres";
 import { BrandingDBSubmission, BrandingHashDBResult, BrandingResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
 import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
 import { shuffleArray } from "../utils/array";
@@ -50,6 +51,12 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
     res.setHeader("X-Start-Time", brandingTrace.startTime);
     if (brandingTrace.dbStartTime) res.setHeader("X-DB-Start-Time", brandingTrace.dbStartTime);
     res.setHeader("X-End-Time", brandingTrace.endTime);
+    const stats = (db as Postgres)?.getStats?.();
+    if (stats) {
+        res.setHeader("X-DB-Pool-Total", stats.pool.total);
+        res.setHeader("X-DB-Pool-Idle", stats.pool.idle);
+        res.setHeader("X-DB-Pool-Waiting", stats.pool.waiting);
+    }
 
     const cache = {
         currentIP: null as Promise<HashedIP> | null
