@@ -9,4 +9,4 @@ test -e config.json || cat <<EOF > config.json
 }
 EOF
 
-node dist/src/index.js
+node dist/src/index.js --inspect
