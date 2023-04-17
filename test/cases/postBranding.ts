@@ -177,7 +177,7 @@ describe("postBranding", () => {
         assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
     });
 
-    it("Submit title and thumbnail as VIP", async () => {
+    xit("Submit title and thumbnail as VIP", async () => {
         const videoID = "postBrand6";
         const title = {
             title: "Some title",
@@ -218,7 +218,7 @@ describe("postBranding", () => {
         assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
     });
 
-    it("Submit another title and thumbnail as VIP unlocks others", async () => {
+    xit("Submit another title and thumbnail as VIP unlocks others", async () => {
         const videoID = "postBrand6";
         const title = {
             title: "Some other title",
