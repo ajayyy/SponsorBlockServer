@@ -38,8 +38,7 @@ export async function postBranding(req: Request, res: Response) {
 
     try {
         const hashedUserID = await getHashCache(userID);
-        // const isVip = await isUserVIP(hashedUserID);
-        const isVip = false; // TODO: In future, reenable locks
+        const isVip = await isUserVIP(hashedUserID);
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
 
@@ -64,7 +63,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 if (isVip) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "titleVotes" SET "locked" = 0 WHERE "UUID" != ? AND "videoID" = ?`, [UUID, videoID]);
+                    await db.prepare("run", `UPDATE "titleVotes" SET "locked" = 0 FROM "titles" WHERE "titleVotes"."UUID" != ? AND "titles"."UUID" != ? AND "titles"."videoID" = ?`, [UUID, UUID, videoID]);
                 }
             }
         })(), (async () => {
@@ -92,7 +91,7 @@ export async function postBranding(req: Request, res: Response) {
 
                     if (isVip) {
                         // unlock all other titles
-                        await db.prepare("run", `UPDATE "thumbnailVotes" SET "locked" = 0 WHERE "UUID" != ? AND "videoID" = ?`, [UUID, videoID]);
+                        await db.prepare("run", `UPDATE "thumbnailVotes" SET "locked" = 0 FROM "thumbnails" WHERE "thumbnailVotes"."UUID" != ? AND "thumbnails"."UUID" != ? AND "thumbnails"."videoID" = ?`, [UUID, UUID, videoID]);
                     }
                 }
             }
