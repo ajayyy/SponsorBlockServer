@@ -115,6 +115,24 @@ async function getPermissions(userID: HashedUserID): Promise<Record<string, bool
     return result;
 }
 
+async function getTitleSubmissionCount(userID: HashedUserID): Promise<number> {
+    try {
+        const row = await db.prepare("get", `SELECT COUNT(*) as "titleSubmissionCount" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."votes" >= 0`, [userID], { useReplica: true });
+        return row?.titleSubmissionCount ?? 0;
+    } catch (err) /* istanbul ignore next */ {
+        return null;
+    }
+}
+
+async function getThumbnailSubmissionCount(userID: HashedUserID): Promise<number> {
+    try {
+        const row = await db.prepare("get", `SELECT COUNT(*) as "thumbnailSubmissionCount" FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnails"."userID" = ? AND "thumbnailVotes"."votes" >= 0`, [userID], { useReplica: true });
+        return row?.thumbnailSubmissionCount ?? 0;
+    } catch (err) /* istanbul ignore next */ {
+        return null;
+    }
+}
+
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -140,7 +158,9 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
         vip: () => isUserVIP(userID),
         lastSegmentID: () => dbGetLastSegmentForUser(userID),
         permissions: () => getPermissions(userID),
-        freeChaptersAccess: () => true
+        freeChaptersAccess: () => true,
+        titleSubmissionCount: () => getTitleSubmissionCount(userID),
+        thumbnailSubmissionCount: () => getThumbnailSubmissionCount(userID),
     })("")(property);
 };
 
@@ -150,7 +170,8 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
     const defaultProperties: string[] = ["userID", "userName", "minutesSaved", "segmentCount", "ignoredSegmentCount",
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
-    const allProperties: string[] = [...defaultProperties, "banned", "permissions", "freeChaptersAccess"];
+    const allProperties: string[] = [...defaultProperties, "banned", "permissions", "freeChaptersAccess",
+        "ignoredSegmentCount", "titleSubmissionCount", "thumbnailSubmissionCount"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value

@@ -23,6 +23,16 @@ describe("getUserInfo", () => {
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo4", 1, 11, 2,   "uuid000010", getHash("getuserinfo_user_04"), 9, 10, "chapter", "chapter", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo5", 1, 11, 2,   "uuid000011", getHash("getuserinfo_user_05"), 9, 10, "sponsor", "skip", 0]);
 
+        const titlesQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const titleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, 0);';
+        const thumbnailsQuery = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
+        const thumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, 0)';
+        await db.prepare("run", titlesQuery, ["getUserInfo6", "title0", 1, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000001"]);
+        await db.prepare("run", titleVotesQuery, ["uuid000001", 0, 0]);
+        await db.prepare("run", thumbnailsQuery, ["getUserInfo6", "thumbnail0", getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000002"]);
+        await db.prepare("run", thumbnailVotesQuery, ["uuid000002", 0, 0]);
+        await db.prepare("run", titlesQuery, ["getUserInfo6", "title1", 0, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 2, "uuid000003"]);
+        await db.prepare("run", titleVotesQuery, ["uuid000003", -1, 0]);
 
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_0"), 10, "getuserinfo_vip", 1, "warning0-0"]);
@@ -362,6 +372,20 @@ describe("getUserInfo", () => {
                     warningReason: ""
                 };
                 assert.deepStrictEqual(res.data, expected);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should get title and vote submission counts", (done) => {
+        client.get(endpoint, { params: { userID: "getuserinfo_user_01", value: ["titleSubmissionCount", "thumbnailSubmissionCount"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    titleSubmissionCount: 1,
+                    thumbnailSubmissionCount: 1
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
