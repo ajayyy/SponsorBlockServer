@@ -29,7 +29,7 @@ describe("getUserInfo", () => {
         const thumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, 0)';
         await db.prepare("run", titlesQuery, ["getUserInfo6", "title0", 1, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000001"]);
         await db.prepare("run", titleVotesQuery, ["uuid000001", 0, 0]);
-        await db.prepare("run", thumbnailsQuery, ["getUserInfo6", "thumbnail0", getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000002"]);
+        await db.prepare("run", thumbnailsQuery, ["getUserInfo6", 0, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000002"]);
         await db.prepare("run", thumbnailVotesQuery, ["uuid000002", 0, 0]);
         await db.prepare("run", titlesQuery, ["getUserInfo6", "title1", 0, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 2, "uuid000003"]);
         await db.prepare("run", titleVotesQuery, ["uuid000003", -1, 0]);
