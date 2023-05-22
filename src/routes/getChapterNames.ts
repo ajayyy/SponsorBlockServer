@@ -22,7 +22,7 @@ export async function getChapterNames(req: Request, res: Response): Promise<Resp
         const descriptions = await db.prepare("all", `
             SELECT "description"
             FROM "sponsorTimes"
-            WHERE ("locked" = 1 OR "votes" > 0 OR ("views" > 25 AND "votes" >= 0)) AND "videoID" IN (
+            WHERE ("locked" = 1 OR "votes" >= 0) AND "videoID" IN (
                 SELECT "videoID"
                 FROM "videoInfo"
                 WHERE "channelID" = ?
