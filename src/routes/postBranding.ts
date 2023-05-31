@@ -63,7 +63,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 if (isVip) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "titleVotes" SET "locked" = 0 FROM "titles" WHERE "titleVotes"."UUID" != ? AND "titles"."UUID" != ? AND "titles"."videoID" = ?`, [UUID, UUID, videoID]);
+                    await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
             }
         })(), (async () => {
@@ -91,7 +91,7 @@ export async function postBranding(req: Request, res: Response) {
 
                     if (isVip) {
                         // unlock all other titles
-                        await db.prepare("run", `UPDATE "thumbnailVotes" SET "locked" = 0 FROM "thumbnails" WHERE "thumbnailVotes"."UUID" != ? AND "thumbnails"."UUID" != ? AND "thumbnails"."videoID" = ?`, [UUID, UUID, videoID]);
+                        await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                     }
                 }
             }
