@@ -221,7 +221,7 @@ export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResu
     const randomTime = SeedRandom.alea(videoID)();
     if (segments.length === 0) return randomTime;
 
-    const videoDuration = segments[0].videoDuration;
+    const videoDuration = segments[0].videoDuration || Math.max(...segments.map((s) => s.endTime));
 
     // There are segments, treat this as a relative time in the chopped up video
     const sorted = segments.sort((a, b) => a.startTime - b.startTime);
