@@ -46,7 +46,8 @@ export interface ThumbnailResult {
 export interface BrandingResult {
     titles: TitleResult[],
     thumbnails: ThumbnailResult[],
-    randomTime: number
+    randomTime: number,
+    videoDuration: number | null
 }
 
 export interface BrandingHashDBResult {

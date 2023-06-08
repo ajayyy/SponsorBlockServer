@@ -189,7 +189,8 @@ async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[]
     return {
         titles,
         thumbnails,
-        randomTime: findRandomTime(videoID, dbSegments)
+        randomTime: findRandomTime(videoID, dbSegments),
+        videoDuration: dbSegments[0]?.videoDuration ?? null
     };
 }
 

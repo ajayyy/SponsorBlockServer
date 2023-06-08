@@ -239,6 +239,8 @@ describe("getBranding", () => {
 
         const timeAbsolute = randomTime * videoDuration;
         assert.ok(timeAbsolute < 1 || (timeAbsolute > 11 && timeAbsolute < 20) || timeAbsolute > 33);
+
+        assert.strictEqual(result1.data.videoDuration, 100);
     });
 
     async function checkVideo(videoID: string, videoIDHash: string, expected: {
