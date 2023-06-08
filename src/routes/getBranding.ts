@@ -228,13 +228,11 @@ export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResu
     const emptySegments: [number, number][] = [];
     let totalTime = 0;
 
-    let nextEndTime = -1;
+    let nextEndTime = 0;
     for (const segment of sorted) {
         if (segment.startTime > nextEndTime) {
-            if (nextEndTime !== -1) {
-                emptySegments.push([nextEndTime, segment.startTime]);
-                totalTime += segment.startTime - nextEndTime;
-            }
+            emptySegments.push([nextEndTime, segment.startTime]);
+            totalTime += segment.startTime - nextEndTime;
         }
 
         nextEndTime = Math.max(segment.endTime, nextEndTime);
