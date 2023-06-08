@@ -3,10 +3,13 @@ import { UserID } from "./user.model";
 
 export type BrandingUUID = string & { readonly __brandingUUID: unique symbol };
 
-export interface BrandingDBSubmission {
+export interface BrandingDBSubmissionData {
+    videoID: VideoID,
+}
+
+export interface BrandingDBSubmission extends BrandingDBSubmissionData {
     shadowHidden: number,
     UUID: BrandingUUID,
-    videoID: VideoID,
     hashedVideoID: VideoIDHash
 }
 
@@ -42,12 +45,14 @@ export interface ThumbnailResult {
 
 export interface BrandingResult {
     titles: TitleResult[],
-    thumbnails: ThumbnailResult[]
+    thumbnails: ThumbnailResult[],
+    randomTime: number
 }
 
 export interface BrandingHashDBResult {
     titles: TitleDBResult[],
-    thumbnails: ThumbnailDBResult[]
+    thumbnails: ThumbnailDBResult[],
+    segments: BrandingSegmentDBResult[]
 }
 
 export interface OriginalThumbnailSubmission {
@@ -72,4 +77,16 @@ export interface BrandingSubmission {
     videoID: VideoID;
     userID: UserID;
     service: Service;
+}
+
+export interface BrandingSegmentDBResult {
+    startTime: number;
+    endTime: number;
+    videoDuration: number;
+}
+
+export interface BrandingSegmentHashDBResult extends BrandingDBSubmissionData {
+    startTime: number;
+    endTime: number;
+    videoDuration: number;
 }

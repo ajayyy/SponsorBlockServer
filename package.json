@@ -30,6 +30,7 @@
     "pg": "^8.8.0",
     "rate-limit-redis": "^3.0.1",
     "redis": "^4.5.0",
+    "seedrandom": "^3.0.5",
     "sync-mysql": "^3.0.1"
   },
   "devDependencies": {
@@ -41,6 +42,7 @@
     "@types/mocha": "^10.0.0",
     "@types/node": "^18.11.9",
     "@types/pg": "^8.6.5",
+    "@types/seedrandom": "^3.0.5",
     "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",

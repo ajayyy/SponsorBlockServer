@@ -3,7 +3,7 @@ import assert from "assert";
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import { Service } from "../../src/types/segments.model";
-import { BrandingResult, BrandingUUID } from "../../src/types/branding.model";
+import { BrandingUUID, ThumbnailResult, TitleResult } from "../../src/types/branding.model";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 describe("getBranding", () => {
@@ -11,11 +11,13 @@ describe("getBranding", () => {
     const videoID2Locked = "videoID2";
     const videoID2ShadowHide = "videoID3";
     const videoIDEmpty = "videoID4";
+    const videoIDRandomTime = "videoID5";
 
     const videoID1Hash = getHash(videoID1, 1).slice(0, 4);
     const videoID2LockedHash = getHash(videoID2Locked, 1).slice(0, 4);
     const videoID2ShadowHideHash = getHash(videoID2ShadowHide, 1).slice(0, 4);
     const videoIDEmptyHash = "aaaa";
+    const videoIDRandomTimeHash = getHash(videoIDRandomTime, 1).slice(0, 4);
 
     const endpoint = "/api/branding";
     const getBranding = (params: Record<string, any>) => client({
@@ -97,6 +99,10 @@ describe("getBranding", () => {
             db.prepare("run", thumbnailVotesQuery, ["UUID22T", 2, 0, 0]),
             db.prepare("run", thumbnailVotesQuery, ["UUID32T", 1, 0, 1])
         ]);
+
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
+        await db.prepare("run", query, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
     });
 
     it("should get top titles and thumbnails", async () => {
@@ -221,7 +227,24 @@ describe("getBranding", () => {
         assert.strictEqual(result2.status, 404);
     });
 
-    async function checkVideo(videoID: string, videoIDHash: string, expected: BrandingResult) {
+    it("should get correct random time", async () => {
+        const videoDuration = 100;
+
+        const result1 = await getBranding({ videoID: videoIDRandomTime });
+        const result2 = await getBrandingByHash(videoIDRandomTimeHash, {});
+
+        const randomTime = result1.data.randomTime;
+        assert.strictEqual(randomTime, result2.data[videoIDRandomTime].randomTime);
+        assert.ok(randomTime > 0 && randomTime < 1);
+
+        const timeAbsolute = randomTime * videoDuration;
+        assert.ok(timeAbsolute < 1 || (timeAbsolute > 11 && timeAbsolute < 20) || timeAbsolute > 33);
+    });
+
+    async function checkVideo(videoID: string, videoIDHash: string, expected: {
+        titles: TitleResult[],
+        thumbnails: ThumbnailResult[]
+    }) {
         const result1 = await getBranding({ videoID });
         const result2 = await getBrandingByHash(videoIDHash, {});
 

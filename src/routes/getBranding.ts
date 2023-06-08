@@ -3,7 +3,7 @@ import { isEmpty } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
-import { BrandingDBSubmission, BrandingHashDBResult, BrandingResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
+import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
 import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
 import { shuffleArray } from "../utils/array";
 import { getHashCache } from "../utils/getHashCache";
@@ -14,6 +14,7 @@ import { Logger } from "../utils/logger";
 import { promiseOrTimeout } from "../utils/promise";
 import { QueryCacher } from "../utils/queryCacher";
 import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys";
+import * as SeedRandom from "seedrandom";
 
 enum BrandingSubmissionType {
     Title = "title",
@@ -39,10 +40,25 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         { useReplica: true }
     ) as Promise<ThumbnailDBResult[]>;
 
-    const getBranding = async () => ({
-        titles: await getTitles(),
-        thumbnails: await getThumbnails()
-    });
+    const getSegments = () => db.prepare(
+        "all",
+        `SELECT "startTime", "endTime", "videoDuration" FROM "sponsorTimes" 
+        WHERE "votes" >= 0 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "videoID" = ? AND "service" = ?`,
+        [videoID, service],
+        { useReplica: true }
+    ) as Promise<BrandingSegmentDBResult[]>;
+
+    const getBranding = async () => {
+        const titles = getTitles();
+        const thumbnails = getThumbnails();
+        const segments = getSegments();
+
+        return {
+            titles: await titles,
+            thumbnails: await thumbnails,
+            segments: await segments
+        };
+    };
 
     const brandingTrace = await QueryCacher.getTraced(getBranding, brandingKey(videoID, service));
     const branding = brandingTrace.data;
@@ -62,7 +78,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         currentIP: null as Promise<HashedIP> | null
     };
 
-    return filterAndSortBranding(branding.titles, branding.thumbnails, ip, cache);
+    return filterAndSortBranding(videoID, branding.titles, branding.thumbnails, branding.segments, ip, cache);
 }
 
 export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress): Promise<Record<VideoID, BrandingResult>> {
@@ -84,18 +100,28 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         { useReplica: true }
     ) as Promise<ThumbnailDBResult[]>;
 
+    const getSegments = () => db.prepare(
+        "all",
+        `SELECT "videoID", "startTime", "endTime", "videoDuration" FROM "sponsorTimes" 
+        WHERE "votes" >= 0 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "hashedVideoID" LIKE ? AND "service" = ?`,
+        [`${videoHashPrefix}%`, service],
+        { useReplica: true }
+    ) as Promise<BrandingSegmentHashDBResult[]>;
+
     const branding = await QueryCacher.get(async () => {
         // Make sure they are both called in parallel
         const branding = {
             titles: getTitles(),
-            thumbnails: getThumbnails()
+            thumbnails: getThumbnails(),
+            segments: getSegments()
         };
 
         const dbResult: Record<VideoID, BrandingHashDBResult> = {};
-        const initResult = (submission: BrandingDBSubmission) => {
+        const initResult = (submission: BrandingDBSubmissionData) => {
             dbResult[submission.videoID] = dbResult[submission.videoID] || {
                 titles: [],
-                thumbnails: []
+                thumbnails: [],
+                segments: []
             };
         };
 
@@ -106,6 +132,11 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         (await branding.thumbnails).map((thumbnail) => {
             initResult(thumbnail);
             dbResult[thumbnail.videoID].thumbnails.push(thumbnail);
+        });
+
+        (await branding.segments).map((segment) => {
+            initResult(segment);
+            dbResult[segment.videoID].segments.push(segment);
         });
 
         return dbResult;
@@ -119,13 +150,17 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
     const processedResult: Record<VideoID, BrandingResult> = {};
     await Promise.all(Object.keys(branding).map(async (key) => {
         const castedKey = key as VideoID;
-        processedResult[castedKey] = await filterAndSortBranding(branding[castedKey].titles, branding[castedKey].thumbnails, ip, cache);
+        processedResult[castedKey] = await filterAndSortBranding(castedKey, branding[castedKey].titles,
+            branding[castedKey].thumbnails, branding[castedKey].segments, ip, cache);
     }));
 
     return processedResult;
 }
 
-async function filterAndSortBranding(dbTitles: TitleDBResult[], dbThumbnails: ThumbnailDBResult[], ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null }): Promise<BrandingResult> {
+async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[],
+    dbThumbnails: ThumbnailDBResult[], dbSegments: BrandingSegmentDBResult[],
+    ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null }): Promise<BrandingResult> {
+
     const shouldKeepTitles = shouldKeepSubmission(dbTitles, BrandingSubmissionType.Title, ip, cache);
     const shouldKeepThumbnails = shouldKeepSubmission(dbThumbnails, BrandingSubmissionType.Thumbnail, ip, cache);
 
@@ -153,7 +188,8 @@ async function filterAndSortBranding(dbTitles: TitleDBResult[], dbThumbnails: Th
 
     return {
         titles,
-        thumbnails
+        thumbnails,
+        randomTime: findRandomTime(videoID, dbSegments)
     };
 }
 
@@ -178,6 +214,50 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
     }));
 
     return (_, index) => shouldKeep[index];
+}
+
+export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResult[]): number {
+    const randomTime = SeedRandom.alea(videoID)();
+    if (segments.length === 0) return randomTime;
+
+    const videoDuration = segments[0].videoDuration;
+
+    // There are segments, treat this as a relative time in the chopped up video
+    const sorted = segments.sort((a, b) => a.startTime - b.startTime);
+    const emptySegments: [number, number][] = [];
+    let totalTime = 0;
+
+    let nextEndTime = -1;
+    for (const segment of sorted) {
+        if (segment.startTime > nextEndTime) {
+            if (nextEndTime !== -1) {
+                emptySegments.push([nextEndTime, segment.startTime]);
+                totalTime += segment.startTime - nextEndTime;
+            }
+        }
+
+        nextEndTime = Math.max(segment.endTime, nextEndTime);
+    }
+
+    if (nextEndTime < videoDuration) {
+        emptySegments.push([nextEndTime, videoDuration]);
+        totalTime += videoDuration - nextEndTime;
+    }
+
+    let cursor = 0;
+    for (const segment of emptySegments) {
+        const duration = segment[1] - segment[0];
+
+        if (cursor + duration >= randomTime * totalTime) {
+            // Found it
+            return (segment[0] + (randomTime * totalTime - cursor)) / videoDuration;
+        }
+
+        cursor += duration;
+    }
+
+    // Fallback to just the random time
+    return randomTime;
 }
 
 export async function getBranding(req: Request, res: Response) {
