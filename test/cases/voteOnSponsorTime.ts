@@ -15,6 +15,9 @@ const vipUser = "VIPUser";
 const randomID2 = "randomID2";
 const randomID2Hashed = getHash(randomID2);
 const categoryChangeUser = "category-change-user";
+const outroSubmitter = "outro-submitter";
+const badIntroSubmitter = "bad-intro-submitter";
+const hiddenInteractionSubmitter = "hidden-interaction-submitter";
 
 describe("voteOnSponsorTime", () => {
     before(async () => {
@@ -31,7 +34,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 2, 0, "vote-uuid-1", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.5", "testman", 0, 50, "outro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.6", "testman", 0, 50, "interaction", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest3", 20, 33, 10, 0, "vote-uuid-2", "testman", 0, 50, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest3", 20, 33, 10, 0, "vote-uuid-2", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest,test", 1, 11, 100, 0, "vote-uuid-3", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 1, 11, 2, 0, "vote-uuid-4", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5", "testman", 0, 50, "intro", "skip", 0, 0]);
@@ -71,6 +74,19 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
         await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "chapter-uuid-1", "testman", 0, 0, "chapter", "chapter", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "non-chapter-uuid-2", "testman", 0, 0, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 11, 20, 0, 0, "chapter-uuid-2", randomID2Hashed, 0, 0, "chapter", "chapter", 0, 0]);
+        // segments for testing stricter voting requirements
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "good-outro-submission", getHash(outroSubmitter), 0, 0, "outro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, -2, 0, "bad-intro-submission", getHash(badIntroSubmitter), 0, 0, "intro", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "hidden-interaction-submission", getHash(hiddenInteractionSubmitter), 0, 0, "interaction", "skip", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-outro-skip-1", "testman", 0, 0, "outro", "skip", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-outro-skip-2", "testman", 0, 0, "outro", "skip", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-outro-mute-1", "testman", 0, 0, "outro", "mute", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-outro-mute-2", "testman", 0, 0, "outro", "mute", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-intro-skip-1", "testman", 0, 0, "intro", "skip", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-intro-skip-2", "testman", 0, 0, "intro", "skip", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-interaction-skip-1", "testman", 0, 0, "interaction", "skip", 0, 1]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-interaction-skip-2", "testman", 0, 0, "interaction", "skip", 0, 1]);
 
         const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
@@ -706,5 +722,101 @@ describe("voteOnSponsorTime", () => {
                 })
                 .catch(err => done(err));
         });
+    });
+
+    it("Should be able to upvote a segment if the user has submitted that in category", (done) => {
+        const UUID = "testing-outro-skip-1";
+        postVote(outroSubmitter, UUID, 1)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to downvote a segment if the user has submitted that in category", (done) => {
+        const UUID = "testing-outro-skip-2";
+        postVote(outroSubmitter, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, -1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to upvote a segment if the user has submitted that in category but different action", (done) => {
+        const UUID = "testing-outro-mute-1";
+        postVote(outroSubmitter, UUID, 1)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to downvote a segment if the user has submitted that in category but different action", (done) => {
+        const UUID = "testing-outro-mute-2";
+        postVote(outroSubmitter, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, -1);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to upvote a segment if the user's only submission of that category was downvoted", (done) => {
+        const UUID = "testing-intro-skip-1";
+        postVote(badIntroSubmitter, UUID, 1)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to downvote a segment if the user's only submission of that category was downvoted", (done) => {
+        const UUID = "testing-intro-skip-2";
+        postVote(badIntroSubmitter, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to upvote a segment if the user's only submission of that category was hidden", (done) => {
+        const UUID = "testing-interaction-skip-1";
+        postVote(hiddenInteractionSubmitter, UUID, 1)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not be able to downvote a segment if the user's only submission of that category was hidden", (done) => {
+        const UUID = "testing-interaction-skip-2";
+        postVote(hiddenInteractionSubmitter, UUID, 0)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 0);
+                done();
+            })
+            .catch(err => done(err));
     });
 });
