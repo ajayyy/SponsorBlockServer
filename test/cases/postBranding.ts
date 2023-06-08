@@ -27,24 +27,24 @@ describe("postBranding", () => {
     const queryTitleVotesByUUID = (UUID: string, all = false) => db.prepare(all ? "all" : "get", `SELECT * FROM "titleVotes" WHERE "UUID" = ?`, [UUID]);
     const queryThumbnailVotesByUUID = (UUID: string, all = false) => db.prepare(all ? "all" : "get", `SELECT * FROM "thumbnailVotes" WHERE "UUID" = ?`, [UUID]);
 
-    before(() => {
+    before(async () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        db.prepare("run", insertVipUserQuery, [getHash(vipUser)]);
-        db.prepare("run", insertVipUserQuery, [getHash(vipUser2)]);
+        await db.prepare("run", insertVipUserQuery, [getHash(vipUser)]);
+        await db.prepare("run", insertVipUserQuery, [getHash(vipUser2)]);
 
         const insertTitleQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertTitleQuery, ["postBrandLocked1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
-        db.prepare("run", insertTitleQuery, ["postBrandLocked2", "Some title", 1, getHash(userID2), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
+        await db.prepare("run", insertTitleQuery, ["postBrandLocked1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
+        await db.prepare("run", insertTitleQuery, ["postBrandLocked2", "Some title", 1, getHash(userID2), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
         const insertTitleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?);';
-        db.prepare("run", insertTitleVotesQuery, ["postBrandLocked1", 0, 1, 0]);
-        db.prepare("run", insertTitleVotesQuery, ["postBrandLocked2", 0, 1, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked1", 0, 1, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked2", 0, 1, 0]);
 
         const insertThumbnailQuery = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertThumbnailQuery, ["postBrandLocked1", 0, getHash(userID3), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
-        db.prepare("run", insertThumbnailQuery, ["postBrandLocked2", 1, getHash(userID4), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandLocked1", 0, getHash(userID3), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandLocked2", 1, getHash(userID4), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
         const insertThumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?);';
-        db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0]);
-        db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0]);
     });
 
     it("Submit only title", async () => {
