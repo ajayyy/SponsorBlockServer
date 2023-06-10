@@ -57,8 +57,8 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
-                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0);`,
-                        [UUID, isVip ? 1 : 0]);
+                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, 0, ?);`,
+                        [UUID, isVip ? 1 : 0, await getVerificationValue(hashedUserID, isVip)]);
                 }
 
                 if (isVip) {
@@ -144,5 +144,16 @@ async function updateVoteTotals(type: BrandingType, existingVote: ExistingVote, 
 
     if (isVip) {
         await db.prepare("run", `UPDATE ${table} SET "locked" = 1 WHERE "UUID" = ?`, [UUID]);
+    }
+}
+
+async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean): Promise<number> {
+    const voteSum = await db.prepare("get", `SELECT SUM("titleVotes"."votes") as "voteSum" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ?`, [hashedUserID]);
+    const sbSubmissions = () => db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > 0 LIMIT 3`, [hashedUserID]);
+
+    if (voteSum.voteSum > 3 || isVip || (await sbSubmissions()).count > 2) {
+        return 0;
+    } else {
+        return -1;
     }
 }

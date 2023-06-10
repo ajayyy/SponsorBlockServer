@@ -12,12 +12,14 @@ describe("getBranding", () => {
     const videoID2ShadowHide = "videoID3";
     const videoIDEmpty = "videoID4";
     const videoIDRandomTime = "videoID5";
+    const videoIDUnverified = "videoID6";
 
     const videoID1Hash = getHash(videoID1, 1).slice(0, 4);
     const videoID2LockedHash = getHash(videoID2Locked, 1).slice(0, 4);
     const videoID2ShadowHideHash = getHash(videoID2ShadowHide, 1).slice(0, 4);
     const videoIDEmptyHash = "aaaa";
     const videoIDRandomTimeHash = getHash(videoIDRandomTime, 1).slice(0, 4);
+    const videoIDUnverifiedHash = getHash(videoIDUnverified, 1).slice(0, 4);
 
     const endpoint = "/api/branding";
     const getBranding = (params: Record<string, any>) => client({
@@ -34,7 +36,7 @@ describe("getBranding", () => {
 
     before(async () => {
         const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)`;
+        const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)`;
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)`;
@@ -49,9 +51,9 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID2", 2, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID3", 1, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID2", 2, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID3", 1, 0, 0, 0]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID1T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID3T", 3]),
             db.prepare("run", thumbnailVotesQuery, ["UUID1T", 3, 0, 0]),
@@ -69,9 +71,9 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID11", 3, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID21", 2, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID31", 1, 1, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID11", 3, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID21", 2, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID31", 1, 1, 0, 0]),
 
             db.prepare("run", thumbnailTimestampsQuery, ["UUID11T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID31T", 3]),
@@ -90,9 +92,9 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID12", 3, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID22", 2, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID32", 1, 0, 1]),
+            db.prepare("run", titleVotesQuery, ["UUID12", 3, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID22", 2, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID32", 1, 0, 1, 0]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID12T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID32T", 3]),
             db.prepare("run", thumbnailVotesQuery, ["UUID12T", 3, 0, 0]),
@@ -103,6 +105,26 @@ describe("getBranding", () => {
         const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", query, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
         await db.prepare("run", query, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
+
+        await Promise.all([
+            db.prepare("run", titleQuery, [videoIDUnverified, "title1", 0, "userID1", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-1"]),
+            db.prepare("run", titleQuery, [videoIDUnverified, "title2", 0, "userID2", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-2"]),
+            db.prepare("run", titleQuery, [videoIDUnverified, "title3", 1, "userID3", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-3"]),
+            db.prepare("run", thumbnailQuery, [videoIDUnverified, 0, "userID1", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-1T"]),
+            db.prepare("run", thumbnailQuery, [videoIDUnverified, 1, "userID2", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-2T"]),
+            db.prepare("run", thumbnailQuery, [videoIDUnverified, 0, "userID3", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-3T"]),
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleVotesQuery, ["UUID-uv-1", 3, 0, 0, -1]),
+            db.prepare("run", titleVotesQuery, ["UUID-uv-2", 2, 0, 0, -1]),
+            db.prepare("run", titleVotesQuery, ["UUID-uv-3", 0, 0, 0, -1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID-uv-1T", 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID-uv-3T", 3]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID-uv-1T", 3, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID-uv-2T", 2, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID-uv-3T", 1, 0, 0])
+        ]);
     });
 
     it("should get top titles and thumbnails", async () => {
@@ -241,6 +263,48 @@ describe("getBranding", () => {
         assert.ok(timeAbsolute < 1 || (timeAbsolute > 11 && timeAbsolute < 20) || timeAbsolute > 33);
 
         assert.strictEqual(result1.data.videoDuration, 100);
+    });
+
+    it("should get top titles and thumbnails that are unverified", async () => {
+        await checkVideo(videoIDUnverified, videoIDUnverifiedHash, {
+            titles: [{
+                title: "title1",
+                original: false,
+                votes: 2,
+                locked: false,
+                UUID: "UUID-uv-1" as BrandingUUID
+            }, {
+                title: "title2",
+                original: false,
+                votes: 1,
+                locked: false,
+                UUID: "UUID-uv-2" as BrandingUUID
+            }, {
+                title: "title3",
+                original: true,
+                votes: -1,
+                locked: false,
+                UUID: "UUID-uv-3" as BrandingUUID
+            }],
+            thumbnails: [{
+                timestamp: 1,
+                original: false,
+                votes: 3,
+                locked: false,
+                UUID: "UUID-uv-1T" as BrandingUUID
+            }, {
+                original: true,
+                votes: 2,
+                locked: false,
+                UUID: "UUID-uv-2T" as BrandingUUID
+            }, {
+                timestamp: 3,
+                original: false,
+                votes: 1,
+                locked: false,
+                UUID: "UUID-uv-3T" as BrandingUUID
+            }]
+        });
     });
 
     async function checkVideo(videoID: string, videoIDHash: string, expected: {

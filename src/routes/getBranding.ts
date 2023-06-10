@@ -24,7 +24,7 @@ enum BrandingSubmissionType {
 export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
         WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
         [videoID, service],
@@ -84,7 +84,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress): Promise<Record<VideoID, BrandingResult>> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
         WHERE "titles"."hashedVideoID" LIKE ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
         [`${videoHashPrefix}%`, service],
@@ -165,15 +165,15 @@ async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[]
     const shouldKeepThumbnails = shouldKeepSubmission(dbThumbnails, BrandingSubmissionType.Thumbnail, ip, cache);
 
     const titles = shuffleArray(dbTitles.filter(await shouldKeepTitles))
-        .sort((a, b) => b.votes - a.votes)
-        .sort((a, b) => b.locked - a.locked)
         .map((r) => ({
             title: r.title,
             original: r.original === 1,
-            votes: r.votes,
+            votes: r.votes + r.verification,
             locked: r.locked === 1,
             UUID: r.UUID,
-        })) as TitleResult[];
+        }))
+        .sort((a, b) => b.votes - a.votes)
+        .sort((a, b) => +b.locked - +a.locked) as TitleResult[];
 
     const thumbnails = shuffleArray(dbThumbnails.filter(await shouldKeepThumbnails))
         .sort((a, b) => b.votes - a.votes)

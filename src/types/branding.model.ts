@@ -17,7 +17,8 @@ export interface TitleDBResult extends BrandingDBSubmission {
     title: string,
     original: number,
     votes: number,
-    locked: number
+    locked: number,
+    verification: number
 }
 
 export interface TitleResult {

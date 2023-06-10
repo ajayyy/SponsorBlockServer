@@ -12,7 +12,11 @@ describe("postBranding", () => {
     const userID2 = `PostBrandingUser2${".".repeat(16)}`;
     const userID3 = `PostBrandingUser3${".".repeat(16)}`;
     const userID4 = `PostBrandingUser4${".".repeat(16)}`;
-    const userID5 = `PostBrandingUser4${".".repeat(16)}`;
+    const userID5 = `PostBrandingUser5${".".repeat(16)}`;
+    const userID6 = `PostBrandingUser6${".".repeat(16)}`;
+    const userID7 = `PostBrandingUser7${".".repeat(16)}`;
+    const userID8 = `PostBrandingUser8${".".repeat(16)}`;
+
 
     const endpoint = "/api/branding";
     const postBranding = (data: Record<string, any>) => client({
@@ -35,9 +39,9 @@ describe("postBranding", () => {
         const insertTitleQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertTitleQuery, ["postBrandLocked1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
         await db.prepare("run", insertTitleQuery, ["postBrandLocked2", "Some title", 1, getHash(userID2), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
-        const insertTitleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?);';
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked1", 0, 1, 0]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked2", 0, 1, 0]);
+        const insertTitleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?);';
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked1", 0, 1, 0, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked2", 0, 1, 0, 0]);
 
         const insertThumbnailQuery = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertThumbnailQuery, ["postBrandLocked1", 0, getHash(userID3), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
@@ -45,6 +49,18 @@ describe("postBranding", () => {
         const insertThumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?);';
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0]);
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0]);
+
+        // Verified through title submissions
+        await db.prepare("run", insertTitleQuery, ["postBrandVerified1", "Some title", 0, getHash(userID7), Service.YouTube, getHash("postBrandVerified1"), Date.now(), "postBrandVerified1"]);
+        await db.prepare("run", insertTitleQuery, ["postBrandVerified2", "Some title", 1, getHash(userID7), Service.YouTube, getHash("postBrandVerified2"), Date.now(), "postBrandVerified2"]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified1", 5, 0, 0, -1]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified2", -1, 0, 0, -1]);
+
+        // Verified through SponsorBlock submissions
+        const insertSegment = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSegment, ["postBrandVerified3", 1, 11, 1, 0, "postBrandVerified3", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
+        await db.prepare("run", insertSegment, ["postBrandVerified3", 11, 21, 1, 0, "postBrandVerified32", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
+        await db.prepare("run", insertSegment, ["postBrandVerified3", 21, 31, 1, 0, "postBrandVerified33", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
     });
 
     it("Submit only title", async () => {
@@ -430,5 +446,77 @@ describe("postBranding", () => {
         assert.strictEqual(oldDBVotes.votes, -1);
         assert.strictEqual(oldDBVotes.locked, 0);
         assert.strictEqual(oldDBVotes.shadowHidden, 0);
+    });
+
+    it("Submit from unverified user", async () => {
+        const videoID = "postBrandUnverified";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            userID: userID6,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.verification, -1);
+    });
+
+    it("Submit from verified user from title submissions", async () => {
+        const videoID = "postBrandVerified";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            userID: userID7,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.verification, 0);
+    });
+
+    it("Submit from verified user from SponsorBlock submissions", async () => {
+        const videoID = "postBrandVerified2-2";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            userID: userID8,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.verification, 0);
     });
 });
