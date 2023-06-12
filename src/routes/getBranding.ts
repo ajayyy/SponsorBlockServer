@@ -176,8 +176,8 @@ async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[]
         .sort((a, b) => +b.locked - +a.locked) as TitleResult[];
 
     const thumbnails = shuffleArray(dbThumbnails.filter(await shouldKeepThumbnails))
-        .sort((a, b) => b.votes - a.votes)
         .sort((a, b) => +a.original - +b.original)
+        .sort((a, b) => b.votes - a.votes)
         .sort((a, b) => b.locked - a.locked)
         .map((r) => ({
             timestamp: r.timestamp,
