@@ -133,8 +133,6 @@ async function handleExistingVotes(type: BrandingType, videoID: VideoID,
  * Will update public vote totals and locked status.
  */
 async function updateVoteTotals(type: BrandingType, existingVote: ExistingVote, UUID: BrandingUUID, isVip: boolean): Promise<void> {
-    if (!existingVote) return;
-
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
 
     // Don't upvote if we vote on the same submission

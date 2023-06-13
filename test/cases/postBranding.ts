@@ -448,6 +448,59 @@ describe("postBranding", () => {
         assert.strictEqual(oldDBVotes.shadowHidden, 0);
     });
 
+    it("Vote for an existing title from another user", async () => {
+        const videoID = "postBrand1";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            userID: userID4,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 1);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
+    it("Vote for the same thumbnail from a different user", async () => {
+        const videoID = "postBrand4";
+        const thumbnail = {
+            timestamp: 15.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: userID1,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbThumbnailTimestamps = await queryThumbnailTimestampsByUUID(dbThumbnail.UUID);
+        const dbVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbThumbnailTimestamps.timestamp, thumbnail.timestamp);
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 1);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
     it("Submit from unverified user", async () => {
         const videoID = "postBrandUnverified";
         const title = {
