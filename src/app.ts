@@ -53,6 +53,7 @@ import { getBranding, getBrandingByHashEndpoint } from "./routes/getBranding";
 import { postBranding } from "./routes/postBranding";
 import { cacheMiddlware } from "./middleware/etag";
 import { hostHeader } from "./middleware/hostHeader";
+import { getBrandingStats } from "./routes/getBrandingStats";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -144,6 +145,8 @@ function setupRoutes(router: Router) {
     //send out totals
     //send the total submissions, total views and total minutes saved
     router.get("/api/getTotalStats", getTotalStats);
+
+    router.get("/api/brandingStats", getBrandingStats);
 
     router.get("/api/getUserInfo", getUserInfo);
     router.get("/api/userInfo", getUserInfo);
