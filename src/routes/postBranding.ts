@@ -31,7 +31,7 @@ export async function postBranding(req: Request, res: Response) {
     if (!videoID || !userID || userID.length < 30 || !service
         || ((!title || !title.title)
             && (!thumbnail || thumbnail.original == null
-                || (!thumbnail.original && !(thumbnail as TimeThumbnailSubmission).timestamp)))) {
+                || (!thumbnail.original && (thumbnail as TimeThumbnailSubmission).timestamp) == null))) {
         res.status(400).send("Bad Request");
         return;
     }
