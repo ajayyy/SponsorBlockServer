@@ -149,7 +149,7 @@ async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean):
     const voteSum = await db.prepare("get", `SELECT SUM("titleVotes"."votes") as "voteSum" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ?`, [hashedUserID]);
     const sbSubmissions = () => db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > 0 LIMIT 3`, [hashedUserID]);
 
-    if (voteSum.voteSum > 3 || isVip || (await sbSubmissions()).count > 2) {
+    if (voteSum.voteSum > 1 || isVip || (await sbSubmissions()).count > 2) {
         return 0;
     } else {
         return -1;
