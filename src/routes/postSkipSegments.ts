@@ -554,7 +554,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
         if (!userBanCount && ipBanCount) {
             // Make sure the whole user is banned
-            banUser(userID, true, true, 1, config.categoryList as Category[])
+            banUser(userID, true, true, 1, config.categoryList as Category[], config.deArrowTypes)
                 .catch((e) => Logger.error(`Error banning user after submitting from a banned IP: ${e}`));
         }
 

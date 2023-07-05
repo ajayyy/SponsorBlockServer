@@ -6,6 +6,7 @@ export type SegmentUUID = string & { __segmentUUIDBrand: unknown };
 export type VideoID = string & { __videoIDBrand: unknown };
 export type VideoDuration = number & { __videoDurationBrand: unknown };
 export type Category = ("sponsor" | "selfpromo" | "interaction" | "intro" | "outro" | "preview" | "music_offtopic" | "poi_highlight" | "chapter" | "filler" | "exclusive_access") & { __categoryBrand: unknown };
+export type DeArrowType = "title" | "thumbnail";
 export type VideoIDHash = VideoID & HashedValue;
 export type IPAddress = string & { __ipAddressBrand: unknown };
 export type HashedIP = IPAddress & HashedValue;

@@ -1,5 +1,6 @@
 import { PoolConfig } from "pg";
 import * as redis from "redis";
+import { DeArrowType } from "./segments.model";
 
 interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;
@@ -65,6 +66,7 @@ export interface SBSConfig {
     readOnly: boolean;
     webhooks: WebhookConfig[];
     categoryList: string[];
+    deArrowTypes: DeArrowType[];
     categorySupport: Record<string, string[]>;
     getTopUsersCacheTimeMinutes: number;
     maxNumberOfActiveWarnings: number;

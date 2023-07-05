@@ -34,6 +34,7 @@ addDefaults(config, {
         poi_highlight: ["poi"],
         chapter: ["chapter"]
     },
+    deArrowTypes: ["title", "thumbnail"],
     maxNumberOfActiveWarnings: 1,
     hoursAfterWarningExpires: 16300000,
     adminUserID: "",

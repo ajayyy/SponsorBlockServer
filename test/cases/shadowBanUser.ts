@@ -1,13 +1,15 @@
 import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
-import { Category } from "../../src/types/segments.model";
+import { Category, Service } from "../../src/types/segments.model";
 import { client } from "../utils/httpClient";
 
 describe("shadowBanUser", () => {
     const getShadowBan = (userID: string) => db.prepare("get", `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);
     const getShadowBanSegments = (userID: string, status: number) => db.prepare("all", `SELECT "shadowHidden" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
     const getShadowBanSegmentCategory = (userID: string, status: number): Promise<{shadowHidden: number, category: Category}[]> => db.prepare("all", `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
+    const getShadowBanTitles = (userID: string, status: number) => db.prepare("all", `SELECT tv."shadowHidden" FROM "titles" t JOIN "titleVotes" tv ON t."UUID" = tv."UUID" WHERE t."userID" = ? AND tv."shadowHidden" = ?`, [userID, status]);
+    const getShadowBanThumbnails = (userID: string, status: number) => db.prepare("all", `SELECT tv."shadowHidden" FROM "thumbnails" t JOIN "thumbnailVotes" tv ON t."UUID" = tv."UUID" WHERE t."userID" = ? AND tv."shadowHidden" = ?`, [userID, status]);
 
     const getIPShadowBan = (hashedIP: string) => db.prepare("get", `SELECT * FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
 
@@ -67,6 +69,52 @@ describe("shadowBanUser", () => {
         await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062443, "YouTube"]);
         await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062342, "YouTube"]);
         await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916069491, "YouTube"]);
+
+        const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)`;
+        const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
+        const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)`;
+
+        await Promise.all([
+            db.prepare("run", titleQuery, [video, "title1", 0, "userID1-ban", Service.YouTube, videohash, 1, "UUID1-ban"]),
+            db.prepare("run", titleQuery, [video, "title2", 0, "userID1-ban", Service.YouTube, videohash, 1, "UUID2-ban"]),
+            db.prepare("run", titleQuery, [video, "title3", 1, "userID1-ban", Service.YouTube, videohash, 1, "UUID3-ban"]),
+            db.prepare("run", thumbnailQuery, [video, 0, "userID1-ban", Service.YouTube, videohash, 1, "UUID1T-ban"]),
+            db.prepare("run", thumbnailQuery, [video, 1, "userID1-ban", Service.YouTube, videohash, 1, "UUID2T-ban"]),
+            db.prepare("run", thumbnailQuery, [video, 0, "userID1-ban", Service.YouTube, videohash, 1, "UUID3T-ban"]),
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleVotesQuery, ["UUID1-ban", 3, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID2-ban", 2, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID3-ban", 1, 0, 0, 0]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID1T-ban", 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID3T-ban", 3]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban", 3, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban", 2, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban", 1, 0, 0])
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleQuery, [video, "title1", 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID1-ban2"]),
+            db.prepare("run", titleQuery, [video, "title2", 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID2-ban2"]),
+            db.prepare("run", titleQuery, [video, "title3", 1, "userID2-ban", Service.YouTube, videohash, 1, "UUID3-ban2"]),
+            db.prepare("run", thumbnailQuery, [video, 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID1T-ban2"]),
+            db.prepare("run", thumbnailQuery, [video, 1, "userID2-ban", Service.YouTube, videohash, 1, "UUID2T-ban2"]),
+            db.prepare("run", thumbnailQuery, [video, 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID3T-ban2"]),
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleVotesQuery, ["UUID1-ban2", 3, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID2-ban2", 2, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID3-ban2", 1, 0, 0, 0]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID1T-ban2", 1]),
+            db.prepare("run", thumbnailTimestampsQuery, ["UUID3T-ban2", 3]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban2", 3, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban2", 2, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban2", 1, 0, 0])
+        ]);
     });
 
     it("Should be able to ban user and hide submissions", (done) => {
@@ -459,6 +507,53 @@ describe("shadowBanUser", () => {
                 assert.ok(normalShadowRow2);
                 assert.strictEqual(videoRow.length, 2);
                 assert.strictEqual(videoRow2.length, 2);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to ban user and hide dearrow submissions", (done) => {
+        const userID = "userID1-ban";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const titles = await getShadowBanTitles(userID, 1);
+                const thumbnails = await getShadowBanThumbnails(userID, 1);
+                const shadowRow = await getShadowBan(userID);
+                assert.ok(shadowRow);
+                assert.strictEqual(titles.length, 3);
+                assert.strictEqual(thumbnails.length, 3);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to ban user and hide just dearrow titles", (done) => {
+        const userID = "userID2-ban";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                deArrowTypes: `["title"]`
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const titles = await getShadowBanTitles(userID, 1);
+                const thumbnails = await getShadowBanThumbnails(userID, 1);
+                const shadowRow = await getShadowBan(userID);
+                assert.ok(shadowRow);
+                assert.strictEqual(titles.length, 3);
+                assert.strictEqual(thumbnails.length, 0);
                 done();
             })
             .catch(err => done(err));
