@@ -75,8 +75,6 @@ export interface SBSConfig {
         vote: RateLimitConfig;
         view: RateLimitConfig;
     };
-    mysql?: any;
-    privateMysql?: any;
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: RedisConfig;

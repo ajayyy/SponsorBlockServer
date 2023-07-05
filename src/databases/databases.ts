@@ -1,15 +1,11 @@
 import { config } from "../config";
 import { Sqlite } from "./Sqlite";
-import { Mysql } from "./Mysql";
 import { Postgres } from "./Postgres";
 import { IDatabase } from "./IDatabase";
 
 let db: IDatabase;
 let privateDB: IDatabase;
-if (config.mysql) {
-    db = new Mysql(config.mysql);
-    privateDB = new Mysql(config.privateMysql);
-} else if (config.postgres?.enabled) {
+if (config.postgres?.enabled) {
     db = new Postgres({
         dbSchemaFileName: config.dbSchema,
         dbSchemaFolder: config.schemaFolder,
