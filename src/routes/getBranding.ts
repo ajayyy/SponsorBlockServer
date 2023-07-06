@@ -208,7 +208,7 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
             if (cache.currentIP === null) cache.currentIP = getHashCache((ip + config.globalSalt) as IPAddress);
             const hashedIP = await cache.currentIP;
 
-            return submitterIP.hashedIP !== hashedIP;
+            return submitterIP.hashedIP === hashedIP;
         } catch (e) {
             // give up on shadow hide for now
             return false;
