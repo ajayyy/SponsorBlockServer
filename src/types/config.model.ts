@@ -68,6 +68,7 @@ export interface SBSConfig {
     categoryList: string[];
     deArrowTypes: DeArrowType[];
     categorySupport: Record<string, string[]>;
+    maxTitleLength: number;
     getTopUsersCacheTimeMinutes: number;
     maxNumberOfActiveWarnings: number;
     hoursAfterWarningExpires: number;

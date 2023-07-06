@@ -45,6 +45,11 @@ export async function postBranding(req: Request, res: Response) {
         const now = Date.now();
         const voteType = 1;
 
+        if (title && !isVip && title.title.length > config.maxTitleLength) {
+            res.status(400).send("Your title is too long. Please keep titles concise.");
+            return;
+        }
+
         await Promise.all([(async () => {
             if (title) {
                 const existingUUID = (await db.prepare("get", `SELECT "UUID" from "titles" where "videoID" = ? AND "title" = ?`, [videoID, title.title]))?.UUID;

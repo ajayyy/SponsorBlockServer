@@ -35,6 +35,7 @@ addDefaults(config, {
         chapter: ["chapter"]
     },
     deArrowTypes: ["title", "thumbnail"],
+    maxTitleLength: 110,
     maxNumberOfActiveWarnings: 1,
     hoursAfterWarningExpires: 16300000,
     adminUserID: "",
