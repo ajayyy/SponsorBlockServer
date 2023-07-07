@@ -54,6 +54,7 @@ import { postBranding } from "./routes/postBranding";
 import { cacheMiddlware } from "./middleware/etag";
 import { hostHeader } from "./middleware/hostHeader";
 import { getBrandingStats } from "./routes/getBrandingStats";
+import { getTopBrandingUsers } from "./routes/getTopBrandingUsers";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -141,6 +142,7 @@ function setupRoutes(router: Router) {
 
     router.get("/api/getTopUsers", getTopUsers);
     router.get("/api/getTopCategoryUsers", getTopCategoryUsers);
+    router.get("/api/getTopBrandingUsers", getTopBrandingUsers);
 
     //send out totals
     //send the total submissions, total views and total minutes saved
