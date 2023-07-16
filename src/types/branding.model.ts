@@ -18,7 +18,8 @@ export interface TitleDBResult extends BrandingDBSubmission {
     original: number,
     votes: number,
     locked: number,
-    verification: number
+    verification: number,
+    userID: UserID
 }
 
 export interface TitleResult {
@@ -26,14 +27,16 @@ export interface TitleResult {
     original: boolean,
     votes: number,
     locked: boolean,
-    UUID: BrandingUUID
+    UUID: BrandingUUID,
+    userID?: UserID
 }
 
 export interface ThumbnailDBResult extends BrandingDBSubmission {
     timestamp?: number,
     original: number,
     votes: number,
-    locked: number
+    locked: number,
+    userID: UserID
 }
 
 export interface ThumbnailResult {
@@ -41,7 +44,8 @@ export interface ThumbnailResult {
     original: boolean,
     votes: number,
     locked: boolean,
-    UUID: BrandingUUID
+    UUID: BrandingUUID,
+    userID?: UserID
 }
 
 export interface BrandingResult {

@@ -21,10 +21,10 @@ enum BrandingSubmissionType {
     Thumbnail = "thumbnail"
 }
 
-export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress): Promise<BrandingResult> {
+export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress, returnUserID: boolean): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
         WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
         [videoID, service],
@@ -33,7 +33,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 
     const getThumbnails = () => db.prepare(
         "all",
-        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID"
+        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
         WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2`,
         [videoID, service],
@@ -78,10 +78,10 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         currentIP: null as Promise<HashedIP> | null
     };
 
-    return filterAndSortBranding(videoID, branding.titles, branding.thumbnails, branding.segments, ip, cache);
+    return filterAndSortBranding(videoID, returnUserID, branding.titles, branding.thumbnails, branding.segments, ip, cache);
 }
 
-export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress): Promise<Record<VideoID, BrandingResult>> {
+export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress, returnUserID: boolean): Promise<Record<VideoID, BrandingResult>> {
     const getTitles = () => db.prepare(
         "all",
         `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
@@ -150,14 +150,14 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
     const processedResult: Record<VideoID, BrandingResult> = {};
     await Promise.all(Object.keys(branding).map(async (key) => {
         const castedKey = key as VideoID;
-        processedResult[castedKey] = await filterAndSortBranding(castedKey, branding[castedKey].titles,
+        processedResult[castedKey] = await filterAndSortBranding(castedKey, returnUserID, branding[castedKey].titles,
             branding[castedKey].thumbnails, branding[castedKey].segments, ip, cache);
     }));
 
     return processedResult;
 }
 
-async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[],
+async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, dbTitles: TitleDBResult[],
     dbThumbnails: ThumbnailDBResult[], dbSegments: BrandingSegmentDBResult[],
     ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null }): Promise<BrandingResult> {
 
@@ -171,6 +171,7 @@ async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[]
             votes: r.votes + r.verification,
             locked: r.locked === 1,
             UUID: r.UUID,
+            userID: returnUserID ? r.userID : undefined
         }))
         .sort((a, b) => b.votes - a.votes)
         .sort((a, b) => +b.locked - +a.locked) as TitleResult[];
@@ -184,7 +185,8 @@ async function filterAndSortBranding(videoID: VideoID, dbTitles: TitleDBResult[]
             original: r.original === 1,
             votes: r.votes,
             locked: r.locked === 1,
-            UUID: r.UUID
+            UUID: r.UUID,
+            userID: returnUserID ? r.userID : undefined
         })) as ThumbnailResult[];
 
     return {
@@ -263,6 +265,7 @@ export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResu
 export async function getBranding(req: Request, res: Response) {
     const videoID: VideoID = req.query.videoID as VideoID;
     const service: Service = getService(req.query.service as string);
+    const returnUserID = req.query.returnUserID === "true";
 
     if (!videoID) {
         return res.status(400).send("Missing parameter: videoID");
@@ -270,7 +273,7 @@ export async function getBranding(req: Request, res: Response) {
 
     const ip = getIP(req);
     try {
-        const result = await getVideoBranding(res, videoID, service, ip);
+        const result = await getVideoBranding(res, videoID, service, ip, returnUserID);
 
         const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
         return res.status(status).json(result);
@@ -289,9 +292,10 @@ export async function getBrandingByHashEndpoint(req: Request, res: Response) {
 
     const service: Service = getService(req.query.service as string);
     const ip = getIP(req);
+    const returnUserID = req.query.returnUserID === "true";
 
     try {
-        const result = await getVideoBrandingByHash(hashPrefix, service, ip);
+        const result = await getVideoBrandingByHash(hashPrefix, service, ip, returnUserID);
 
         const status = !isEmpty(result) ? 200 : 404;
         return res.status(status).json(result);
