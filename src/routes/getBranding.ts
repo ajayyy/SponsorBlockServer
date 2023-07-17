@@ -43,7 +43,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
     const getSegments = () => db.prepare(
         "all",
         `SELECT "startTime", "endTime", "videoDuration" FROM "sponsorTimes" 
-        WHERE "votes" >= 0 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "videoID" = ? AND "service" = ?`,
+        WHERE "votes" > -2 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "videoID" = ? AND "service" = ?`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<BrandingSegmentDBResult[]>;
