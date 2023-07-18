@@ -70,7 +70,7 @@ async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
 
 async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
-        const row = await db.prepare("get", `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1`, [userID], { useReplica: true });
+        const row = await db.prepare("get", `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 AND "type" = 0`, [userID], { useReplica: true });
         return row?.total ?? 0;
     } catch (err) /* istanbul ignore next */ {
         Logger.error(`Couldn't get warnings for user ${userID}. returning 0`);
@@ -99,7 +99,7 @@ async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUI
 
 async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<string> {
     try {
-        const row = await db.prepare("get", `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 ORDER BY "issueTime" DESC LIMIT 1`, [userID], { useReplica: true });
+        const row = await db.prepare("get", `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 AND "type" = 0 ORDER BY "issueTime" DESC LIMIT 1`, [userID], { useReplica: true });
         return row?.reason ?? "";
     } catch (err) /* istanbul ignore next */ {
         Logger.error(`Couldn't get reason for user ${userID}. returning blank`);
