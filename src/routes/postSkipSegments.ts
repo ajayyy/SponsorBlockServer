@@ -162,7 +162,7 @@ async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult
     const warnings = (await db.prepare("all",
         `SELECT "reason" 
         FROM warnings 
-        WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1
+        WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1 AND type = 0
         ORDER BY "issueTime" DESC`,
         [
             userID,

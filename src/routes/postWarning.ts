@@ -6,6 +6,7 @@ import { getHashCache } from "../utils/getHashCache";
 import { HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
 import { generateWarningDiscord, warningData, dispatchEvent } from "../utils/webhookUtils";
+import { WarningType } from "../types/warning.model";
 
 type warningEntry = {
     userID: HashedUserID,
@@ -32,6 +33,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     const issueTime = new Date().getTime();
     const enabled: boolean = req.body.enabled ?? true;
     const reason: string = req.body.reason ?? "";
+    const type: WarningType = req.body.type ?? WarningType.SponsorBlock;
 
     if ((!issuerUserID && enabled) || (issuerUserID && !await isUserVIP(issuerUserID))) {
         Logger.warn(`Permission violation: User ${issuerUserID} attempted to warn user ${userID}.`);
@@ -46,8 +48,8 @@ export async function postWarning(req: Request, res: Response): Promise<Response
         if (!previousWarning) {
             await db.prepare(
                 "run",
-                'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, 1, ?)',
-                [userID, issueTime, issuerUserID, reason]
+                'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason", "type") VALUES (?, ?, ?, 1, ?, ?)',
+                [userID, issueTime, issuerUserID, reason, type]
             );
             resultStatus = "issued to";
         // check if warning is still within issue time and warning is not enabled
@@ -61,7 +63,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
             return res.sendStatus(409);
         }
     } else {
-        await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ?', [userID]);
+        await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "type" = ?', [userID, type]);
         resultStatus = "removed from";
     }
 

@@ -7,7 +7,7 @@ import { client } from "../utils/httpClient";
 describe("postWarning", () => {
     // constants
     const endpoint = "/api/warnUser";
-    const getWarning = (userID: string) => db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ?`, [userID]);
+    const getWarning = (userID: string, type = 0) => db.prepare("get", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ? AND "type" = ?`, [userID, type]);
 
     const warneduserID = "warning-0";
     const warnedUserPublicID = getHash(warneduserID);

@@ -366,7 +366,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     const MILLISECONDS_IN_HOUR = 3600000;
     const now = Date.now();
-    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1`,
+    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1  AND type = 0`,
         [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
     ));
 

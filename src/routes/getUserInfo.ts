@@ -78,6 +78,16 @@ async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     }
 }
 
+async function dbGetDeArrowWarningReasonForUser(userID: HashedUserID): Promise<number> {
+    try {
+        const row = await db.prepare("get", `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 AND "type" = 1`, [userID], { useReplica: true });
+        return row?.reason ?? 0;
+    } catch (err) /* istanbul ignore next */ {
+        Logger.error(`Couldn't get warnings for user ${userID}. returning 0`);
+        return 0;
+    }
+}
+
 async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUID> {
     try {
         const row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID], { useReplica: true });
@@ -153,6 +163,7 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
         ignoredViewCount: () => dbGetIgnoredViewsForUser(userID),
         warnings: () => dbGetWarningsForUser(userID),
         warningReason: () => dbGetActiveWarningReasonForUser(userID),
+        deArrowWarningReason: () => dbGetDeArrowWarningReasonForUser(userID),
         banned: () => dbGetBanned(userID),
         reputation: () => getReputation(userID),
         vip: () => isUserVIP(userID),
@@ -171,7 +182,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
     const allProperties: string[] = [...defaultProperties, "banned", "permissions", "freeChaptersAccess",
-        "ignoredSegmentCount", "titleSubmissionCount", "thumbnailSubmissionCount"];
+        "ignoredSegmentCount", "titleSubmissionCount", "thumbnailSubmissionCount", "deArrowWarningReason"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value
