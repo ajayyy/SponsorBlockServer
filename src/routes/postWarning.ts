@@ -43,7 +43,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
     let resultStatus = "";
 
     if (enabled) {
-        const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ?', [userID, issuerUserID]) as warningEntry;
+        const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ? AND "type" = ?', [userID, issuerUserID, type]) as warningEntry;
 
         if (!previousWarning) {
             await db.prepare(
