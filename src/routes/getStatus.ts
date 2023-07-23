@@ -1,4 +1,4 @@
-import { db } from "../databases/databases";
+import { db, privateDB } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import os from "os";
@@ -45,6 +45,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             statusRequests,
             hostname: os.hostname(),
             postgresStats: (db as Postgres)?.getStats?.(),
+            postgresPrivateStats: (privateDB as Postgres)?.getStats?.(),
             redisStats: getRedisStats(),
         };
         return value ? res.send(JSON.stringify(statusValues[value])) : res.send(statusValues);
