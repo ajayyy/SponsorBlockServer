@@ -27,6 +27,8 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         return res.sendStatus(200);
     }
 
+    const timings = [Date.now()];
+
     // remove unicode control characters from username (example: \n, \r, \t etc.)
     // source: https://en.wikipedia.org/wiki/Control_character#In_Unicode
     // eslint-disable-next-line no-control-regex
@@ -36,6 +38,8 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     if (!await checkPrivateUsername(userName, userID)) {
         return res.sendStatus(400);
     }
+
+    timings.push(Date.now());
 
     if (adminUserIDInput != undefined) {
         //this is the admin controlling the other users account, don't hash the controling account's ID
@@ -50,16 +54,22 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         userID = await getHashCache(userID);
     }
 
+    timings.push(Date.now());
+
     try {
         const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "userNames" WHERE "userID" = ? AND "locked" = 1`, [userID]);
         if (adminUserIDInput === undefined && row.userCount > 0) {
             return res.sendStatus(200);
         }
 
+        timings.push(Date.now());
+
         const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
         if (adminUserIDInput === undefined && shadowBanRow.userCount > 0) {
             return res.sendStatus(200);
         }
+
+        timings.push(Date.now());
     }
     catch (error) /* istanbul ignore next */ {
         Logger.error(error as string);
@@ -71,6 +81,8 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
         const locked = adminUserIDInput === undefined ? 0 : 1;
         let oldUserName = "";
+
+        timings.push(Date.now());
 
         if (row?.userName !== undefined) {
             //already exists, update this row
@@ -85,9 +97,14 @@ export async function setUsername(req: Request, res: Response): Promise<Response
             await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [userID, userName, locked]);
         }
 
+        timings.push(Date.now());
+
         await logUserNameChange(userID, userName, oldUserName, adminUserIDInput !== undefined);
 
-        return res.sendStatus(200);
+        timings.push(Date.now());
+
+
+        return res.status(200).send(timings.join(", "));
     } catch (err) /* istanbul ignore next */ {
         Logger.error(err as string);
         return res.sendStatus(500);
