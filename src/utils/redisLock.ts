@@ -1,3 +1,4 @@
+import { config } from "../config";
 import redis from "../utils/redis";
 import { Logger } from "./logger";
 
@@ -11,6 +12,13 @@ export type AcquiredLock = {
 };
 
 export async function acquireLock(key: string, timeout = defaultTimeout): Promise<AcquiredLock> {
+    if (!config.redis?.enabled) {
+        return {
+            status: true,
+            unlock: () => void 0
+        };
+    }
+
     try {
         const result = await redis.set(key, "1", {
             PX: timeout,
