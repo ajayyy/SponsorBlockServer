@@ -84,6 +84,7 @@ export interface SBSConfig {
     maxRewardTimePerSegmentInSeconds?: number;
     postgres?: CustomWritePostgresConfig;
     postgresReadOnly?: CustomPostgresReadOnlyConfig;
+    postgresPrivateMax?: number;
     dumpDatabase?: DumpDatabase;
     diskCacheURL: string;
     crons: CronJobOptions;

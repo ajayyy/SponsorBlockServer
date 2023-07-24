@@ -30,6 +30,7 @@ if (config.postgres?.enabled) {
         createDbIfNotExists: config.createDatabaseIfNotExist,
         postgres: {
             ...config.postgres,
+            max: config.postgresPrivateMax ?? config.postgres.max,
             database: "privateDB"
         },
         postgresReadOnly: config.postgresReadOnly ? {

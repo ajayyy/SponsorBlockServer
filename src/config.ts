@@ -98,6 +98,7 @@ addDefaults(config, {
         fallbackOnFail: true,
         stopRetryThreshold: 800
     },
+    postgresPrivateMax: 10,
     dumpDatabase: {
         enabled: false,
         minTimeBetweenMs: 180000,
