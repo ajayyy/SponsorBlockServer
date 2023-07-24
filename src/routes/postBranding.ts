@@ -49,8 +49,6 @@ export async function postBranding(req: Request, res: Response) {
             return;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-
         const now = Date.now();
         const voteType = 1;
 
