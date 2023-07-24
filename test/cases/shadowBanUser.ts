@@ -97,9 +97,9 @@ describe("shadowBanUser", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleQuery, [video, "title1", 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID1-ban2"]),
-            db.prepare("run", titleQuery, [video, "title2", 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID2-ban2"]),
-            db.prepare("run", titleQuery, [video, "title3", 1, "userID2-ban", Service.YouTube, videohash, 1, "UUID3-ban2"]),
+            db.prepare("run", titleQuery, [video, "title11", 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID1-ban2"]),
+            db.prepare("run", titleQuery, [video, "title12", 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID2-ban2"]),
+            db.prepare("run", titleQuery, [video, "title13", 1, "userID2-ban", Service.YouTube, videohash, 1, "UUID3-ban2"]),
             db.prepare("run", thumbnailQuery, [video, 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID1T-ban2"]),
             db.prepare("run", thumbnailQuery, [video, 1, "userID2-ban", Service.YouTube, videohash, 1, "UUID2T-ban2"]),
             db.prepare("run", thumbnailQuery, [video, 0, "userID2-ban", Service.YouTube, videohash, 1, "UUID3T-ban2"]),
