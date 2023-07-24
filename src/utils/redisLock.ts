@@ -2,7 +2,7 @@ import { config } from "../config";
 import redis from "../utils/redis";
 import { Logger } from "./logger";
 
-const defaultTimeout = 5000;
+const defaultTimeout = 20000;
 
 export type AcquiredLock = {
     status: false
