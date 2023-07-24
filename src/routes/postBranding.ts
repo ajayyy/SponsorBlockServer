@@ -53,6 +53,7 @@ export async function postBranding(req: Request, res: Response) {
         const voteType = 1;
 
         if (title && !isVip && title.title.length > config.maxTitleLength) {
+            lock.unlock();
             res.status(400).send("Your title is too long. Please keep titles concise.");
             return;
         }
