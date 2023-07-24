@@ -24,6 +24,7 @@ import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
 import { banUser } from "./shadowBanUser";
+import { acquireLock } from "../utils/redisLock";
 
 type CheckResult = {
     pass: boolean,
@@ -508,6 +509,12 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(userWarningCheckResult.errorCode).send(userWarningCheckResult.errorMessage);
     }
 
+    const lock = await acquireLock(`postSkipSegment:${videoID}.${userID}`);
+    if (!lock.status) {
+        res.status(429).send("Submission already in progress");
+        return;
+    }
+
     const isVIP = (await isUserVIP(userID));
     const isTempVIP = (await isUserTempVIP(userID, videoID));
     const rawIP = getIP(req);
@@ -618,6 +625,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     for (let i = 0; i < segments.length; i++) {
         sendWebhooks(apiVideoDetails, userID, videoID, UUIDs[i], segments[i], service).catch((e) => Logger.error(`call send webhooks ${e}`));
     }
+
+    lock.unlock();
     return res.json(newSegments);
 }
 

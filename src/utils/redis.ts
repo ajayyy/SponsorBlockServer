@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { Logger } from "./logger";
-import { createClient } from "redis";
+import { SetOptions, createClient } from "redis";
 import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@redis/client/dist/lib/commands";
 import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
@@ -16,7 +16,7 @@ export interface RedisStats {
 
 interface RedisSB {
     get(key: RedisCommandArgument): Promise<string>;
-    set(key: RedisCommandArgument, value: RedisCommandArgument): Promise<string>;
+    set(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
     setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
@@ -125,7 +125,7 @@ if (config.redis?.enabled) {
 
     const set = client.set.bind(client);
     const setEx = client.setEx.bind(client);
-    exportClient.set = (key, value) => setFun(set, [key, value]);
+    exportClient.set = (key, value, options) => setFun(set, [key, value, options]);
     exportClient.setEx = (key, seconds, value) => setFun(setEx, [key, seconds, value]);
     exportClient.increment = (key) => new Promise((resolve, reject) =>
         void client.multi()

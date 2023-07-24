@@ -12,6 +12,7 @@ import { isUserVIP } from "../utils/isUserVIP";
 import { Logger } from "../utils/logger";
 import crypto from "crypto";
 import { QueryCacher } from "../utils/queryCacher";
+import { acquireLock } from "../utils/redisLock";
 
 enum BrandingType {
     Title,
@@ -41,6 +42,14 @@ export async function postBranding(req: Request, res: Response) {
         const isVip = await isUserVIP(hashedUserID);
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
+
+        const lock = await acquireLock(`postBranding:${videoID}.${hashedUserID}`);
+        if (!lock.status) {
+            res.status(429).send("Vote already in progress");
+            return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const now = Date.now();
         const voteType = 1;
@@ -104,6 +113,7 @@ export async function postBranding(req: Request, res: Response) {
 
         QueryCacher.clearBrandingCache({ videoID, hashedVideoID, service });
         res.status(200).send("OK");
+        lock.unlock();
     } catch (e) {
         Logger.error(e as string);
         res.status(500).send("Internal Server Error");

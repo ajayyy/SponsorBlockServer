@@ -15,6 +15,7 @@ import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import { deleteLockCategories } from "./deleteLockCategories";
+import { acquireLock } from "../utils/redisLock";
 
 const voteTypes = {
     normal: 0,
@@ -335,6 +336,11 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
 
+    const lock = await acquireLock(`voteOnSponsorTime:${UUID}.${paramUserID}`);
+    if (!lock.status) {
+        return { status: 429, message: "Vote already in progress" };
+    }
+
     // To force a non 200, change this early
     const finalResponse: FinalResponse = {
         blockVote: false,
@@ -526,6 +532,9 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 finalResponse
             }).catch((e) => Logger.error(`Sending vote webhook: ${e}`));
         }
+
+        lock.unlock();
+
         return { status: finalResponse.finalStatus, message: finalResponse.finalMessage ?? undefined };
     } catch (err) {
         Logger.error(err as string);
