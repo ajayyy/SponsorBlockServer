@@ -526,12 +526,14 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     // Check if all submissions are correct
     const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
     if (!segmentCheckResult.pass) {
+        lock.unlock();
         return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
     }
 
     if (!(isVIP || isTempVIP)) {
         const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
         if (!autoModerateCheckResult.pass) {
+            lock.unlock();
             return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
         }
     }
@@ -607,6 +609,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             } catch (err) {
                 //a DB change probably occurred
                 Logger.error(`Error when putting sponsorTime in the DB: ${videoID}, ${segmentInfo.segment[0]}, ${segmentInfo.segment[1]}, ${userID}, ${segmentInfo.category}. ${err}`);
+                lock.unlock();
                 return res.sendStatus(500);
             }
 
@@ -619,6 +622,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         }
     } catch (err) {
         Logger.error(err as string);
+        lock.unlock();
         return res.sendStatus(500);
     }
 

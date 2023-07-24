@@ -356,6 +356,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     const segmentInfo: DBSegment = await db.prepare("get", `SELECT * from "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
     // segment doesnt exist
     if (!segmentInfo) {
+        lock.unlock();
         return { status: 404 };
     }
 
@@ -367,6 +368,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     // disallow vote types 10/11
     if (type === 10 || type === 11) {
+        lock.unlock();
         return { status: 400 };
     }
 
@@ -385,7 +387,10 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     // no type but has category, categoryVote
     if (!type && category) {
-        return categoryVote(UUID, nonAnonUserID, isVIP, isTempVIP, isOwnSubmission, category, hashedIP, finalResponse);
+        const result = categoryVote(UUID, nonAnonUserID, isVIP, isTempVIP, isOwnSubmission, category, hashedIP, finalResponse);
+
+        lock.unlock();
+        return result;
     }
 
     // If not upvote, or an upvote on a dead segment (for ActionType.Full)
@@ -405,8 +410,11 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     if (!isNaN(type) && segmentInfo.votes <= -2 && segmentInfo.actionType !== ActionType.Full &&
         !(isVIP || isTempVIP || isOwnSubmission)) {
         if (type == 1) {
+            lock.unlock();
             return { status: 403, message: "Not allowed to upvote segment with too many downvotes unless you are VIP." };
         } else if (type == 0) {
+            lock.unlock();
+
             // Already downvoted enough, ignore
             return { status: 200 };
         }
@@ -439,6 +447,8 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             //undo/cancel vote
             incrementAmount = 0;
         } else {
+            lock.unlock();
+
             //unrecongnised type of vote
             return { status: 400 };
         }
@@ -537,6 +547,8 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
         return { status: finalResponse.finalStatus, message: finalResponse.finalMessage ?? undefined };
     } catch (err) {
+        lock.unlock();
+
         Logger.error(err as string);
         return { status: 500, message: finalResponse.finalMessage ?? undefined, json: { error: "Internal error creating segment vote" } };
     }
