@@ -205,14 +205,18 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
         return res.status(400).send("Invalid userID or publicUserID parameter");
     }
 
-    const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
     const responseObj = {} as Record<string, string|SegmentUUID|number>;
     for (const property of paramValues) {
         responseObj[property] = await dbGetValue(hashedUserID, property);
     }
+
     // add minutesSaved and segmentCount after to avoid getting overwritten
-    if (paramValues.includes("minutesSaved")) responseObj["minutesSaved"] = segmentsSummary.minutesSaved;
-    if (paramValues.includes("segmentCount")) responseObj["segmentCount"] = segmentsSummary.segmentCount;
+    if (paramValues.includes("minutesSaved") || paramValues.includes("segmentCount")) {
+        const segmentsSummary = await dbGetSubmittedSegmentSummary(hashedUserID);
+        responseObj["minutesSaved"] = segmentsSummary.minutesSaved;
+        responseObj["segmentCount"] = segmentsSummary.segmentCount;
+    }
+
     return res.send(responseObj);
 }
 
