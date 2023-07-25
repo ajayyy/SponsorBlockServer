@@ -34,29 +34,29 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     // eslint-disable-next-line no-control-regex
     userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
-    // check privateID against publicID
-    if (!await checkPrivateUsername(userName, userID)) {
-        return res.sendStatus(400);
-    }
-
-    timings.push(Date.now());
-
-    if (adminUserIDInput != undefined) {
-        //this is the admin controlling the other users account, don't hash the controling account's ID
-        adminUserIDInput = await getHashCache(adminUserIDInput);
-
-        if (adminUserIDInput != config.adminUserID) {
-            //they aren't the admin
-            return res.sendStatus(403);
-        }
-    } else {
-        //hash the userID
-        userID = await getHashCache(userID);
-    }
-
-    timings.push(Date.now());
-
     try {
+        // check privateID against publicID
+        if (!await checkPrivateUsername(userName, userID)) {
+            return res.sendStatus(400);
+        }
+
+        timings.push(Date.now());
+
+        if (adminUserIDInput != undefined) {
+            //this is the admin controlling the other users account, don't hash the controling account's ID
+            adminUserIDInput = await getHashCache(adminUserIDInput);
+
+            if (adminUserIDInput != config.adminUserID) {
+                //they aren't the admin
+                return res.sendStatus(403);
+            }
+        } else {
+            //hash the userID
+            userID = await getHashCache(userID);
+        }
+
+        timings.push(Date.now());
+
         const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "userNames" WHERE "userID" = ? AND "locked" = 1`, [userID]);
         if (adminUserIDInput === undefined && row.userCount > 0) {
             return res.sendStatus(200);

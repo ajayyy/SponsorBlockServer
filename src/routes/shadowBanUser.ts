@@ -7,6 +7,7 @@ import { UserID } from "../types/user.model";
 import { QueryCacher } from "../utils/queryCacher";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseCategories, parseDeArrowTypes } from "../utils/parseParams";
+import { Logger } from "../utils/logger";
 
 export async function shadowBanUser(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
@@ -36,42 +37,47 @@ export async function shadowBanUser(req: Request, res: Response): Promise<Respon
         return res.sendStatus(400);
     }
 
-    //hash the userID
-    const adminUserID = await getHashCache(adminUserIDInput);
+    try {
+        //hash the userID
+        const adminUserID = await getHashCache(adminUserIDInput);
 
-    const isVIP = await isUserVIP(adminUserID);
-    if (!isVIP) {
-        //not authorized
-        return res.sendStatus(403);
+        const isVIP = await isUserVIP(adminUserID);
+        if (!isVIP) {
+            //not authorized
+            return res.sendStatus(403);
+        }
+
+        if (userID) {
+            const result = await banUser(userID, enabled, unHideOldSubmissions, type, categories, deArrowTypes);
+
+            if (enabled && lookForIPs) {
+                const ipLoggingFixedTime = 1675295716000;
+                const timeSubmitted = (await db.prepare("all", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "timeSubmitted" > ? AND "userID" = ?`, [ipLoggingFixedTime, userID])) as { timeSubmitted: number }[];
+                const ips = (await Promise.all(timeSubmitted.map((s) => {
+                    return privateDB.prepare("all", `SELECT "hashedIP" FROM "sponsorTimes" WHERE "timeSubmitted" = ?`, [s.timeSubmitted]) as Promise<{ hashedIP: HashedIP }[]>;
+                }))).flat();
+
+                await Promise.all([...new Set(ips.map((ip) => ip.hashedIP))].map((ip) => {
+                    return banIP(ip, enabled, unHideOldSubmissions, type, categories, deArrowTypes, true);
+                }));
+            }
+
+            if (result) {
+                res.sendStatus(result);
+                return;
+            }
+        } else if (hashedIP) {
+            const result = await banIP(hashedIP, enabled, unHideOldSubmissions, type, categories, deArrowTypes, banUsers);
+            if (result) {
+                res.sendStatus(result);
+                return;
+            }
+        }
+        return res.sendStatus(200);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.sendStatus(500);
     }
-
-    if (userID) {
-        const result = await banUser(userID, enabled, unHideOldSubmissions, type, categories, deArrowTypes);
-
-        if (enabled && lookForIPs) {
-            const ipLoggingFixedTime = 1675295716000;
-            const timeSubmitted = (await db.prepare("all", `SELECT "timeSubmitted" FROM "sponsorTimes" WHERE "timeSubmitted" > ? AND "userID" = ?`, [ipLoggingFixedTime, userID])) as { timeSubmitted: number }[];
-            const ips = (await Promise.all(timeSubmitted.map((s) => {
-                return privateDB.prepare("all", `SELECT "hashedIP" FROM "sponsorTimes" WHERE "timeSubmitted" = ?`, [s.timeSubmitted]) as Promise<{ hashedIP: HashedIP }[]>;
-            }))).flat();
-
-            await Promise.all([...new Set(ips.map((ip) => ip.hashedIP))].map((ip) => {
-                return banIP(ip, enabled, unHideOldSubmissions, type, categories, deArrowTypes, true);
-            }));
-        }
-
-        if (result) {
-            res.sendStatus(result);
-            return;
-        }
-    } else if (hashedIP) {
-        const result = await banIP(hashedIP, enabled, unHideOldSubmissions, type, categories, deArrowTypes, banUsers);
-        if (result) {
-            res.sendStatus(result);
-            return;
-        }
-    }
-    return res.sendStatus(200);
 }
 
 export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmissions: boolean,

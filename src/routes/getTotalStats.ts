@@ -30,30 +30,35 @@ let lastFetch: DBStatsData = {
 updateExtensionUsers();
 
 export async function getTotalStats(req: Request, res: Response): Promise<void> {
-    const countContributingUsers = Boolean(req.query?.countContributingUsers == "true");
-    const row = await getStats(countContributingUsers);
-    lastFetch = row;
+    try {
+        const countContributingUsers = Boolean(req.query?.countContributingUsers == "true");
+        const row = await getStats(countContributingUsers);
+        lastFetch = row;
 
-    /* istanbul ignore if */
-    if (!row) res.sendStatus(500);
-    const extensionUsers = chromeUsersCache + firefoxUsersCache;
+        /* istanbul ignore if */
+        if (!row) res.sendStatus(500);
+        const extensionUsers = chromeUsersCache + firefoxUsersCache;
 
-    //send this result
-    res.send({
-        userCount: row.userCount ?? 0,
-        activeUsers: extensionUsers,
-        apiUsers: Math.max(apiUsersCache, extensionUsers),
-        viewCount: row.viewCount,
-        totalSubmissions: row.totalSubmissions,
-        minutesSaved: row.minutesSaved,
-    });
+        //send this result
+        res.send({
+            userCount: row.userCount ?? 0,
+            activeUsers: extensionUsers,
+            apiUsers: Math.max(apiUsersCache, extensionUsers),
+            viewCount: row.viewCount,
+            totalSubmissions: row.totalSubmissions,
+            minutesSaved: row.minutesSaved,
+        });
 
-    // Check if the cache should be updated (every ~14 hours)
-    const now = Date.now();
-    if (now - lastUserCountCheck > 5000000) {
-        lastUserCountCheck = now;
+        // Check if the cache should be updated (every ~14 hours)
+        const now = Date.now();
+        if (now - lastUserCountCheck > 5000000) {
+            lastUserCountCheck = now;
 
-        updateExtensionUsers();
+            updateExtensionUsers();
+        }
+    } catch (e) {
+        Logger.error(e as string);
+        res.sendStatus(500);
     }
 }
 

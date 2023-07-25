@@ -17,50 +17,55 @@ export const validateLicenseKeyRegex = (token: string) =>
 export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response): Promise<Response> {
     const { query: { licenseKey } } = req;
 
-    if (!licenseKey) {
-        return res.status(400).send("Invalid request");
-    } else if (!validateLicenseKeyRegex(licenseKey)) {
-        // fast check for invalid licence key
-        return res.status(200).send({
-            allowed: false
-        });
-    }
-
-    const tokens = (await privateDB.prepare("get", `SELECT "accessToken", "refreshToken", "expiresIn" from "oauthLicenseKeys" WHERE "licenseKey" = ?`
-        , [licenseKey])) as {accessToken: string, refreshToken: string, expiresIn: number};
-    if (tokens) {
-        const identity = await getPatreonIdentity(tokens.accessToken);
-
-        if (tokens.expiresIn < 15 * 24 * 60 * 60) {
-            refreshToken(TokenType.patreon, licenseKey, tokens.refreshToken).catch((e) => Logger.error(`refresh token: ${e}`));
+    try {
+        if (!licenseKey) {
+            return res.status(400).send("Invalid request");
+        } else if (!validateLicenseKeyRegex(licenseKey)) {
+            // fast check for invalid licence key
+            return res.status(200).send({
+                allowed: false
+            });
         }
 
-        /* istanbul ignore else */
-        if (identity) {
-            const membership = identity.included?.[0]?.attributes;
-            const allowed = !!membership && ((membership.patron_status === PatronStatus.active && membership.currently_entitled_amount_cents > 0)
-                || (membership.patron_status === PatronStatus.former && membership.campaign_lifetime_support_cents > 300));
+        const tokens = (await privateDB.prepare("get", `SELECT "accessToken", "refreshToken", "expiresIn" from "oauthLicenseKeys" WHERE "licenseKey" = ?`
+            , [licenseKey])) as {accessToken: string, refreshToken: string, expiresIn: number};
+        if (tokens) {
+            const identity = await getPatreonIdentity(tokens.accessToken);
 
-            return res.status(200).send({
-                allowed
-            });
+            if (tokens.expiresIn < 15 * 24 * 60 * 60) {
+                refreshToken(TokenType.patreon, licenseKey, tokens.refreshToken).catch((e) => Logger.error(`refresh token: ${e}`));
+            }
+
+            /* istanbul ignore else */
+            if (identity) {
+                const membership = identity.included?.[0]?.attributes;
+                const allowed = !!membership && ((membership.patron_status === PatronStatus.active && membership.currently_entitled_amount_cents > 0)
+                    || (membership.patron_status === PatronStatus.former && membership.campaign_lifetime_support_cents > 300));
+
+                return res.status(200).send({
+                    allowed
+                });
+            } else {
+                return res.status(500);
+            }
         } else {
-            return res.status(500);
-        }
-    } else {
-        // Check Local
-        const result = await privateDB.prepare("get", `SELECT "licenseKey" from "licenseKeys" WHERE "licenseKey" = ?`, [licenseKey]);
-        if (result) {
-            return res.status(200).send({
-                allowed: true
-            });
-        } else {
-            // Gumroad
-            return res.status(200).send({
-                allowed: await checkAllGumroadProducts(licenseKey)
-            });
-        }
+            // Check Local
+            const result = await privateDB.prepare("get", `SELECT "licenseKey" from "licenseKeys" WHERE "licenseKey" = ?`, [licenseKey]);
+            if (result) {
+                return res.status(200).send({
+                    allowed: true
+                });
+            } else {
+                // Gumroad
+                return res.status(200).send({
+                    allowed: await checkAllGumroadProducts(licenseKey)
+                });
+            }
 
+        }
+    } catch (e) {
+        Logger.error(e as string);
+        return res.status(500);
     }
 }
 

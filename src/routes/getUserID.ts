@@ -1,6 +1,7 @@
 import { db } from "../databases/databases";
 import { Request, Response } from "express";
 import { UserID } from "../types/user.model";
+import { Logger } from "../utils/logger";
 
 function getFuzzyUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     // escape [_ % \] to avoid ReDOS
@@ -37,16 +38,22 @@ export async function getUserID(req: Request, res: Response): Promise<Response> 
         // invalid request
         return res.sendStatus(400);
     }
-    const results = exactSearch
-        ? await getExactUserID(userName)
-        : await getFuzzyUserID(userName);
 
-    if (results === undefined || results === null) {
-        /* istanbul ignore next */
+    try {
+        const results = exactSearch
+            ? await getExactUserID(userName)
+            : await getFuzzyUserID(userName);
+
+        if (results === undefined || results === null) {
+            /* istanbul ignore next */
+            return res.sendStatus(500);
+        } else if (results.length === 0) {
+            return res.sendStatus(404);
+        } else {
+            return res.send(results);
+        }
+    } catch (e) {
+        Logger.error(e as string);
         return res.sendStatus(500);
-    } else if (results.length === 0) {
-        return res.sendStatus(404);
-    } else {
-        return res.send(results);
     }
 }

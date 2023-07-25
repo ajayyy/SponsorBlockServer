@@ -164,18 +164,23 @@ export default async function dumpDatabase(req: Request, res: Response, showPage
             <hr/>
             ${updateQueued ? `Update queued.` : ``} Last updated: ${lastUpdate ? new Date(lastUpdate).toUTCString() : `Unknown`}`);
     } else {
-        res.send({
-            dbVersion: await getDbVersion(),
-            lastUpdated: lastUpdate,
-            updateQueued,
-            links: latestDumpFiles.map((item:any) => {
-                return {
-                    table: item.tableName,
-                    url: `/database/${item.tableName}.csv`,
-                    size: item.fileSize,
-                };
-            }),
-        });
+        try {
+            res.send({
+                dbVersion: await getDbVersion(),
+                lastUpdated: lastUpdate,
+                updateQueued,
+                links: latestDumpFiles.map((item:any) => {
+                    return {
+                        table: item.tableName,
+                        url: `/database/${item.tableName}.csv`,
+                        size: item.fileSize,
+                    };
+                }),
+            });
+        } catch (e) {
+            Logger.error(e as string);
+            res.sendStatus(500);
+        }
     }
 
     await queueDump();

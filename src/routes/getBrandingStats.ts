@@ -25,20 +25,25 @@ let lastFetch: DBStatsData = {
 updateExtensionUsers();
 
 export async function getBrandingStats(req: Request, res: Response): Promise<void> {
-    const row = await getStats();
-    lastFetch = row;
+    try {
+        const row = await getStats();
+        lastFetch = row;
 
-    /* istanbul ignore if */
-    if (!row) res.sendStatus(500);
-    const extensionUsers = chromeUsersCache + firefoxUsersCache;
+        /* istanbul ignore if */
+        if (!row) res.sendStatus(500);
+        const extensionUsers = chromeUsersCache + firefoxUsersCache;
 
-    //send this result
-    res.send({
-        userCount: row.userCount ?? 0,
-        activeUsers: extensionUsers,
-        titles: row.titles,
-        thumbnails: row.thumbnails,
-    });
+        //send this result
+        res.send({
+            userCount: row.userCount ?? 0,
+            activeUsers: extensionUsers,
+            titles: row.titles,
+            thumbnails: row.thumbnails,
+        });
+    } catch (e) {
+        Logger.error(e as string);
+        res.sendStatus(500);
+    }
 }
 
 async function getStats(): Promise<DBStatsData> {

@@ -3,6 +3,7 @@ import { createMemoryCache } from "../utils/createMemoryCache";
 import { config } from "../config";
 import { Request, Response } from "express";
 import { validateCategories } from "../utils/parseParams";
+import { Logger } from "../utils/logger";
 
 const MILLISECONDS_IN_MINUTE = 60000;
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -74,8 +75,13 @@ export async function getTopCategoryUsers(req: Request, res: Response): Promise<
         return res.sendStatus(400);
     }
 
-    const stats = await getTopCategoryUsersWithCache(sortBy, category);
+    try {
+        const stats = await getTopCategoryUsersWithCache(sortBy, category);
 
-    //send this result
-    return res.send(stats);
+        //send this result
+        return res.send(stats);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.sendStatus(500);
+    }
 }

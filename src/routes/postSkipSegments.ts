@@ -515,38 +515,37 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return;
     }
 
-    const isVIP = (await isUserVIP(userID));
-    const isTempVIP = (await isUserTempVIP(userID, videoID));
-    const rawIP = getIP(req);
-
-    const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
-    videoDuration = newData.videoDuration;
-    const { lockedCategoryList, apiVideoDetails } = newData;
-
-    // Check if all submissions are correct
-    const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
-    if (!segmentCheckResult.pass) {
-        lock.unlock();
-        return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
-    }
-
-    if (!(isVIP || isTempVIP)) {
-        const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
-        if (!autoModerateCheckResult.pass) {
-            lock.unlock();
-            return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
-        }
-    }
-
-    // Will be filled when submitting
-    const UUIDs = [];
-    const newSegments = [];
-
-    //hash the ip 5000 times so no one can get it from the database
-    const hashedIP = await getHashCache(rawIP + config.globalSalt);
-
     try {
-        //get current time
+        const isVIP = (await isUserVIP(userID));
+        const isTempVIP = (await isUserTempVIP(userID, videoID));
+        const rawIP = getIP(req);
+
+        const newData = await updateDataIfVideoDurationChange(videoID, service, videoDuration, videoDurationParam);
+        videoDuration = newData.videoDuration;
+        const { lockedCategoryList, apiVideoDetails } = newData;
+
+        // Check if all submissions are correct
+        const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
+        if (!segmentCheckResult.pass) {
+            lock.unlock();
+            return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
+        }
+
+        if (!(isVIP || isTempVIP)) {
+            const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
+            if (!autoModerateCheckResult.pass) {
+                lock.unlock();
+                return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
+            }
+        }
+
+        // Will be filled when submitting
+        const UUIDs = [];
+        const newSegments = [];
+
+        //hash the ip 5000 times so no one can get it from the database
+        const hashedIP = await getHashCache(rawIP + config.globalSalt);
+
         const timeSubmitted = Date.now();
 
         // const rateLimitCheckResult = checkRateLimit(userID, videoID, service, timeSubmitted, hashedIP);
@@ -620,18 +619,18 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 segment: segmentInfo.segment,
             });
         }
+
+        for (let i = 0; i < segments.length; i++) {
+            sendWebhooks(apiVideoDetails, userID, videoID, UUIDs[i], segments[i], service).catch((e) => Logger.error(`call send webhooks ${e}`));
+        }
+
+        return res.json(newSegments);
     } catch (err) {
         Logger.error(err as string);
-        lock.unlock();
         return res.sendStatus(500);
+    } finally {
+        lock.unlock();
     }
-
-    for (let i = 0; i < segments.length; i++) {
-        sendWebhooks(apiVideoDetails, userID, videoID, UUIDs[i], segments[i], service).catch((e) => Logger.error(`call send webhooks ${e}`));
-    }
-
-    lock.unlock();
-    return res.json(newSegments);
 }
 
 // Takes an array of arrays:

@@ -42,53 +42,58 @@ export async function postWarning(req: Request, res: Response): Promise<Response
 
     let resultStatus = "";
 
-    if (enabled) {
-        const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ? AND "type" = ?', [userID, issuerUserID, type]) as warningEntry;
-
-        if (!previousWarning) {
-            await db.prepare(
-                "run",
-                'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason", "type") VALUES (?, ?, ?, 1, ?, ?)',
-                [userID, issueTime, issuerUserID, reason, type]
-            );
-            resultStatus = "issued to";
-        // check if warning is still within issue time and warning is not enabled
-        } else if (checkExpiredWarning(previousWarning) ) {
-            await db.prepare(
-                "run", 'UPDATE "warnings" SET "enabled" = 1, "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
-                [reason, userID, previousWarning.issueTime]
-            );
-            resultStatus = "re-enabled";
-        } else {
-            return res.sendStatus(409);
-        }
-    } else {
-        await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "type" = ?', [userID, type]);
-        resultStatus = "removed from";
-    }
-
-    const targetUsername = await getUsername(userID) ?? null;
-    const issuerUsername = await getUsername(issuerUserID) ?? null;
-    const webhookData = {
-        target: {
-            userID,
-            username: targetUsername
-        },
-        issuer: {
-            userID: issuerUserID,
-            username: issuerUsername
-        },
-        reason
-    } as warningData;
-
     try {
-        const warning = generateWarningDiscord(webhookData);
-        dispatchEvent("warning", warning);
-    } catch /* istanbul ignore next */ (err) {
-        Logger.error(`Error sending warning to Discord ${err}`);
-    }
+        if (enabled) {
+            const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ? AND "type" = ?', [userID, issuerUserID, type]) as warningEntry;
 
-    return res.status(200).json({
-        message: `Warning ${resultStatus} user '${userID}'.`,
-    });
+            if (!previousWarning) {
+                await db.prepare(
+                    "run",
+                    'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason", "type") VALUES (?, ?, ?, 1, ?, ?)',
+                    [userID, issueTime, issuerUserID, reason, type]
+                );
+                resultStatus = "issued to";
+            // check if warning is still within issue time and warning is not enabled
+            } else if (checkExpiredWarning(previousWarning) ) {
+                await db.prepare(
+                    "run", 'UPDATE "warnings" SET "enabled" = 1, "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
+                    [reason, userID, previousWarning.issueTime]
+                );
+                resultStatus = "re-enabled";
+            } else {
+                return res.sendStatus(409);
+            }
+        } else {
+            await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "type" = ?', [userID, type]);
+            resultStatus = "removed from";
+        }
+
+        const targetUsername = await getUsername(userID) ?? null;
+        const issuerUsername = await getUsername(issuerUserID) ?? null;
+        const webhookData = {
+            target: {
+                userID,
+                username: targetUsername
+            },
+            issuer: {
+                userID: issuerUserID,
+                username: issuerUsername
+            },
+            reason
+        } as warningData;
+
+        try {
+            const warning = generateWarningDiscord(webhookData);
+            dispatchEvent("warning", warning);
+        } catch /* istanbul ignore next */ (err) {
+            Logger.error(`Error sending warning to Discord ${err}`);
+        }
+
+        return res.status(200).json({
+            message: `Warning ${resultStatus} user '${userID}'.`,
+        });
+    } catch (e) {
+        Logger.error(e as string);
+        return res.sendStatus(500);
+    }
 }

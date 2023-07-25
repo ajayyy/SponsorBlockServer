@@ -1,5 +1,6 @@
 import { db } from "../databases/databases";
 import { Request, Response } from "express";
+import { Logger } from "../utils/logger";
 
 async function generateTopUsersStats(sortBy: string) {
     const rows = await db.prepare("all", `SELECT COUNT(distinct "titles"."UUID") as "titleCount", COUNT(distinct "thumbnails"."UUID") as "thumbnailCount", COALESCE("userName", "titles"."userID") as "userName"
@@ -36,8 +37,13 @@ export async function getTopBrandingUsers(req: Request, res: Response): Promise<
         return res.status(503).send("Disabled for load reasons");
     }
 
-    const stats = await generateTopUsersStats(sortBy);
+    try {
+        const stats = await generateTopUsersStats(sortBy);
 
-    //send this result
-    return res.send(stats);
+        //send this result
+        return res.send(stats);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.sendStatus(500);
+    }
 }

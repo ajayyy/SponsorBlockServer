@@ -6,6 +6,7 @@ import { ActionType, Category, Service, VideoID } from "../types/segments.model"
 import { UserID } from "../types/user.model";
 import { getService } from "../utils/getService";
 import { config } from "../config";
+import { Logger } from "../utils/logger";
 
 interface DeleteLockCategoriesRequest extends Request {
     body: {
@@ -53,7 +54,12 @@ export async function deleteLockCategoriesEndpoint(req: DeleteLockCategoriesRequ
         });
     }
 
-    await deleteLockCategories(videoID, categories, actionTypes, getService(service));
+    try {
+        await deleteLockCategories(videoID, categories, actionTypes, getService(service));
+    } catch (e) {
+        Logger.error(e as string);
+        return res.status(500);
+    }
 
     return res.status(200).json({ message: `Removed lock categories entries for video ${videoID}` });
 }

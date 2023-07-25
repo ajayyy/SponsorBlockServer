@@ -2,6 +2,7 @@ import { db } from "../databases/databases";
 import { createMemoryCache } from "../utils/createMemoryCache";
 import { config } from "../config";
 import { Request, Response } from "express";
+import { Logger } from "../utils/logger";
 
 const MILLISECONDS_IN_MINUTE = 60000;
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -92,8 +93,13 @@ export async function getTopUsers(req: Request, res: Response): Promise<Response
         return res.status(503).send("Disabled for load reasons");
     }
 
-    const stats = await getTopUsersWithCache(sortBy, categoryStatsEnabled);
+    try {
+        const stats = await getTopUsersWithCache(sortBy, categoryStatsEnabled);
 
-    //send this result
-    return res.send(stats);
+        //send this result
+        return res.send(stats);
+    } catch (e) {
+        Logger.error(e as string);
+        return res.sendStatus(500);
+    }
 }
