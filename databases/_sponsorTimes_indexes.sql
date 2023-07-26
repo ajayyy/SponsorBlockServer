@@ -124,6 +124,11 @@ CREATE INDEX IF NOT EXISTS "titles_timeSubmitted"
     ("timeSubmitted" ASC NULLS LAST)
     TABLESPACE pg_default;
 
+CREATE INDEX IF NOT EXISTS "titles_votes_timeSubmitted"
+    ON public."titles" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
+    TABLESPACE pg_default;
+
 CREATE INDEX IF NOT EXISTS "titles_videoID"
     ON public."titles" USING btree
     ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
@@ -139,6 +144,11 @@ CREATE INDEX IF NOT EXISTS "titles_hashedVideoID"
 CREATE INDEX IF NOT EXISTS "thumbnails_timeSubmitted"
     ON public."thumbnails" USING btree
     ("timeSubmitted" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "thumbnails_votes_timeSubmitted"
+    ON public."thumbnails" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "thumbnails_videoID"

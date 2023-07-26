@@ -26,7 +26,9 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         "all",
         `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
+        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2
+        GROUP BY "titles"."userID"
+        ORDER BY "titleVotes"."votes", "titles"."timeSubmitted" DESC`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
@@ -35,7 +37,9 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         "all",
         `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
-        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2`,
+        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2
+        GROUP BY "thumbnails"."userID"
+        ORDER BY "thumbnailVotes"."votes", "thumbnails"."timeSubmitted" DESC`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<ThumbnailDBResult[]>;
