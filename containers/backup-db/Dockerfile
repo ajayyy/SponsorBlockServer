@@ -1,11 +1,11 @@
-FROM alpine
-RUN apk add postgresql-client
-RUN apk add restic --repository http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/
+FROM alpine as builder
+WORKDIR /scripts
+COPY ./backup.sh ./backup.sh
+COPY ./forget.sh ./forget.sh
 
-COPY ./backup.sh /usr/src/app/backup.sh
-RUN chmod +x /usr/src/app/backup.sh
-COPY ./forget.sh /usr/src/app/forget.sh
-RUN chmod +x /usr/src/app/forget.sh
+FROM alpine
+RUN apk add --no-cache postgresql-client restic
+COPY --from=builder --chmod=755 /scripts /usr/src/app/
 
 RUN echo '30  *  *  *  *    /usr/src/app/backup.sh' >> /etc/crontabs/root
 RUN echo '10  0  *  *  1    /usr/src/app/forget.sh' >> /etc/crontabs/root
