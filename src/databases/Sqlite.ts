@@ -72,6 +72,15 @@ export class Sqlite implements IDatabase {
     }
 
     private static processQuery(query: string): string {
+        if (query.includes("DISTINCT ON")) {
+            const column = query.match(/DISTINCT ON \((.*)\) (.*)/)[1];
+            query = query.replace(/DISTINCT ON \((.*)\)/g, "");
+
+            const parts = query.split("ORDER BY");
+
+            query = `${parts[0]} GROUP BY ${column} ORDER BY ${parts[1]}`;
+        }
+
         return query.replace(/ ~\* /g, " REGEXP ");
     }
 

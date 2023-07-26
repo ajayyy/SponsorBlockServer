@@ -124,9 +124,9 @@ CREATE INDEX IF NOT EXISTS "titles_timeSubmitted"
     ("timeSubmitted" ASC NULLS LAST)
     TABLESPACE pg_default;
 
-CREATE INDEX IF NOT EXISTS "titles_votes_timeSubmitted"
+CREATE INDEX IF NOT EXISTS "titles_userID_timeSubmitted"
     ON public."titles" USING btree
-    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "userID" COLLATE pg_catalog."default" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "titles_videoID"
@@ -139,6 +139,13 @@ CREATE INDEX IF NOT EXISTS "titles_hashedVideoID"
     ("hashedVideoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
 
+-- titleVotes
+
+CREATE INDEX IF NOT EXISTS "titleVotes_votes"
+    ON public."titleVotes" USING btree
+    ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST)
+    TABLESPACE pg_default;
+
 -- thumbnails
 
 CREATE INDEX IF NOT EXISTS "thumbnails_timeSubmitted"
@@ -148,7 +155,7 @@ CREATE INDEX IF NOT EXISTS "thumbnails_timeSubmitted"
 
 CREATE INDEX IF NOT EXISTS "thumbnails_votes_timeSubmitted"
     ON public."thumbnails" USING btree
-    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "userID" COLLATE pg_catalog."default" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "thumbnails_videoID"
@@ -159,4 +166,11 @@ CREATE INDEX IF NOT EXISTS "thumbnails_videoID"
 CREATE INDEX IF NOT EXISTS "thumbnails_hashedVideoID"
     ON public."thumbnails" USING btree
     ("hashedVideoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+-- thumbnailVotes
+
+CREATE INDEX IF NOT EXISTS "thumbnailVotes_votes"
+    ON public."thumbnailVotes" USING btree
+    ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST)
     TABLESPACE pg_default;
