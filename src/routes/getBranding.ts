@@ -24,20 +24,18 @@ enum BrandingSubmissionType {
 export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress, returnUserID: boolean): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT DISTINCT ON ("titles"."userID") "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2
-        ORDER BY "titles"."userID", "titleVotes"."votes", "titles"."timeSubmitted" DESC`,
+        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
 
     const getThumbnails = () => db.prepare(
         "all",
-        `SELECT DISTINCT ON ("thumbnails"."userID") "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
+        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
-        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2
-        ORDER BY "thumbnails"."userID", "thumbnailVotes"."votes", "thumbnails"."timeSubmitted" DESC`,
+        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<ThumbnailDBResult[]>;

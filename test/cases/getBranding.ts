@@ -45,8 +45,6 @@ describe("getBranding", () => {
             db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
             db.prepare("run", titleQuery, [videoID1, "title2", 0, "userID2", Service.YouTube, videoID1Hash, 1, "UUID2"]),
             db.prepare("run", titleQuery, [videoID1, "title3", 1, "userID3", Service.YouTube, videoID1Hash, 1, "UUID3"]),
-            // Will be ignored since it has the same userID, but less votes
-            db.prepare("run", titleQuery, [videoID1, "some badly written title", 0, "userID3", Service.YouTube, videoID1Hash, 1, "UUID4"]),
             db.prepare("run", thumbnailQuery, [videoID1, 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1T"]),
             db.prepare("run", thumbnailQuery, [videoID1, 1, "userID2", Service.YouTube, videoID1Hash, 1, "UUID2T"]),
             db.prepare("run", thumbnailQuery, [videoID1, 0, "userID3", Service.YouTube, videoID1Hash, 1, "UUID3T"]),
