@@ -119,6 +119,8 @@ function clearSegmentCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoID
         redis.del(videoLabelsKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
         redis.del(videoLabelsHashKey(videoInfo.hashedVideoID, videoInfo.service)).catch((err) => Logger.error(err));
         if (videoInfo.userID) redis.del(reputationKey(videoInfo.userID)).catch((err) => Logger.error(err));
+
+        clearBrandingCache(videoInfo);
     }
 }
 
