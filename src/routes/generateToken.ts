@@ -25,10 +25,10 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
     if (type === TokenType.patreon
             || ([TokenType.local, TokenType.gift].includes(type) && adminUserIDHash === config.adminUserID)
             || type === TokenType.free) {
-        const licenseKey = await createAndSaveToken(type, code, adminUserIDHash === config.adminUserID ? parseInt(total) : 1);
+        const licenseKeys = await createAndSaveToken(type, code, adminUserIDHash === config.adminUserID ? parseInt(total) : 1);
 
         /* istanbul ignore else */
-        if (licenseKey) {
+        if (licenseKeys) {
             if (type === TokenType.patreon) {
                 return res.status(200).send(`
                     <h1>
@@ -36,7 +36,7 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
                     </h1>
                     <p>
                         <b>
-                            ${licenseKey[0]}
+                            ${licenseKeys[0]}
                         </b>
                     </p>
                     <p>
@@ -45,10 +45,10 @@ export async function generateTokenRequest(req: GenerateTokenRequest, res: Respo
                 `);
             } else if (type === TokenType.free) {
                 return res.status(200).send({
-                    licenseKey: licenseKey[0]
+                    licenseKey: licenseKeys[0]
                 });
             } else {
-                return res.status(200).send(licenseKey.join("<br/>"));
+                return res.status(200).send(licenseKeys.join("<br/>"));
             }
         } else {
             return res.status(401).send(`
