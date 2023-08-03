@@ -4,10 +4,13 @@ import { privateDB } from "../databases/databases";
 import { Logger } from "./logger";
 import FormData from "form-data";
 import { randomInt } from "node:crypto";
+import { getHash } from "./getHash";
 
 export enum TokenType {
     patreon = "patreon",
     local = "local",
+    free = "free",
+    gift = "gift",
     gumroad = "gumroad"
 }
 
@@ -28,7 +31,7 @@ export interface PatreonIdentityData {
     }>
 }
 
-export async function createAndSaveToken(type: TokenType, code?: string): Promise<string> {
+export async function createAndSaveToken(type: TokenType, code?: string, total = 1): Promise<string[]> {
     switch(type) {
         case TokenType.patreon: {
             const domain = "https://www.patreon.com";
@@ -48,7 +51,7 @@ export async function createAndSaveToken(type: TokenType, code?: string): Promis
                 });
 
                 if (result.status === 200) {
-                    const licenseKey = generateToken();
+                    const licenseKey = generateLicenseKey("P");
                     const time = Date.now();
 
                     await privateDB.prepare("run", `INSERT INTO "licenseKeys"("licenseKey", "time", "type") VALUES(?, ?, ?)`, [licenseKey, time, type]);
@@ -56,7 +59,7 @@ export async function createAndSaveToken(type: TokenType, code?: string): Promis
                         , [licenseKey, result.data.access_token, result.data.refresh_token, result.data.expires_in]);
 
 
-                    return licenseKey;
+                    return [licenseKey];
                 }
                 break;
             } catch (e) /* istanbul ignore next */ {
@@ -64,13 +67,16 @@ export async function createAndSaveToken(type: TokenType, code?: string): Promis
                 return null;
             }
         }
+        case TokenType.free:
+        case TokenType.gift:
         case TokenType.local: {
-            const licenseKey = generateToken();
-            const time = Date.now();
+            const prefix = type === TokenType.free ? "F" : (type === TokenType.gift ? "G" : "A");
+            const licenseKeys = [];
+            for (let i = 0; i < total; i++) {
+                licenseKeys.push(generateLicenseKey(prefix));
+            }
 
-            await privateDB.prepare("run", `INSERT INTO "licenseKeys"("licenseKey", "time", "type") VALUES(?, ?, ?)`, [licenseKey, time, type]);
-
-            return licenseKey;
+            return licenseKeys;
         }
     }
     return null;
@@ -109,7 +115,12 @@ export async function refreshToken(type: TokenType, licenseKey: string, refreshT
     return false;
 }
 
-function generateToken(length = 40): string {
+function generateLicenseKey(prefix: string): string {
+    const code = `${prefix}${generateRandomCode()}`;
+    return `${code}-${getHash(config.tokenSeed + code, 1).slice(0, 5)}`;
+}
+
+function generateRandomCode(length = 4): string {
     const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let result = "";
 

@@ -4,6 +4,7 @@ import { config } from "../config";
 import { privateDB } from "../databases/databases";
 import { Logger } from "../utils/logger";
 import { getPatreonIdentity, PatronStatus, refreshToken, TokenType } from "../utils/tokenUtils";
+import { getHash } from "../utils/getHash";
 
 interface VerifyTokenRequest extends Request {
     query: {
@@ -12,7 +13,9 @@ interface VerifyTokenRequest extends Request {
 }
 
 export const validateLicenseKeyRegex = (token: string) =>
-    new RegExp(/[A-Za-z0-9]{40}|[A-Za-z0-9-]{35}/).test(token);
+    new RegExp(/[A-Za-z0-9]{40}|[A-Za-z0-9-]{35}|[A-Za-z0-9-]{5}-[A-Za-z0-9-]{5}/).test(token);
+
+const isLocalLicenseKey = (token: string) => /[A-Za-z0-9-]{5}-[A-Za-z0-9-]{5}/.test(token);
 
 export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response): Promise<Response> {
     const { query: { licenseKey } } = req;
@@ -25,6 +28,18 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
             return res.status(200).send({
                 allowed: false
             });
+        }
+
+        if (isLocalLicenseKey(licenseKey)) {
+            const parts = licenseKey.split("-");
+            const code = parts[0];
+            const givenResult = parts[1];
+
+            if (getHash(config.tokenSeed + code, 1).startsWith(givenResult)) {
+                return res.status(200).send({
+                    allowed: true
+                });
+            }
         }
 
         const tokens = (await privateDB.prepare("get", `SELECT "accessToken", "refreshToken", "expiresIn" from "oauthLicenseKeys" WHERE "licenseKey" = ?`

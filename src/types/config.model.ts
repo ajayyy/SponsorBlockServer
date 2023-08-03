@@ -97,6 +97,7 @@ export interface SBSConfig {
     gumroad: {
         productPermalinks: string[],
     },
+    tokenSeed: string,
     minUserIDLength: number
 }
 

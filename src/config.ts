@@ -185,6 +185,7 @@ addDefaults(config, {
     gumroad: {
         productPermalinks: ["sponsorblock"]
     },
+    tokenSeed: "",
     minUserIDLength: 30
 });
 loadFromEnv(config);
