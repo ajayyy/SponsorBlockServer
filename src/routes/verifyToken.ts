@@ -30,7 +30,7 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
             });
         }
 
-        if (isLocalLicenseKey(licenseKey)) {
+        if (isLocalLicenseKey(licenseKey) && !licenseKey.startsWith("P")) {
             const parts = licenseKey.split("-");
             const code = parts[0];
             const givenResult = parts[1];

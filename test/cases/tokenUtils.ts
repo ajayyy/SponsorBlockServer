@@ -19,13 +19,13 @@ describe("tokenUtils test", function() {
     it("Should be able to create patreon token", function (done) {
         if (!config?.patreon) this.skip();
         tokenUtils.createAndSaveToken(tokenUtils.TokenType.patreon, "test_code").then((licenseKey) => {
-            assert.ok(validateToken(licenseKey));
+            assert.ok(validateToken(licenseKey[0]));
             done();
         });
     });
     it("Should be able to create local token", (done) => {
         tokenUtils.createAndSaveToken(tokenUtils.TokenType.local).then((licenseKey) => {
-            assert.ok(validateToken(licenseKey));
+            assert.ok(validateToken(licenseKey[0]));
             done();
         });
     });

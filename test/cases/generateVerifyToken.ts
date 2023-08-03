@@ -26,7 +26,7 @@ let localLicense: string;
 const gumroadLicense = gumroad.generateLicense();
 
 const extractLicenseKey = (data: string) => {
-    const regex = /([A-Za-z0-9]{40})/;
+    const regex = /([A-Za-z0-9-]{5}-[A-Za-z0-9-]{5})/;
     const match = data.match(regex);
     if (!match) throw new Error("Failed to extract license key");
     return match[1];
@@ -65,8 +65,8 @@ describe("generateToken test", function() {
 
     it("Should be able to create new local token", function (done) {
         createAndSaveToken(TokenType.local).then((licenseKey) => {
-            assert.ok(validateLicenseKeyRegex(licenseKey));
-            localLicense = licenseKey;
+            assert.ok(validateLicenseKeyRegex(licenseKey[0]));
+            localLicense = licenseKey[0];
             done();
         }).catch(err => done(err));
     });
