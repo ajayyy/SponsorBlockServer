@@ -53,6 +53,10 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         const thumbnails = getThumbnails();
         const segments = getSegments();
 
+        for (const title of await titles) {
+            title.title = title.title.replace("<", "‹");
+        }
+
         return {
             titles: await titles,
             thumbnails: await thumbnails,
@@ -126,6 +130,8 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         };
 
         (await branding.titles).map((title) => {
+            title.title = title.title.replace("<", "‹");
+
             initResult(title);
             dbResult[title.videoID].titles.push(title);
         });
