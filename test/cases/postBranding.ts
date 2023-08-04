@@ -547,6 +547,13 @@ describe("postBranding", () => {
         assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
 
         assert.strictEqual(dbVotes.verification, 0);
+
+        // Other segments now verified too
+        const dbVotes2 = await queryTitleVotesByUUID("postBrandVerified1");
+        assert.strictEqual(dbVotes2.verification, 0);
+
+        const dbVotes3 = await queryTitleVotesByUUID("postBrandVerified2");
+        assert.strictEqual(dbVotes3.verification, 0);
     });
 
     it("Submit from verified user from SponsorBlock submissions", async () => {

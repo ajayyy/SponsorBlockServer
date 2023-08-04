@@ -70,8 +70,11 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
+                    const verificationValue = await getVerificationValue(hashedUserID, isVip);
                     await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, 0, ?);`,
-                        [UUID, isVip ? 1 : 0, await getVerificationValue(hashedUserID, isVip)]);
+                        [UUID, isVip ? 1 : 0, verificationValue]);
+
+                    await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
 
                 if (isVip) {
@@ -167,5 +170,23 @@ async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean):
         return 0;
     } else {
         return -1;
+    }
+}
+
+async function verifyOldSubmissions(hashedUserID: HashedUserID, verification: number): Promise<void> {
+    if (verification >= 0) {
+        const unverifiedSubmissions = await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."verification" < ? GROUP BY "videoID"`, [hashedUserID, verification]);
+
+        if (unverifiedSubmissions.length > 0) {
+            for (const submission of unverifiedSubmissions) {
+                QueryCacher.clearBrandingCache({
+                    videoID: submission.videoID,
+                    hashedVideoID: submission.hashedVideoID,
+                    service: submission.service
+                });
+            }
+
+            await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, hashedUserID, verification]);
+        }
     }
 }
