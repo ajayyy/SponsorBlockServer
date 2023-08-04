@@ -160,10 +160,10 @@ async function updateVoteTotals(type: BrandingType, existingVote: ExistingVote, 
 }
 
 async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean): Promise<number> {
-    const voteSum = await db.prepare("get", `SELECT SUM("titleVotes"."votes") as "voteSum" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ?`, [hashedUserID]);
+    const voteSum = await db.prepare("get", `SELECT SUM("maxVotes") as "voteSum" FROM (SELECT MAX("votes") as "maxVotes" from "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? GROUP BY "titles"."videoID") t`, [hashedUserID]);
     const sbSubmissions = () => db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > 0 LIMIT 3`, [hashedUserID]);
 
-    if (voteSum.voteSum > 1 || isVip || (await sbSubmissions()).count > 2) {
+    if (voteSum.voteSum >= 1 || isVip || (await sbSubmissions()).count > 2) {
         return 0;
     } else {
         return -1;
