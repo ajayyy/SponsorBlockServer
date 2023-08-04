@@ -4,7 +4,7 @@ import { db, privateDB } from "../databases/databases";
 
 import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission } from "../types/branding.model";
 import { HashedIP, IPAddress, VideoID } from "../types/segments.model";
-import { HashedUserID } from "../types/user.model";
+import { Feature, HashedUserID } from "../types/user.model";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { getService } from "../utils/getService";
@@ -13,6 +13,7 @@ import { Logger } from "../utils/logger";
 import crypto from "crypto";
 import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
+import { hasFeature } from "../utils/features";
 
 enum BrandingType {
     Title,
@@ -166,7 +167,7 @@ async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean):
     const voteSum = await db.prepare("get", `SELECT SUM("maxVotes") as "voteSum" FROM (SELECT MAX("votes") as "maxVotes" from "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? GROUP BY "titles"."videoID") t`, [hashedUserID]);
     const sbSubmissions = () => db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > 0 LIMIT 3`, [hashedUserID]);
 
-    if (voteSum.voteSum >= 1 || isVip || (await sbSubmissions()).count > 2) {
+    if (voteSum.voteSum >= 1 || isVip || (await sbSubmissions()).count > 2 || await hasFeature(hashedUserID, Feature.DeArrowTitleSubmitter)) {
         return 0;
     } else {
         return -1;

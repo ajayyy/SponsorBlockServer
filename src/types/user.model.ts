@@ -5,5 +5,6 @@ export type HashedUserID = UserID & HashedValue;
 
 export enum Feature {
     ChapterSubmitter = 0,
-    FillerSubmitter = 1
+    FillerSubmitter = 1,
+    DeArrowTitleSubmitter = 2,
 }
