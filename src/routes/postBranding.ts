@@ -176,7 +176,7 @@ async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean):
 
 async function verifyOldSubmissions(hashedUserID: HashedUserID, verification: number): Promise<void> {
     if (verification >= 0) {
-        const unverifiedSubmissions = await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."verification" < ? GROUP BY "videoID"`, [hashedUserID, verification]);
+        const unverifiedSubmissions = await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."verification" < ? GROUP BY "videoID", "hashedVideoID", "service"`, [hashedUserID, verification]);
 
         if (unverifiedSubmissions.length > 0) {
             for (const submission of unverifiedSubmissions) {
