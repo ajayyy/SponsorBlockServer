@@ -315,7 +315,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         }
 
         if (!(isVIP || isTempVIP) && segments[i].category === "sponsor"
-                && segments[i].actionType !== ActionType.Full && (endTime - startTime) < 1) {
+                && segments[i].actionType === ActionType.Skip && (endTime - startTime) < 1) {
             // Too short
             return { pass: false, errorMessage: "Segments must be longer than 1 second long", errorCode: 400 };
         }
