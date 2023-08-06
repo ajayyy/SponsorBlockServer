@@ -8,6 +8,7 @@ interface GenerateTokenRequest extends Request {
         code: string;
         adminUserID?: string;
         total?: string;
+        key?: string;
     },
     params: {
         type: TokenType;
@@ -15,10 +16,14 @@ interface GenerateTokenRequest extends Request {
 }
 
 export async function generateTokenRequest(req: GenerateTokenRequest, res: Response): Promise<Response> {
-    const { query: { code, adminUserID, total }, params: { type } } = req;
+    const { query: { code, adminUserID, total, key }, params: { type } } = req;
     const adminUserIDHash = adminUserID ? (await getHashCache(adminUserID)) : null;
 
     if (!type || (!code && type === TokenType.patreon)) {
+        return res.status(400).send("Invalid request");
+    }
+
+    if (type === TokenType.free && (!key || Math.abs(Date.now() - parseInt(key)) > 1000 * 60 * 60 * 24)) {
         return res.status(400).send("Invalid request");
     }
 
