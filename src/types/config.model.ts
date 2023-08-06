@@ -98,7 +98,8 @@ export interface SBSConfig {
         productPermalinks: string[],
     },
     tokenSeed: string,
-    minUserIDLength: number
+    minUserIDLength: number,
+    deArrowPaywall: boolean
 }
 
 export interface WebhookConfig {

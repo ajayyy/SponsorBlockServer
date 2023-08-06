@@ -55,6 +55,7 @@ import { cacheMiddlware } from "./middleware/etag";
 import { hostHeader } from "./middleware/hostHeader";
 import { getBrandingStats } from "./routes/getBrandingStats";
 import { getTopBrandingUsers } from "./routes/getTopBrandingUsers";
+import { getFeatureFlag } from "./routes/getFeatureFlag";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -209,6 +210,8 @@ function setupRoutes(router: Router) {
     router.get("/api/lockReason", getLockReason);
 
     router.post("/api/feature", addFeature);
+
+    router.get("/api/featureFlag/:name", getFeatureFlag);
 
     router.get("/api/generateToken/:type", generateTokenRequest);
     router.get("/api/verifyToken", verifyTokenRequest);

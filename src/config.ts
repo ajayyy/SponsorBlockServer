@@ -186,7 +186,8 @@ addDefaults(config, {
         productPermalinks: ["sponsorblock"]
     },
     tokenSeed: "",
-    minUserIDLength: 30
+    minUserIDLength: 30,
+    deArrowPaywall: false
 });
 loadFromEnv(config);
 migrate(config);
