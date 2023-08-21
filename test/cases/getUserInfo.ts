@@ -22,6 +22,8 @@ describe("getUserInfo", () => {
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo3", 1, 11, 2,   "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", "skip", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo4", 1, 11, 2,   "uuid000010", getHash("getuserinfo_user_04"), 9, 10, "chapter", "chapter", 0]);
         await db.prepare("run", sponsorTimesQuery, ["getUserInfo5", 1, 11, 2,   "uuid000011", getHash("getuserinfo_user_05"), 9, 10, "sponsor", "skip", 0]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo6", 1, 11, 2,   "uuid000012", getHash("getuserinfo_user_06"), 9, 10, "sponsor", "skip", 1]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfo7", 1, 11, 2,   "uuid000013", getHash("getuserinfo_ban_02"), 9, 10, "sponsor", "skip", 1]);
 
         const titlesQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         const titleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, 0);';
@@ -44,6 +46,7 @@ describe("getUserInfo", () => {
 
         const insertBanQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertBanQuery, [getHash("getuserinfo_ban_01")]);
+        await db.prepare("run", insertBanQuery, [getHash("getuserinfo_ban_02")]);
     });
 
     it("Should be able to get a 200", (done) => {
@@ -387,6 +390,32 @@ describe("getUserInfo", () => {
                 };
                 assert.ok(partialDeepEquals(res.data, expected));
                 done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return all segments of banned user", (done) => {
+        client.get(endpoint, { params: { userID: "getuserinfo_ban_02", value: ["segmentCount"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    segmentCount: 1
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
+                done(); // pass
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not return shadowhidden segments of not-banned user", (done) => {
+        client.get(endpoint, { params: { userID: "getuserinfo_user_06", value: ["segmentCount"] } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    segmentCount: 0
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
+                done(); // pass
             })
             .catch(err => done(err));
     });

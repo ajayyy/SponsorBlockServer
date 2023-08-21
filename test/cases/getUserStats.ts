@@ -4,25 +4,44 @@ import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
+const userOnePrivateID = "getuserstats_user_01";
+const userOnePublicID = getHash(userOnePrivateID);
+const userTwoPrivateID = "getuserstats_user_02";
+const userTwoPublicID = getHash(userTwoPrivateID);
+const userThreePrivateID = "getuserstats_user_03";
+const userThreePublicID = getHash(userThreePrivateID);
+const userFourPrivateID = "getuserstats_user_04";
+const userFourPublicID = getHash(userFourPrivateID);
+
 describe("getUserStats", () => {
     const endpoint = "/api/userStats";
     before(async () => {
+        const insertBanQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
+        await db.prepare("run", insertBanQuery, [userThreePublicID]);
+
         const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserstats_user_01"), "Username user 01"]);
+        await db.prepare("run", insertUserNameQuery, [userOnePublicID, "Username user 01"]);
 
         const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "actionType", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid1", getHash("getuserstats_user_01"), 1, 1, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid2", getHash("getuserstats_user_01"), 2, 2, "selfpromo", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid3", getHash("getuserstats_user_01"), 3, 3, "interaction", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid4", getHash("getuserstats_user_01"), 4, 4, "intro", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid5", getHash("getuserstats_user_01"), 5, 5, "outro", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid6", getHash("getuserstats_user_01"), 6, 6, "preview", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid7", getHash("getuserstats_user_01"), 7, 7, "music_offtopic", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 11, 11, 0, "poi", "getuserstatsuuid8", getHash("getuserstats_user_01"), 8, 8, "poi_highlight", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, -2, "skip", "getuserstatsuuid9", getHash("getuserstats_user_02"), 8, 2, "sponsor", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "skip", "getuserstatsuuid10", getHash("getuserstats_user_01"), 8, 2, "filler", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 0, 0, "full", "getuserstatsuuid11", getHash("getuserstats_user_01"), 8, 2, "exclusive_access", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getuserstats1", 0, 60, 0, "chapter", "getuserstatsuuid12", getHash("getuserstats_user_01"), 9, 2, "chapter", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid1", userOnePublicID, 1, 1, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid2", userOnePublicID, 2, 2, "selfpromo", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid3", userOnePublicID, 3, 3, "interaction", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid4", userOnePublicID, 4, 4, "intro", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid5", userOnePublicID, 5, 5, "outro", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid6", userOnePublicID, 6, 6, "preview", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid7", userOnePublicID, 7, 7, "music_offtopic", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 11, 11, 0, "poi", "getuserstatsuuid8", userOnePublicID, 8, 8, "poi_highlight", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userTwoPrivateID, 0, 60, -2, "skip", "getuserstatsuuid9", userTwoPublicID, 8, 2, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid10", userOnePublicID, 8, 2, "filler", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 0, 0, "full", "getuserstatsuuid11", userOnePublicID, 8, 2, "exclusive_access", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "chapter", "getuserstatsuuid12", userOnePublicID, 9, 2, "chapter", 0]);
+
+        // fully banned user
+        await db.prepare("run", sponsorTimesQuery, [userThreePrivateID, 0, 60, 0, "skip", "getuserstatsuuid13", userThreePublicID, 1, 1, "sponsor", 1]);
+        await db.prepare("run", sponsorTimesQuery, [userThreePrivateID, 0, 60, 0, "skip", "getuserstatsuuid14", userThreePublicID, 1, 1, "sponsor", 1]);
+        // user with banned segments
+        await db.prepare("run", sponsorTimesQuery, [userFourPrivateID, 0, 60, 0, "skip", "getuserstatsuuid15", userFourPublicID, 1, 1, "sponsor", 0]);
+        await db.prepare("run", sponsorTimesQuery, [userFourPrivateID, 0, 60, 0, "skip", "getuserstatsuuid16", userFourPublicID, 1, 1, "sponsor", 1]);
     });
 
     it("Should be able to get a 400 (No userID parameter)", (done) => {
@@ -35,12 +54,12 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all user info", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchCategoryStats: true, fetchActionTypeStats: true } })
+        client.get(endpoint, { params: { userID: userOnePrivateID, fetchCategoryStats: true, fetchActionTypeStats: true } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
                     userName: "Username user 01",
-                    userID: getHash("getuserstats_user_01"),
+                    userID: userOnePublicID,
                     categoryCount: {
                         sponsor: 1,
                         selfpromo: 1,
@@ -88,7 +107,7 @@ describe("getUserStats", () => {
     });
 
     it("Should be able to get all zeroes for only ignored segments", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_02" } })
+        client.get(endpoint, { params: { userID: userTwoPrivateID } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -103,7 +122,7 @@ describe("getUserStats", () => {
     });
 
     it("Should not get extra stats if not requested", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_01" } })
+        client.get(endpoint, { params: { userID: userOnePrivateID } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -117,7 +136,7 @@ describe("getUserStats", () => {
     });
 
     it("Should get parts of extra stats if not requested", (done) => {
-        client.get(endpoint, { params: { userID: "getuserstats_user_01", fetchActionTypeStats: true } })
+        client.get(endpoint, { params: { userID: userOnePrivateID, fetchActionTypeStats: true } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -125,6 +144,40 @@ describe("getUserStats", () => {
                 if (data.categoryCount && !data.actionTypeCount) {
                     done("returned extra stats");
                 }
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should return stats for banned segments if user is banned", (done) => {
+        client.get(endpoint, { params: { userID: userThreePrivateID } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    userID: userThreePublicID,
+                    overallStats: {
+                        minutesSaved: 2,
+                        segmentCount: 2
+                    }
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should not return stats for banned segments", (done) => {
+        client.get(endpoint, { params: { userID: userFourPrivateID } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const expected = {
+                    userID: userFourPublicID,
+                    overallStats: {
+                        minutesSaved: 1,
+                        segmentCount: 1
+                    }
+                };
+                assert.ok(partialDeepEquals(res.data, expected));
                 done();
             })
             .catch(err => done(err));
