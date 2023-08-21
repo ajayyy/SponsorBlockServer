@@ -10,4 +10,6 @@ export function getFeatureFlag(req: Request, res: Response): Response {
                 enabled: config.deArrowPaywall,
             });
     }
+
+    return res.status(404).json();
 }
