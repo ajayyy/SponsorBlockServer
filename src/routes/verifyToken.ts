@@ -15,7 +15,7 @@ interface VerifyTokenRequest extends Request {
 export const validateLicenseKeyRegex = (token: string) =>
     new RegExp(/[A-Za-z0-9]{40}|[A-Za-z0-9-]{35}|[A-Za-z0-9-]{5}-[A-Za-z0-9-]{5}/).test(token);
 
-const isLocalLicenseKey = (token: string) => /[A-Za-z0-9-]{5}-[A-Za-z0-9-]{5}/.test(token);
+const isLocalLicenseKey = (token: string) => /[A-Za-z0-9]{5}-[A-Za-z0-9]{5}/.test(token);
 
 export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response): Promise<Response> {
     const { query: { licenseKey } } = req;
