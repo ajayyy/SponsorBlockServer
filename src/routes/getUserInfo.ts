@@ -8,12 +8,12 @@ import { getReputation } from "../utils/reputation";
 import { Category, SegmentUUID } from "../types/segments.model";
 import { config } from "../config";
 import { canSubmit } from "../utils/permissions";
+import { isUserBanned } from "../utils/checkBan";
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        const userBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]))?.userCount;
-        const countShadowHidden = userBanCount > 0 ? 2 : 1; // if shadowbanned, count shadowhidden as well
+        const countShadowHidden = await isUserBanned(userID) ? 2 : 1; // if shadowbanned, count shadowhidden as well
         const row = await db.prepare("get",
             `SELECT SUM(CASE WHEN "actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views" END) as "minutesSaved",
             count(*) as "segmentCount" FROM "sponsorTimes"
@@ -111,8 +111,7 @@ async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<st
 
 async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
     try {
-        const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID], { useReplica: true });
-        return row?.userCount > 0 ?? false;
+        return await isUserBanned(userID);
     } catch (err) /* istanbul ignore next */ {
         return false;
     }

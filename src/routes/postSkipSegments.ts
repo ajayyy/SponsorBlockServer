@@ -9,7 +9,7 @@ import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
+import { ActionType, Category, HashedIP, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { QueryCacher } from "../utils/queryCacher";
 import { getReputation } from "../utils/reputation";
@@ -23,8 +23,8 @@ import { vote } from "./voteOnSponsorTime";
 import { canSubmit } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
-import { banUser } from "./shadowBanUser";
 import { acquireLock } from "../utils/redisLock";
+import { checkBanStatus } from "../utils/checkBan";
 
 type CheckResult = {
     pass: boolean,
@@ -544,7 +544,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const newSegments = [];
 
         //hash the ip 5000 times so no one can get it from the database
-        const hashedIP = await getHashCache(rawIP + config.globalSalt);
+        const hashedIP = await getHashCache(rawIP + config.globalSalt) as HashedIP;
 
         const timeSubmitted = Date.now();
 
@@ -554,22 +554,14 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         // }
 
         //check to see if this user is shadowbanned
-        const userBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]))?.userCount;
-        const ipBanCount = (await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedIPs" WHERE "hashedIP" = ? LIMIT 1`, [hashedIP]))?.userCount;
-        const shadowBanCount = userBanCount || ipBanCount;
+        const isBanned = await checkBanStatus(userID, hashedIP);
         const startingVotes = 0;
         const reputation = await getReputation(userID);
-
-        if (!userBanCount && ipBanCount) {
-            // Make sure the whole user is banned
-            banUser(userID, true, true, 1, config.categoryList as Category[], config.deArrowTypes)
-                .catch((e) => Logger.error(`Error banning user after submitting from a banned IP: ${e}`));
-        }
 
         for (const segmentInfo of segments) {
             // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
             if (segmentInfo.ignoreSegment
-                || (shadowBanCount && segmentInfo.actionType === ActionType.Full)) {
+                || (isBanned && segmentInfo.actionType === ActionType.Full)) {
                 continue;
             }
 
@@ -586,7 +578,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                     ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description")
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0
-                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, shadowBanCount, hashedVideoID, userAgent, segmentInfo.description
+                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, isBanned ? 1 : 0, hashedVideoID, userAgent, segmentInfo.description
                 ],
                 );
 
