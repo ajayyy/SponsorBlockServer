@@ -172,7 +172,7 @@ async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult
     ) as {reason: string}[]).sort((a, b) => (b?.reason?.length ?? 0) - (a?.reason?.length ?? 0));
 
     if (warnings?.length >= config.maxNumberOfActiveWarnings) {
-        const defaultMessage = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
+        const defaultMessage = "Submission rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes"
                                 + " that are not malicious, and we just want to clarify the rules. "
                                 + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
                                 + `Your userID is ${userID}.`;

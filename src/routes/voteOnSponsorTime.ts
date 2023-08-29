@@ -380,7 +380,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     if (warnings.length >= config.maxNumberOfActiveWarnings) {
         const warningReason = warnings[0]?.reason;
-        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
+        return { status: 403, message: "Vote rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
                 "Could you please send a message in Discord or Matrix so we can further help you?" +
                 `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
     }

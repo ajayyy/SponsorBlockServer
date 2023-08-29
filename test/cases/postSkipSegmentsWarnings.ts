@@ -60,7 +60,7 @@ describe("postSkipSegments Warnings", () => {
                 assert.strictEqual(res.status, 403);
                 const errorMessage = res.data;
                 const reason = "Reason01";
-                const expected = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
+                const expected = "Submission rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes"
                 + " that are not malicious, and we just want to clarify the rules. "
                 + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
                 + `Your userID is ${warnUser01Hash}.\n\nWarning reason: '${reason}'`;
@@ -115,7 +115,7 @@ describe("postSkipSegments Warnings", () => {
             .then(res => {
                 assert.strictEqual(res.status, 403);
                 const errorMessage = res.data;
-                const expected = "Submission rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes"
+                const expected = "Submission rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes"
                 + " that are not malicious, and we just want to clarify the rules. "
                 + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
                 + `Your userID is ${warnUser04Hash}.`;
