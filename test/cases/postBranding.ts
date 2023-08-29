@@ -16,6 +16,7 @@ describe("postBranding", () => {
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
     const userID8 = `PostBrandingUser8${".".repeat(16)}`;
+    const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
 
 
     const endpoint = "/api/branding";
@@ -35,6 +36,9 @@ describe("postBranding", () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertVipUserQuery, [getHash(vipUser)]);
         await db.prepare("run", insertVipUserQuery, [getHash(vipUser2)]);
+
+        const insertBannedUserQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
+        await db.prepare("run", insertBannedUserQuery, [getHash(bannedUser)]);
 
         const insertTitleQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertTitleQuery, ["postBrandLocked1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
@@ -61,6 +65,18 @@ describe("postBranding", () => {
         await db.prepare("run", insertSegment, ["postBrandVerified3", 1, 11, 1, 0, "postBrandVerified3", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
         await db.prepare("run", insertSegment, ["postBrandVerified3", 11, 21, 1, 0, "postBrandVerified32", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
         await db.prepare("run", insertSegment, ["postBrandVerified3", 21, 31, 1, 0, "postBrandVerified33", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
+
+        // Testing details for banned user handling
+        await db.prepare("run", insertTitleQuery, ["postBrandBannedCustomVote",   "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandBannedCustomVote"), Date.now(), "postBrandBannedCustomVote"]);
+        await db.prepare("run", insertTitleQuery, ["postBrandBannedOriginalVote", "Some title", 1, getHash(userID1), Service.YouTube, getHash("postBrandBannedOriginalVote"), Date.now(), "postBrandBannedOriginalVote"]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandBannedCustomVote",   0, 0, 0, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0, 0]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandBannedCustomVote",   0, getHash(userID1), Service.YouTube, getHash("postBrandBannedCustomVote"), Date.now(), "postBrandBannedCustomVote"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandBannedOriginalVote", 1, getHash(userID1), Service.YouTube, getHash("postBrandBannedOriginalVote"), Date.now(), "postBrandBannedOriginalVote"]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedCustomVote", 0, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0]);
+        const insertThumbnailTimestampQuery = 'INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)';
+        await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandBannedCustomVote", 12.34]);
     });
 
     it("Submit only title", async () => {
@@ -578,5 +594,194 @@ describe("postBranding", () => {
         assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
 
         assert.strictEqual(dbVotes.verification, 0);
+    });
+
+    it("Banned users should not be able to vote (custom title)", async () => {
+        const videoID = "postBrandBannedCustomVote";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
+    it("Banned users should not be able to vote (original title)", async () => {
+        const videoID = "postBrandBannedOriginalVote";
+        const title = {
+            title: "Some title",
+            original: true
+        };
+
+        const res = await postBranding({
+            title,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
+    it("Banned users should not be able to vote (custom thumbnail)", async () => {
+        const videoID = "postBrandBannedCustomVote";
+        const thumbnail = {
+            original: false,
+            timestamp: 12.34
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
+    it("Banned users should not be able to vote (original thumbnail)", async () => {
+        const videoID = "postBrandBannedOriginalVote";
+        const thumbnail = {
+            original: true
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
+    it("Banned users' custom submissions should be hidden (title)", async () => {
+        const videoID = "postBrandBannedCustom";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 1);
+    });
+
+    it("Banned users' custom submissions should be hidden (thumbnail)", async () => {
+        const videoID = "postBrandBannedCustom";
+        const thumbnail = {
+            original: false,
+            timestamp: 12.34
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 1);
+    });
+
+    it("Banned users' original submissions should be ignored (title)", async () => {
+        const videoID = "postBrandBannedOriginal";
+        const title = {
+            title: "Some title",
+            original: true
+        };
+
+        const res = await postBranding({
+            title,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        assert.strictEqual(dbTitle, undefined);
+    });
+
+    it("Banned users' original submissions should be ignored (thumbnail)", async () => {
+        const videoID = "postBrandBannedOriginal";
+        const thumbnail = {
+            original: true
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: bannedUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        assert.strictEqual(dbThumbnail, undefined);
     });
 });
