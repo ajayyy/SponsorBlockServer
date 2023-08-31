@@ -15,8 +15,7 @@ export async function isIPBanned(ip: HashedIP): Promise<boolean> {
 
 // NOTE: this function will propagate IP bans
 export async function checkBanStatus(userID: HashedUserID, ip: HashedIP): Promise<boolean> {
-    const userBanStatus = await isUserBanned(userID);
-    const ipBanStatus = await isIPBanned(ip);
+    const [userBanStatus, ipBanStatus] = await Promise.all([isUserBanned(userID), isIPBanned(ip)]);
 
     if (!userBanStatus && ipBanStatus) {
         // Make sure the whole user is banned
