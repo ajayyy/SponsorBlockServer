@@ -3,6 +3,8 @@ import { Logger } from "../utils/logger";
 import { db, privateDB } from "../databases/databases";
 import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
+import { isUserBanned } from "../utils/checkBan";
+import { HashedUserID } from "../types/user.model";
 
 function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
     return privateDB.prepare("run",
@@ -12,12 +14,12 @@ function logUserNameChange(userID: string, newUserName: string, oldUserName: str
 }
 
 export async function setUsername(req: Request, res: Response): Promise<Response> {
-    let userID = req.query.userID as string;
+    const userIDInput = req.query.userID as string;
+    const adminUserIDInput = req.query.adminUserID as string;
     let userName = req.query.username as string;
+    let hashedUserID: HashedUserID;
 
-    let adminUserIDInput = req.query.adminUserID as string;
-
-    if (userID == undefined || userName == undefined || userID === "undefined" || userName.length > 64) {
+    if (userIDInput == undefined || userName == undefined || userIDInput === "undefined" || userName.length > 64) {
         //invalid request
         return res.sendStatus(400);
     }
@@ -35,41 +37,37 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
     try {
-        // check privateID against publicID
-        if (!await checkPrivateUsername(userName, userID)) {
-            return res.sendStatus(400);
-        }
-
         timings.push(Date.now());
 
         if (adminUserIDInput != undefined) {
             //this is the admin controlling the other users account, don't hash the controling account's ID
-            adminUserIDInput = await getHashCache(adminUserIDInput);
+            hashedUserID = userIDInput as HashedUserID;
 
-            if (adminUserIDInput != config.adminUserID) {
+            if (await getHashCache(adminUserIDInput) != config.adminUserID) {
                 //they aren't the admin
                 return res.sendStatus(403);
             }
         } else {
+            // check privateID against publicID
+            if (!await checkPrivateUsername(userName, userIDInput)) {
+                return res.sendStatus(400);
+            }
             //hash the userID
-            userID = await getHashCache(userID);
+            hashedUserID = await getHashCache(userIDInput) as HashedUserID;
+
+            timings.push(Date.now());
+
+            const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "userNames" WHERE "userID" = ? AND "locked" = 1`, [hashedUserID]);
+            if (row.userCount > 0) {
+                return res.sendStatus(200);
+            }
+
+            timings.push(Date.now());
+
+            if (await isUserBanned(hashedUserID)) {
+                return res.sendStatus(200);
+            }
         }
-
-        timings.push(Date.now());
-
-        const row = await db.prepare("get", `SELECT count(*) as "userCount" FROM "userNames" WHERE "userID" = ? AND "locked" = 1`, [userID]);
-        if (adminUserIDInput === undefined && row.userCount > 0) {
-            return res.sendStatus(200);
-        }
-
-        timings.push(Date.now());
-
-        const shadowBanRow = await db.prepare("get", `SELECT count(*) as "userCount" FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID]);
-        if (adminUserIDInput === undefined && shadowBanRow.userCount > 0) {
-            return res.sendStatus(200);
-        }
-
-        timings.push(Date.now());
     }
     catch (error) /* istanbul ignore next */ {
         Logger.error(error as string);
@@ -78,7 +76,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
 
     try {
         //check if username is already set
-        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [userID]);
+        const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [hashedUserID]);
         const locked = adminUserIDInput === undefined ? 0 : 1;
         let oldUserName = "";
 
@@ -87,19 +85,19 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         if (row?.userName !== undefined) {
             //already exists, update this row
             oldUserName = row.userName;
-            if (userName == userID && !locked) {
-                await db.prepare("run", `DELETE FROM "userNames" WHERE "userID" = ?`, [userID]);
+            if (userName == hashedUserID && !locked) {
+                await db.prepare("run", `DELETE FROM "userNames" WHERE "userID" = ?`, [hashedUserID]);
             } else {
-                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, userID]);
+                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, hashedUserID]);
             }
         } else {
             //add to the db
-            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [userID, userName, locked]);
+            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [hashedUserID, userName, locked]);
         }
 
         timings.push(Date.now());
 
-        await logUserNameChange(userID, userName, oldUserName, adminUserIDInput !== undefined);
+        await logUserNameChange(hashedUserID, userName, oldUserName, adminUserIDInput !== undefined);
 
         timings.push(Date.now());
 

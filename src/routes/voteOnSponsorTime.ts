@@ -9,13 +9,14 @@ import { getFormattedTime } from "../utils/getFormattedTime";
 import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
 import { config } from "../config";
-import { UserID } from "../types/user.model";
+import { HashedUserID, UserID } from "../types/user.model";
 import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "../types/segments.model";
 import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { acquireLock } from "../utils/redisLock";
+import { checkBanStatus } from "../utils/checkBan";
 
 const voteTypes = {
     normal: 0,
@@ -208,7 +209,7 @@ async function sendWebhooks(voteData: VoteData) {
     }
 }
 
-async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, isTempVIP: boolean, isOwnSubmission: boolean, category: Category
+async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: boolean, isTempVIP: boolean, isOwnSubmission: boolean, category: Category
     , hashedIP: HashedIP, finalResponse: FinalResponse): Promise<{ status: number, message?: string }> {
     // Check if they've already made a vote
     const usersLastVoteInfo = await privateDB.prepare("get", `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID], { useReplica: true });
@@ -244,8 +245,7 @@ async function categoryVote(UUID: SegmentUUID, userID: UserID, isVIP: boolean, i
     const timeSubmitted = Date.now();
 
     const voteAmount = (isVIP || isTempVIP) ? 500 : 1;
-    const ableToVote = finalResponse.finalStatus === 200
-                        && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID], { useReplica: true })) === undefined;
+    const ableToVote = finalResponse.finalStatus === 200; // ban status checks handled by vote() (caller function)
 
     if (ableToVote) {
         // Add the vote
@@ -336,6 +336,9 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
 
+    //hash the ip 5000 times so no one can get it from the database
+    const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);
+
     const lock = await acquireLock(`voteOnSponsorTime:${UUID}.${paramUserID}`);
     if (!lock.status) {
         return { status: 429, message: "Vote already in progress" };
@@ -350,9 +353,6 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         webhookMessage: null
     };
 
-    //hash the ip 5000 times so no one can get it from the database
-    const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);
-
     const segmentInfo: DBSegment = await db.prepare("get", `SELECT * from "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
     // segment doesnt exist
     if (!segmentInfo) {
@@ -362,6 +362,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     const isTempVIP = await isUserTempVIP(nonAnonUserID, segmentInfo.videoID);
     const isVIP = await isUserVIP(nonAnonUserID);
+    const isBanned = await checkBanStatus(nonAnonUserID, hashedIP); // propagates IP bans
 
     //check if user voting on own submission
     const isOwnSubmission = nonAnonUserID === segmentInfo.userID;
@@ -380,9 +381,17 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
 
     if (warnings.length >= config.maxNumberOfActiveWarnings) {
         const warningReason = warnings[0]?.reason;
-        return { status: 403, message: "Vote rejected due to a warning from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
+        lock.unlock();
+        return { status: 403, message: "Vote rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
                 "Could you please send a message in Discord or Matrix so we can further help you?" +
                 `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
+    }
+
+    // we can return out of the function early if the user is banned after warning checks
+    // returning before warning checks would make them not appear on vote if the user is also banned
+    if (isBanned) {
+        lock.unlock();
+        return { status: 200 };
     }
 
     // no type but has category, categoryVote
@@ -486,13 +495,13 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         }
 
         // Only change the database if they have made a submission before and haven't voted recently
+        // ban status check was handled earlier (w/ early return)
         const ableToVote = isVIP || isTempVIP || (
             (!(isOwnSubmission && incrementAmount > 0 && oldIncrementAmount >= 0)
             && !(originalType === VoteType.Malicious && segmentInfo.actionType !== ActionType.Chapter)
             && !finalResponse.blockVote
             && finalResponse.finalStatus === 200
             && (await db.prepare("get", `SELECT "userID" FROM "sponsorTimes" WHERE "userID" = ? AND "category" = ? AND "votes" > -2 AND "hidden" = 0 AND "shadowHidden" = 0 LIMIT 1`, [nonAnonUserID, segmentInfo.category], { useReplica: true }) !== undefined)
-            && (await db.prepare("get", `SELECT "userID" FROM "shadowBannedUsers" WHERE "userID" = ?`, [nonAnonUserID], { useReplica: true })) === undefined
             && (await privateDB.prepare("get", `SELECT "UUID" FROM "votes" WHERE "UUID" = ? AND "hashedIP" = ? AND "userID" != ?`, [UUID, hashedIP, userID], { useReplica: true })) === undefined)
         );
 

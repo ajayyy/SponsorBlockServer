@@ -14,6 +14,7 @@ import crypto from "crypto";
 import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { hasFeature } from "../utils/features";
+import { checkBanStatus } from "../utils/checkBan";
 
 enum BrandingType {
     Title,
@@ -43,6 +44,7 @@ export async function postBranding(req: Request, res: Response) {
         const isVip = await isUserVIP(hashedUserID);
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
+        const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
         const lock = await acquireLock(`postBranding:${videoID}.${hashedUserID}`);
         if (!lock.status) {
@@ -61,7 +63,11 @@ export async function postBranding(req: Request, res: Response) {
 
         await Promise.all([(async () => {
             if (title) {
+                // ignore original submissions from banned users - hiding those would cause issues
+                if (title.original && isBanned) return;
+
                 const existingUUID = (await db.prepare("get", `SELECT "UUID" from "titles" where "videoID" = ? AND "title" = ?`, [videoID, title.title]))?.UUID;
+                if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 const UUID = existingUUID || crypto.randomUUID();
 
                 const existingVote = await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
@@ -72,8 +78,8 @@ export async function postBranding(req: Request, res: Response) {
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
                     const verificationValue = await getVerificationValue(hashedUserID, isVip);
-                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, 0, ?);`,
-                        [UUID, isVip ? 1 : 0, verificationValue]);
+                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, ?, ?);`,
+                        [UUID, isVip ? 1 : 0, isBanned ? 1 : 0, verificationValue]);
 
                     await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
@@ -85,10 +91,14 @@ export async function postBranding(req: Request, res: Response) {
             }
         })(), (async () => {
             if (thumbnail) {
+                // ignore original submissions from banned users - hiding those would cause issues
+                if (thumbnail.original && isBanned) return;
+
                 const existingUUID = thumbnail.original
                     ? (await db.prepare("get", `SELECT "UUID" from "thumbnails" where "videoID" = ? AND "original" = 1`, [videoID]))?.UUID
                     : (await db.prepare("get", `SELECT "thumbnails"."UUID" from "thumbnailTimestamps" JOIN "thumbnails" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
                         WHERE "thumbnailTimestamps"."timestamp" = ? AND "thumbnails"."videoID" = ?`, [(thumbnail as TimeThumbnailSubmission).timestamp, videoID]))?.UUID;
+                if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 const UUID = existingUUID || crypto.randomUUID();
 
                 const existingVote = await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
@@ -98,8 +108,8 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
-                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, 0)`,
-                        [UUID, isVip ? 1 : 0]);
+                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, ?)`,
+                        [UUID, isVip ? 1 : 0, isBanned ? 1 : 0]);
 
                     if (!thumbnail.original) {
                         await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
