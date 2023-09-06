@@ -6,6 +6,7 @@ import { isUserVIP } from "../utils/isUserVIP";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
+import { getVerificationValue, verifyOldSubmissions } from "./postBranding";
 
 interface AddFeatureRequest extends Request {
     body: {
@@ -57,6 +58,10 @@ export async function addFeature(req: AddFeatureRequest, res: Response): Promise
                 if (!featureAdded) {
                     await db.prepare("run", 'INSERT INTO "userFeatures" ("userID", "feature", "issuerUserID", "timeSubmitted") VALUES(?, ?, ?, ?)'
                         , [userID, feature, adminUserID, Date.now()]);
+                }
+
+                if (feature === Feature.DeArrowTitleSubmitter) {
+                    await verifyOldSubmissions(userID, await getVerificationValue(userID, false));
                 }
             } else {
                 await db.prepare("run", 'DELETE FROM "userFeatures" WHERE "userID" = ? AND "feature" = ?', [userID, feature]);

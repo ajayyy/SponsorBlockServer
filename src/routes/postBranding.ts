@@ -173,7 +173,7 @@ async function updateVoteTotals(type: BrandingType, existingVote: ExistingVote, 
     }
 }
 
-async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean): Promise<number> {
+export async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean): Promise<number> {
     const voteSum = await db.prepare("get", `SELECT SUM("maxVotes") as "voteSum" FROM (SELECT MAX("votes") as "maxVotes" from "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? GROUP BY "titles"."videoID") t`, [hashedUserID]);
     const sbSubmissions = () => db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > 0 LIMIT 3`, [hashedUserID]);
 
@@ -184,7 +184,7 @@ async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean):
     }
 }
 
-async function verifyOldSubmissions(hashedUserID: HashedUserID, verification: number): Promise<void> {
+export async function verifyOldSubmissions(hashedUserID: HashedUserID, verification: number): Promise<void> {
     if (verification >= 0) {
         const unverifiedSubmissions = await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."verification" < ? GROUP BY "videoID", "hashedVideoID", "service"`, [hashedUserID, verification]);
 
