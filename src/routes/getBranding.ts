@@ -107,7 +107,7 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
     const getSegments = () => db.prepare(
         "all",
         `SELECT "videoID", "startTime", "endTime", "videoDuration" FROM "sponsorTimes" 
-        WHERE "votes" >= 0 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "hashedVideoID" LIKE ? AND "service" = ?`,
+        WHERE "votes" > -2 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "hashedVideoID" LIKE ? AND "service" = ?`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
     ) as Promise<BrandingSegmentHashDBResult[]>;
