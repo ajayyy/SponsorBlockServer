@@ -384,7 +384,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         lock.unlock();
         return { status: 403, message: "Vote rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
                 "Could you please send a message in Discord or Matrix so we can further help you?" +
-                `${(warningReason.length > 0 ? ` Warning reason: '${warningReason}'` : "")}` };
+                `${(warningReason.length > 0 ? ` Tip message: '${warningReason}'` : "")}` };
     }
 
     // we can return out of the function early if the user is banned after warning checks

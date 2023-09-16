@@ -63,7 +63,7 @@ describe("postSkipSegments Warnings", () => {
                 const expected = "Submission rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes"
                 + " that are not malicious, and we just want to clarify the rules. "
                 + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
-                + `Your userID is ${warnUser01Hash}.\n\nWarning reason: '${reason}'`;
+                + `Your userID is ${warnUser01Hash}.\n\nTip message: '${reason}'`;
 
                 assert.strictEqual(errorMessage, expected);
                 done();
