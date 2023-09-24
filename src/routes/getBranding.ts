@@ -42,7 +42,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 
     const getSegments = () => db.prepare(
         "all",
-        `SELECT "startTime", "endTime", "videoDuration" FROM "sponsorTimes" 
+        `SELECT "startTime", "endTime", "category", "videoDuration" FROM "sponsorTimes" 
         WHERE "votes" > -2 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "videoID" = ? AND "service" = ?`,
         [videoID, service],
         { useReplica: true }
@@ -106,7 +106,7 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
 
     const getSegments = () => db.prepare(
         "all",
-        `SELECT "videoID", "startTime", "endTime", "videoDuration" FROM "sponsorTimes" 
+        `SELECT "videoID", "startTime", "endTime", "category", "videoDuration" FROM "sponsorTimes" 
         WHERE "votes" > -2 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "hashedVideoID" LIKE ? AND "service" = ?`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
@@ -227,7 +227,13 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
 }
 
 export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResult[]): number {
-    const randomTime = SeedRandom.alea(videoID)();
+    let randomTime = SeedRandom.alea(videoID)();
+
+    // Don't allow random times past 90% of the video if no endcard
+    if (!segments.some((s) => s.category === "outro") && randomTime > 0.9) {
+        randomTime -= 0.9;
+    }
+
     if (segments.length === 0) return randomTime;
 
     const videoDuration = segments[0].videoDuration || Math.max(...segments.map((s) => s.endTime));

@@ -1,4 +1,4 @@
-import { Service, VideoID, VideoIDHash } from "./segments.model";
+import { Category, Service, VideoID, VideoIDHash } from "./segments.model";
 import { UserID } from "./user.model";
 
 export type BrandingUUID = string & { readonly __brandingUUID: unique symbol };
@@ -88,11 +88,13 @@ export interface BrandingSubmission {
 export interface BrandingSegmentDBResult {
     startTime: number;
     endTime: number;
+    category: Category;
     videoDuration: number;
 }
 
 export interface BrandingSegmentHashDBResult extends BrandingDBSubmissionData {
     startTime: number;
     endTime: number;
+    category: Category;
     videoDuration: number;
 }
