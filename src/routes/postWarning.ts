@@ -47,6 +47,9 @@ export async function postWarning(req: Request, res: Response): Promise<Response
             const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ? AND "type" = ?', [userID, issuerUserID, type]) as warningEntry;
 
             if (!previousWarning) {
+                if (!reason) {
+                    return res.status(400).json({ "message": "Missing warning reason" });
+                }
                 await db.prepare(
                     "run",
                     'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason", "type") VALUES (?, ?, ?, 1, ?, ?)',
