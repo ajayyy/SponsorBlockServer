@@ -25,7 +25,7 @@ describe("getChapterNames", function () {
         return client.get(`${endpoint}?description=${query}&channelID=${chapterChannelID}`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                assert.strictEqual(res.data.length, 1);
+                assert.strictEqual(res.data.length, chapterNames.length);
                 assert.ok(partialDeepEquals(res.data, expectedData));
             });
     };
