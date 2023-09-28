@@ -11,6 +11,9 @@ export const insertVip = async (db: IDatabase, userID: HashedUserID) => {
     const query = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
     await db.prepare("run", query, [userID]);
 };
+export const insertVipUser = async (db: IDatabase, user: User) => {
+    await insertVip(db, user.pubID);
+};
 export const insertVipBulk = async (db: IDatabase, users: userArray) => {
     for (const user of Object.values(users))
         await insertVip(db, user.pubID);

@@ -104,38 +104,17 @@ describe("getUserID", () => {
 });
 
 describe("getUserID 400/ 404", () => {
+    const validateStatus = (query: string, status: number) =>
+        getUserName(query)
+            .then(res => assert.strictEqual(res.status, status));
+
     it("Should be able to get a 400 (No username parameter)", () =>
         client.get(endpoint)
             .then(res => assert.strictEqual(res.status, 400))
     );
 
-    it("Should return 400 if no username parameter specified", () =>
-        client.get(endpoint)
-            .then(res => assert.strictEqual(res.status, 400))
-    );
-
-    it("Should not allow usernames more than 64 characters", () =>
-        getUserName("0".repeat(65))
-            .then(res => assert.strictEqual(res.status, 400))
-    );
-
-    it("Should not allow usernames less than 3 characters", () =>
-        getUserName("aa")
-            .then(res => assert.strictEqual(res.status, 400))
-    );
-
-    it("Should return 400 (username longer than 64 chars)", () =>
-        getUserName(users["public_1"].username+0)
-            .then(res => assert.strictEqual(res.status, 400))
-    );
-
-    it("Should return 404 if escaped backslashes present", () =>
-        getUserName("%redos\\\\_")
-            .then(res => assert.strictEqual(res.status, 404))
-    );
-
-    it("Should return 404 if backslashes present", () =>
-        getUserName(`\\%redos\\_`)
-            .then(res => assert.strictEqual(res.status, 404))
-    );
+    it("Should not allow usernames more than 64 characters", () => validateStatus("0".repeat(65), 400));
+    it("Should not allow usernames less than 3 characters", () => validateStatus("aa", 400));
+    it("Should return 404 if escaped backslashes present", () => validateStatus("%redos\\\\_", 404));
+    it("Should return 404 if backslashes present", () => validateStatus(`\\%redos\\_`, 404));
 });

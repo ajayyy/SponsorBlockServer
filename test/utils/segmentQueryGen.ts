@@ -1,7 +1,7 @@
 import { IDatabase } from "../../src/databases/IDatabase";
 import { Service, VideoIDHash, VideoID } from "../../src/types/segments.model";
 import { HashedUserID, UserID } from "../../src/types/user.model";
-import { genRandom } from "./getRandom";
+import { genRandomValue } from "./getRandom";
 import { getHash } from "../../src/utils/getHash";
 
 type insertSegmentParams = {
@@ -44,21 +44,21 @@ const defaultSegmentParams: insertSegmentParams = {
 };
 
 // sponsorTimes
-export const insertSegment = async(db: IDatabase, fnname: string, testcase: string, params: insertSegmentParams = defaultSegmentParams) => {
+export const insertSegment = async(db: IDatabase, fnname: string, testcase: string, params: insertSegmentParams = {}) => {
     const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // corrections for parameters
     const identifier = `${fnname}-${testcase}`;
-    const correctedParams = params;
+    const correctedParams = { ...defaultSegmentParams, ...params };
     // generate defaults
     const videoID = (params.videoID || `vid-${identifier}`) as VideoID;
     const userID = (params.userID || `user-${identifier}`) as UserID;
     if (!params.videoID) correctedParams.videoID = videoID;
-    if (!params.UUID) correctedParams.UUID = `uuid-${identifier}-${genRandom(2)}`;
+    if (!params.UUID) correctedParams.UUID = genRandomValue("uuid", identifier, 2);
     if (!params.userID) correctedParams.userID = getHash(userID);
     if (!params.hashedVideoID) correctedParams.hashedVideoID = getHash(videoID);
     // convert bool to 0 | 1
-    correctedParams.locked = Number(params.locked);
-    correctedParams.hidden = Number(params.hidden);
-    correctedParams.shadowHidden = Number(params.shadowHidden);
+    correctedParams.locked = Number(correctedParams.locked);
+    correctedParams.hidden = Number(correctedParams.hidden);
+    correctedParams.shadowHidden = Number(correctedParams.shadowHidden);
     await db.prepare("run", query, Object.values(correctedParams));
 };
