@@ -1,3 +1,9 @@
+import { db } from "../../src/databases/databases";
+import assert from "assert";
+import { client } from "../utils/httpClient";
+import { genUsers, User } from "../utils/genUser";
+import { insertSegment, insertVip } from "../utils/queryGen";
+
 const endpoint = "/api/endpoint";
 
 const postTestEndpoint = () => client({
