@@ -45,3 +45,25 @@ export const insertVideoInfo = async (db: IDatabase, videoID: string, channelID:
     const query = 'INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published") VALUES(?, ?, ?, ?)';
     await db.prepare("run", query, [videoID, channelID, title, published]);
 };
+
+// warning
+type warningParams = {
+    userID?: HashedUserID,
+    issueTime?: number,
+    issuerUserID?: HashedUserID,
+    enabled?: boolean | number,
+    reason?: string,
+    type?: number
+}
+export const insertWarning = async (db: IDatabase, userID: HashedUserID, overrides: warningParams = {}) => {
+    const defaults = { userID, issueTime: 0, issuerUserID: "vip-user", enabled: true, reason: "default-warn-reason", type: 0 };
+    const params = { ...defaults, ...overrides };
+    params.enabled = Number(params.enabled);
+    const query = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason", "type") VALUES(?, ?, ?, ?, ?, ?)';
+    await db.prepare("run", query, Object.values(params));
+};
+// ban
+export const insertBan = async (db: IDatabase, userID: HashedUserID) => {
+    const query = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
+    await db.prepare("run", query, [userID]);
+};

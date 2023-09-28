@@ -1,28 +1,32 @@
 import { IDatabase } from "../../src/databases/IDatabase";
-import { Service, VideoIDHash, VideoID } from "../../src/types/segments.model";
-import { HashedUserID, UserID } from "../../src/types/user.model";
+import { Service, VideoIDHash } from "../../src/types/segments.model";
+import { HashedUserID } from "../../src/types/user.model";
 import { genRandom, genRandomValue } from "./getRandom";
 import { getHash } from "../../src/utils/getHash";
 
-type insertSegmentParams = {
-    videoID?: string,
+interface baseParams {
+    videoID?: string
+    hashedVideoID?: VideoIDHash | ""
+    userID?: HashedUserID | ""
+    service?: Service
+    timeSubmitted?: number
+    UUID?: string
+}
+
+// sponsorTimes
+interface insertSegmentParams extends baseParams {
     startTime?: number,
     endTime?: number,
     votes?: number,
     locked?: boolean | number,
-    UUID?: string,
-    userID?: HashedUserID | "",
-    timeSubmitted?: number,
     views?: number,
     category?: string,
     actionType?: string,
-    service?: Service,
     videoDuration?: number,
     hidden?: boolean | number,
     shadowHidden?: boolean | number,
-    hashedVideoID?: VideoIDHash | "",
     description?: string
-};
+}
 const defaultSegmentParams: insertSegmentParams = {
     videoID: "",
     startTime: 0,
@@ -43,25 +47,84 @@ const defaultSegmentParams: insertSegmentParams = {
     description: ""
 };
 
-export const insertSegment = async(db: IDatabase, params: insertSegmentParams = {}) => {
+const generateDefaults = (identifier: string) => ({
+    videoID: `vid-${identifier}`,
+    hashedVideoID: getHash(`vid-${identifier}`),
+    userID: `user-${identifier}`,
+    UUID: genRandomValue("uuid", identifier, 2),
+});
+
+export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
     const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    // corrections for parameters
-    const correctedParams = { ...defaultSegmentParams, ...params };
-    const identifier = genRandom(7); // 7 to fill out videoID
     // generate defaults
-    const videoID = (params.videoID || `vid-${identifier}`) as VideoID;
-    const userID = (params.userID || `user-${identifier}`) as UserID;
-    if (!params.videoID) correctedParams.videoID = videoID;
-    if (!params.UUID) correctedParams.UUID = genRandomValue("uuid", identifier, 2);
-    if (!params.userID) correctedParams.userID = getHash(userID);
-    if (!params.hashedVideoID) correctedParams.hashedVideoID = getHash(videoID);
+    identifier = identifier ?? genRandom();
+    const defaults = generateDefaults(identifier);
+    const params = { ...defaultSegmentParams, ...defaults, ...overrides };
     // convert bool to 0 | 1
-    correctedParams.locked = Number(correctedParams.locked);
-    correctedParams.hidden = Number(correctedParams.hidden);
-    correctedParams.shadowHidden = Number(correctedParams.shadowHidden);
-    await db.prepare("run", query, Object.values(correctedParams));
+    params.locked = Number(params.locked);
+    params.hidden = Number(params.hidden);
+    params.shadowHidden = Number(params.shadowHidden);
+    await db.prepare("run", query, Object.values(params));
 };
 export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {
     const overrides = { category: "chapter", actionType: "chapter", description, ...params };
     await insertSegment(db, overrides);
+};
+
+// titles
+interface insertTitleParams extends baseParams {
+    title?: string,
+    original?: string,
+}
+const defaultTitleParams: insertTitleParams = {
+    videoID: "",
+    title: "test-title",
+    original: "original-video-title",
+    userID: "",
+    service: Service.YouTube,
+    hashedVideoID: "",
+    timeSubmitted: 0,
+    UUID: "",
+};
+export const insertTitle = async (db: IDatabase, overrides: insertTitleParams = {}, identifier?: string) => {
+    const query = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    // generate defaults
+    identifier = identifier ?? genRandom();
+    const defaults = generateDefaults(identifier);
+    const params = { ...defaultTitleParams, ...defaults, ...overrides };
+    // convert bool to 0 | 1
+    await db.prepare("run", query, Object.values(params));
+};
+export const insertTitleVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, verification = false) => {
+    const query = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)';
+    const params = [UUID, votes, Number(locked), Number(shadowHidden), Number(verification)];
+    await db.prepare("run", query, params);
+};
+
+interface insertThumbnailParams extends baseParams {
+    original?: number,
+}
+const defaultThumbParams = {
+    videoID: "",
+    original: 0,
+    userID: "",
+    service: Service.YouTube,
+    hashedVideoID: "",
+    timeSubmitted: 0,
+    UUID: "",
+};
+export const insertThumbnail = async (db: IDatabase, overrides: insertThumbnailParams = {}, identifier?: string) => {
+    const query = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
+    // generate defaults
+    identifier = identifier ?? genRandom();
+    const defaults = generateDefaults(identifier);
+    const params = { ...defaultThumbParams, ...defaults, ...overrides };
+    // convert bool to 0 | 1
+    await db.prepare("run", query, Object.values(params));
+};
+
+export const insertThumbnailVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false) => {
+    const query = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)';
+    const params = [UUID, votes, Number(locked), Number(shadowHidden)];
+    await db.prepare("run", query, params);
 };

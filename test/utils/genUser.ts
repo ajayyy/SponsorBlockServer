@@ -5,6 +5,7 @@ import { getHash } from "../../src/utils/getHash";
 export interface User {
     privID: UserID,
     pubID: HashedUserID
+    info: Record<string, any>
 }
 export type userArray = Record<string, User>
 
@@ -16,7 +17,7 @@ export type usernameUserArray = Record<string, UsernameUser>
 export const genUser = (fnname: string, testcase: string): User => {
     const privID = `${fnname}-${testcase}-${genRandom(2)}` as UserID;
     const pubID = getHash(privID);
-    return { privID, pubID };
+    return { privID, pubID, info: {} };
 };
 
 export const genUsers = (fnname: string, testcase: string[]): userArray => {
