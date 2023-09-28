@@ -78,7 +78,7 @@ interface insertTitleParams extends baseParams {
 }
 const defaultTitleParams: insertTitleParams = {
     videoID: "",
-    title: "test-title",
+    title: "",
     original: false,
     userID: "",
     service: Service.YouTube,
@@ -92,6 +92,7 @@ export const insertTitle = async (db: IDatabase, overrides: insertTitleParams = 
     identifier = identifier ?? genRandom();
     const defaults = generateDefaults(identifier);
     const params = { ...defaultTitleParams, ...defaults, ...overrides };
+    params.title = genRandomValue("title", identifier);
     // convert bool to 0 | 1
     params.original = Number(params.original);
     await db.prepare("run", query, Object.values(params));
