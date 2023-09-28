@@ -74,12 +74,12 @@ export const insertChapter = async(db: IDatabase, description: string, params: i
 // titles
 interface insertTitleParams extends baseParams {
     title?: string,
-    original?: string,
+    original?: boolean | number,
 }
 const defaultTitleParams: insertTitleParams = {
     videoID: "",
     title: "test-title",
-    original: "original-video-title",
+    original: false,
     userID: "",
     service: Service.YouTube,
     hashedVideoID: "",
@@ -93,6 +93,7 @@ export const insertTitle = async (db: IDatabase, overrides: insertTitleParams = 
     const defaults = generateDefaults(identifier);
     const params = { ...defaultTitleParams, ...defaults, ...overrides };
     // convert bool to 0 | 1
+    params.original = Number(params.original);
     await db.prepare("run", query, Object.values(params));
 };
 export const insertTitleVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, verification = false) => {
