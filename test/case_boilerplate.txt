@@ -1,0 +1,16 @@
+const endpoint = "/api/endpoint";
+
+const postTestEndpoint = () => client({
+    method: "POST",
+    url: endpoint,
+    data: {
+    }
+});
+
+const cases = [
+    "firstCase",
+    "secondCase",
+    "thirdCase"
+];
+const users = genUsers("endpoint", cases);
+const vipUser = genUser("endpoint", "vip");

@@ -19,7 +19,7 @@ const validateSearch = (query: string, users: UsernameUser[], exact: number | bo
             assert.deepStrictEqual(res.data, expected);
         });
 
-const validateSearchWithUser = (user: UsernameUser, exact = false) =>
+const validateSearchWithUser = (user: UsernameUser, exact = false): Promise<void> =>
     validateSearch(user.username, [user], exact);
 
 const cases = new Map([
