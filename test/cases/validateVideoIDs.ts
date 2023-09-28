@@ -106,20 +106,16 @@ describe("VideoID Validation - postSkipSegments", () => {
         done();
     });
 
-    it(`Should return 400 for invalid videoID`, (done) => {
+    it(`Should return 400 for invalid videoID`, () =>
         postSkipSegments("123456").then(res => {
             assert.strictEqual(res.status, 400);
             assert.strictEqual(res.data, expectedError);
-            done();
         })
-            .catch(err => done(err));
-    });
+    );
 
-    it(`Should return 200 for valid videoID`, (done) => {
-        postSkipSegments("dQw4w9WgXcQ").then(res => {
-            assert.strictEqual(res.status, 200);
-            done();
-        })
-            .catch(err => done(err));
-    });
+    it(`Should return 200 for valid videoID`, () =>
+        postSkipSegments("dQw4w9WgXcQ").then(res =>
+            assert.strictEqual(res.status, 200)
+        )
+    );
 });
