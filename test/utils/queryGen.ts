@@ -39,3 +39,9 @@ export const insertUsernameBulk = async (db: IDatabase, users: usernameUserArray
     for (const user of Object.values(users))
         await insertUsername(db, user.pubID, user.username, false);
 };
+
+// videoInfo
+export const insertVideoInfo = async (db: IDatabase, videoID: string, channelID: string, title = "", published = 0) => {
+    const query = 'INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published") VALUES(?, ?, ?, ?)';
+    await db.prepare("run", query, [videoID, channelID, title, published]);
+};

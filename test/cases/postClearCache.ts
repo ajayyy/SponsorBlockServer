@@ -16,7 +16,7 @@ const users = genUsers("postClearCache", cases);
 describe("postClearCache", () => {
     before(async () => {
         await insertVip(db, users["vip"].pubID);
-        await insertSegment(db, "clearSegments", "clear-test", { videoID: "clear-test" });
+        await insertSegment(db, { videoID: "clear-test" });
     });
 
     it("Should be able to clear cache for existing video", () =>

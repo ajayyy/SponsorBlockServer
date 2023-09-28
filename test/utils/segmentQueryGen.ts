@@ -1,7 +1,7 @@
 import { IDatabase } from "../../src/databases/IDatabase";
 import { Service, VideoIDHash, VideoID } from "../../src/types/segments.model";
 import { HashedUserID, UserID } from "../../src/types/user.model";
-import { genRandomValue } from "./getRandom";
+import { genRandom, genRandomValue } from "./getRandom";
 import { getHash } from "../../src/utils/getHash";
 
 type insertSegmentParams = {
@@ -43,12 +43,11 @@ const defaultSegmentParams: insertSegmentParams = {
     description: ""
 };
 
-// sponsorTimes
-export const insertSegment = async(db: IDatabase, fnname: string, testcase: string, params: insertSegmentParams = {}) => {
+export const insertSegment = async(db: IDatabase, params: insertSegmentParams = {}) => {
     const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // corrections for parameters
-    const identifier = `${fnname}-${testcase}`;
     const correctedParams = { ...defaultSegmentParams, ...params };
+    const identifier = genRandom(7); // 7 to fill out videoID
     // generate defaults
     const videoID = (params.videoID || `vid-${identifier}`) as VideoID;
     const userID = (params.userID || `user-${identifier}`) as UserID;
@@ -61,4 +60,8 @@ export const insertSegment = async(db: IDatabase, fnname: string, testcase: stri
     correctedParams.hidden = Number(correctedParams.hidden);
     correctedParams.shadowHidden = Number(correctedParams.shadowHidden);
     await db.prepare("run", query, Object.values(correctedParams));
+};
+export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {
+    const overrides = { category: "chapter", actionType: "chapter", description, ...params };
+    await insertSegment(db, overrides);
 };
