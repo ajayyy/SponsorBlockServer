@@ -179,7 +179,7 @@ async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult
 
         return {
             pass: false,
-            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? `\n\nWarning reason: '${warnings[0].reason}'` : ""),
+            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? `\n\nTip message: '${warnings[0].reason}'` : ""),
             errorCode: 403
         };
     }
