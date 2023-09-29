@@ -30,7 +30,10 @@ const validateResponse = (videoID: string, overrides: lockOverrides = {}, expect
     return getLockCategories(videoID, actionTypes, service)
         .then(res => {
             assert.strictEqual(res.status, 200);
-            assert.ok(partialDeepEquals(res.data, expectedResponse));
+            // modify both categories to sort()
+            res.data.categories?.sort();
+            expectedResponse.categories?.sort();
+            assert.deepStrictEqual(res.data, expectedResponse);
         });
 };
 
