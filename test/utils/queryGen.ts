@@ -2,6 +2,9 @@ import { IDatabase } from "../../src/databases/IDatabase";
 import { HashedUserID } from "../../src/types/user.model";
 import { User, userArray, usernameUserArray } from "./genUser";
 import { Feature } from "../../src/types/user.model";
+import { ActionType, Category, Service, VideoIDHash } from "../../src/types/segments.model";
+import { genRandomValue } from "./getRandom";
+import { getHash } from "../../src/utils/getHash";
 
 // segments
 export { insertSegment } from "./segmentQueryGen";
@@ -44,6 +47,28 @@ export const insertUsernameBulk = async (db: IDatabase, users: usernameUserArray
 export const insertVideoInfo = async (db: IDatabase, videoID: string, channelID: string, title = "", published = 0) => {
     const query = 'INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published") VALUES(?, ?, ?, ?)';
     await db.prepare("run", query, [videoID, channelID, title, published]);
+};
+
+interface lockParams {
+    videoID?: string,
+    userID?: HashedUserID | "",
+    actionType?: ActionType | string,
+    category?: Category | string,
+    hashedVideoID?: VideoIDHash | "",
+    reason?: string,
+    service?: Service | string
+}
+
+export const insertLock = async(db: IDatabase, overrides: lockParams = {}) => {
+    const query = 'INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service") VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const identifier = "lock";
+    const defaults = {
+        videoID: genRandomValue("video", identifier), userID: genRandomValue("user", identifier),
+        actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube
+    };
+    const params = { ...defaults, ...overrides };
+    params.hashedVideoID = getHash(params.videoID);
+    await db.prepare("run", query, Object.values(params));
 };
 
 // warning

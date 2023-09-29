@@ -1,26 +1,57 @@
-import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
-import { mixedDeepEquals } from "../utils/partialDeepEquals";
+import { insertLock } from "../utils/queryGen";
+import { multiGenRandomValue } from "../utils/getRandom";
+
 const endpoint = "/api/lockCategories";
 const defaultActionTypes = ["skip", "mute"];
+
 const getLockCategories = (videoID: string, actionType = defaultActionTypes, service = "YouTube") => client.get(endpoint, { params: { videoID, actionType, service } });
+const queryStatusCheck = (status: number, queryString: string) =>
+    client.get(`${endpoint}${queryString}`)
+        .then(res => assert.strictEqual(res.status, status));
+
+type lockResponse = {
+    categories?: string[],
+    reason?: string,
+    actionTypes?: string[]
+}
+type lockOverrides = {
+    actionTypes?: string[],
+    service?: string
+}
+const validateResponse = (videoID: string, overrides: lockOverrides = {}, expected: lockResponse): Promise<void> => {
+    const actionTypes = overrides.actionTypes ?? defaultActionTypes;
+    const service = overrides.service ?? "YouTube";
+    const defaultExpected = { categories: [ "sponsor" ], reason: "", actionTypes: defaultActionTypes };
+    const expectedResponse = { ...defaultExpected, ...expected };
+    return getLockCategories(videoID, actionTypes, service)
+        .then(res => {
+            assert.strictEqual(res.status, 200);
+            assert.deepStrictEqual(res.data, expectedResponse);
+        });
+};
+
+const validate404 = (videoID: string, overrides: lockOverrides = {}): Promise<void> => {
+    const actionTypes = overrides.actionTypes || defaultActionTypes;
+    const service = overrides.service || "YouTube";
+    return getLockCategories(videoID, actionTypes, service)
+        .then(res => assert.strictEqual(res.status, 404));
+};
+
+const videoIDs = multiGenRandomValue("video", "getLockCategories", 3);
 
 describe("getLockCategories", () => {
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesVIP")]);
+        await insertLock(db, { videoID: videoIDs[0], reason: "1-short" });
+        await insertLock(db, { videoID: videoIDs[0], reason: "1-longer-reason", actionType: "mute", category: "interaction" });
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType","category", "reason", "service") VALUES (?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory1", "skip", "sponsor", "1-short", "YouTube"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory1", "mute", "interaction", "1-longer-reason", "YouTube"]);
+        await insertLock(db, { videoID: videoIDs[1], reason: "2-reason", category: "preview" });
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory2", "skip", "preview", "2-reason", "YouTube"]);
-
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory3", "mute", "nonmusic", "3-reason", "PeerTube"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory3", "skip", "sponsor", "3-reason", "YouTube"]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesVIP"), "getLockCategory3", "full", "outro", "3-longer-reason", "YouTube"]);
+        await insertLock(db, { videoID: videoIDs[2], reason: "3-reason", category: "nonmusic", actionType: "mute", service: "PeerTube" });
+        await insertLock(db, { videoID: videoIDs[2], reason: "3-reason" });
+        await insertLock(db, { videoID: videoIDs[2], reason: "3-longer-reason", category: "selfpromo", actionType: "full" });
     });
 
     it("Should update the database version when starting the application", async () => {
@@ -28,198 +59,87 @@ describe("getLockCategories", () => {
         assert.ok(version >= 29, `Version isn't greater than 29. Version is ${version}`);
     });
 
-    it("Should be able to get multiple locks", (done) => {
-        getLockCategories("getLockCategory1")
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "sponsor",
-                        "interaction"
-                    ],
-                    reason: "1-longer-reason",
-                    actionTypes: defaultActionTypes
-                };
-                assert.ok(mixedDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
+    // 200 tests
+    it("should return 200 by single actionType", () => queryStatusCheck(200, `?videoID=${videoIDs[0]}&actionType=mute`));
+    it("should return 200 by single actionTypes JSON", () => queryStatusCheck(200, `?videoID=${videoIDs[0]}&actionTypes=["mute"]`));
+    it("should return 200 by repeating actionTypes", () => queryStatusCheck(200, `?videoID=${videoIDs[0]}&actionType=mute&actionType=skip`) );
 
-    it("Should be able to get single locks", (done) => {
-        getLockCategories("getLockCategory2")
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "preview"
-                    ],
-                    reason: "2-reason",
-                    actionTypes: defaultActionTypes
-                };
-                assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    // 404 tests
+    it("should return 404 if no lock exists", () => validate404("getLockCategoryNull"));
+    it("should return 404 if invalid actionTypes specified", () => validate404(videoIDs[0], { actionTypes: ["ban"] }));
 
-    it("should return 404 if no lock exists", (done) => {
-        getLockCategories("getLockCategoryNull")
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    // 400 tests
+    it("should return 400 if no videoID specified", () => queryStatusCheck(400, ""));
 
-    it("should return 400 if no videoID specified", (done) => {
-        client.get(endpoint)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    // complicated response tests
+    it("Should be able to get multiple locks", () =>
+        validateResponse(videoIDs[0], {}, {
+            categories: [
+                "sponsor",
+                "interaction"
+            ],
+            reason: "1-longer-reason"
+        })
+    );
 
-    it("Should be able to get multiple locks with service", (done) => {
-        getLockCategories("getLockCategory1", defaultActionTypes, "YouTube")
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "sponsor",
-                        "interaction"
-                    ],
-                    reason: "1-longer-reason",
-                    actionTypes: defaultActionTypes
-                };
-                assert.ok(mixedDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("Should be able to get single locks", () =>
+        validateResponse(videoIDs[1], {}, {
+            categories: [
+                "preview"
+            ],
+            reason: "2-reason",
+        })
+    );
 
-    it("Should be able to get single locks with service", (done) => {
-        getLockCategories("getLockCategory3", defaultActionTypes, "PeerTube")
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "nonmusic"
-                    ],
-                    reason: "3-reason",
-                    actionTypes: defaultActionTypes
-                };
-                assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("Should be able to get multiple locks with service", () =>
+        validateResponse(videoIDs[0], {}, {
+            categories: [
+                "sponsor",
+                "interaction"
+            ],
+            reason: "1-longer-reason",
+        })
+    );
 
-    it("Should be able to get single locks with service", (done) => {
-        getLockCategories("getLockCategory3", defaultActionTypes, "Youtube")
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "sponsor"
-                    ],
-                    reason: "3-reason",
-                    actionTypes: defaultActionTypes
-                };
-                assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("Should be able to get single locks with service", () =>
+        validateResponse(videoIDs[2], { service: "PeerTube" }, {
+            categories: [ "nonmusic" ],
+            reason: "3-reason",
+        })
+    );
 
-    it("should return result from Youtube service if service not match", (done) => {
-        getLockCategories("getLockCategory3", defaultActionTypes, "Dailymotion")
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "sponsor"
-                    ],
-                    reason: "3-reason",
-                    actionTypes: defaultActionTypes
-                };
-                assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("Should be able to get single locks with service", () =>
+        validateResponse(videoIDs[2], { service: "Youtube" }, {
+            reason: "3-reason",
+        })
+    );
 
-    it("should return 404 if invalid actionTypes specified", (done) => {
-        getLockCategories("getLockCategory1", ["ban"])
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("should return result from Youtube service if service not match", () =>
+        validateResponse(videoIDs[2], { service: "Dailymotion" }, {
+            reason: "3-reason",
+        })
+    );
 
-    it("should be able to get with specific actionType", (done) => {
-        getLockCategories("getLockCategory1", ["mute"])
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "interaction"
-                    ],
-                    reason: "1-longer-reason",
-                    actionTypes: ["mute"]
-                };
-                mixedDeepEquals(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("should be able to get with specific actionType", () =>
+        validateResponse(videoIDs[0], { actionTypes: ["mute"] }, {
+            categories: [
+                "interaction"
+            ],
+            reason: "1-longer-reason",
+            actionTypes: ["mute"]
+        })
+    );
 
-    it("Should be able to get skip, mute, full", (done) => {
+    it("Should be able to get skip, mute, full", () => {
         const actionTypes = [...defaultActionTypes, "full"];
-        getLockCategories("getLockCategory3", actionTypes)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    categories: [
-                        "sponsor",
-                        "nonmusic",
-                        "outro"
-                    ],
-                    reason: "3-longer-reason",
-                    actionTypes
-                };
-                mixedDeepEquals(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should return 200 by single actionType", (done) => {
-        client.get(`${endpoint}?videoID=getLockCategory1&actionType=mute`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should return 200 by single actionTypes JSON", (done) => {
-        client.get(`${endpoint}?videoID=getLockCategory1&actionTypes=["mute"]`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should return 200 by repeating actionTypes", (done) => {
-        client.get(`${endpoint}?videoID=getLockCategory1&actionType=mute&actionType=skip`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
+        return validateResponse(videoIDs[2], { actionTypes }, {
+            categories: [
+                "sponsor",
+                // "nonmusic", // no nonmusic since it's on other service
+                "selfpromo"
+            ],
+            reason: "3-longer-reason",
+            actionTypes
+        });
     });
 });
