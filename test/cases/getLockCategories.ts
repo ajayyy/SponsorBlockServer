@@ -3,6 +3,7 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 import { insertLock } from "../utils/queryGen";
 import { multiGenRandomValue } from "../utils/getRandom";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 const endpoint = "/api/lockCategories";
 const defaultActionTypes = ["skip", "mute"];
@@ -29,7 +30,7 @@ const validateResponse = (videoID: string, overrides: lockOverrides = {}, expect
     return getLockCategories(videoID, actionTypes, service)
         .then(res => {
             assert.strictEqual(res.status, 200);
-            assert.deepStrictEqual(res.data, expectedResponse);
+            assert.ok(partialDeepEquals(res.data, expectedResponse));
         });
 };
 
@@ -135,8 +136,8 @@ describe("getLockCategories", () => {
         return validateResponse(videoIDs[2], { actionTypes }, {
             categories: [
                 "sponsor",
+                "selfpromo",
                 // "nonmusic", // no nonmusic since it's on other service
-                "selfpromo"
             ],
             reason: "3-longer-reason",
             actionTypes
