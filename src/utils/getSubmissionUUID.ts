@@ -1,14 +1,14 @@
 import { getHash } from "./getHash";
 import { HashedValue } from "../types/hash.model";
 import { ActionType, VideoID, Service, Category } from "../types/segments.model";
-import { UserID } from "../types/user.model";
+import { HashedUserID } from "../types/user.model";
 
 export function getSubmissionUUID(
     videoID: VideoID,
     category: Category,
     actionType: ActionType,
     description: string,
-    userID: UserID,
+    userID: HashedUserID,
     startTime: number,
     endTime: number,
     service: Service
