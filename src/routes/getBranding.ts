@@ -26,7 +26,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         "all",
         `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
+        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
