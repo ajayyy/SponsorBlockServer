@@ -62,7 +62,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
                     "run", 'UPDATE "warnings" SET "enabled" = 1, "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
                     [reason, userID, previousWarning.issueTime]
                 );
-                resultStatus = "re-enabled";
+                resultStatus = "re-enabled for";
             } else {
                 return res.sendStatus(409);
             }
@@ -93,7 +93,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
         }
 
         return res.status(200).json({
-            message: `Warning ${resultStatus} user '${userID}'.`,
+            message: `Tip ${resultStatus} user '${userID}'.`,
         });
     } catch (e) {
         Logger.error(e as string);
