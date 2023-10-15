@@ -11,7 +11,7 @@ describe("getStatus", () => {
         dbVersion = (await db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])).value;
     });
 
-    it("Should be able to get status", (done) => {
+    it("Should be able to get status", () =>
         client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 200);
@@ -22,106 +22,86 @@ describe("getStatus", () => {
                 assert.ok(data.startTime);
                 assert.ok(data.processTime >= 0);
                 assert.ok(data.loadavg.length == 2);
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get uptime only", (done) => {
+    it("Should be able to get uptime only", () =>
         client.get(`${endpoint}/uptime`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data) >= 1); // uptime should be greater than 1s
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get commit only", (done) => {
+    it("Should be able to get commit only", () =>
         client.get(`${endpoint}/commit`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(res.data, "test"); // commit should be test
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get db only", (done) => {
+    it("Should be able to get db only", () =>
         client.get(`${endpoint}/db`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(Number(res.data), Number(dbVersion)); // commit should be test
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get startTime only", (done) => {
+    it("Should be able to get startTime only", () =>
         client.get(`${endpoint}/startTime`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const now = Date.now();
                 assert.ok(Number(res.data) <= now); // startTime should be more than now
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get processTime only", (done) => {
+    it("Should be able to get processTime only", () =>
         client.get(`${endpoint}/processTime`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data) >= 0);
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get loadavg only", (done) => {
+    it("Should be able to get loadavg only", () =>
         client.get(`${endpoint}/loadavg`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data[0]) >= 0);
                 assert.ok(Number(res.data[1]) >= 0);
-                done();
             })
-            .catch(err => done(err));
-    });
+    );
 
-    it("Should be able to get statusRequests only", function (done) {
+    it("Should be able to get statusRequests only", function () {
         if (!config.redis?.enabled) this.skip();
-        client.get(`${endpoint}/statusRequests`)
+        return client.get(`${endpoint}/statusRequests`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.ok(Number(res.data) > 1);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get status with statusRequests", function (done) {
+    it("Should be able to get status with statusRequests", function () {
         if (!config.redis?.enabled) this.skip();
-        client.get(endpoint)
+        return client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
                 assert.ok(data.statusRequests > 2);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get redis latency", function (done) {
+    it("Should be able to get redis latency", function () {
         if (!config.redis?.enabled) this.skip();
-        client.get(endpoint)
+        return client.get(endpoint)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
                 assert.ok(data.redisProcessTime >= 0);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
     it("Should return commit unkown if not present", (done) => {

@@ -1,163 +1,123 @@
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { insertSegment, insertThumbnail, insertThumbnailVote, insertTitle, insertTitleVote } from "../utils/segmentQueryGen";
+import { genUsers, User } from "../utils/genUser";
+import { genRandomValue } from "../utils/getRandom";
+import { insertBan, insertUsername, insertWarning } from "../utils/queryGen";
 
 describe("getUserInfo", () => {
     const endpoint = "/api/userInfo";
+
+    const cases = [
+        "n-0",
+        "n-1",
+        "n-2",
+        "n-3",
+        "n-4",
+        "n-5",
+        "n-6",
+        "null",
+        "vip",
+        "warn-0",
+        "warn-1",
+        "warn-2",
+        "warn-3",
+        "ban-1",
+        "ban-2",
+    ];
+
+    const users = genUsers("endpoint", cases);
+    for (const [id, user] of Object.entries(users))
+        // generate last segment UUIDs
+        user.info["last"] = genRandomValue("uuid", id);
+
+    const checkValues = (user: User, expected: Record<string, string | number | boolean>) =>
+        client.get(endpoint, { params: { userID: user.privID, value: Object.keys(expected) } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                assert.ok(partialDeepEquals(res.data, expected));
+            });
+
     before(async () => {
-        const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
-        await db.prepare("run", insertUserNameQuery, [getHash("getuserinfo_user_01"), "Username user 01"]);
+        users["n-1"].info["username"] = genRandomValue("username", "n-1");
+        await insertUsername(db, users["n-1"].pubID, users["n-1"].info["username"]);
 
-        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000001", getHash("getuserinfo_user_01"), 1, 10, "sponsor", "skip", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000002", getHash("getuserinfo_user_01"), 2, 10, "sponsor", "skip", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo1", 1, 11, -1,  "uuid000003", getHash("getuserinfo_user_01"), 3, 10, "sponsor", "skip", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo1", 1, 11, -2,  "uuid000004", getHash("getuserinfo_user_01"), 4, 10, "sponsor", "skip", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo2", 1, 11, -5,  "uuid000005", getHash("getuserinfo_user_01"), 5, 10, "sponsor", "skip", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000007", getHash("getuserinfo_user_02"), 7, 10, "sponsor", "skip", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 1, 11, 2,   "uuid000008", getHash("getuserinfo_user_02"), 8, 10, "sponsor", "skip", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo0", 0, 36000, 2,"uuid000009", getHash("getuserinfo_user_03"), 8, 10, "sponsor", "skip", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo3", 1, 11, 2,   "uuid000006", getHash("getuserinfo_user_02"), 6, 10, "sponsor", "skip", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo4", 1, 11, 2,   "uuid000010", getHash("getuserinfo_user_04"), 9, 10, "chapter", "chapter", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo5", 1, 11, 2,   "uuid000011", getHash("getuserinfo_user_05"), 9, 10, "sponsor", "skip", 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo6", 1, 11, 2,   "uuid000012", getHash("getuserinfo_user_06"), 9, 10, "sponsor", "skip", 1]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfo7", 1, 11, 2,   "uuid000013", getHash("getuserinfo_ban_02"), 9, 10, "sponsor", "skip", 1]);
+        // insert segments
+        const defaultSegmentParams = { startTime: 0, endTime: 10, votes: 2, views: 10 };
+        // user["n-1"]
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-1"].pubID });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-1"].pubID });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-1"].pubID, votes: -1 });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-1"].pubID, votes: -2 });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-1"].pubID, votes: -5, timeSubmitted: 5, UUID: users["n-1"].info.last });
+        // user["n-2"]
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-2"].pubID, shadowHidden: true });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-2"].pubID, shadowHidden: true });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-2"].pubID, timeSubmitted: 5, UUID: users["n-2"].info.last });
+        // users n-3 to n-6
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-3"].pubID, UUID: users["n-3"].info.last, endTime: 36000 });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-4"].pubID, UUID: users["n-4"].info.last, category: "chapter", actionType: "chapter" });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-5"].pubID, UUID: users["n-5"].info.last });
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["n-6"].pubID, UUID: users["n-6"].info.last, shadowHidden: true });
+        // ban-2
+        await insertSegment(db, { ...defaultSegmentParams, userID: users["ban-2"].pubID, UUID: users["ban-2"].info.last, shadowHidden: true });
 
-        const titlesQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        const titleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, 0);';
-        const thumbnailsQuery = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
-        const thumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, 0)';
-        await db.prepare("run", titlesQuery, ["getUserInfo6", "title0", 1, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000001"]);
-        await db.prepare("run", titleVotesQuery, ["uuid000001", 0, 0]);
-        await db.prepare("run", thumbnailsQuery, ["getUserInfo6", 0, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 1, "uuid000002"]);
-        await db.prepare("run", thumbnailVotesQuery, ["uuid000002", 0, 0]);
-        await db.prepare("run", titlesQuery, ["getUserInfo6", "title1", 0, getHash("getuserinfo_user_01"), "YouTube", getHash("getUserInfo0"), 2, "uuid000003"]);
-        await db.prepare("run", titleVotesQuery, ["uuid000003", -1, 0]);
+        // user["n-1"]
+        const userN1Video = genRandomValue("video", "getUserInfo-n1");
+        // title 1
+        const userN1UUID1 = genRandomValue("uuid", "getUserInfo-n1-u1");
+        await insertTitle(db, { userID: users["n-1"].pubID, timeSubmitted: 1, videoID: userN1Video, UUID: userN1UUID1 });
+        await insertTitleVote(db, userN1UUID1, 0);
+        // title 2
+        const userN1UUID2 = genRandomValue("uuid", "getUserInfo-n1-u2");
+        await insertTitle(db, { userID: users["n-1"].pubID, timeSubmitted: 2, videoID: userN1Video, UUID: userN1UUID2 });
+        await insertTitleVote(db, userN1UUID2, -1);
+        // thumbnail 1
+        const userN1UUID3 = genRandomValue("uuid", "getUserInfo-n1-u3");
+        await insertThumbnail(db, { userID: users["n-1"].pubID, UUID: userN1UUID3 });
+        await insertThumbnailVote(db, userN1UUID3, 0);
 
-        const insertWarningQuery = 'INSERT INTO warnings ("userID", "issueTime", "issuerUserID", "enabled", "reason") VALUES (?, ?, ?, ?, ?)';
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_0"), 10, "getuserinfo_vip", 1, "warning0-0"]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_1"), 20, "getuserinfo_vip", 1, "warning1-0"]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_1"), 30, "getuserinfo_vip", 1, "warning1-1"]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_2"), 40, "getuserinfo_vip", 0, "warning2-0"]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_3"), 50, "getuserinfo_vip", 1, "warning3-0"]);
-        await db.prepare("run", insertWarningQuery, [getHash("getuserinfo_warning_3"), 60, "getuserinfo_vip", 0, "warning3-1"]);
+        // warnings & bans
+        // warn-0
+        insertWarning(db, users["warn-0"].pubID, { reason: "warning0-0", issueTime: 10 });
+        // warn-1
+        insertWarning(db, users["warn-1"].pubID, { reason: "warning1-0", issueTime: 20 });
+        insertWarning(db, users["warn-1"].pubID, { reason: "warning1-1", issueTime: 30 });
+        // warn -2
+        insertWarning(db, users["warn-2"].pubID, { reason: "warning2-0", issueTime: 40, enabled: false });
+        // warn-3
+        insertWarning(db, users["warn-3"].pubID, { reason: "warning3-0", issueTime: 50 });
+        insertWarning(db, users["warn-3"].pubID, { reason: "warning3-1", issueTime: 60, enabled: false });
 
-        const insertBanQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertBanQuery, [getHash("getuserinfo_ban_01")]);
-        await db.prepare("run", insertBanQuery, [getHash("getuserinfo_ban_02")]);
+        // ban-
+        insertBan(db, users["ban-1"].pubID);
+        insertBan(db, users["ban-2"].pubID);
     });
 
-    it("Should be able to get a 200", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_01" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("Should be able to get a 200", () => statusTest(200, { userID: users["n-1"].privID }));
 
-    it("Should be able to get a 400 (No userID parameter)", (done) => {
-        client.get(endpoint, { params: { userID: "" } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    // value tests
 
-    it("Should be able to get user info", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_01" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    userName: "Username user 01",
-                    userID: "66e7c974039ffb870a500a33eca3a3989861018909b938c313cf1a8a366800b8",
-                    minutesSaved: 5,
-                    viewCount: 30,
-                    ignoredViewCount: 20,
-                    segmentCount: 3,
-                    ignoredSegmentCount: 2,
-                    reputation: -1.5,
-                    lastSegmentID: "uuid000005",
-                    vip: false,
-                    warnings: 0,
-                    warningReason: ""
-                };
-                assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
-    });
+    it("Should get title and vote submission counts", () =>
+        checkValues(users["n-1"], {
+            titleSubmissionCount: 1,
+            thumbnailSubmissionCount: 1
+        })
+    );
 
-    it("Should get warning data", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_0", value: "warnings" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warnings: 1
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get warning data with public ID", (done) => {
-        client.get(endpoint, { params: { publicUserID: getHash("getuserinfo_warning_0"), values: `["warnings"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warnings: 1
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get multiple warnings", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_1", value: "warnings" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warnings: 2
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not get warnings if none", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_2", value: "warnings" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warnings: 0,
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should done(userID for userName (No userName set)", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_02", value: "userName" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    userName: "c2a28fd225e88f74945794ae85aef96001d4a1aaa1022c656f0dd48ac0a3ea0f"
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    // fallback/ null tests
+    it("Should return publidID if no username set", () => {
+        const user = users["n-2"];
+        return checkValues(user, {
+            userName: user.pubID,
+        });
     });
 
     it("Should return null segment if none", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_null", value: "lastSegmentID" } })
+        const user = users["null"];
+        client.get(endpoint, { params: { userID: user.privID, value: "lastSegmentID" } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(res.data.lastSegmentID, null);
@@ -167,7 +127,8 @@ describe("getUserInfo", () => {
     });
 
     it("Should return zeroes if userid does not exist", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_null", value: "lastSegmentID" } })
+        const user = users["null"];
+        client.get(endpoint, { params: { userID: user.privID, value: "lastSegmentID" } })
             .then(res => {
                 const data = res.data;
                 for (const value in data) {
@@ -180,243 +141,174 @@ describe("getUserInfo", () => {
             .catch(err => done(err));
     });
 
-    it("Should get warning reason from from single enabled warning", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_0", values: `["warningReason"]` } })
+    // warnings
+    it("Should get warning data with public ID", (done) => {
+        const user = users["warn-0"];
+        client.get(endpoint, { params: { publicUserID: user.pubID, values: `["warnings"]` } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = {
-                    warningReason: "warning0-0",
+                    warnings: 1
                 };
                 assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get most recent warning from two enabled warnings", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_1", value: "warningReason" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warningReason: "warning1-1"
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not get disabled warning", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_2", values: `["warnings","warningReason"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warnings: 0,
-                    warningReason: ""
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not get newer disabled warning", (done) => {
-        client.get(`${endpoint}?userID=getuserinfo_warning_3&value=warnings&value=warningReason`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    warnings: 1,
-                    warningReason: "warning3-0"
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get 400 if bad values specified", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_warning_3", value: "invalid-value" } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get ban data for banned user (only appears when specifically requested)", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_ban_01", value: "banned" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    banned: true
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get ban data for unbanned user (only appears when specifically requested)", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_notban_01", value: "banned" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    banned: false
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should throw 400 on bad json in values", (done) => {
-        client.get(endpoint, { params: { userID: "x", values: `[userID]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should throw 400 with invalid array", (done) => {
-        client.get(endpoint, { params: { userID: "x", values: 123 } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 200 on userID not found", (done) => {
-        client.get(endpoint, { params: { userID: "notused-userid" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    minutesSaved: 0,
-                    segmentCount: 0,
-                    ignoredSegmentCount: 0,
-                    viewCount: 0,
-                    ignoredViewCount: 0,
-                    warnings: 0,
-                    warningReason: "",
-                    reputation: 0,
-                    vip: false,
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should only count long segments as 10 minutes", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_03" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    userName: "807e0a5d0a62c9c4365fae3d403e4618a3226f231314a898fa1555a0e55eab9e",
-                    userID: "807e0a5d0a62c9c4365fae3d403e4618a3226f231314a898fa1555a0e55eab9e",
-                    minutesSaved: 100,
-                    viewCount: 10,
-                    ignoredViewCount: 0,
-                    segmentCount: 1,
-                    ignoredSegmentCount: 0,
-                    reputation: 0,
-                    lastSegmentID: "uuid000009",
-                    vip: false,
-                    warnings: 0,
-                    warningReason: ""
-                };
-                assert.deepStrictEqual(res.data, expected);
                 done();
             })
             .catch(err => done(err));
     });
 
-    it("Should be able to get permissions", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_01", value: "permissions" } })
+    it("Should get warning reason from from single enabled warning", () =>
+        checkValues(users["warn-0"], {
+            warnings: 1,
+            warningReason: "warning0-0",
+        })
+    );
+
+    it("Should get most recent warning from two enabled warnings", () =>
+        checkValues(users["warn-1"], {
+            warnings: 2,
+            warningReason: "warning1-1"
+        })
+    );
+
+    it("Should not get disabled warning", () =>
+        checkValues(users["warn-2"], {
+            warnings: 0,
+            warningReason: ""
+        })
+    );
+
+    it("Should not get newer disabled warning", () =>
+        checkValues(users["warn-3"], {
+            warnings: 1,
+            warningReason: "warning3-0"
+        })
+    );
+
+    // shadowban tests
+    it("Should get ban data for banned user (only appears when specifically requested)", () =>
+        checkValues(users["ban-1"], {
+            banned: true
+        })
+    );
+
+    it("Should return all segments of banned user", () =>
+        checkValues(users["ban-2"], {
+            segmentCount: 1
+        })
+    );
+
+    it("Should not return shadowhidden segments of not-banned user", () =>
+        checkValues(users["n-6"], {
+            segmentCount: 0,
+            banned: false
+        })
+    );
+
+    // error 400 testing
+    const statusTest = (status: number, params: Record<string, any>) =>
+        client.get(endpoint, { params })
             .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    permissions: {
-                        sponsor: true,
-                        selfpromo: true,
-                        exclusive_access: true,
-                        interaction: true,
-                        intro: true,
-                        outro: true,
-                        preview: true,
-                        music_offtopic: true,
-                        filler: true,
-                        poi_highlight: true,
-                        chapter: false,
-                    },
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
+                assert.strictEqual(res.status, status);
             });
-    });
 
-    it("Should ignore chapters for saved time calculations", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_04" } })
+    it("Should throw 400 on bad json in values", () => statusTest(400, { userID: "x", values: `[userID]` }));
+    it("Should throw 400 with invalid array", () => statusTest(400, { userID: "x", values: 123 }));
+    it("Should throw 400 with empty userID)", () => statusTest(400, { userID: "" }));
+    it("Should throw 400 if bad values specified", () => statusTest(400, { userID: users["warn-3"].privID, value: "invalid-value" }));
+
+    // full user stats
+    const fullUserStats = (params: Record<string, any>, expected: Record<string, any>) =>
+        client.get(endpoint, { params })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                const expected = {
-                    userName: "f187933817e7b0211a3f6f7d542a63ca9cc289d6cc8a8a79669d69a313671ccf",
-                    userID: "f187933817e7b0211a3f6f7d542a63ca9cc289d6cc8a8a79669d69a313671ccf",
-                    minutesSaved: 0,
-                    viewCount: 10,
-                    ignoredViewCount: 0,
-                    segmentCount: 1,
-                    ignoredSegmentCount: 0,
-                    reputation: 0,
-                    lastSegmentID: "uuid000010",
-                    vip: false,
-                    warnings: 0,
-                    warningReason: ""
-                };
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
+
+    const defaultUserInfo = {
+        minutesSaved: 0,
+        segmentCount: 0,
+        ignoredSegmentCount: 0,
+        viewCount: 0,
+        ignoredViewCount: 0,
+        warnings: 0,
+        warningReason: "",
+        reputation: 0,
+        lastSegmentID: "",
+        vip: false,
+    };
+
+    it("Should be able to get user info", () => {
+        const user = users["n-1"];
+        const params = { userID: user.privID };
+        return fullUserStats(params, {
+            ...defaultUserInfo,
+            userName: user.info.username,
+            userID: user.pubID,
+            minutesSaved: 5,
+            viewCount: 30,
+            ignoredViewCount: 20,
+            segmentCount: 3,
+            ignoredSegmentCount: 2,
+            reputation: -1.5,
+            lastSegmentID: user.info.last,
+        });
     });
 
-    it("Should get title and vote submission counts", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_01", value: ["titleSubmissionCount", "thumbnailSubmissionCount"] } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    titleSubmissionCount: 1,
-                    thumbnailSubmissionCount: 1
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should only count long segments as 10 minutes", () => {
+        const user = users["n-3"];
+        const params = { userID: user.privID };
+        return fullUserStats(params, {
+            ...defaultUserInfo,
+            userName: user.pubID,
+            userID: user.pubID,
+            minutesSaved: 100,
+            viewCount: 10,
+            segmentCount: 1,
+            lastSegmentID: user.info.last,
+        });
     });
 
-    it("Should return all segments of banned user", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_ban_02", value: ["segmentCount"] } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    segmentCount: 1
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
+    it("Should be able to get permissions", () => {
+        const user = users["n-1"];
+        const params = { userID: user.privID, value: "permissions" };
+        return fullUserStats(params, {
+            permissions: {
+                sponsor: true,
+                selfpromo: true,
+                exclusive_access: true,
+                interaction: true,
+                intro: true,
+                outro: true,
+                preview: true,
+                music_offtopic: true,
+                filler: true,
+                poi_highlight: true,
+                chapter: false,
+            },
+        });
     });
 
-    it("Should not return shadowhidden segments of not-banned user", (done) => {
-        client.get(endpoint, { params: { userID: "getuserinfo_user_06", value: ["segmentCount"] } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = {
-                    segmentCount: 0
-                };
-                assert.ok(partialDeepEquals(res.data, expected));
-                done(); // pass
-            })
-            .catch(err => done(err));
+    it("Should ignore chapters for saved time calculations", () => {
+        const user = users["n-4"];
+        const params = { userID: user.privID };
+        return fullUserStats(params, {
+            ...defaultUserInfo,
+            userName: user.pubID,
+            userID: user.pubID,
+            viewCount: 10,
+            segmentCount: 1,
+            lastSegmentID: user.info.last,
+        });
+    });
+
+    it("Should return 200 on userID not found", () => {
+        const user = users["null"];
+        const params = { userID: user.privID };
+        return fullUserStats(params, {
+            ...defaultUserInfo,
+            userName: user.pubID,
+            userID: user.pubID,
+            lastSegmentID: null
+        });
     });
 });

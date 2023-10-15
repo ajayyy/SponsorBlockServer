@@ -16,14 +16,10 @@ describe("eTag", () => {
     });
 
     const endpoint = "/etag";
-    it("Should reject weak etag", (done) => {
+    it("Should reject weak etag", () => {
         const etagKey = `W/test-etag-${genRandom()}`;
-        client.get(endpoint, { headers: { "If-None-Match": etagKey } })
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
+        return client.get(endpoint, { headers: { "If-None-Match": etagKey } })
+            .then(res => assert.strictEqual(res.status, 404));
     });
 });
 
@@ -34,32 +30,29 @@ describe("304 etag validation", () => {
 
     const endpoint = "/etag";
     for (const hashType of ["skipSegments", "skipSegmentsHash", "videoLabel", "videoLabelHash"]) {
-        it(`${hashType} etag should return 304`, (done) => {
+        it(`${hashType} etag should return 304`, () => {
             const etagKey = `${hashType};${genRandom};YouTube;${Date.now()}`;
-            redis.setEx(etagKey, 8400, "test").then(() =>
+            return redis.setEx(etagKey, 8400, "test").then(() =>
                 client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
                     assert.strictEqual(res.status, 304);
                     const etag = res.headers?.etag ?? "";
                     assert.ok(validateEtag(etagKey, etag));
-                    done();
-                }).catch(err => done(err))
+                })
             );
         });
     }
 
-    it(`other etag type should not return 304`, (done) => {
+    it(`other etag type should not return 304`, () => {
         const etagKey = `invalidHashType;${genRandom};YouTube;${Date.now()}`;
-        client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
+        return client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
             assert.strictEqual(res.status, 404);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it(`outdated etag type should not return 304`, (done) => {
+    it(`outdated etag type should not return 304`, () => {
         const etagKey = `skipSegments;${genRandom};YouTube;5000`;
-        client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
+        return client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
             assert.strictEqual(res.status, 404);
-            done();
-        }).catch(err => done(err));
+        });
     });
 });

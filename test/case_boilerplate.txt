@@ -1,0 +1,22 @@
+import { db } from "../../src/databases/databases";
+import assert from "assert";
+import { client } from "../utils/httpClient";
+import { genUsers, User } from "../utils/genUser";
+import { insertSegment, insertVip } from "../utils/queryGen";
+
+const endpoint = "/api/endpoint";
+
+const postTestEndpoint = () => client({
+    method: "POST",
+    url: endpoint,
+    data: {
+    }
+});
+
+const cases = [
+    "firstCase",
+    "secondCase",
+    "thirdCase"
+];
+const users = genUsers("endpoint", cases);
+const vipUser = genUser("endpoint", "vip");

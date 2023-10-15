@@ -1,68 +1,57 @@
 import assert from "assert";
 import { db } from "../../src/databases/databases";
-import { Feature, HashedUserID } from "../../src/types/user.model";
+import { Feature } from "../../src/types/user.model";
 import { hasFeature } from "../../src/utils/features";
-import { getHash } from "../../src/utils/getHash";
 import { client } from "../utils/httpClient";
+import { grantFeature, insertVip } from "../utils/queryGen";
+import { User, genUser, genUsers } from "../utils/genUser";
 
 const endpoint = "/api/feature";
 
-const postAddFeatures = (userID: string, adminUserID: string, feature: Feature, enabled: string) => client({
+const postAddFeatures = (userID: string, adminUserID: string, feature: Feature, enabled: boolean) => client({
     method: "POST",
     url: endpoint,
     data: {
         userID,
         feature,
-        enabled,
+        enabled: String(enabled),
         adminUserID
     }
 });
 
-const privateVipUserID = "VIPUser-addFeatures";
-const vipUserID = getHash(privateVipUserID);
+const cases = [
+    "grant",
+    "remove",
+    "update"
+];
+const users = genUsers("addFeatures", cases);
+const vipUser = genUser("addFeatures", "vip");
 
-const hashedUserID1 = "user1-addFeatures" as HashedUserID;
-const hashedUserID2 = "user2-addFeatures" as HashedUserID;
-const hashedUserID3 = "user3-addFeatures" as HashedUserID;
+const testedFeature = Feature.ChapterSubmitter;
+const validFeatures = [testedFeature];
 
-const validFeatures = [Feature.ChapterSubmitter];
+const updateValidateFeature = (user: User, feature: Feature, grant: boolean, issuer: User): Promise<void> =>
+    postAddFeatures(user.pubID, issuer.privID, feature, grant)
+        .then(res => assert.strictEqual(res.status, 200)) // ensure request was successful
+        .then(() => hasFeature(user.pubID, feature))
+        .then(result => assert.strictEqual(result, grant)); // ensure user has new feature
 
 describe("addFeatures", () => {
-    before(() => {
-        const userFeatureQuery = `INSERT INTO "userFeatures" ("userID", "feature", "issuerUserID", "timeSubmitted") VALUES(?, ?, ?, ?)`;
-
-        return Promise.all([
-            db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]),
-
-            db.prepare("run", userFeatureQuery, [hashedUserID2, Feature.ChapterSubmitter, "some-user", 0]),
-            db.prepare("run", userFeatureQuery, [hashedUserID3, Feature.ChapterSubmitter, "some-user", 0])
-        ]);
+    before(async () => {
+        await insertVip(db, vipUser.pubID);
+        await grantFeature(db, users["remove"].pubID, testedFeature, vipUser.pubID);
+        await grantFeature(db, users["update"].pubID, testedFeature, vipUser.pubID);
     });
 
-    it("can add features", async () => {
+    it("can add features", (done) => {
         for (const feature of validFeatures) {
-            const result = await postAddFeatures(hashedUserID1, privateVipUserID, feature, "true");
-            assert.strictEqual(result.status, 200);
-
-            assert.strictEqual(await hasFeature(hashedUserID1, feature), true);
+            updateValidateFeature(users["grant"], feature, true, vipUser)
+                .catch(err => done(err));
         }
+        done();
     });
 
-    it("can remove features", async () => {
-        const feature = Feature.ChapterSubmitter;
+    it("can remove features", () => updateValidateFeature(users["remove"], testedFeature, false, vipUser));
 
-        const result = await postAddFeatures(hashedUserID2, privateVipUserID, feature, "false");
-        assert.strictEqual(result.status, 200);
-
-        assert.strictEqual(await hasFeature(hashedUserID2, feature), false);
-    });
-
-    it("can update features", async () => {
-        const feature = Feature.ChapterSubmitter;
-
-        const result = await postAddFeatures(hashedUserID3, privateVipUserID, feature, "true");
-        assert.strictEqual(result.status, 200);
-
-        assert.strictEqual(await hasFeature(hashedUserID3, feature), true);
-    });
+    it("can update features", () => updateValidateFeature(users["update"], testedFeature, true, vipUser));
 });

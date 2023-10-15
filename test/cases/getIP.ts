@@ -50,9 +50,8 @@ describe("getIP stubs", () => {
     before(() => stub = sinon.stub(config, "mode").value(mode));
     after(() => stub.restore());
 
-    it("Should return production mode if stub worked", (done) => {
+    it("Should return production mode if stub worked", () => {
         assert.strictEqual(config.mode, mode);
-        done();
     });
 });
 
@@ -64,22 +63,20 @@ describe("getIP array tests", () => {
     });
 
     for (const [key, value] of Object.entries(expectedIP4)) {
-        it(`Should return correct IPv4 from ${key}`, (done) => {
+        it(`Should return correct IPv4 from ${key}`, () => {
             stub2 = sinon.stub(config, "behindProxy").value(key);
             const ip = getIP(v4MockRequest);
             assert.strictEqual(config.behindProxy, key);
             assert.strictEqual(ip, value);
-            done();
         });
     }
 
     for (const [key, value] of Object.entries(expectedIP6)) {
-        it(`Should return correct IPv6 from ${key}`, (done) => {
+        it(`Should return correct IPv6 from ${key}`, () => {
             stub2 = sinon.stub(config, "behindProxy").value(key);
             const ip = getIP(v6MockRequest);
             assert.strictEqual(config.behindProxy, key);
             assert.strictEqual(ip, value);
-            done();
         });
     }
 });
@@ -91,19 +88,17 @@ describe("getIP true tests", () => {
         stub2.restore();
     });
 
-    it(`Should return correct IPv4 from with bool true`, (done) => {
+    it(`Should return correct IPv4 from with bool true`, () => {
         stub2 = sinon.stub(config, "behindProxy").value(true);
         const ip = getIP(v4MockRequest);
         assert.strictEqual(config.behindProxy, "X-Forwarded-For");
         assert.strictEqual(ip, expectedIP4["X-Forwarded-For"]);
-        done();
     });
 
-    it(`Should return correct IPv4 from with string true`, (done) => {
+    it(`Should return correct IPv4 from with string true`, () => {
         stub2 = sinon.stub(config, "behindProxy").value("true");
         const ip = getIP(v4MockRequest);
         assert.strictEqual(config.behindProxy, "X-Forwarded-For");
         assert.strictEqual(ip, expectedIP4["X-Forwarded-For"]);
-        done();
     });
 });

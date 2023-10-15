@@ -9,17 +9,20 @@ const randKey2 = genRandom(16);
 const randKey3 = genRandom();
 const randValue3 = genRandom();
 
+const redisGetCheck = (key: string, expected: string | null, done: Mocha.Done): Promise<void> =>
+    redis.get(key)
+        .then(res => {
+            assert.strictEqual(res, expected);
+            done();
+        }).catch(err => done(err));
+
 describe("redis test", function() {
     before(async function() {
         if (!config.redis?.enabled) this.skip();
         await redis.set(randKey1, randValue1);
     });
     it("Should get stored value", (done) => {
-        redis.get(randKey1)
-            .then(res => {
-                assert.strictEqual(res, randValue1);
-                done();
-            }).catch(err => done(err));
+        redisGetCheck(randKey1, randValue1, done);
     });
     it("Should not be able to get not stored value", (done) => {
         redis.get(randKey2)
@@ -30,23 +33,13 @@ describe("redis test", function() {
     });
     it("Should be able to delete stored value", (done) => {
         redis.del(randKey1)
-            .then(() => {
-                redis.get(randKey1)
-                    .then(res => {
-                        assert.strictEqual(res, null);
-                        done();
-                    }).catch(err => done(err));
-            }).catch(err => done(err));
+            .catch(err => done(err))
+            .then(() => redisGetCheck(randKey1, null, done));
     });
     it("Should be able to set expiring value", (done) => {
         redis.setEx(randKey3, 8400, randValue3)
-            .then(() => {
-                redis.get(randKey3)
-                    .then(res => {
-                        assert.strictEqual(res, randValue3);
-                        done();
-                    }).catch(err => done(err));
-            }).catch(err => done(err));
+            .catch(err => done(err))
+            .then(() => redisGetCheck(randKey3, randValue3, done));
     });
     it("Should continue when undefined value is fetched", (done) => {
         const undefkey = `undefined.${genRandom()}`;
