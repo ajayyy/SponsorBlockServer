@@ -2,29 +2,30 @@ import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
-import { ActionType } from "../../src/types/segments.model";
+import { ActionType, VideoIDHash } from "../../src/types/segments.model";
+import { genUser } from "../utils/genUser";
+import { insertLock, insertVipUser } from "../utils/queryGen";
 
-const fakeHash = "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35";
+const fakeHash = "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35" as VideoIDHash;
 const endpoint = "/api/lockCategories";
 const getLockCategories = (hash: string, actionType = [ActionType.Mute, ActionType.Skip]) => client.get(`${endpoint}/${hash}`, { params: { actionType } });
+const getLockCategoriesHashed = (videoID: string, hashLength = 6, actionType = [ActionType.Mute, ActionType.Skip]) => getLockCategories(getHash(videoID, 1).substring(0, hashLength), actionType);
+
+const vip = genUser("getLockCategoriesHash", "VIP");
 
 describe("getLockCategoriesByHash", () => {
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesHashVIP")]);
-
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "hashedVideoID") VALUES (?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "sponsor", "1-reason-short", getHash("getLockHash1", 1)]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "interaction", "1-reason-longer", getHash("getLockHash1", 1)]);
-
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash2", "skip", "preview", "2-reason", getHash("getLockHash2", 1)]);
-
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash3", "skip", "nonmusic", "3-reason", getHash("getLockHash3", 1)]);
-
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-1", "mute", "outro", "fake1-reason", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "intro", "fake2-longer-reason", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "preview", "fake2-short", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "full", "sponsor", "fake2-notshown", fakeHash]);
+        await insertVipUser(db, vip);
+        // add locks with real hash
+        await insertLock(db, { userID: vip.pubID, videoID: "getLockHash1", category: "sponsor", reason: "1-reason-short" });
+        await insertLock(db, { userID: vip.pubID, videoID: "getLockHash1", category: "interaction", reason: "1-reason-longer" });
+        await insertLock(db, { userID: vip.pubID, videoID: "getLockHash2", category: "preview", reason: "2-reason" });
+        await insertLock(db, { userID: vip.pubID, videoID: "getLockHash3", category: "nonmusic", reason: "3-reason" });
+        // add locks with fake hash
+        await insertLock(db, { userID: vip.pubID, videoID: "fakehash-1", actionType: "mute", category: "outro", reason: "fake1-reason", hashedVideoID: fakeHash });
+        await insertLock(db, { userID: vip.pubID, videoID: "fakehash-2", actionType: "mute", category: "intro", reason: "fake2-longer-reason", hashedVideoID: fakeHash });
+        await insertLock(db, { userID: vip.pubID, videoID: "fakehash-2", actionType: "mute", category: "preview", reason: "fake2-short", hashedVideoID: fakeHash });
+        await insertLock(db, { userID: vip.pubID, videoID: "fakehash-2", actionType: "full", category: "sponsor", reason: "fake2-notshown", hashedVideoID: fakeHash });
     });
 
     it("Database should be greater or equal to version 29", async () => {
@@ -34,10 +35,10 @@ describe("getLockCategoriesByHash", () => {
             `Version isn't greater than 29. Version is ${version}`);
     });
 
-    it("Should be able to get multiple locks in one object", (done) => {
+    it("Should be able to get multiple locks in one object", () => {
         const videoID = "getLockHash1";
         const hash = getHash(videoID, 1);
-        getLockCategories(hash.substring(0,4))
+        return getLockCategoriesHashed(videoID, 4)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -50,15 +51,13 @@ describe("getLockCategoriesByHash", () => {
                     reason: "1-reason-longer"
                 }];
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get single lock", (done) => {
+    it("Should be able to get single lock", () => {
         const videoID = "getLockHash2";
         const hash = getHash(videoID, 1);
-        getLockCategories(hash.substring(0,6))
+        return getLockCategoriesHashed(videoID)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -70,15 +69,13 @@ describe("getLockCategoriesByHash", () => {
                     reason: "2-reason"
                 }];
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get by half full hash", (done) => {
+    it("Should be able to get by half full hash", () => {
         const videoID = "getLockHash3";
         const hash = getHash(videoID, 1);
-        getLockCategories(hash.substring(0,32))
+        return getLockCategoriesHashed(videoID, 32)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -90,104 +87,70 @@ describe("getLockCategoriesByHash", () => {
                     reason: "3-reason"
                 }];
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get multiple by similar hash with multiple categories", (done) => {
-        getLockCategories(fakeHash.substring(0,5))
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const expected = [{
-                    videoID: "fakehash-1",
-                    hash: fakeHash,
-                    categories: [
-                        "outro"
-                    ],
-                    reason: "fake1-reason"
-                }, {
-                    videoID: "fakehash-2",
-                    hash: fakeHash,
-                    categories: [
-                        "intro",
-                        "preview"
-                    ],
-                    reason: "fake2-longer-reason"
-                }];
-                assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get multiple by similar hash with multiple categories", async () => {
+        const res = await getLockCategories(fakeHash.substring(0,5));
+        assert.strictEqual(res.status, 200);
+        const expected = [{
+            videoID: "fakehash-1",
+            hash: fakeHash,
+            categories: [
+                "outro"
+            ],
+            reason: "fake1-reason",
+        }, {
+            videoID: "fakehash-2",
+            hash: fakeHash,
+            categories: [
+                "intro",
+                "preview"
+            ],
+            reason: "fake2-longer-reason",
+        }];
+        assert.deepStrictEqual(res.data, expected);
     });
 
-    it("should return 404 once hash prefix varies", (done) => {
+    it("should return 404 once hash prefix varies", () =>
         getLockCategories("b05aa")
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 404))
+    );
 
-    it("should return 404 if no lock exists", (done) => {
+    it("should return 404 if no lock exists", () =>
         getLockCategories("aaaaaa")
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 404))
+    );
 
-    it("should return 400 if full hash sent", (done) => {
+    it("should return 400 if full hash sent", () =>
         getLockCategories(fakeHash)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 400))
+    );
 
-    it("should return 400 if hash too short", (done) => {
+    it("should return 400 if hash too short", () =>
         getLockCategories("00")
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 400))
+    );
 
-    it("should return 400 if no hash specified", (done) => {
+    it("should return 400 if no hash specified", () =>
         getLockCategories("")
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 400))
+    );
 
-    it("should return 400 if invalid actionTypes", (done) => {
+    it("should return 400 if invalid actionTypes", () =>
         client.get(`${endpoint}/aaaa`, { params: { actionTypes: 3 } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 400))
+    );
 
-    it("should return 400 if invalid actionTypes JSON", (done) => {
+    it("should return 400 if invalid actionTypes JSON", () =>
         client.get(`${endpoint}/aaaa`, { params: { actionTypes: "{3}" } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
+            .then(res => assert.strictEqual(res.status, 400))
+    );
 
-    it("Should be able to get single lock", (done) => {
+    it("Should be able to get single lock", () => {
         const videoID = "getLockHash2";
         const hash = getHash(videoID, 1);
-        getLockCategories(hash.substring(0,6))
+        return getLockCategoriesHashed(videoID)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -199,15 +162,13 @@ describe("getLockCategoriesByHash", () => {
                     reason: "2-reason"
                 }];
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get by actionType not in array", (done) => {
+    it("Should be able to get by actionType not in array", () => {
         const videoID = "getLockHash2";
         const hash = getHash(videoID, 1);
-        client.get(`${endpoint}/${hash.substring(0,6)}`, { params: { actionType: ActionType.Skip } })
+        return client.get(`${endpoint}/${hash.substring(0,6)}`, { params: { actionType: ActionType.Skip } })
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -219,15 +180,13 @@ describe("getLockCategoriesByHash", () => {
                     reason: "2-reason"
                 }];
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 
-    it("Should be able to get by no actionType", (done) => {
+    it("Should be able to get by no actionType", () => {
         const videoID = "getLockHash2";
         const hash = getHash(videoID, 1);
-        client.get(`${endpoint}/${hash.substring(0,6)}`)
+        return client.get(`${endpoint}/${hash.substring(0,6)}`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const expected = [{
@@ -239,8 +198,6 @@ describe("getLockCategoriesByHash", () => {
                     reason: "2-reason"
                 }];
                 assert.deepStrictEqual(res.data, expected);
-                done();
-            })
-            .catch(err => done(err));
+            });
     });
 });
