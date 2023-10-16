@@ -63,27 +63,24 @@ describe("generateToken test", function() {
         }).catch(err => done(err));
     });
 
-    it("Should be able to create new local token", function (done) {
+    it("Should be able to create new local token", () =>
         createAndSaveToken(TokenType.local).then((licenseKey) => {
             assert.ok(validateLicenseKeyRegex(licenseKey[0]));
             localLicense = licenseKey[0];
-            done();
-        }).catch(err => done(err));
-    });
+        })
+    );
 
-    it("Should return 400 if missing code parameter", function (done) {
+    it("Should return 400 if missing code parameter", () =>
         getGenerateToken("patreon", null, "").then(res => {
             assert.strictEqual(res.status, 400);
-            done();
-        }).catch(err => done(err));
-    });
+        })
+    );
 
-    it("Should return 403 if missing adminuserID parameter", function (done) {
+    it("Should return 403 if missing adminuserID parameter", () =>
         getGenerateToken("local", "fake-code", null).then(res => {
             assert.strictEqual(res.status, 403);
-            done();
-        }).catch(err => done(err));
-    });
+        })
+    );
 
     it("Should return 403 for invalid adminuserID parameter", function (done) {
         getGenerateToken("local", "fake-code", "fakeAdminID").then(res => {
@@ -94,20 +91,18 @@ describe("generateToken test", function() {
 });
 
 describe("verifyToken static tests", function() {
-    it("Should fast reject invalid token", function (done) {
+    it("Should fast reject invalid token", () =>
         getVerifyToken("00000").then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(!res.data.allowed);
-            done();
-        }).catch(err => done(err));
-    });
+        })
+    );
 
-    it("Should return 400 if missing code token", function (done) {
-        getVerifyToken(null).then(res => {
-            assert.strictEqual(res.status, 400);
-            done();
-        }).catch(err => done(err));
-    });
+    it("Should return 400 if missing code token", () =>
+        getVerifyToken(null).then(res =>
+            assert.strictEqual(res.status, 400)
+        )
+    );
 });
 
 describe("verifyToken mock tests", function() {
@@ -121,69 +116,62 @@ describe("verifyToken mock tests", function() {
         mock.restore();
     });
 
-    it("Should accept current patron", function (done) {
+    it("Should accept current patron", function () {
         if (!config?.patreon) this.skip();
         mock.onGet(/identity/).reply(200, patreon.activeIdentity);
-        getVerifyToken(patreonLicense).then(res => {
+        return getVerifyToken(patreonLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(res.data.allowed);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should reject nonexistent patron", function (done) {
+    it("Should reject nonexistent patron", function () {
         if (!config?.patreon) this.skip();
         mock.onGet(/identity/).reply(200, patreon.invalidIdentity);
-        getVerifyToken(patreonLicense).then(res => {
+        return getVerifyToken(patreonLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(!res.data.allowed);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should accept qualitying former patron", function (done) {
+    it("Should accept qualitying former patron", function () {
         if (!config?.patreon) this.skip();
         mock.onGet(/identity/).reply(200, patreon.formerIdentitySucceed);
-        getVerifyToken(patreonLicense).then(res => {
+        return getVerifyToken(patreonLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(res.data.allowed);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should reject unqualitifed former patron", function (done) {
+    it("Should reject unqualitifed former patron", function () {
         if (!config?.patreon) this.skip();
         mock.onGet(/identity/).reply(200, patreon.formerIdentityFail);
-        getVerifyToken(patreonLicense).then(res => {
+        return getVerifyToken(patreonLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(!res.data.allowed);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should accept real gumroad key", function (done) {
+    it("Should accept real gumroad key", () => {
         mock.onPost("https://api.gumroad.com/v2/licenses/verify").reply(200, gumroad.licenseSuccess);
-        getVerifyToken(gumroadLicense).then(res => {
+        return getVerifyToken(gumroadLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(res.data.allowed);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should reject fake gumroad key", function (done) {
+    it("Should reject fake gumroad key", () => {
         mock.onPost("https://api.gumroad.com/v2/licenses/verify").reply(200, gumroad.licenseFail);
-        getVerifyToken(gumroadLicense).then(res => {
+        return getVerifyToken(gumroadLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(!res.data.allowed);
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should validate local license", function (done) {
+    it("Should validate local license", () =>
         getVerifyToken(localLicense).then(res => {
             assert.strictEqual(res.status, 200);
             assert.ok(res.data.allowed);
-            done();
-        }).catch(err => done(err));
-    });
+        })
+    );
 });
