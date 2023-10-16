@@ -1,8 +1,9 @@
 import { db, privateDB } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
-import { UsernameUser, genAnonUser, genUsersUsername } from "../utils/genUser";
+import { UsernameUser, genAnonUser, genUser, genUsersUsername } from "../utils/genUser";
 import { genRandomValue } from "../utils/getRandom";
+import { insertBan } from "../utils/queryGen";
 
 const adminPrivateUserID = "testUserId"; // hardcoded
 
@@ -11,6 +12,7 @@ const userMap = new Map();
 for (let i = 0; i < 9; i++) {
     userMap.set(`user_0${i}`, `username_0${i}`);
 }
+const bannedUser = genUser("setUsername", "bannedUser");
 
 const users = genUsersUsername("setUsername", userMap);
 
@@ -84,6 +86,8 @@ describe("setUsername", () => {
         // add locked users
         await addUsername(users["user_04"], 1);
         await addUsername(users["user_07"], 1);
+        // ban user
+        await insertBan(db, bannedUser.pubID);
     });
 
     it("Should be able to set username that has never been set", (done) => {
@@ -245,6 +249,18 @@ describe("setUsername", () => {
             .then(() => {
                 getUsernameInfo(user.pubID)
                     .then(usernameinfo => done(`Username should be deleted - ${JSON.stringify(usernameinfo)})`))
+                    .catch(() => done());
+            })
+            .catch((err) => done(err));
+    });
+
+    it("Should not apply username change if user is banned", (done) => {
+        const user = bannedUser;
+        const newUsername = genRandomValue("username", "setUsernameBanned");
+        postSetUserName(user.privID, newUsername)
+            .then(() => {
+                getUsernameInfo(user.pubID)
+                    .then(usernameinfo => done(`Username should not exist - ${JSON.stringify(usernameinfo)}`))
                     .catch(() => done());
             })
             .catch((err) => done(err));
