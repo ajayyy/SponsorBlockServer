@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../databases/databases";
 import { DBSegment, SegmentUUID } from "../types/segments.model";
 
-const isValidSegmentUUID = (str: string): boolean => /^([a-f0-9]{64}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/.test(str);
+const isValidSegmentUUID = (str: string): boolean => /^([a-f0-9]{64,65}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/.test(str);
 
 async function getSegmentFromDBByUUID(UUID: SegmentUUID): Promise<DBSegment> {
     try {
@@ -31,23 +31,29 @@ async function handleGetSegmentInfo(req: Request, res: Response): Promise<DBSegm
                 ? req.query.UUID
                 : [req.query.UUID]
             : null;
-    // deduplicate with set
-    UUIDs = [ ...new Set(UUIDs)];
-    // if more than 10 entries, slice
+    // verify format
     if (!Array.isArray(UUIDs) || !UUIDs?.length) {
         res.status(400).send("UUIDs parameter does not match format requirements.");
         return;
     }
+    // verify that first entry of UUIDs array conforms to regex
+    if (!isValidSegmentUUID(UUIDs?.[0])) {
+        res.status(400).send("UUIDs parameter does not match format requirements.");
+        return;
+    }
+    // deduplicate with set
+    UUIDs = [ ...new Set(UUIDs)];
+    // if more than 10 entries, slice
     if (UUIDs.length > 10) UUIDs = UUIDs.slice(0, 10);
     const DBSegments = await getSegmentsByUUID(UUIDs);
     // all uuids failed lookup
     if (!DBSegments?.length) {
-        res.sendStatus(400);
+        res.sendStatus(404);
         return;
     }
     // uuids valid but not found
     if (DBSegments[0] === null || DBSegments[0] === undefined) {
-        res.sendStatus(400);
+        res.sendStatus(404);
         return;
     }
     return DBSegments;

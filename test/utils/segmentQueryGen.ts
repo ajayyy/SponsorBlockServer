@@ -25,8 +25,8 @@ interface insertSegmentParams extends baseParams {
     videoDuration?: number,
     hidden?: boolean | number,
     shadowHidden?: boolean | number,
-    userAgent?: string,
     hashedVideoID?: VideoIDHash,
+    userAgent?: string,
     description?: string
 }
 const defaultSegmentParams: insertSegmentParams = {
@@ -45,8 +45,8 @@ const defaultSegmentParams: insertSegmentParams = {
     videoDuration: 0,
     hidden: false,
     shadowHidden: false,
-    userAgent: "",
     hashedVideoID: "" as VideoIDHash,
+    userAgent: "",
     description: ""
 };
 
@@ -69,6 +69,7 @@ export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams
     params.shadowHidden = Number(params.shadowHidden);
     // generate hashedVideoID if not provided
     params.hashedVideoID = overrides?.hashedVideoID ?? getHash(params.videoID, 1) as VideoIDHash;
+    // debug
     await db.prepare("run", query, Object.values(params));
 };
 export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {
