@@ -104,15 +104,13 @@ describe("getStatus", () => {
             });
     });
 
-    it("Should return commit unkown if not present", (done) => {
+    it("Should return commit unkown if not present", () => {
         sinon.stub((global as any), "HEADCOMMIT").value(undefined);
         client.get(`${endpoint}/commit`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 assert.strictEqual(res.data, "test"); // commit should be test
-                done();
-            })
-            .catch(err => done(err));
+            });
         sinon.restore();
     });
 });

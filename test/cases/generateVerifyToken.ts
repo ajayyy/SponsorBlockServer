@@ -43,24 +43,22 @@ describe("generateToken test", function() {
         mock.restore();
     });
 
-    it("Should be able to create patreon token for active patron", function (done) {
+    it("Should be able to create patreon token for active patron", function () {
         mock.onGet(/identity/).reply(200, patreon.activeIdentity);
         if (!config?.patreon) this.skip();
-        getGenerateToken("patreon", "patreon_code", "").then(res => {
+        return getGenerateToken("patreon", "patreon_code", "").then(res => {
             patreonLicense = extractLicenseKey(res.data);
             assert.ok(validateLicenseKeyRegex(patreonLicense));
-            done();
-        }).catch(err => done(err));
+        });
     });
 
-    it("Should create patreon token for invalid patron", function (done) {
+    it("Should create patreon token for invalid patron", function () {
         mock.onGet(/identity/).reply(200, patreon.formerIdentityFail);
         if (!config?.patreon) this.skip();
-        getGenerateToken("patreon", "patreon_code", "").then(res => {
+        return getGenerateToken("patreon", "patreon_code", "").then(res => {
             patreonLicense = extractLicenseKey(res.data);
             assert.ok(validateLicenseKeyRegex(patreonLicense));
-            done();
-        }).catch(err => done(err));
+        });
     });
 
     it("Should be able to create new local token", () =>
@@ -82,11 +80,9 @@ describe("generateToken test", function() {
         })
     );
 
-    it("Should return 403 for invalid adminuserID parameter", function (done) {
-        getGenerateToken("local", "fake-code", "fakeAdminID").then(res => {
-            assert.strictEqual(res.status, 403);
-            done();
-        }).catch(err => done(err));
+    it("Should return 403 for invalid adminuserID parameter", () => {
+        getGenerateToken("local", "fake-code", "fakeAdminID")
+            .then(res => assert.strictEqual(res.status, 403));
     });
 });
 
