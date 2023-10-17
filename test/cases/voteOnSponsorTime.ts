@@ -207,6 +207,55 @@ describe("voteOnSponsorTime - user with submissions", () => {
     });
 });
 
+describe("voteOnSponsorTime - category votes", () => {
+    // before
+    let voteForChange: (targetCategory: string, expectedCategory: string, count: number) => Promise<void>;
+    beforeEach (async () => {
+        const randomUUID = genRandomValue("uuid", "vote-category");
+        // create segment
+        await insertSegment(db, { UUID: randomUUID, category: "sponsor" });
+        voteForChange = async (targetCategory: string, expectedCategory: string, count: number) => {
+            // insert user for eligibility
+            const user = genUser("vote", "category-vote");
+            await insertSegment(db, { userID: user.pubID });
+            // vote
+            await assertCategory(user, randomUUID, targetCategory, expectedCategory);
+            await assertCategoryVotes(randomUUID, targetCategory, count);
+        };
+    });
+    // tests
+    it("Three votes should change the category", async () => {
+        await voteForChange("outro", "sponsor", 1);
+        await voteForChange("outro", "sponsor", 2);
+        await voteForChange("outro", "outro", 3); // commit to change
+    });
+    it("2x2 votes should not change the category", async () => {
+        await voteForChange("outro", "sponsor", 1);
+        await voteForChange("outro", "sponsor", 2);
+        await voteForChange("intro", "sponsor", 1);
+        await voteForChange("intro", "sponsor", 2);
+    });
+    it("Three eventual votes should change the category", async () => {
+        await voteForChange("outro", "sponsor", 1);
+        await voteForChange("outro", "sponsor", 2);
+        await voteForChange("intro", "sponsor", 1);
+        await voteForChange("intro", "sponsor", 2);
+        await voteForChange("outro", "outro", 3); // commit to change
+    });
+    it("More votes should flip the category", async () => {
+        await voteForChange("outro", "sponsor", 1);
+        await voteForChange("outro", "sponsor", 2);
+        await voteForChange("outro", "outro", 3); // commit to change
+        await voteForChange("outro", "outro", 4); // assert
+        await voteForChange("intro", "outro", 1);
+        await voteForChange("intro", "outro", 2);
+        await voteForChange("intro", "outro", 3);
+        await voteForChange("intro", "outro", 4); // match
+        await voteForChange("intro", "outro", 5);
+        await voteForChange("intro", "intro", 6); // overcome by 2
+    });
+});
+
 describe("voteOnSponsorTime - changing votes", () => {
     const user = genUser("vote", "changing-user");
     let randomUUID: string;
