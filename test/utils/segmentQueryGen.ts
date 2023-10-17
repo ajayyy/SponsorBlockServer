@@ -64,6 +64,8 @@ export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams
     params.locked = Number(params.locked);
     params.hidden = Number(params.hidden);
     params.shadowHidden = Number(params.shadowHidden);
+    // generate hashedVideoID if not provided
+    params.hashedVideoID = overrides?.hashedVideoID ?? getHash(params.videoID, 1) as VideoIDHash;
     await db.prepare("run", query, Object.values(params));
 };
 export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {

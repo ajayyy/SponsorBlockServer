@@ -67,7 +67,7 @@ export const insertLock = async(db: IDatabase, overrides: lockParams = {}) => {
         actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube
     };
     const params = { ...defaults, ...overrides };
-    params.hashedVideoID = getHash(params.videoID, 1);
+    params.hashedVideoID = overrides?.hashedVideoID ?? getHash(params.videoID, 1) as VideoIDHash;
     await db.prepare("run", query, Object.values(params));
 };
 
