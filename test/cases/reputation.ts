@@ -1,24 +1,10 @@
 import assert from "assert";
 import { db } from "../../src/databases/databases";
 import { getReputation, calculateReputationFromMetrics } from "../../src/utils/reputation";
-import { genUsers } from "../utils/genUser";
+import { genUsersProxy } from "../utils/genUser";
 
 describe("reputation", () => {
-    // user definitions
-    const cases = [
-        "locking-vip",
-        "low-submissions",
-        "high-downvotes",
-        "low-non-self-downvotes",
-        "high-non-self-downvotes",
-        "new-submissions",
-        "low-sum",
-        "high-rep-before-manual-vote",
-        "high-rep",
-        "high-rep-locked",
-        "have-most-upvoted-in-locked-video"
-    ];
-    const users = genUsers("reputation", cases);
+    const users = genUsersProxy("reputation");
 
     before(async function() {
         this.timeout(5000); // this preparation takes longer then usual

@@ -2,15 +2,12 @@ import { HashedUserID } from "../../src/types/user.model";
 import { client } from "../utils/httpClient";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { genAnonUser, genUsers } from "../utils/genUser";
+import { genAnonUser, genUsersProxy } from "../utils/genUser";
 
 // helpers
 const checkUserVIP = (publicID: string) => db.prepare("get", `SELECT "userID" FROM "vipUsers" WHERE "userID" = ?`, [publicID]);
 
-const cases = [
-    "vip-1",
-];
-const users = genUsers("endpoint", cases);
+const users = genUsersProxy("addUserAsVIP");
 
 // hardcoded into test code
 const adminPrivateUserID = "testUserId";

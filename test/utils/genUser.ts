@@ -28,12 +28,23 @@ export const genAnonUser = (info: info = {}): User => {
     return { privID, pubID, info };
 };
 
-export const genUsers = (fnname: string, testcase: string[]): userArray => {
+const genUsers = (fnname: string, testcase: string[]): userArray => {
     const users: userArray = {};
     for (const tc of testcase)
         users[tc] = genUser(fnname, tc);
     return users;
 };
+
+export const genUsersProxy = (fnname: string) =>
+    new Proxy({}, {
+        get(target: Record<string, User>, prop, receiver) {
+            if (Reflect.has(target, prop)) return Reflect.get(target, prop, receiver);
+            const identifier = typeof prop === "string" ? prop : "";
+            const result = genUser(fnname, identifier);
+            Reflect.set(target, prop, result, receiver);
+            return result;
+        },
+    });
 
 export const genUsersUsername = (fnname: string, case_usernames: Map<string, string>): usernameUserArray => {
     const cases = Array.from(case_usernames.keys());

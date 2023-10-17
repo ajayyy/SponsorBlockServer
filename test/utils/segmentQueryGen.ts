@@ -54,7 +54,7 @@ const generateDefaults = (identifier: string) => ({
     videoID: `vid-${identifier}`,
     hashedVideoID: getHash(`vid-${identifier}`),
     userID: `user-${identifier}`,
-    UUID: genRandomValue("uuid", identifier, 2),
+    UUID: genRandomValue("uuid", identifier),
 });
 
 export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
