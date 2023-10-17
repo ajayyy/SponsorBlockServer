@@ -46,14 +46,9 @@ async function handleGetSegmentInfo(req: Request, res: Response): Promise<DBSegm
     // if more than 10 entries, slice
     if (UUIDs.length > 10) UUIDs = UUIDs.slice(0, 10);
     const DBSegments = await getSegmentsByUUID(UUIDs);
-    // all uuids failed lookup
-    if (!DBSegments?.length) {
-        res.sendStatus(404);
-        return;
-    }
     // uuids valid but not found
-    if (DBSegments[0] === null || DBSegments[0] === undefined) {
-        res.sendStatus(404);
+    if (!DBSegments?.length || DBSegments[0] === null || DBSegments[0] === undefined) {
+        res.status(404).send("UUIDs not found in database.");
         return;
     }
     return DBSegments;
