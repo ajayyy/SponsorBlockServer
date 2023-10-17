@@ -209,11 +209,12 @@ describe("voteOnSponsorTime - user with submissions", () => {
 
 describe("voteOnSponsorTime - category votes", () => {
     // before
+    const originalCategory = "sponsor";
     let voteForChange: (targetCategory: string, expectedCategory: string, count: number) => Promise<void>;
     beforeEach (async () => {
         const randomUUID = genRandomValue("uuid", "vote-category");
         // create segment
-        await insertSegment(db, { UUID: randomUUID, category: "sponsor" });
+        await insertSegment(db, { UUID: randomUUID, category: "sponsor", votes: 1 });
         voteForChange = async (targetCategory: string, expectedCategory: string, count: number) => {
             // insert user for eligibility
             const user = genUser("vote", "category-vote");
@@ -225,34 +226,37 @@ describe("voteOnSponsorTime - category votes", () => {
     });
     // tests
     it("Three votes should change the category", async () => {
-        await voteForChange("outro", "sponsor", 1);
-        await voteForChange("outro", "sponsor", 2);
-        await voteForChange("outro", "outro", 3); // commit to change
+        const targetCategory = "outro";
+        await voteForChange(targetCategory, originalCategory, 1);
+        await voteForChange(targetCategory, originalCategory, 2);
+        await voteForChange(targetCategory, targetCategory, 3); // commit to change
     });
     it("2x2 votes should not change the category", async () => {
-        await voteForChange("outro", "sponsor", 1);
-        await voteForChange("outro", "sponsor", 2);
-        await voteForChange("intro", "sponsor", 1);
-        await voteForChange("intro", "sponsor", 2);
+        await voteForChange("outro", originalCategory, 1);
+        await voteForChange("outro", originalCategory, 2);
+        await voteForChange("intro", originalCategory, 1);
+        await voteForChange("intro", originalCategory, 2);
     });
     it("Three eventual votes should change the category", async () => {
-        await voteForChange("outro", "sponsor", 1);
-        await voteForChange("outro", "sponsor", 2);
-        await voteForChange("intro", "sponsor", 1);
-        await voteForChange("intro", "sponsor", 2);
+        await voteForChange("outro", originalCategory, 1);
+        await voteForChange("outro", originalCategory, 2);
+        await voteForChange("intro", originalCategory, 1);
+        await voteForChange("intro", originalCategory, 2);
         await voteForChange("outro", "outro", 3); // commit to change
     });
     it("More votes should flip the category", async () => {
-        await voteForChange("outro", "sponsor", 1);
-        await voteForChange("outro", "sponsor", 2);
-        await voteForChange("outro", "outro", 3); // commit to change
-        await voteForChange("outro", "outro", 4); // assert
-        await voteForChange("intro", "outro", 1);
-        await voteForChange("intro", "outro", 2);
-        await voteForChange("intro", "outro", 3);
-        await voteForChange("intro", "outro", 4); // match
-        await voteForChange("intro", "outro", 5);
-        await voteForChange("intro", "intro", 6); // overcome by 2
+        const firstTarget = "outro";
+        const secondTarget = "intro";
+        await voteForChange(firstTarget, originalCategory, 1);
+        await voteForChange(firstTarget, originalCategory, 2);
+        await voteForChange(firstTarget, firstTarget, 3); // commit to change
+        await voteForChange(firstTarget, firstTarget, 4); // assert
+        await voteForChange(secondTarget,firstTarget, 1);
+        await voteForChange(secondTarget, firstTarget, 2);
+        await voteForChange(secondTarget, firstTarget, 3);
+        await voteForChange(secondTarget, firstTarget, 4); // match
+        await voteForChange(secondTarget, firstTarget, 5);
+        await voteForChange(secondTarget, secondTarget, 6); // overcome by 2
     });
 });
 
