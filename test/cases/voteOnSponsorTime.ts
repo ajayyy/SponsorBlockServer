@@ -205,10 +205,130 @@ describe("voteOnSponsorTime - user with submissions", () => {
         await assertCategory(user, uuid, "outro", "sponsor"); // vote for change
         return assertCategoryVotes(uuid, "outro", 1);
     });
+});
+
+describe("voteOnSponsorTime - changing votes", () => {
+    const user = genUser("vote", "changing-user");
+    let randomUUID: string;
+    const uuids = multiGenProxy("uuid", "vote-changing");
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID }); // user has submission
+        await insertChapter(db, "", { userID: user.pubID }); // user has chapter submission
+        await insertChapter(db, "chaptername", { UUID: uuids["chapter-undo"] });
+    });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: randomUUID });
+    });
+    // tests
     // undovote
-    it("Should be able to undo-vote a segment", async () => {
+    it("Should be able to undo-vote upvote", async () => {
         await assertVotes(user, randomUUID, 1, 1); // upvote
         return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote downvote", async () => {
+        await assertVotes(user, randomUUID, 0, -1); // downvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote killing vote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        return assertVotes(user, uuid, 20, -1); // undo-vote
+    });
+    it("Should be able to override undo vote with upvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 1, 0); // upvote
+    });
+    it("Should be able to override undo vote with downvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 0, -2); // downvote
+    });
+    it("Should be able to continuously undo vote (SLOW)", async () => {
+        const times = Math.ceil(Math.random() * 10);
+        const finalVote = (times%2 == 0) ? 0 : 1;
+        for (let i = 0; i < times; i++) {
+            if (i%2 == 0) {
+                await assertVotes(user, randomUUID, 1, 1); // upvote
+            } else {
+                await assertVotes(user, randomUUID, 20, 0); // undo-vote
+            }
+        }
+        const votes = await getSegmentVotes(randomUUID);
+        assert.strictEqual(Number(votes.votes), finalVote);
+    });
+    it("Should be able to undo malicious vote", async () => {
+        await assertVotes(user, uuids["chapter-undo"], 30, -2); // malicious downvote
+        return assertVotes(user, uuids["chapter-undo"], 20, 0); // undo-vote
+    });
+});
+
+describe("voteOnSponsorTime - changing votes: VIP", () => {
+    const user = genUser("vote", "changing-vip");
+    let randomUUID: string;
+    const uuids = multiGenProxy("uuid", "vote-changing-vip");
+    // before
+    before (async () => {
+        await insertVipUser(db, user);
+        await insertChapter(db, "chaptername", { UUID: uuids["chapter-undo"] });
+    });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: randomUUID });
+    });
+    // tests
+    // undovote
+    it("Should be able to undo-vote upvote", async () => {
+        await assertVotes(user, randomUUID, 1, 1); // upvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote downvote", async () => {
+        await assertVotes(user, randomUUID, 0, -2); // downvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote killing vote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        return assertVotes(user, uuid, 20, -1); // undo-vote
+    });
+    it("Should be able to override undo vote with upvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 1, 0); // upvote
+    });
+    it("Should be able to override undo vote with downvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 0, -2); // downvote
+    });
+    it("Should be able to continuously undo vote (SLOW)", async () => {
+        const times = Math.ceil(Math.random() * 10);
+        const finalVote = (times%2 == 0) ? 0 : 1;
+        for (let i = 0; i < times; i++) {
+            if (i%2 == 0) {
+                await assertVotes(user, randomUUID, 1, 1); // upvote
+            } else {
+                await assertVotes(user, randomUUID, 20, 0); // undo-vote
+            }
+        }
+        const votes = await getSegmentVotes(randomUUID);
+        assert.strictEqual(Number(votes.votes), finalVote);
+    });
+    it("Should be able to undo malicious vote", async () => {
+        await assertVotes(user, uuids["chapter-undo"], 30, -2); // malicious downvote
+        return assertVotes(user, uuids["chapter-undo"], 20, 0); // undo-vote
     });
 });
 
@@ -231,12 +351,12 @@ describe("voteOnSponsorTime - duration change", () => {
         await assertVotes(user, UUID, 0, -1);
         const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
         const expected = [{
-            "UUID": "duration-changed-uuid-1",
+            "UUID": uuids["duration-changed-1"]
         }, {
-            "UUID": "duration-changed-uuid-2",
+            "UUID": uuids["duration-changed-2"],
         }];
         assert.strictEqual(hiddenSegments.length, 2);
-        arrayDeepEquals(hiddenSegments, expected);
+        assert.ok(arrayDeepEquals(hiddenSegments, expected));
     });
 });
 
