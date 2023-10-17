@@ -1,7 +1,7 @@
 import { IDatabase } from "../../src/databases/IDatabase";
 import { Service, VideoIDHash } from "../../src/types/segments.model";
 import { HashedUserID } from "../../src/types/user.model";
-import { genRandom, genRandomValue } from "./getRandom";
+import { genRandom, genRandomValue } from "./genRandom";
 import { getHash } from "../../src/utils/getHash";
 
 interface baseParams {
@@ -25,6 +25,8 @@ interface insertSegmentParams extends baseParams {
     videoDuration?: number,
     hidden?: boolean | number,
     shadowHidden?: boolean | number,
+    userAgent?: string,
+    hashedVideoID?: VideoIDHash,
     description?: string
 }
 const defaultSegmentParams: insertSegmentParams = {
@@ -43,7 +45,8 @@ const defaultSegmentParams: insertSegmentParams = {
     videoDuration: 0,
     hidden: false,
     shadowHidden: false,
-    hashedVideoID: "",
+    userAgent: "",
+    hashedVideoID: "" as VideoIDHash,
     description: ""
 };
 
@@ -55,7 +58,7 @@ const generateDefaults = (identifier: string) => ({
 });
 
 export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
-    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "userAgent", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // generate defaults
     identifier = identifier ?? genRandom();
     const defaults = generateDefaults(identifier);

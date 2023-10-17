@@ -1,4 +1,4 @@
-import { genRandom } from "./getRandom";
+import { genRandom } from "./genRandom";
 import { UserID, HashedUserID } from "../../src/types/user.model";
 import { getHash } from "../../src/utils/getHash";
 

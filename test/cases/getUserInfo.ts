@@ -4,7 +4,7 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 import { insertSegment, insertThumbnail, insertThumbnailVote, insertTitle, insertTitleVote } from "../utils/segmentQueryGen";
 import { genUsers, User } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+import { genRandomValue } from "../utils/genRandom";
 import { insertBan, insertUsername, insertWarning } from "../utils/queryGen";
 
 describe("getUserInfo", () => {

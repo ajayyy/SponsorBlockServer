@@ -4,7 +4,7 @@ import { Postgres } from "../../src/databases/Postgres";
 import { client } from "../utils/httpClient";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { insertChapter } from "../utils/segmentQueryGen";
-import { genRandomValue } from "../utils/getRandom";
+import { genRandomValue } from "../utils/genRandom";
 import { insertVideoInfo } from "../utils/queryGen";
 
 describe("getChapterNames", function () {

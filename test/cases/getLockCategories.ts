@@ -2,7 +2,7 @@ import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 import { insertLock } from "../utils/queryGen";
-import { multiGenRandomValue } from "../utils/getRandom";
+import { multiGenRandomValue } from "../utils/genRandom";
 
 const endpoint = "/api/lockCategories";
 const defaultActionTypes = ["skip", "mute"];

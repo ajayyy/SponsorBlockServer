@@ -2,7 +2,7 @@ import { db, privateDB } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 import { UsernameUser, genAnonUser, genUser, genUsersUsername } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+import { genRandomValue } from "../utils/genRandom";
 import { insertBan } from "../utils/queryGen";
 
 const adminPrivateUserID = "testUserId"; // hardcoded

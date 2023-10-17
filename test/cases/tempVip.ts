@@ -7,7 +7,7 @@ import redis from "../../src/utils/redis";
 import { genAnonUser, genUser } from "../utils/genUser";
 import assert from "assert";
 import { insertSegment } from "../utils/segmentQueryGen";
-import { genRandomValue } from "../utils/getRandom";
+import { genRandomValue } from "../utils/genRandom";
 import { insertVipUser } from "../utils/queryGen";
 
 // helpers

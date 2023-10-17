@@ -3,7 +3,7 @@ import { HashedUserID } from "../../src/types/user.model";
 import { User, userArray, usernameUserArray } from "./genUser";
 import { Feature } from "../../src/types/user.model";
 import { ActionType, Category, Service, VideoIDHash } from "../../src/types/segments.model";
-import { genRandomValue } from "./getRandom";
+import { genRandomValue } from "./genRandom";
 import { getHash } from "../../src/utils/getHash";
 
 // segments

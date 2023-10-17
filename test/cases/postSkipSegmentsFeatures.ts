@@ -2,7 +2,7 @@ import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { genRandom } from "../utils/getRandom";
+import { genRandom } from "../utils/genRandom";
 import { Feature } from "../../src/types/user.model";
 import { Segment, postSkipSegmentJSON, convertSingleToDBFormat } from "./postSkipSegments";
 
