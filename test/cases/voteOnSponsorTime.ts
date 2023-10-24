@@ -250,13 +250,11 @@ describe("voteOnSponsorTime - category votes", () => {
         await voteForChange(firstTarget, originalCategory, 1);
         await voteForChange(firstTarget, originalCategory, 2);
         await voteForChange(firstTarget, firstTarget, 3); // commit to change
-        await voteForChange(firstTarget, firstTarget, 4); // assert
-        await voteForChange(secondTarget,firstTarget, 1);
+        await voteForChange(secondTarget, firstTarget, 1);
         await voteForChange(secondTarget, firstTarget, 2);
         await voteForChange(secondTarget, firstTarget, 3);
         await voteForChange(secondTarget, firstTarget, 4); // match
-        await voteForChange(secondTarget, firstTarget, 5);
-        await voteForChange(secondTarget, secondTarget, 6); // overcome by 2
+        await voteForChange(secondTarget, secondTarget, 5); // overcome by 2
     });
 });
 
