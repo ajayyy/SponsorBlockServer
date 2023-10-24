@@ -41,16 +41,16 @@ export const assertPrivateVote = async (user: User, UUID: string, voteType: numb
     assert.strictEqual(privateVoteInfo[0].type, voteType, `expect vote type to be ${voteType}`);
 };
 
-const getCategoryVoteInfo = (UUID: string) => db.prepare("all", `SELECT * FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
+const getCategoryVoteInfo = (UUID: string, category: string) => db.prepare("get", `SELECT * FROM "categoryVotes" WHERE "UUID" = ? AND "category" = ?`, [UUID, category]);
 export const assertCategoryVotes = async (UUID: string, category: string, votes: number) => {
     type categoryVoteRow = {
         UUID: string,
         category: string,
         votes: number
     };
-    const categoryVoteInfo: categoryVoteRow[] = await getCategoryVoteInfo(UUID);
-    const row = categoryVoteInfo.find((row) => row.category === category);
-    if (!row) throw new Error(`vote for category ${category} not found`);
+    const categoryVoteInfo: categoryVoteRow = await getCategoryVoteInfo(UUID, category);
+    const row = categoryVoteInfo;
+    if (!row) throw new Error(`categoryVotes row not found for UUID ${UUID} and category ${category} at count ${votes}`);
     assert.strictEqual(row.votes, votes);
 };
 

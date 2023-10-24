@@ -211,10 +211,20 @@ describe("voteOnSponsorTime - category votes", () => {
     // before
     const originalCategory = "sponsor";
     let voteForChange: (targetCategory: string, expectedCategory: string, count: number) => Promise<void>;
+    let voteNoConfirm: (targetCategory: string, count: number) => Promise<void>;
     beforeEach (async () => {
         const randomUUID = genRandomValue("uuid", "vote-category");
         // create segment
         await insertSegment(db, { UUID: randomUUID, category: "sponsor", votes: 1 });
+        voteNoConfirm = async (targetCategory: string, count: number) => {
+            // insert user for eligibility
+            const user = genUser("vote", "category-vote");
+            await insertSegment(db, { userID: user.pubID });
+            // vote
+            const categoryRes = await postVoteCategory(user.privID, randomUUID, targetCategory);
+            assert.strictEqual(categoryRes.status, 200);
+            await assertCategoryVotes(randomUUID, targetCategory, count);
+        };
         voteForChange = async (targetCategory: string, expectedCategory: string, count: number) => {
             // insert user for eligibility
             const user = genUser("vote", "category-vote");
@@ -247,14 +257,17 @@ describe("voteOnSponsorTime - category votes", () => {
     it("More votes should flip the category", async () => {
         const firstTarget = "outro";
         const secondTarget = "intro";
-        await voteForChange(firstTarget, originalCategory, 1);
-        await voteForChange(firstTarget, originalCategory, 2);
-        await voteForChange(firstTarget, firstTarget, 3); // commit to change
-        await voteForChange(secondTarget, firstTarget, 1);
-        await voteForChange(secondTarget, firstTarget, 2);
-        await voteForChange(secondTarget, firstTarget, 3);
-        await voteForChange(secondTarget, firstTarget, 4); // match
-        await voteForChange(secondTarget, secondTarget, 5); // overcome by 2
+        await voteNoConfirm(firstTarget, 1);
+        await voteNoConfirm(firstTarget, 2);
+        await voteNoConfirm(firstTarget, 3); // commit to change
+        await voteForChange(firstTarget, firstTarget, 4); // vote and assert change
+        await voteNoConfirm(secondTarget, 1);
+        await voteNoConfirm(secondTarget, 2);
+        await voteNoConfirm(secondTarget, 3);
+        await voteNoConfirm(secondTarget, 4); // match
+        await voteNoConfirm(secondTarget, 5);
+        await voteNoConfirm(secondTarget, 6);
+        await voteForChange(secondTarget, secondTarget, 7); // overcome by 3 and assert
     });
 });
 

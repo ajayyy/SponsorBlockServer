@@ -16,10 +16,19 @@ export interface UsernameUser extends User {
 }
 export type usernameUserArray = Record<string, UsernameUser>
 
+export const emptyUser: User = { privID: "" as UserID, pubID: "" as HashedUserID, info: {} };
+export const emptyUsernameUser: UsernameUser = { ...emptyUser, username: "" };
+
 export const genUser = (fnname: string, testcase: string, info: info = {}): User => {
     const privID = `${fnname}-${testcase}-${genRandom(2)}` as UserID;
     const pubID = getHash(privID);
     return { privID, pubID, info };
+};
+
+export const genUserUsername = (fnname: string, testcase: string, username: string, info: info = {}): UsernameUser => {
+    const user = genUser(fnname, testcase, info) as UsernameUser;
+    user.username = username;
+    return user;
 };
 
 export const genAnonUser = (info: info = {}): User => {
