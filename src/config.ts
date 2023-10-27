@@ -45,6 +45,7 @@ addDefaults(config, {
     discordFailedReportChannelWebhookURL: null,
     discordReportChannelWebhookURL: null,
     discordMaliciousReportWebhookURL: null,
+    discordDeArrowLockedWebhookURL: null,
     minReputationToSubmitChapter: 0,
     minReputationToSubmitFiller: 0,
     getTopUsersCacheTimeMinutes: 240,

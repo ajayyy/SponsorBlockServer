@@ -15,6 +15,9 @@ import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { hasFeature } from "../utils/features";
 import { checkBanStatus } from "../utils/checkBan";
+import axios from "axios";
+import { getMaxResThumbnail } from "../utils/youtubeApi";
+import { getVideoDetails } from "../utils/getVideoDetails";
 
 enum BrandingType {
     Title,
@@ -88,6 +91,8 @@ export async function postBranding(req: Request, res: Response) {
                     // unlock all other titles
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
+
+                sendWebhooks(videoID, UUID).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -198,6 +203,47 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
             }
 
             await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, hashedUserID, verification]);
+        }
+    }
+}
+
+async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID) {
+    const lockedSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titles"."userID" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."videoID" = ? AND "titles"."UUID" != ? AND "titleVotes"."locked" = 1`, [videoID, UUID]);
+
+    if (lockedSubmission) {
+        const currentSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."UUID" = ?`, [UUID]);
+
+        // Time to warn that there may be an issue
+        if (currentSubmission.votes - lockedSubmission.votes > 2) {
+            const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [lockedSubmission.userID]);
+
+            const data = await getVideoDetails(videoID);
+            axios.post(config.discordDeArrowLockedWebhookURL, {
+                "embeds": [{
+                    "title": data?.title,
+                    "url": `https://www.youtube.com/watch?v=${videoID}`,
+                    "description": `**${lockedSubmission.votes}** Votes vs **${currentSubmission.votes}**\
+                        \n\n**Locked title:** ${lockedSubmission.title}\
+                        \n**New title:** ${currentSubmission.title}\
+                        \n\n**Submitted by:** ${usernameRow?.userName ?? ""}\n${lockedSubmission.userID}`,
+                    "color": 10813440,
+                    "thumbnail": {
+                        "url": getMaxResThumbnail(videoID),
+                    },
+                }],
+            })
+                .then(res => {
+                    if (res.status >= 400) {
+                        Logger.error("Error sending reported submission Discord hook");
+                        Logger.error(JSON.stringify((res.data)));
+                        Logger.error("\n");
+                    }
+                })
+                .catch(err => {
+                    Logger.error("Failed to send reported submission Discord hook.");
+                    Logger.error(JSON.stringify(err));
+                    Logger.error("\n");
+                });
         }
     }
 }
