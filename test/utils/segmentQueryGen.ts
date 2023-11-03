@@ -24,6 +24,7 @@ interface insertSegmentParams extends baseParams {
     actionType?: string,
     videoDuration?: number,
     hidden?: boolean | number,
+    reputation?: number,
     shadowHidden?: boolean | number,
     hashedVideoID?: VideoIDHash,
     userAgent?: string,
@@ -44,6 +45,7 @@ const defaultSegmentParams: insertSegmentParams = {
     service: Service.YouTube,
     videoDuration: 0,
     hidden: false,
+    reputation: 0,
     shadowHidden: false,
     hashedVideoID: "" as VideoIDHash,
     userAgent: "",
@@ -58,7 +60,7 @@ const generateDefaults = (identifier: string) => ({
 });
 
 export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
-    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "userAgent", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // generate defaults
     identifier = identifier ?? genRandom();
     const defaults = generateDefaults(identifier);
