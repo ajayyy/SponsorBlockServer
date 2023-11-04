@@ -237,7 +237,7 @@ describe("getSearchSegments - paginated", () => {
 
     it("Should be able to get with custom limit(2) and page(2)", async () => {
         const res = await getVideoSearch({ limit: 2, page: 2 });
-        const expected = firstPage.slice(2, 4);
+        const expected = firstPage.slice(4, 6);
         assert.strictEqual(res.status, 200);
         const segments = res.data.segments;
         assert.strictEqual(res.data.segmentCount, 12);
@@ -339,6 +339,7 @@ describe("getSearchSegments - specific", () => {
     const videoID = videoIDs["specific"];
     const getVideoSearch = (params: Record<string, any>) => getSearchSegments(videoID, params);
     const segment: insertSegmentParams = {
+        videoID,
         UUID: "search-values",
         timeSubmitted: 22,
         startTime: 0,
@@ -348,6 +349,8 @@ describe("getSearchSegments - specific", () => {
         votes: 1,
         views: 1,
         locked: 1,
+        hidden: 0,
+        description: "",
         shadowHidden: 0,
         userID: user.pubID,
     };
@@ -379,12 +382,13 @@ describe("getSearchSegments - specific", () => {
         return assertSegments(expected, res);
     });
 
-    it("Should return all wanted values from searchTest5", async () => {
+    it("Should return all wanted values", async () => {
         const res = await getVideoSearch({});
         assert.strictEqual(res.status, 200);
         const data = res.data;
         assert.strictEqual(data.segmentCount, 1);
         assert.strictEqual(data.page, 0);
-        assert.strictEqual(segment, data.segment);
+        delete segment.videoID; // videoID not returned in searchSegments
+        assert.deepEqual(segment, data.segments[0]);
     });
 });
