@@ -14,7 +14,7 @@ interface baseParams {
 }
 
 // sponsorTimes
-interface insertSegmentParams extends baseParams {
+export interface insertSegmentParams extends baseParams {
     startTime?: number,
     endTime?: number,
     votes?: number,

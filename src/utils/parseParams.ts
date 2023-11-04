@@ -12,9 +12,23 @@ const syntaxErrorWrapper = (fn: fn, req: Request, fallback: any) => {
     }
 };
 
+/**
+ * This function acts as a parser for singular and plural query parameters
+ * either as arrays, strings as arrays or singular values with optional fallback
+ * The priority is to parse the plural parameter natively, then with JSON
+ * then the singular parameter as an array, then as a single value
+ * and then finally fall back to the fallback value
+ * @param req Axios Request object
+ * @param fallback fallback value in case all parsing fail
+ * @param param Name of singular parameter
+ * @param paramPlural Name of plural parameter
+ * @returns Array of values
+ */
 const getQueryList = <T>(req: Request, fallback: T[], param: string, paramPlural: string): string[] | T[] =>
     req.query[paramPlural]
-        ? JSON.parse(req.query[paramPlural] as string)
+        ? Array.isArray(req.query[paramPlural])
+            ? req.query[paramPlural]
+            : JSON.parse(req.query[paramPlural] as string)
         : req.query[param]
             ? Array.isArray(req.query[param])
                 ? req.query[param]

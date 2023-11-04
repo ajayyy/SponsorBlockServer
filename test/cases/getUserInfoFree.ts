@@ -10,12 +10,11 @@ describe("getUserInfo Free Chapters", () => {
     const postOldQualify = 1600000000000;
 
     const getUserInfo = (userID: string) => client.get(endpoint, { params: { userID, value: "freeChaptersAccess" } });
-    const assertChapterAccess = (pubID: string) =>
-        getUserInfo(pubID)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                assert.strictEqual(res.data.freeChaptersAccess, true);
-            });
+    async function assertChapterAccess (pubID: string) {
+        const res = await getUserInfo(pubID);
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(res.data.freeChaptersAccess, true);
+    }
 
     it("Should get free access under new rule (newQualify)", async () => {
         const user = genAnonUser();
@@ -41,7 +40,7 @@ describe("getUserInfo Free Chapters", () => {
         return assertChapterAccess(user.pubID);
     });
 
-    it("Everyone should get free access", async() => {
+    it("Everyone should get free access", () => {
         const user = genAnonUser();
         return assertChapterAccess(user.pubID);
     });
