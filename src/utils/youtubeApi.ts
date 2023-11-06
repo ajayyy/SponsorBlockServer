@@ -53,4 +53,4 @@ export class YouTubeAPI {
 }
 
 export const getMaxResThumbnail = (videoID: string): string =>
-    `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;
+    `https://dearrow-thumb.ajay.app/api/v1/getThumbnail?videoID=${videoID}&redirectUrl=https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;
