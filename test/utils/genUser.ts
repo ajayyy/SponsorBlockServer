@@ -32,7 +32,7 @@ export const genUserUsername = (fnname: string, testcase: string, username: stri
 };
 
 export const genAnonUser = (info: info = {}): User => {
-    const privID = `user-${genRandom()}` as UserID;
+    const privID = `user-${genRandom(16)}` as UserID;
     const pubID = getHash(privID);
     return { privID, pubID, info };
 };

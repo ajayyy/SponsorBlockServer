@@ -187,7 +187,7 @@ async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult
     return CHECK_PASS;
 }
 
-async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID: HashedUserID
+async function checkInvalidFields(videoID: VideoID, userID: string, hashedUserID: HashedUserID
     , segments: IncomingSegment[], videoDurationParam: number, userAgent: string, service: Service): Promise<CheckResult> {
     const invalidFields = [];
     const errors = [];
@@ -493,10 +493,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     let { videoID, userID: paramUserID, service, videoDuration, videoDurationParam, segments, userAgent } = preprocessInput(req);
 
     //hash the userID
-    if (!paramUserID) {
+    if (!paramUserID || typeof paramUserID !== "string"){
         return res.status(400).send("No userID provided");
     }
-    const userID: HashedUserID = await getHashCache(paramUserID);
+    const userID: HashedUserID = await getHashCache(paramUserID) as HashedUserID;
 
     const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
     if (!invalidCheckResult.pass) {
@@ -525,7 +525,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const { lockedCategoryList, apiVideoDetails } = newData;
 
         // Check if all submissions are correct
-        const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
+        const segmentCheckResult = await checkEachSegmentValid(rawIP, paramUserID as UserID, userID, videoID, segments, service, isVIP, isTempVIP, lockedCategoryList);
         if (!segmentCheckResult.pass) {
             lock.unlock();
             return res.status(segmentCheckResult.errorCode).send(segmentCheckResult.errorMessage);
