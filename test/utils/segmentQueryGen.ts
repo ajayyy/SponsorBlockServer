@@ -33,7 +33,7 @@ export interface insertSegmentParams extends baseParams {
 const defaultSegmentParams: insertSegmentParams = {
     videoID: "",
     startTime: 0,
-    endTime: 0,
+    endTime: 10,
     votes: 0,
     locked: false,
     UUID: "",
