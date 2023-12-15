@@ -6,7 +6,7 @@ import { getHash } from "../../src/utils/getHash";
 
 interface baseParams {
     videoID?: string
-    hashedVideoID?: VideoIDHash | ""
+    hashedVideoID?: string | VideoIDHash | ""
     userID?: HashedUserID | ""
     service?: Service
     timeSubmitted?: number
@@ -26,7 +26,7 @@ export interface insertSegmentParams extends baseParams {
     hidden?: boolean | number,
     reputation?: number,
     shadowHidden?: boolean | number,
-    hashedVideoID?: VideoIDHash,
+    hashedVideoID?: string | VideoIDHash,
     userAgent?: string,
     description?: string
 }
@@ -70,7 +70,7 @@ export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams
     params.hidden = Number(params.hidden);
     params.shadowHidden = Number(params.shadowHidden);
     // generate hashedVideoID if not provided
-    params.hashedVideoID = overrides?.hashedVideoID ?? getHash(params.videoID, 1) as VideoIDHash;
+    params.hashedVideoID = (overrides?.hashedVideoID ?? getHash(params.videoID, 1)) as VideoIDHash;
     // debug
     await db.prepare("run", query, Object.values(params));
 };

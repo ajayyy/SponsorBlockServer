@@ -3,33 +3,131 @@ import { partialDeepEquals, arrayPartialDeepEquals } from "../utils/partialDeepE
 import { getHash } from "../../src/utils/getHash";
 import { ImportMock, } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
+import { multiGenProxy } from "../utils/genRandom";
+import { insertSegment, insertSegmentParams } from "../utils/segmentQueryGen";
 import { YouTubeApiMock } from "../mocks/youtubeMock";
+import { AxiosRequestConfig } from "axios";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { Service, VideoIDHash } from "../../src/types/segments.model";
 
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
 
+type HashResponseSegment = {
+    videoID: string,
+    segments: ResponseSegment[]
+}
+
+type ResponseSegment = {
+    segment?: [number, number] | number[],
+    category?: string,
+    UUID?: string,
+    videoDuration?: number,
+    actionType?: string,
+    votes?: number,
+    locked?: number,
+    description?: string
+};
+
+const defaultResponseSegment = {
+    segment: [1, 10] as [number, number],
+    category: "sponsor",
+    UUID: "",
+    videoDuration: 0,
+    actionType: "skip",
+    votes: 0,
+    locked: 0,
+    description: ""
+};
+
+interface segmentInsertSegmentParams extends insertSegmentParams {
+    segment: [number, number] | number[],
+}
+
 describe("getSkipSegmentsByHash", () => {
     const endpoint = "/api/skipSegments";
+    const videoIDs = multiGenProxy("video", "getSegmentsByHash");
+    const hashedVideoIDs = new Proxy({}, {
+        get(target: Record<string, { videoID: string, hashedVideoID: VideoIDHash, hashPrefix: string }>, prop: string, receiver) {
+            if (Reflect.has(target, prop)) return Reflect.get(target, prop, receiver);
+            const videoID = videoIDs[prop];
+            const hashedVideoID = getHash(videoID, 1);
+            const hashPrefix = hashedVideoID.substring(0, 5);
+            const result = { videoID, hashedVideoID, hashPrefix };
+            Reflect.set(target, prop, result, receiver);
+            return result;
+        }
+    });
+
     const getSegmentsByHash0Hash = "fdaff4dee1043451faa7398324fb63d8618ebcd11bddfe0491c488db12c6c910";
     const requiredSegmentVidHash = "d51822c3f681e07aef15a8855f52ad12db9eb9cf059e65b16b64c43359557f61";
     const requiredSegmentHashVidHash = "17bf8d9090e050257772f8bff277293c29c7ce3b25eb969a8fae111a2434504d";
     const differentCategoryVidHash = "7fac44d1ee3257ec7f18953e2b5f991828de6854ad57193d1027c530981a89c0";
     const nonMusicOverlapVidHash = "306151f778f9bfd19872b3ccfc83cbab37c4f370717436bfd85e0a624cd8ba3c";
     const fullCategoryVidHash = "278fa987eebfe07ae3a4a60cf0663989ad874dd0c1f0430831d63c2001567e6f";
+    const insertSegments: insertSegmentParams[] = [
+        // videoID: "getSegmentsByHash-0"
+        { videoID: "getSegmentsByHash-0", startTime: 1, endTime: 10, UUID: "getSegmentsByHash-01" },
+        { videoID: "getSegmentsByHash-0", startTime: 1, endTime: 10, UUID: "getSegmentsByHash-02", service: Service.PeerTube },
+        { videoID: "getSegmentsByHash-0", startTime: 20, endTime: 30, UUID: "getSegmentsByHash-03", category: "intro" },
+        { videoID: "getSegmentsByHash-0", startTime: 40, endTime: 50, UUID: "getSegmentsByHash-04", actionType: "mute" },
+        // getSegmentsByHash-noMatchHash
+        { videoID: "getSegmentsByHash-noMatchHash", startTime: 40, endTime: 50, UUID: "getSegmentsByHash-noMatchHash", hashedVideoID: "fdaffnoMatchHash" },
+    ];
+
+    const assertSegmentsEqual = async (hashPrefix: string, expectedUUIDs: string[], axiosConfig: AxiosRequestConfig = {}) => {
+        // fetch segments
+        const res = await client.get(`${endpoint}/${hashPrefix}`, axiosConfig);
+        assert.strictEqual(res.status, 200);
+        const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
+        // sort out videos
+        const expected = insertSegments.filter(segment => segment.UUID && expectedUUIDs.includes(segment.UUID));
+        const expectedArray: HashResponseSegment[] = [];
+        for (const segment of expected) {
+            const videoID = segment.videoID;
+            if (!videoID) throw new Error("VideoID is undefined");
+            const rawResponse = {
+                ...defaultResponseSegment,
+                ...segment
+            };
+            if (!rawResponse.startTime || !rawResponse.endTime) throw new Error("startTime or endTime is undefined");
+            const sanitizedResponse: ResponseSegment = {
+                segment: [rawResponse.startTime, rawResponse.endTime],
+                category: rawResponse.category,
+                UUID: rawResponse.UUID,
+                videoDuration: rawResponse.videoDuration,
+                actionType: rawResponse.actionType,
+                votes: rawResponse.votes,
+                locked: Number(rawResponse.locked),
+                description: rawResponse.description
+            };
+            // insert into array
+            const match = expectedArray.findIndex((s: insertSegmentParams) => s.videoID === videoID);
+            if (match !== -1) {
+                expectedArray[match].segments.push(sanitizedResponse);
+            } else {
+                expectedArray.push({
+                    videoID,
+                    segments: [sanitizedResponse]
+                });
+            }
+        }
+        assert.ok(partialDeepEquals(data, expectedArray));
+    };
+
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, 0, "getSegmentsByHash-01", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 1, 10, 2, 0, "getSegmentsByHash-02", "testman", 0, 50, "sponsor", "skip", "PeerTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 20, 30, 2, 0, "getSegmentsByHash-03", "testman", 100, 150, "intro", "skip", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-0", 40, 50, 2, 0, "getSegmentsByHash-04", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getSegmentsByHash0Hash, ""]);
-        await db.prepare("run", query, ["getSegmentsByHash-noMatchHash", 40, 50, 2, 0, "getSegmentsByHash-noMatchHash", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "fdaffnoMatchHash", ""]);
+        for (const segment of insertSegments) {
+            await insertSegment(db, segment);
+        }
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "service", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+
         await db.prepare("run", query, ["getSegmentsByHash-1", 60, 70, 2, 0, "getSegmentsByHash-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, "3272fa85ee0927f6073ef6f07ad5f3146047c1abba794cfa364d65ab9921692b", ""]);
         await db.prepare("run", query, ["onlyHidden", 60, 70, 2, 0, "onlyHidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 1, 0, "f3a199e1af001d716cdc6599360e2b062c2d2b3fa2885f6d9d2fd741166cbbd3", ""]);
-        await db.prepare("run", query, ["highlightVid", 60, 60, 2, 0, "highlightVid-1", "testman", 0, 50, "poi_highlight", "poi", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
-        await db.prepare("run", query, ["highlightVid", 70, 70, 2, 0, "highlightVid-2", "testman", 0, 50, "poi_highlight", "poi", "YouTube", 0, 0, getHash("highlightVid", 1), ""]);
+
+        await insertSegment(db, { videoID: "highlightVid", startTime: 60, endTime: 60, UUID: "highlightVid-1", category: "poi_highlight", actionType: "poi" });
+        await insertSegment(db, { videoID: "highlightVid", startTime: 70, endTime: 70, UUID: "highlightVid-2", category: "poi_highlight", actionType: "poi" });
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, 0, "requiredSegmentVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
         await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid-3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentVidHash, ""]);
@@ -41,10 +139,12 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["longMuteVid-hash", 30, 35, 2, 0, "longMuteVid-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
         await db.prepare("run", query, ["longMuteVid-hash", 2, 80, 2, 0, "longMuteVid-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
         await db.prepare("run", query, ["longMuteVid-hash", 3, 78, 2, 0, "longMuteVid-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-hash", 1), ""]); //6613
-        await db.prepare("run", query, ["longMuteVid-2-hash", 1, 15, 2, 0, "longMuteVid-2-hash-1", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["longMuteVid-2-hash", 30, 35, 2, 0, "longMuteVid-2-hash-2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["longMuteVid-2-hash", 2, 80, 2, 0, "longMuteVid-2-hash-3", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
-        await db.prepare("run", query, ["longMuteVid-2-hash", 3, 78, 2, 0, "longMuteVid-2-hash-4", "testman", 0, 50, "sponsor", "mute", "YouTube", 0, 0, getHash("longMuteVid-2-hash", 1), ""]); //ab0c
+
+        await insertSegment(db, { videoID: "longMuteVid-2-hash", startTime: 1, endTime: 15, UUID: "longMuteVid-2-hash-1", category: "sponsor", actionType: "mute" });
+        await insertSegment(db, { videoID: "longMuteVid-2-hash", startTime: 30, endTime: 35, UUID: "longMuteVid-2-hash-2", category: "sponsor", actionType: "skip" });
+        await insertSegment(db, { videoID: "longMuteVid-2-hash", startTime: 2, endTime: 80, UUID: "longMuteVid-2-hash-3", category: "sponsor", actionType: "mute" });
+        await insertSegment(db, { videoID: "longMuteVid-2-hash", startTime: 3, endTime: 78, UUID: "longMuteVid-2-hash-4", category: "sponsor", actionType: "mute" });
+
         await db.prepare("run", query, ["requiredSegmentHashVid", 10, 20, -2, 0, "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
         await db.prepare("run", query, ["requiredSegmentHashVid", 20, 30, -2, 0, "7e1ebc5194551d2d0a606d64f675e5a14952e4576b2959f8c9d51e316c14f8da", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, requiredSegmentHashVidHash, ""]);
         await db.prepare("run", query, ["differentCategoryVid", 60, 70, 2, 0, "differentCategoryVid-1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, differentCategoryVidHash, ""]);
@@ -55,111 +155,13 @@ describe("getSkipSegmentsByHash", () => {
         await db.prepare("run", query, ["fullCategoryVid", 60, 70, 2, 1, "fullCategoryVid-2", "testman", 0, 50, "selfpromo", "full", "YouTube", 0, 0, fullCategoryVidHash, ""]);
     });
 
-    it("Should be able to get a 200", (done) => {
-        client.get(`${endpoint}/3272f`, { params: { categories: `["sponsor", "intro"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 404 if no segments are found even if a video for the given hash is known", (done) => {
-        client.get(`${endpoint}/3272f`, { params: { categories: `["shilling"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                assert.equal(res.data.length, 0);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to get an empty array if no videos", (done) => {
-        client.get(`${endpoint}/11111`, { params: { categories: `["shilling"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                const body = res.data;
-                assert.strictEqual(body.length, 0);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to get an empty array if only hidden videos", (done) => {
-        client.get(`${endpoint}/f3a1`, { params: { categories:`["sponsor"]` } })
-            .then(res => {
-                if (res.status !== 404) done(`non 404 status code, was ${res.status}`);
-                else {
-                    const body = res.data;
-                    if (body.length === 0) done(); // pass
-                    else done("non empty array returned");
-                }
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 prefix too short", (done) => {
-        client.get(`${endpoint}/11`, { params: { categories: `["shilling"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 prefix too long", (done) => {
-        const prefix = "1".repeat(50);
-        assert.ok(prefix.length > 33, "failed to generate long enough string");
-        client.get(`${endpoint}/${prefix}`, { params: { categories: `["shilling"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 404 prefix in range", (done) => {
-        const prefix = "1".repeat(5);
-        client.get(`${endpoint}/${prefix}`, { params: { categories: `["shilling"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 for no hash", (done) => {
-        client.get(`${endpoint}`, { params: { categories: `["shilling"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 for bad format categories", (done) => {
-        client.get(`${endpoint}/fdaf`, { params: { categories: "shilling" } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to get multiple videos", (done) => {
-        client.get(`${endpoint}/fdaf`, { params: { categories: `["sponsor","intro"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 2);
-                assert.strictEqual(data[0].segments.length, 2);
-                assert.strictEqual(data[1].segments.length, 1);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get multiple videos", () => {
+        const prefix = getSegmentsByHash0Hash.substring(0, 5);
+        return assertSegmentsEqual(prefix, ["getSegmentsByHash-01", "getSegmentsByHash-03", "getSegmentsByHash-noMatchHash"], { params: { categories: `["sponsor","intro"]` } });
     });
 
     it("Should be able to get 200 for no categories (default sponsor)", (done) => {
+        const prefix = getSegmentsByHash0Hash.substring(0, 5);
         client.get(`${endpoint}/fdaf`)
             .then(res => {
                 assert.strictEqual(res.status, 200);
@@ -601,58 +603,4 @@ describe("getSkipSegmentsByHash", () => {
             .catch(err => done(err));
     });
 
-    it("Should return 400 if categories are is number", (done) => {
-        client.get(`${endpoint}/17bf?categories=3`)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 if actionTypes is number", (done) => {
-        client.get(`${endpoint}/17bf?actionTypes=3`)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 if actionTypes are invalid json", (done) => {
-        client.get(`${endpoint}/17bf?actionTypes={test}`)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 if requiredSegments is number", (done) => {
-        client.get(`${endpoint}/17bf?requiredSegments=3`)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-
-    it("Should return 404 if requiredSegments is invalid json", (done) => {
-        client.get(`${endpoint}/17bf?requiredSegments={test}`)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should return 400 if requiredSegments is not present", (done) => {
-        client.get(`${endpoint}/17bf?requiredSegment=${fullCategoryVidHash}`)
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
-    });
 });
