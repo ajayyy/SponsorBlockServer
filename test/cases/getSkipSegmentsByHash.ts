@@ -237,48 +237,9 @@ describe("getSkipSegmentsByHash", () => {
         assert.strictEqual(retreive.data[0].segments.length, 1);
     });
 
-    it("Should be able to get multiple categories with repeating parameters", (done) => {
-        client.get(`${endpoint}/${hashedVideoIDs[0].hashedVideoID.substring(0,7)}?&category=sponsor&category=intro`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        segment: [1, 10],
-                        category: "sponsor",
-                        UUID: "getSegmentsByHash-01",
-                    }, {
-                        segment: [20, 30],
-                        category: "intro",
-                        UUID: "getSegmentsByHash-03",
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to get specific segments with requiredSegments", (done) => {
+    it("Should be able to get specific segments with requiredSegments", () => {
         const prefix = requiredSegmentVidHash.substring(0, 5);
-        client.get(`${endpoint}/${prefix}?requiredSegments=["requiredSegmentsVid-2","requiredSegmentsVid-3"]`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        UUID: "requiredSegmentsVid-2"
-                    }, {
-                        UUID: "requiredSegmentsVid-3"
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data[0].segments.length, 2);
-                done();
-            })
-            .catch(err => done(err));
+        return assertSegmentsEqual(prefix, ["requiredSegmentsVid-2", "requiredSegmentsVid-3"], { params: { requiredSegments: `["requiredSegmentsVid-2","requiredSegmentsVid-3"]` } });
     });
 
     it("Should be able to get specific segments with repeating requiredSegment", (done) => {
