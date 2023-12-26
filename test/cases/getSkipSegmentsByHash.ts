@@ -1,5 +1,5 @@
 import { db } from "../../src/databases/databases";
-import { partialDeepEquals, arrayPartialDeepEquals } from "../utils/partialDeepEquals";
+import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { getHash } from "../../src/utils/getHash";
 import { ImportMock, } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
@@ -42,10 +42,6 @@ const defaultResponseSegment = {
     description: ""
 };
 
-interface segmentInsertSegmentParams extends insertSegmentParams {
-    segment: [number, number] | number[],
-}
-
 describe("getSkipSegmentsByHash", () => {
     const endpoint = "/api/skipSegments";
     const videoIDs = multiGenProxy("video", "getSegmentsByHash");
@@ -60,16 +56,8 @@ describe("getSkipSegmentsByHash", () => {
             return result;
         }
     });
-    console.log(hashedVideoIDs[0].videoID)
-    console.log(hashedVideoIDs[0].hashedVideoID)
-    console.log(hashedVideoIDs[0].hashPrefix)
-    console.log(`${hashedVideoIDs[0].hashPrefix}noMatchHash`)
 
     const requiredSegmentVidHash = getHash("requiredSegmentsVid", 1);
-    const requiredSegmentHashVidHash = getHash("requiredSegmentsHashVid", 1);
-    const differentCategoryVidHash = "7fac44d1ee3257ec7f18953e2b5f991828de6854ad57193d1027c530981a89c0";
-    const nonMusicOverlapVidHash = "306151f778f9bfd19872b3ccfc83cbab37c4f370717436bfd85e0a624cd8ba3c";
-    const fullCategoryVidHash = "278fa987eebfe07ae3a4a60cf0663989ad874dd0c1f0430831d63c2001567e6f";
     const insertSegments: insertSegmentParams[] = [
         // videoID 0
         { videoID: hashedVideoIDs[0].videoID, startTime: 1, endTime: 10, UUID: "getSegmentsByHash-01" },
@@ -160,6 +148,16 @@ describe("getSkipSegmentsByHash", () => {
         assert.ok(partialDeepEquals(data, expectedArray, true));
     };
 
+    const assertSegmentsArray = async(hashPrefix: string, expectedArray: { segments: any[]}[][], axiosConfig: AxiosRequestConfig) => {
+        // fetch segments
+        const res = await client.get(`${endpoint}/${hashPrefix}`, axiosConfig);
+        assert.strictEqual(res.status, 200);
+        const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
+        const arrayMatch = expectedArray.some(exp => partialDeepEquals(data, exp));
+        assert.ok(arrayMatch);
+        return assert.strictEqual(data[0].segments.length, expectedArray[0][0].segments.length);
+    };
+
     before(async () => {
         for (const segment of insertSegments) {
             await insertSegment(db, segment);
@@ -242,95 +240,64 @@ describe("getSkipSegmentsByHash", () => {
         return assertSegmentsEqual(prefix, ["requiredSegmentsVid-2", "requiredSegmentsVid-3"], { params: { requiredSegments: `["requiredSegmentsVid-2","requiredSegmentsVid-3"]` } });
     });
 
-    it("Should be able to get specific segments with repeating requiredSegment", (done) => {
+    it("Should be able to get specific segments with repeating requiredSegment", () => {
         const prefix = requiredSegmentVidHash.substring(0, 5);
-        client.get(`${endpoint}/${prefix}?requiredSegment=requiredSegmentsVid-2&requiredSegment=requiredSegmentsVid-3`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments.length, 2);
-                const expected = [{
-                    segments: [{
-                        UUID: "requiredSegmentsVid-2"
-                    }, {
-                        UUID: "requiredSegmentsVid-3"
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+        const requiredSegments = ["requiredSegmentsVid-2","requiredSegmentsVid-3"];
+        return assertSegmentsEqual(prefix, requiredSegments, { params: { requiredSegment: requiredSegments } });
     });
 
-    it("Should be able to get overlapping chapter segments if very different", (done) => {
-        client.get(`${endpoint}/7258?category=chapter&actionType=chapter`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        UUID: "chapterVid-hash-1",
-                        description: "Chapter 1"
-                    }, {
-                        UUID: "chapterVid-hash-2",
-                        description: "Chapter 2"
-                    }]
-                }];
-                const expected2 = [{
-                    segments: [{
-                        UUID: "chapterVid-hash-1",
-                        description: "Chapter 1"
-                    }, {
-                        UUID: "chapterVid-hash-3",
-                        description: "Chapter 3"
-                    }]
-                }];
-
-                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
-                assert.strictEqual(data[0].segments.length, 2);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get overlapping chapter segments if very different", () => {
+        const expectedArray = [
+            [{
+                segments: [{
+                    UUID: "chapterVid-hash-1",
+                    description: "Chapter 1"
+                }, {
+                    UUID: "chapterVid-hash-2",
+                    description: "Chapter 2"
+                }]
+            }],
+            [{
+                segments: [{
+                    UUID: "chapterVid-hash-1",
+                    description: "Chapter 1"
+                }, {
+                    UUID: "chapterVid-hash-3",
+                    description: "Chapter 3"
+                }]
+            }]
+        ];
+        return assertSegmentsArray("7258", expectedArray, { params: { category: "chapter", actionType: "chapter" } });
     });
 
-    it("Should be able to get mute segment with small skip segment in middle", (done) => {
-        client.get(`${endpoint}/6613?actionType=skip&actionType=mute`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        UUID: "longMuteVid-hash-3",
-                        actionType: "mute"
-                    }, {
-                        UUID: "longMuteVid-hash-2",
-                        actionType: "skip"
-                    }, {
-                        UUID: "longMuteVid-hash-1",
-                        actionType: "skip"
-                    }]
-                }];
-                const expected2 = [{
-                    segments: [{
-                        UUID: "longMuteVid-hash-4",
-                        actionType: "mute"
-                    }, {
-                        UUID: "longMuteVid-hash-2",
-                        actionType: "skip"
-                    }, {
-                        UUID: "longMuteVid-hash-1",
-                        actionType: "skip"
-                    }]
-                }];
-
-                assert.ok(arrayPartialDeepEquals(data, expected) || arrayPartialDeepEquals(data, expected2));
-                assert.strictEqual(data[0].segments.length, 3);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get mute segment with small skip segment in middle", () => {
+        const expectedArray = [
+            [{
+                segments: [{
+                    UUID: "longMuteVid-hash-3",
+                    actionType: "mute"
+                }, {
+                    UUID: "longMuteVid-hash-2",
+                    actionType: "skip"
+                }, {
+                    UUID: "longMuteVid-hash-1",
+                    actionType: "skip"
+                }]
+            }],
+            [{
+                segments: [{
+                    UUID: "longMuteVid-hash-4",
+                    actionType: "mute"
+                }, {
+                    UUID: "longMuteVid-hash-2",
+                    actionType: "skip"
+                }, {
+                    UUID: "longMuteVid-hash-1",
+                    actionType: "skip"
+                }]
+            }]
+        ];
+        return assertSegmentsArray("6613", expectedArray, { params: { actionType: ["skip", "mute"] } });
     });
 
     // This behavior was causing unintended consequence, uncommend when a solution is found
@@ -353,121 +320,55 @@ describe("getSkipSegmentsByHash", () => {
     //         .catch(err => done(err));
     // });
 
-    it("Should be able to get overlapping segments where one is non music and one is other", (done) => {
-        client.get(`${endpoint}/3061?categories=["sponsor","music_offtopic"]`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        category: "sponsor"
-                    }, {
-                        category: "music_offtopic"
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data[0].segments.length, 2);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get overlapping segments where one is non music and one is other", () => {
+        return assertSegmentsEqual("3061", ["nonMusicOverlapVid-1", "nonMusicOverlapVid-2"], { params: { categories: `["sponsor","music_offtopic"]` } });
     });
 
-    it("Should be able to get mute segment with small skip segment in middle (2)", (done) => {
-        client.get(`${endpoint}/ab0c?actionType=skip&actionType=mute`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        UUID: "longMuteVid-2-hash-1",
-                        actionType: "mute"
-                    }, {
-                        UUID: "longMuteVid-2-hash-2",
-                        actionType: "skip"
-                    }]
-                }];
-                const expected2 = [{
-                    segments: [{
-                        UUID: "longMuteVid-2-hash-3",
-                        actionType: "mute"
-                    }, {
-                        UUID: "longMuteVid-2-hash-2",
-                        actionType: "skip"
-                    }]
-                }];
-                const expected3 = [{
-                    segments: [{
-                        UUID: "longMuteVid-2-hash-4",
-                        actionType: "mute"
-                    }, {
-                        UUID: "longMuteVid-2-hash-2",
-                        actionType: "skip"
-                    }]
-                }];
-
-                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2) || partialDeepEquals(data, expected3));
-                assert.strictEqual(data[0].segments.length, 2);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get mute segment with small skip segment in middle (2)", () => {
+        const expectedArrays = [
+            [{
+                segments: [{
+                    UUID: "longMuteVid-2-hash-1",
+                    actionType: "mute"
+                }, {
+                    UUID: "longMuteVid-2-hash-2",
+                    actionType: "skip"
+                }]
+            }],
+            [{
+                segments: [{
+                    UUID: "longMuteVid-2-hash-3",
+                    actionType: "mute"
+                }, {
+                    UUID: "longMuteVid-2-hash-2",
+                    actionType: "skip"
+                }]
+            }],
+            [{
+                segments: [{
+                    UUID: "longMuteVid-2-hash-4",
+                    actionType: "mute"
+                }, {
+                    UUID: "longMuteVid-2-hash-2",
+                    actionType: "skip"
+                }]
+            }]
+        ];
+        return assertSegmentsArray("ab0c", expectedArrays, { params: { actionType: ["skip", "mute"] } });
     });
 
-    it("Should only return one segment when fetching full video segments", (done) => {
-        client.get(`${endpoint}/278f`, { params: { category: ["sponsor", "selfpromo"], actionType: "full" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segments.length, 1);
-                assert.strictEqual(data[0].segments[0].category, "selfpromo");
-                done();
-            })
-            .catch(err => done(err));
+    it("Should only return one segment when fetching full video segments", () => {
+        return assertSegmentsEqual("278f", ["fullCategoryVid-2"], { params: { category: ["sponsor", "selfpromo"], actionType: "full" } });
     });
 
-    it("Should be able to get specific segments with partial requiredSegments", (done) => {
+    it("Should be able to get specific segments with partial requiredSegments", () => {
         const requiredSegment1 = "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388";
         const requiredSegment2 = "7e1ebc5194551d2d0a606d64f675e5a14952e4576b2959f8c9d51e316c14f8da";
-        const prefix = requiredSegmentHashVidHash.substring(0, 5);
-        client.get(`${endpoint}/${prefix}?requiredSegments=["${requiredSegment1.slice(0,8)}","${requiredSegment2.slice(0,8)}"]`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        UUID: requiredSegment1
-                    }, {
-                        UUID: requiredSegment2
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data[0].segments.length, 2);
-                done();
-            })
-            .catch(err => done(err));
+        return assertSegmentsEqual("32ef", [requiredSegment1, requiredSegment2], { params: { requiredSegments: `["${requiredSegment1.slice(0,8)}","${requiredSegment2.slice(0,8)}"]` } });
     });
 
-    it("Should be able to get single segment with requiredSegments", (done) => {
-        const requiredSegment1 = "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388";
-        const prefix = requiredSegmentHashVidHash.substring(0, 5);
-        client.get(`${endpoint}/${prefix}?requiredSegment=${requiredSegment1}`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = (res.data as Array<any>).sort((a, b) => a.videoID.localeCompare(b.videoID));
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segments: [{
-                        UUID: requiredSegment1
-                    }]
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data[0].segments.length, 1);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get single segment with requiredSegments", () => {
+        const requiredSegment = "fbf0af454059733c8822f6a4ac8ec568e0787f8c0a5ee915dd5b05e0d7a9a388";
+        return assertSegmentsEqual("32ef", [requiredSegment], { params: { requiredSegment: requiredSegment } });
     });
-
 });
