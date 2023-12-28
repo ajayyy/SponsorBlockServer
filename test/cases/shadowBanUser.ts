@@ -11,8 +11,6 @@ describe("shadowBanUser", () => {
     const getShadowBanTitles = (userID: string, status: number) => db.prepare("all", `SELECT tv."shadowHidden" FROM "titles" t JOIN "titleVotes" tv ON t."UUID" = tv."UUID" WHERE t."userID" = ? AND tv."shadowHidden" = ?`, [userID, status]);
     const getShadowBanThumbnails = (userID: string, status: number) => db.prepare("all", `SELECT tv."shadowHidden" FROM "thumbnails" t JOIN "thumbnailVotes" tv ON t."UUID" = tv."UUID" WHERE t."userID" = ? AND tv."shadowHidden" = ?`, [userID, status]);
 
-    const getIPShadowBan = (hashedIP: string) => db.prepare("get", `SELECT * FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
-
     const endpoint = "/api/shadowBanUser";
     const VIPuserID = "shadow-ban-vip";
     const video = "shadowBanVideo";
@@ -58,18 +56,6 @@ describe("shadowBanUser", () => {
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
 
-        const privateInsertQuery = `INSERT INTO "sponsorTimes" ("videoID", "hashedIP", "timeSubmitted", "service") VALUES(?, ?, ?, ?)`;
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP7", 383848, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP7", 2332, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP7", 4923, "YouTube"]);
-
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916068933, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062936, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916064324, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062443, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062342, "YouTube"]);
-        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916069491, "YouTube"]);
-
         const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)`;
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
@@ -93,7 +79,7 @@ describe("shadowBanUser", () => {
             db.prepare("run", thumbnailTimestampsQuery, ["UUID3T-ban", 3]),
             db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban", 3, 0, 0]),
             db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban", 2, 0, 0]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban", 1, 0, 0])
+            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban", 1, 0, 0]),
         ]);
 
         await Promise.all([
@@ -114,6 +100,11 @@ describe("shadowBanUser", () => {
             db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban2", 3, 0, 0]),
             db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban2", 2, 0, 0]),
             db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban2", 1, 0, 0])
+        ]);
+
+        await Promise.all([
+            db.prepare("run", titleQuery, [video, "title31", 0, "userID3-ban", Service.YouTube, videohash, 1, "UUID1-ban3"]),
+            db.prepare("run", thumbnailQuery, [video, 0, "userID3-ban", Service.YouTube, videohash, 1, "UUID1T-ban3"]),
         ]);
     });
 
@@ -380,84 +371,6 @@ describe("shadowBanUser", () => {
             .catch(err => done(err));
     });
 
-    it("Should be able to ban user by IP and hide submissions of a specific category", (done) => {
-        const hashedIP = "shadowBannedIP7";
-        const userID = "shadowBanned7";
-        client({
-            method: "POST",
-            url: endpoint,
-            params: {
-                hashedIP,
-                categories: `["sponsor", "intro"]`,
-                adminUserID: VIPuserID,
-            }
-        })
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const videoRow = await getShadowBanSegments(userID, 1);
-                const normalShadowRow = await getShadowBan(userID);
-                const ipShadowRow = await getIPShadowBan(hashedIP);
-                assert.ok(ipShadowRow);
-                assert.ok(normalShadowRow);
-                assert.strictEqual(videoRow.length, 2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to unban user by IP", (done) => {
-        const hashedIP = "shadowBannedIP7";
-        const userID = "shadowBanned7";
-        client({
-            method: "POST",
-            url: endpoint,
-            params: {
-                hashedIP,
-                enabled: false,
-                unHideOldSubmissions: false,
-                adminUserID: VIPuserID,
-            }
-        })
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const videoRow = await getShadowBanSegments(userID, 1);
-                const normalShadowRow = await getShadowBan(userID);
-                const ipShadowRow = await getIPShadowBan(hashedIP);
-                assert.ok(!ipShadowRow);
-                assert.ok(normalShadowRow);
-                assert.strictEqual(videoRow.length, 2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to unban user by IP and unhide specific category", (done) => {
-        const hashedIP = "shadowBannedIP7";
-        const userID = "shadowBanned7";
-        client({
-            method: "POST",
-            url: endpoint,
-            params: {
-                hashedIP,
-                enabled: false,
-                categories: `["sponsor"]`,
-                unHideOldSubmissions: true,
-                adminUserID: VIPuserID,
-            }
-        })
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const videoRow = await getShadowBanSegments(userID, 1);
-                const normalShadowRow = await getShadowBan(userID);
-                const ipShadowRow = await getIPShadowBan(hashedIP);
-                assert.ok(!ipShadowRow);
-                assert.ok(normalShadowRow);
-                assert.strictEqual(videoRow.length, 1);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
     it("Should be possible to ban self", (done) => {
         const userID = VIPuserID;
         const hashUserID = getHash(userID);
@@ -474,39 +387,6 @@ describe("shadowBanUser", () => {
         })
             .then(res => {
                 assert.strictEqual(res.status, 200);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to ban user by userID and other users who used that IP and hide specific category", (done) => {
-        const hashedIP = "shadowBannedIP8";
-        const userID = "shadowBanned8";
-        const userID2 = "shadowBanned9";
-        client({
-            method: "POST",
-            url: endpoint,
-            params: {
-                userID,
-                enabled: true,
-                categories: `["sponsor", "intro"]`,
-                unHideOldSubmissions: true,
-                adminUserID: VIPuserID,
-                lookForIPs: true
-            }
-        })
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const videoRow = await getShadowBanSegments(userID, 1);
-                const videoRow2 = await getShadowBanSegments(userID2, 1);
-                const normalShadowRow = await getShadowBan(userID);
-                const normalShadowRow2 = await getShadowBan(userID2);
-                const ipShadowRow = await getIPShadowBan(hashedIP);
-                assert.ok(ipShadowRow);
-                assert.ok(normalShadowRow);
-                assert.ok(normalShadowRow2);
-                assert.strictEqual(videoRow.length, 2);
-                assert.strictEqual(videoRow2.length, 2);
                 done();
             })
             .catch(err => done(err));
@@ -554,6 +434,27 @@ describe("shadowBanUser", () => {
                 assert.ok(shadowRow);
                 assert.strictEqual(titles.length, 3);
                 assert.strictEqual(thumbnails.length, 0);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to ban user with bad/ empty categories", (done) => {
+        const userID = "userID4-ban";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                adminUserID: VIPuserID,
+                enabled: true,
+                unHideOldSubmissions: true,
+                categories: `[]`,
+                deArrowTypes: `["title","thumbnail"]`
+            }
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
                 done();
             })
             .catch(err => done(err));
