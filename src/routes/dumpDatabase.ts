@@ -234,11 +234,11 @@ async function queueDump(): Promise<void> {
                 const fileName = `${table.name}_${startTime}.csv`;
                 const file = `${appExportPath}/${fileName}`;
 
-                await new Promise<string>((resolve) => {
+                await new Promise<string>((resolve, reject) => {
                     exec(`psql -c "\\copy (SELECT * FROM \\"${table.name}\\"${table.order ? ` ORDER BY \\"${table.order}\\"` : ``})`
                             + ` TO '${file}' WITH (FORMAT CSV, HEADER true);"`, credentials, (error, stdout, stderr) => {
                         if (error) {
-                            Logger.error(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
+                            reject(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
                         }
 
                         resolve(error ? stderr : stdout);
@@ -253,10 +253,10 @@ async function queueDump(): Promise<void> {
             latestDumpFiles = [...dumpFiles];
 
             lastUpdate = startTime;
+            updateQueued = false;
         } catch(e) {
             Logger.error(e as string);
         } finally {
-            updateQueued = false;
             updateRunning = false;
         }
     }
