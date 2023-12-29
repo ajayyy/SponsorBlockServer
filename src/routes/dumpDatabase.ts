@@ -96,10 +96,12 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
             for (const tableName in tableFiles) {
                 const files = tableFiles[tableName].sort((a, b) => b.timestamp - a.timestamp);
                 for (let i = 2; i < files.length; i++) {
-                    // remove old file
-                    await unlink(files[i].file).catch((error: any) => {
-                        Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
-                    });
+                    if (!latestDumpFiles.some((file) => file.fileName === files[i].file.match(/[^/]+$/)[0])) {
+                        // remove old file
+                        await unlink(files[i].file).catch((error: any) => {
+                            Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
+                        });
+                    }
                 }
             }
             resolve();
