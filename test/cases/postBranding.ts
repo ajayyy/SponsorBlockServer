@@ -564,9 +564,13 @@ describe("postBranding", () => {
         const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
 
         assert.strictEqual(otherSegmentTitleVotes1.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 1);
         assert.strictEqual(otherSegmentTitleVotes2.removed, 0);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 0);
         assert.strictEqual(otherSegmentThumbnailVotes1.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 1);
         assert.strictEqual(otherSegmentThumbnailVotes2.removed, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 0);
     });
 
     it("Downvote another title and thumbnail as VIP", async () => {
@@ -597,9 +601,13 @@ describe("postBranding", () => {
         const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
 
         assert.strictEqual(otherSegmentTitleVotes1.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 1);
         assert.strictEqual(otherSegmentTitleVotes2.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 1);
         assert.strictEqual(otherSegmentThumbnailVotes1.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 1);
         assert.strictEqual(otherSegmentThumbnailVotes2.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 1);
     });
 
     it("Remove downvote on title and thumbnail as VIP", async () => {
@@ -629,9 +637,51 @@ describe("postBranding", () => {
         const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
 
         assert.strictEqual(otherSegmentTitleVotes1.removed, 0);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 0);
         assert.strictEqual(otherSegmentTitleVotes2.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 1);
         assert.strictEqual(otherSegmentThumbnailVotes1.removed, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 0);
         assert.strictEqual(otherSegmentThumbnailVotes2.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 1);
+    });
+
+    it("Downvote title and thumbnail as VIP without removing", async () => {
+        const videoID = "postBrandRemoved1";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID,
+            downvote: true,
+            autoLock: false
+        });
+
+        assert.strictEqual(res.status, 200);
+
+        const otherSegmentTitleVotes1 = await queryTitleVotesByUUID("postBrandRemoved1");
+        const otherSegmentTitleVotes2 = await queryTitleVotesByUUID("postBrandRemoved2");
+        const otherSegmentThumbnailVotes1 = await queryThumbnailVotesByUUID("postBrandRemoved1");
+        const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
+
+        assert.strictEqual(otherSegmentTitleVotes1.removed, 0);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.removed, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 1);
     });
 
     it("Vote the same title again", async () => {
