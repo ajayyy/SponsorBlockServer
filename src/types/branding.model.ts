@@ -83,6 +83,7 @@ export interface BrandingSubmission {
     videoID: VideoID;
     userID: UserID;
     service: Service;
+    autoLock: boolean | undefined;
 }
 
 export interface BrandingSegmentDBResult {

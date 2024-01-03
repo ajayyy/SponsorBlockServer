@@ -320,6 +320,36 @@ describe("postBranding", () => {
         assert.strictEqual(otherSegmentThumbnailVotes2.locked, 1);
     });
 
+    it("Submit title and thumbnail as VIP without locking", async () => {
+        const videoID = "postBrand6";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID,
+            autoLock: false
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbTitleVotes.locked, 0);
+        assert.strictEqual(dbThumbnailVotes.locked, 0);
+    });
+
     it("Vote the same title again", async () => {
         const videoID = "postBrand1";
         const title = {
