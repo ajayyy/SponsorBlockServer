@@ -41,6 +41,8 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
                 [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
             try {
+                if (db.highLoad() || privateDB.highLoad()) throw new Error("High load, not handling shadowhide");
+
                 cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await promiseOrTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
             } catch (e) {
                 // give up on shadowhide for now
