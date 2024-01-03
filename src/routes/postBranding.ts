@@ -24,6 +24,11 @@ enum BrandingType {
     Thumbnail
 }
 
+enum BrandingVoteType {
+    Upvote = 1,
+    Downvote = 2
+}
+
 interface ExistingVote {
     UUID: BrandingUUID;
     type: number;
@@ -31,7 +36,7 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
-    const { videoID, userID, title, thumbnail, autoLock } = req.body as BrandingSubmission;
+    const { videoID, userID, title, thumbnail, autoLock, downvote } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
 
     if (!videoID || !userID || userID.length < 30 || !service
@@ -57,7 +62,7 @@ export async function postBranding(req: Request, res: Response) {
         }
 
         const now = Date.now();
-        const voteType = 1;
+        const voteType: BrandingVoteType = downvote ? BrandingVoteType.Downvote : BrandingVoteType.Upvote;
 
         if (title && !isVip && title.title.length > config.maxTitleLength) {
             lock.unlock();
@@ -74,10 +79,14 @@ export async function postBranding(req: Request, res: Response) {
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 const UUID = existingUUID || crypto.randomUUID();
 
-                const existingVote = await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
+                await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
                 if (existingUUID) {
-                    await updateVoteTotals(BrandingType.Title, existingVote, UUID, shouldLock);
+                    await updateVoteTotals(BrandingType.Title, UUID, shouldLock, !!downvote);
                 } else {
+                    if (downvote) {
+                        throw new Error("Title submission doesn't exist");
+                    }
+
                     await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
@@ -111,10 +120,14 @@ export async function postBranding(req: Request, res: Response) {
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 const UUID = existingUUID || crypto.randomUUID();
 
-                const existingVote = await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
+                await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
                 if (existingUUID) {
-                    await updateVoteTotals(BrandingType.Thumbnail, existingVote, UUID, shouldLock);
+                    await updateVoteTotals(BrandingType.Thumbnail, UUID, shouldLock, !!downvote);
                 } else {
+                    if (downvote) {
+                        throw new Error("Thumbnail submission doesn't exist");
+                    }
+
                     await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
@@ -152,38 +165,54 @@ export async function postBranding(req: Request, res: Response) {
  * If no existing vote, it adds one.
  */
 async function handleExistingVotes(type: BrandingType, videoID: VideoID,
-    hashedUserID: HashedUserID, UUID: BrandingUUID, hashedIP: HashedIP, voteType: number): Promise<ExistingVote> {
+    hashedUserID: HashedUserID, UUID: BrandingUUID, hashedIP: HashedIP, voteType: BrandingVoteType) {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
 
-    const existingVote = await privateDB.prepare("get", `SELECT "id", "UUID", "type" from ${table} where "videoID" = ? AND "userID" = ?`, [videoID, hashedUserID]);
-    if (existingVote && existingVote.UUID !== UUID) {
-        if (existingVote.type === 1) {
-            await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+    // Either votes of the same type, or on the same submission (undo a downvote)
+    const existingVotes = await privateDB.prepare("all", `SELECT "id", "UUID", "type" from ${table} where "videoID" = ? AND "userID" = ? AND ("type" = ? OR "UUID" = ?)`, [videoID, hashedUserID, voteType, UUID]) as ExistingVote[];
+    if (existingVotes.length > 0) {
+        // Only one upvote per video
+        if (voteType === BrandingVoteType.Upvote) {
+            for (const existingVote of existingVotes) {
+                switch (existingVote.type) {
+                    case BrandingVoteType.Upvote:
+                        await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+                        await privateDB.prepare("run", `UPDATE ${table} SET "type" = ?, "UUID" = ? WHERE "id" = ?`, [voteType, UUID, existingVote.id]);
+                        break;
+                    case BrandingVoteType.Downvote:
+                        // Undoing a downvote now that it is being upvoted
+                        await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+                        await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
+                        break;
+                }
+            }
         }
 
-        await privateDB.prepare("run", `UPDATE ${table} SET "type" = ?, "UUID" = ? WHERE "id" = ?`, [voteType, UUID, existingVote.id]);
-    } else if (!existingVote) {
+    } else {
         await privateDB.prepare("run", `INSERT INTO ${table} ("videoID", "UUID", "userID", "hashedIP", "type") VALUES (?, ?, ?, ?, ?)`,
             [videoID, UUID, hashedUserID, hashedIP, voteType]);
     }
-
-    return existingVote;
 }
 
 /**
  * Only called if an existing vote exists.
  * Will update public vote totals and locked status.
  */
-async function updateVoteTotals(type: BrandingType, existingVote: ExistingVote, UUID: BrandingUUID, shouldLock: boolean): Promise<void> {
+async function updateVoteTotals(type: BrandingType, UUID: BrandingUUID, shouldLock: boolean, downvote: boolean): Promise<void> {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
 
-    // Don't upvote if we vote on the same submission
-    if (!existingVote || existingVote.UUID !== UUID) {
+    if (downvote) {
+        await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+    } else {
         await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" + 1 WHERE "UUID" = ?`, [UUID]);
     }
 
     if (shouldLock) {
-        await db.prepare("run", `UPDATE ${table} SET "locked" = 1 WHERE "UUID" = ?`, [UUID]);
+        if (downvote) {
+            await db.prepare("run", `UPDATE ${table} SET "removed" = 1 WHERE "UUID" = ?`, [UUID]);
+        } else {
+            await db.prepare("run", `UPDATE ${table} SET "locked" = 1, "removed" = 0 WHERE "UUID" = ?`, [UUID]);
+        }
     }
 }
 

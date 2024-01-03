@@ -24,18 +24,18 @@ enum BrandingSubmissionType {
 export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress, returnUserID: boolean): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."downvotes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1`,
+        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1 AND "titleVotes"."votes" - "titleVotes"."downvotes" > -2 AND "titleVotes"."removed" = 0`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
 
     const getThumbnails = () => db.prepare(
         "all",
-        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
+        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."downvotes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
-        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2
+        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" - "thumbnailVotes"."downvotes" > -2 AND "thumbnailVotes"."removed" = 0
         ORDER BY "thumbnails"."timeSubmitted" ASC`,
         [videoID, service],
         { useReplica: true }
@@ -89,18 +89,18 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress, returnUserID: boolean): Promise<Record<VideoID, BrandingResult>> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."downvotes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."hashedVideoID" LIKE ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
+        WHERE "titles"."hashedVideoID" LIKE ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1 AND "titleVotes"."votes" - "titleVotes"."downvotes" > -2 AND "titleVotes"."removed" = 0`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
 
     const getThumbnails = () => db.prepare(
         "all",
-        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID"
+        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."downvotes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
-        WHERE "thumbnails"."hashedVideoID" LIKE ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2
+        WHERE "thumbnails"."hashedVideoID" LIKE ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" - "thumbnailVotes"."downvotes" > -2 AND "thumbnailVotes"."removed" = 0
         ORDER BY "thumbnails"."timeSubmitted" ASC`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
@@ -176,7 +176,7 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, db
         .map((r) => ({
             title: r.title,
             original: r.original === 1,
-            votes: r.votes + r.verification,
+            votes: r.votes + r.verification - r.downvotes,
             locked: r.locked === 1,
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
@@ -191,7 +191,7 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, db
         .map((r) => ({
             timestamp: r.timestamp,
             original: r.original === 1,
-            votes: r.votes,
+            votes: r.votes - r.downvotes,
             locked: r.locked === 1,
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
