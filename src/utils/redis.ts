@@ -46,6 +46,8 @@ const writeResponseTime: number[] = [];
 let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
 
+export class TooManyActiveConnectionsError extends Error {}
+
 export let connectionPromise = Promise.resolve();
 
 if (config.redis?.enabled) {
@@ -61,7 +63,7 @@ if (config.redis?.enabled) {
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
         if (config.redis.maxConnections && activeRequests > config.redis.maxConnections) {
-            reject("Too many active requests in general");
+            reject(new TooManyActiveConnectionsError("Too many active requests in general"));
             return;
         }
 

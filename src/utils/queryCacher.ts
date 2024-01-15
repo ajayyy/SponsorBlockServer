@@ -1,4 +1,4 @@
-import redis from "../utils/redis";
+import redis, { TooManyActiveConnectionsError } from "../utils/redis";
 import { Logger } from "../utils/logger";
 import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
@@ -13,7 +13,11 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
             return JSON.parse(reply);
         }
-    } catch (e) { } //eslint-disable-line no-empty
+    } catch (e) {
+        if (e instanceof TooManyActiveConnectionsError) {
+            throw e;
+        }
+    }
 
     const data = await fetchFromDB();
 
