@@ -46,7 +46,11 @@ async function getTraced<T>(fetchFromDB: () => Promise<T>, key: string): Promise
                 endTime: Date.now()
             };
         }
-    } catch (e) { } //eslint-disable-line no-empty
+    } catch (e) {
+        if (e instanceof TooManyActiveConnectionsError) {
+            throw e;
+        }
+    }
 
     const dbStartTime = Date.now();
     const data = await fetchFromDB();
