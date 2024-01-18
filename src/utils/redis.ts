@@ -70,7 +70,8 @@ if (config.redis?.enabled) {
         const start = Date.now();
         activeRequests++;
 
-        const timeout = config.redis.getTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
+        const shouldUseTimeout = config.redis.getTimeout && db.shouldUseRedisTimeout();
+        const timeout = shouldUseTimeout ? setTimeout(() => reject(), config.redis.getTimeout) : null;
         const chosenGet = pickChoice(get, getRead);
         chosenGet(key).then((reply) => {
             if (timeout !== null) clearTimeout(timeout);

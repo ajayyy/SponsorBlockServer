@@ -283,4 +283,8 @@ export class Postgres implements IDatabase {
     highLoad() {
         return this.activePostgresRequests > this.config.postgres.highLoadThreshold;
     }
+
+    shouldUseRedisTimeout() {
+        return this.activePostgresRequests < this.config.postgres.redisTimeoutThreshold;
+    }
 }

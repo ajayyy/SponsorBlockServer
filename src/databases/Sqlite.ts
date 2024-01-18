@@ -108,6 +108,10 @@ export class Sqlite implements IDatabase {
     highLoad() {
         return false;
     }
+
+    shouldUseRedisTimeout() {
+        return false;
+    }
 }
 
 export interface SqliteConfig {

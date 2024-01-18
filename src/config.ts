@@ -83,7 +83,8 @@ addDefaults(config, {
         maxTries: 3,
         maxActiveRequests: 0,
         timeout: 60000,
-        highLoadThreshold: 10
+        highLoadThreshold: 10,
+        redisTimeoutThreshold: 1000
     },
     postgresReadOnly: {
         enabled: false,
