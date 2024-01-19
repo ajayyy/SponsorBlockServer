@@ -19,6 +19,7 @@
   "author": "Ajay Ramachandran",
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "@mongodb-js/zstd": "^1.2.0",
     "axios": "^1.1.3",
     "better-sqlite3": "^8.0.1",
     "cron": "^2.1.0",
