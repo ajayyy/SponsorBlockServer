@@ -23,9 +23,7 @@ export function createMemoryCache(memoryFn: (...args: any[]) => void, cacheTimeM
                 }
             }
             // create new promise
-            const promise = new Promise((resolve) => {
-                resolve(memoryFn(...args));
-            });
+            const promise = Promise.resolve(memoryFn(...args));
             // store promise reference until fulfilled
             promiseMemory.set(cacheKey, promise);
             return promise.then(result => {

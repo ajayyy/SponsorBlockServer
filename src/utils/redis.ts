@@ -26,15 +26,16 @@ interface RedisSB {
 }
 
 let exportClient: RedisSB = {
-    get: () => new Promise((resolve) => resolve(null)),
-    set: () => new Promise((resolve) => resolve(null)),
-    setEx: () => new Promise((resolve) => resolve(null)),
-    del: () => new Promise((resolve) => resolve(null)),
-    increment: () => new Promise((resolve) => resolve(null)),
-    sendCommand: () => new Promise((resolve) => resolve(null)),
-    quit: () => new Promise((resolve) => resolve(null)),
-    ttl: () => new Promise((resolve) => resolve(null)),
+    get: () => Promise.resolve(null),
+    set: () => Promise.resolve(null),
+    setEx: () => Promise.resolve(null),
+    del: () => Promise.resolve(null),
+    increment: () => Promise.resolve(null),
+    sendCommand: () => Promise.resolve(null),
+    quit: () => Promise.resolve(null),
+    ttl: () => Promise.resolve(null),
 };
+
 
 let lastClientFail = 0;
 let lastReadFail = 0;
