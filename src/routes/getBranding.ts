@@ -133,7 +133,7 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
 
         (await branding.titles).forEach((title) => {
             title.title = title.title.replace("<", "‹");
-        
+
             initResult(title);
             dbResult[title.videoID].titles.push(title);
         });
@@ -141,11 +141,11 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
             initResult(thumbnail);
             dbResult[thumbnail.videoID].thumbnails.push(thumbnail);
         });
-        
+
         (await branding.segments).forEach((segment) => {
             initResult(segment);
             dbResult[segment.videoID].segments.push(segment);
-        });        
+        });
 
         return dbResult;
     }, brandingHashKey(videoHashPrefix, service));
