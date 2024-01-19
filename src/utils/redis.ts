@@ -6,7 +6,7 @@ import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 import { db } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
-import { compress, decompress } from "@mongodb-js/zstd";
+import { compress, uncompress } from "lz4-napi";
 
 export interface RedisStats {
     activeRequests: number;
@@ -68,11 +68,11 @@ if (config.redis?.enabled) {
     exportClient.getCompressed = (key) => {
         return exportClient.get(key).then((reply) => {
             if (reply === null) return null;
-            return decompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
+            return uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
         });
     };
     exportClient.setCompressed = (key, value, options) => {
-        return compress(Buffer.from(value as string, "utf-8")).then((compressed) => 
+        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
             exportClient.set(key, compressed.toString("base64"), options)
         );
     };
