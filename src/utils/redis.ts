@@ -6,6 +6,7 @@ import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 import { db } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
+import { compress, uncompress } from "lz4-napi";
 
 export interface RedisStats {
     activeRequests: number;
@@ -16,8 +17,11 @@ export interface RedisStats {
 
 interface RedisSB {
     get(key: RedisCommandArgument): Promise<string>;
+    getCompressed(key: RedisCommandArgument): Promise<string>;
     set(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
+    setCompressed(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
     setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
+    setExCompressed(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
     sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
@@ -27,15 +31,17 @@ interface RedisSB {
 
 let exportClient: RedisSB = {
     get: () => Promise.resolve(null),
+    getCompressed: () => Promise.resolve(null),
     set: () => Promise.resolve(null),
+    setCompressed: () => Promise.resolve(null),
     setEx: () => Promise.resolve(null),
+    setExCompressed: () => Promise.resolve(null),
     del: () => Promise.resolve(null),
     increment: () => Promise.resolve(null),
     sendCommand: () => Promise.resolve(null),
     quit: () => Promise.resolve(null),
     ttl: () => Promise.resolve(null),
 };
-
 
 let lastClientFail = 0;
 let lastReadFail = 0;
@@ -47,7 +53,7 @@ const writeResponseTime: number[] = [];
 let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
 
-export class TooManyActiveConnectionsError extends Error {}
+export class TooManyActiveConnectionsError extends Error { }
 
 export let connectionPromise = Promise.resolve();
 
@@ -57,8 +63,24 @@ if (config.redis?.enabled) {
     const readClient = config.redisRead?.enabled ? createClient(config.redisRead) : null;
     connectionPromise = client.connect();
     void readClient?.connect(); // void as we don't care about the promise
-    exportClient = client as RedisSB;
+    exportClient = client as unknown as RedisSB;
 
+    exportClient.getCompressed = (key) => {
+        return exportClient.get(key).then((reply) => {
+            if (reply === null) return null;
+            return uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
+        });
+    };
+    exportClient.setCompressed = (key, value, options) => {
+        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
+            exportClient.set(key, compressed.toString("base64"), options)
+        );
+    };
+    exportClient.setExCompressed = (key, seconds, value) => {
+        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
+            exportClient.setEx(key, seconds, compressed.toString("base64"))
+        );
+    };
 
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
@@ -84,7 +106,7 @@ if (config.redis?.enabled) {
             readResponseTime.push(responseTime);
             if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
             if (config.redis.stopWritingAfterResponseTime
-                    && responseTime > config.redis.stopWritingAfterResponseTime) {
+                && responseTime > config.redis.stopWritingAfterResponseTime) {
                 Logger.error(`Hit response time limit at ${responseTime}ms`);
                 lastResponseTimeLimit = Date.now();
             }
@@ -104,7 +126,7 @@ if (config.redis?.enabled) {
         new Promise((resolve, reject) => {
             if ((config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections)
                 || (config.redis.responseTimePause
-                        && Date.now() - lastResponseTimeLimit < config.redis.responseTimePause)) {
+                    && Date.now() - lastResponseTimeLimit < config.redis.responseTimePause)) {
                 reject(`Too many active requests to write due to ${activeRequests} requests and ${Date.now() - lastResponseTimeLimit}ms since last limit. ${(db as Postgres)?.getStats?.()?.activeRequests} active db requests with ${(db as Postgres)?.getStats?.()?.avgReadTime}ms`);
                 return;
             }
@@ -140,7 +162,7 @@ if (config.redis?.enabled) {
             .catch((err) => reject(err))
     );
     /* istanbul ignore next */
-    client.on("error", function(error) {
+    client.on("error", function (error) {
         lastClientFail = Date.now();
         Logger.error(`Redis Error: ${error}`);
     });
@@ -149,7 +171,7 @@ if (config.redis?.enabled) {
         Logger.info("Redis: trying to reconnect");
     });
     /* istanbul ignore next */
-    readClient?.on("error", function(error) {
+    readClient?.on("error", function (error) {
         lastReadFail = Date.now();
         Logger.error(`Redis Read-Only Error: ${error}`);
     });
@@ -164,7 +186,7 @@ function pickChoice<T>(client: T, readClient: T): T {
     const ignoreReadDueToFailure = lastReadFail > Date.now() - 1000 * 30;
     const readDueToFailure = lastClientFail > Date.now() - 1000 * 30;
     if (readAvailable && !ignoreReadDueToFailure && (readDueToFailure ||
-            Math.random() > 1 / (config.redisRead?.weight + 1))) {
+        Math.random() > 1 / (config.redisRead?.weight + 1))) {
         return readClient;
     } else {
         return client;
