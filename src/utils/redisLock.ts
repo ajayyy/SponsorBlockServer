@@ -37,6 +37,12 @@ export async function acquireLock(key: string, timeout = defaultTimeout): Promis
         }
     } catch (e) {
         Logger.error(e as string);
+
+        // Fallback to allowing
+        return {
+            status: true,
+            unlock: () => void 0
+        };
     }
 
     return {
