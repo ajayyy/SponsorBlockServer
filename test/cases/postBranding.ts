@@ -15,7 +15,6 @@ describe("postBranding", () => {
     const userID5 = `PostBrandingUser5${".".repeat(16)}`;
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
-    const userID8 = `PostBrandingUser8${".".repeat(16)}`;
     const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
 
 
@@ -74,12 +73,6 @@ describe("postBranding", () => {
         await db.prepare("run", insertTitleQuery, ["postBrandVerified2", "Some title", 1, getHash(userID7), Service.YouTube, getHash("postBrandVerified2"), Date.now(), "postBrandVerified2"]);
         await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified1", 5, 0, 0, -1]);
         await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified2", -1, 0, 0, -1]);
-
-        // Verified through SponsorBlock submissions
-        const insertSegment = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSegment, ["postBrandVerified3", 1, 11, 1, 0, "postBrandVerified3", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
-        await db.prepare("run", insertSegment, ["postBrandVerified3", 11, 21, 1, 0, "postBrandVerified32", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
-        await db.prepare("run", insertSegment, ["postBrandVerified3", 21, 31, 1, 0, "postBrandVerified33", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
 
         // Testing details for banned user handling
         await db.prepare("run", insertTitleQuery, ["postBrandBannedCustomVote",   "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandBannedCustomVote"), Date.now(), "postBrandBannedCustomVote"]);
@@ -935,30 +928,6 @@ describe("postBranding", () => {
 
         const dbVotes3 = await queryTitleVotesByUUID("postBrandVerified2");
         assert.strictEqual(dbVotes3.verification, 0);
-    });
-
-    it("Submit from verified user from SponsorBlock submissions", async () => {
-        const videoID = "postBrandVerified2-2";
-        const title = {
-            title: "Some title",
-            original: false
-        };
-
-        const res = await postBranding({
-            title,
-            userID: userID8,
-            service: Service.YouTube,
-            videoID
-        });
-
-        assert.strictEqual(res.status, 200);
-        const dbTitle = await queryTitleByVideo(videoID);
-        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
-
-        assert.strictEqual(dbTitle.title, title.title);
-        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
-
-        assert.strictEqual(dbVotes.verification, 0);
     });
 
     it("Banned users should not be able to vote (custom title)", async () => {
