@@ -27,7 +27,6 @@
     "express-rate-limit": "^6.7.0",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",
-    "lz4-napi": "^2.2.0",
     "pg": "^8.8.0",
     "rate-limit-redis": "^3.0.1",
     "redis": "^4.5.0",
