@@ -131,18 +131,18 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
             };
         };
 
-        (await branding.titles).map((title) => {
+        (await branding.titles).forEach((title) => {
             title.title = title.title.replace("<", "‹");
 
             initResult(title);
             dbResult[title.videoID].titles.push(title);
         });
-        (await branding.thumbnails).map((thumbnail) => {
+        (await branding.thumbnails).forEach((thumbnail) => {
             initResult(thumbnail);
             dbResult[thumbnail.videoID].thumbnails.push(thumbnail);
         });
 
-        (await branding.segments).map((segment) => {
+        (await branding.segments).forEach((segment) => {
             initResult(segment);
             dbResult[segment.videoID].segments.push(segment);
         });
