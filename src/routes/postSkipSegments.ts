@@ -324,15 +324,19 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         const duplicateCheck2Row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "startTime" = ?
             and "endTime" = ? and "category" = ? and "actionType" = ? and "description" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, segments[i].description, videoID, service]);
         if (duplicateCheck2Row) {
+            segments[i].ignoreSegment = true;
+
             if (segments[i].actionType === ActionType.Full) {
                 // Forward as vote
                 await vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
                 segments[i].ignoreSegment = true;
                 continue;
-            } else {
-                return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
             }
         }
+    }
+
+    if (segments.every((s) => s.ignoreSegment)) {
+        return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
     }
 
     return CHECK_PASS;
