@@ -329,13 +329,12 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
             if (segments[i].actionType === ActionType.Full) {
                 // Forward as vote
                 await vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
-                segments[i].ignoreSegment = true;
                 continue;
             }
         }
     }
 
-    if (segments.every((s) => s.ignoreSegment)) {
+    if (segments.every((s) => s.ignoreSegment && s.actionType !== ActionType.Full)) {
         return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
     }
 
