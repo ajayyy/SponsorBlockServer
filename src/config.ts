@@ -166,7 +166,8 @@ addDefaults(config, {
         commandsQueueMaxLength: 3000,
         stopWritingAfterResponseTime: 50,
         responseTimePause: 1000,
-        disableHashCache: false
+        disableHashCache: false,
+        clientCacheLength: 2000
     },
     redisRead: {
         enabled: false,

@@ -11,6 +11,7 @@ interface RedisConfig extends redis.RedisClientOptions {
     stopWritingAfterResponseTime: number;
     responseTimePause: number;
     disableHashCache: boolean;
+    clientCacheLength: number;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {

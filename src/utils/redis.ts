@@ -1,12 +1,14 @@
 import { config } from "../config";
 import { Logger } from "./logger";
-import { SetOptions, createClient } from "redis";
+import { RedisClientType, SetOptions, createClient } from "redis";
 import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@redis/client/dist/lib/commands";
 import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 import { db } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
 import { compress, uncompress } from "lz4-napi";
+import { LRUCache } from "lru-cache";
+import { shouldClientCacheKey } from "./redisKeys";
 
 export interface RedisStats {
     activeRequests: number;
@@ -16,7 +18,7 @@ export interface RedisStats {
 }
 
 interface RedisSB {
-    get(key: RedisCommandArgument): Promise<string>;
+    get(key: RedisCommandArgument, useClientCache?: boolean): Promise<string>;
     getCompressed(key: RedisCommandArgument): Promise<string>;
     set(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
     setCompressed(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
@@ -65,10 +67,25 @@ if (config.redis?.enabled) {
     void readClient?.connect(); // void as we don't care about the promise
     exportClient = client as unknown as RedisSB;
 
+    const cacheClient = config.redis.clientCacheLength ? createClient(config.redis) : null;
+    const cache = config.redis.clientCacheLength ? new LRUCache<RedisCommandArgument, string>({
+        max: config.redis.clientCacheLength
+    }) : null;
+
     exportClient.getCompressed = (key) => {
+        if (cache && cacheClient && cache.has(key)) {
+            return Promise.resolve(cache.get(key));
+        }
+
         return exportClient.get(key).then((reply) => {
             if (reply === null) return null;
-            return uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
+
+            const decompressed = uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
+            if (cache && shouldClientCacheKey(key)) {
+                decompressed.then((d) => cache.set(key, d)).catch(Logger.error);
+            }
+
+            return decompressed;
         });
     };
     exportClient.setCompressed = (key, value, options) => {
@@ -111,7 +128,7 @@ if (config.redis?.enabled) {
                 lastResponseTimeLimit = Date.now();
             }
         }).catch((err) => {
-            if (chosenGet === get) {
+            if (chosenGet === get || chosenGet === cacheClient?.get) {
                 lastClientFail = Date.now();
             } else {
                 lastReadFail = Date.now();
@@ -179,6 +196,24 @@ if (config.redis?.enabled) {
     readClient?.on("reconnect", () => {
         Logger.info("Redis Read-Only: trying to reconnect");
     });
+
+    if (cacheClient) {
+        /* istanbul ignore next */
+        cacheClient.on("error", function(error) {
+            lastClientFail = Date.now();
+            Logger.error(`Redis Cache Client Error: ${error}`);
+        });
+        /* istanbul ignore next */
+        cacheClient.on("reconnect", () => {
+            Logger.info("Redis cache client: trying to reconnect");
+            cache?.clear();
+        });
+
+        setupClientCache(client as RedisClientType,
+            readClient as RedisClientType,
+            cacheClient as RedisClientType,
+            cache).catch(Logger.error);
+    }
 }
 
 function pickChoice<T>(client: T, readClient: T): T {
@@ -200,6 +235,25 @@ export function getRedisStats(): RedisStats {
         avgReadTime: readResponseTime.length > 0 ? readResponseTime.reduce((a, b) => a + b, 0) / readResponseTime.length : 0,
         avgWriteTime: writeResponseTime.length > 0 ? writeResponseTime.reduce((a, b) => a + b, 0) / writeResponseTime.length : 0,
     };
+}
+
+async function setupClientCache(client: RedisClientType,
+    readClient: RedisClientType,
+    cacheClient: RedisClientType,
+    cache: LRUCache<RedisCommandArgument, string>) {
+
+    await cacheClient.connect();
+
+    const clientId = await cacheClient.sendCommand(["CLIENT", "ID"]);
+    cacheClient.subscribe("__redis__:invalidate", (messages) => {
+        cache.delete(messages[0]);
+    }).catch(Logger.error);
+
+    await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", String(clientId)]);
+
+    if (readClient) {
+        await readClient.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", String(clientId)]);
+    }
 }
 
 export default exportClient;
