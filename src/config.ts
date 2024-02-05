@@ -189,7 +189,8 @@ addDefaults(config, {
     },
     tokenSeed: "",
     minUserIDLength: 30,
-    deArrowPaywall: false
+    deArrowPaywall: false,
+    useCacheForSegmentGroups: false,
 });
 loadFromEnv(config);
 migrate(config);

@@ -101,7 +101,8 @@ export interface SBSConfig {
     },
     tokenSeed: string,
     minUserIDLength: number,
-    deArrowPaywall: boolean
+    deArrowPaywall: boolean,
+    useCacheForSegmentGroups: boolean
 }
 
 export interface WebhookConfig {

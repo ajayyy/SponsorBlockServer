@@ -288,7 +288,7 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
 async function chooseSegments(videoID: VideoID, service: Service, segments: DBSegment[], useCache: boolean): Promise<DBSegment[]> {
     const fetchData = async () => await buildSegmentGroups(segments);
 
-    const groups = useCache
+    const groups = useCache && config.useCacheForSegmentGroups
         ? await QueryCacher.get(fetchData, skipSegmentGroupsKey(videoID, service))
         : await fetchData();
 
