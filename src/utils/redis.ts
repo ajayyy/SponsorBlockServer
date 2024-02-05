@@ -6,6 +6,7 @@ import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 import { db } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
+import { compress, uncompress } from "lz4-napi";
 
 export interface RedisStats {
     activeRequests: number;
@@ -16,8 +17,11 @@ export interface RedisStats {
 
 interface RedisSB {
     get(key: RedisCommandArgument): Promise<string>;
+    getCompressed(key: RedisCommandArgument): Promise<string>;
     set(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
+    setCompressed(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
     setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
+    setExCompressed(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
     sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
@@ -26,14 +30,17 @@ interface RedisSB {
 }
 
 let exportClient: RedisSB = {
-    get: () => new Promise((resolve) => resolve(null)),
-    set: () => new Promise((resolve) => resolve(null)),
-    setEx: () => new Promise((resolve) => resolve(null)),
-    del: () => new Promise((resolve) => resolve(null)),
-    increment: () => new Promise((resolve) => resolve(null)),
-    sendCommand: () => new Promise((resolve) => resolve(null)),
-    quit: () => new Promise((resolve) => resolve(null)),
-    ttl: () => new Promise((resolve) => resolve(null)),
+    get: () => Promise.resolve(null),
+    getCompressed: () => Promise.resolve(null),
+    set: () => Promise.resolve(null),
+    setCompressed: () => Promise.resolve(null),
+    setEx: () => Promise.resolve(null),
+    setExCompressed: () => Promise.resolve(null),
+    del: () => Promise.resolve(null),
+    increment: () => Promise.resolve(null),
+    sendCommand: () => Promise.resolve(null),
+    quit: () => Promise.resolve(null),
+    ttl: () => Promise.resolve(null),
 };
 
 let lastClientFail = 0;
@@ -56,8 +63,24 @@ if (config.redis?.enabled) {
     const readClient = config.redisRead?.enabled ? createClient(config.redisRead) : null;
     connectionPromise = client.connect();
     void readClient?.connect(); // void as we don't care about the promise
-    exportClient = client as RedisSB;
+    exportClient = client as unknown as RedisSB;
 
+    exportClient.getCompressed = (key) => {
+        return exportClient.get(key).then((reply) => {
+            if (reply === null) return null;
+            return uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
+        });
+    };
+    exportClient.setCompressed = (key, value, options) => {
+        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
+            exportClient.set(key, compressed.toString("base64"), options)
+        );
+    };
+    exportClient.setExCompressed = (key, seconds, value) => {
+        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
+            exportClient.setEx(key, seconds, compressed.toString("base64"))
+        );
+    };
 
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
