@@ -223,8 +223,10 @@ if (config.redis?.enabled) {
             cache?.clear();
 
             await setupCacheClientListener(cacheClient as RedisClientType, cache);
-            void setupCacheClientTracking(client as RedisClientType, cacheClient as RedisClientType);
-            void setupCacheClientTracking(readClient as RedisClientType, cacheClient as RedisClientType);
+            void Promise.all([
+                setupCacheClientTracking(client as RedisClientType, cacheClient as RedisClientType),
+                setupCacheClientTracking(readClient as RedisClientType, cacheClient as RedisClientType)
+            ]).then(() => cache?.clear());
         });
 
         void cacheClient.connect();
