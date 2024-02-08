@@ -70,13 +70,20 @@ export async function postBranding(req: Request, res: Response) {
             return;
         }
 
+        let errorCode = 0;
+
         await Promise.all([(async () => {
             if (title) {
                 // ignore original submissions from banned users - hiding those would cause issues
                 if (title.original && isBanned) return;
 
                 const existingUUID = (await db.prepare("get", `SELECT "UUID" from "titles" where "videoID" = ? AND "title" = ?`, [videoID, title.title]))?.UUID;
+                const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
+                if (downvote && existingIsLocked && !isVip) {
+                    errorCode = 403;
+                    return;
+                }
                 const UUID = existingUUID || crypto.randomUUID();
 
                 await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
@@ -117,7 +124,12 @@ export async function postBranding(req: Request, res: Response) {
                     ? (await db.prepare("get", `SELECT "UUID" from "thumbnails" where "videoID" = ? AND "original" = 1`, [videoID]))?.UUID
                     : (await db.prepare("get", `SELECT "thumbnails"."UUID" from "thumbnailTimestamps" JOIN "thumbnails" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
                         WHERE "thumbnailTimestamps"."timestamp" = ? AND "thumbnails"."videoID" = ?`, [(thumbnail as TimeThumbnailSubmission).timestamp, videoID]))?.UUID;
+                const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
+                if (downvote && existingIsLocked && !isVip) {
+                    errorCode = 403;
+                    return;
+                }
                 const UUID = existingUUID || crypto.randomUUID();
 
                 await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
@@ -152,7 +164,13 @@ export async function postBranding(req: Request, res: Response) {
         })()]);
 
         QueryCacher.clearBrandingCache({ videoID, hashedVideoID, service });
-        res.status(200).send("OK");
+
+        if (errorCode) {
+            res.status(errorCode).send();
+        } else {
+            res.status(200).send("OK");
+        }
+
         lock.unlock();
     } catch (e) {
         Logger.error(e as string);
