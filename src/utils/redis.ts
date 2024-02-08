@@ -85,7 +85,7 @@ if (config.redis?.enabled) {
         if (cache && cacheClient && cache.has(key)) {
             memoryCacheHits++;
             return Promise.resolve(cache.get(key));
-        } else {
+        } else if (shouldClientCacheKey(key)) {
             memoryCacheMisses++;
         }
 
