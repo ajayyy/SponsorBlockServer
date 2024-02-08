@@ -14,6 +14,8 @@ interface ReputationDBResult {
     mostUpvotedInLockedVideoSum: number
 }
 
+const activeReputationRequests: Record<UserID, Promise<ReputationDBResult>> = {};
+
 export async function getReputation(userID: UserID): Promise<number> {
     const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 7; // 45 days ago
     const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
@@ -42,7 +44,11 @@ export async function getReputation(userID: UserID): Promise<number> {
                 THEN 1 ELSE 0 END) AS "mostUpvotedInLockedVideoSum"
         FROM "sponsorTimes" as "a" WHERE "userID" = ? AND "actionType" != 'full'`, [userID, weekAgo, pastDate, userID], { useReplica: true }) as Promise<ReputationDBResult>;
 
-    const result = await QueryCacher.get(fetchFromDB, reputationKey(userID));
+    const promise = activeReputationRequests[userID] ?? QueryCacher.get(fetchFromDB, reputationKey(userID));
+    activeReputationRequests[userID] = promise;
+
+    const result = await promise;
+    delete activeReputationRequests[userID];
 
     return calculateReputationFromMetrics(result);
 }
