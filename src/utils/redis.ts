@@ -17,6 +17,7 @@ export interface RedisStats {
     avgWriteTime: number;
     memoryCacheHits: number
     memoryCacheLength: number;
+    memoryCacheSize: number;
 }
 
 interface RedisSB {
@@ -61,7 +62,8 @@ let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
 
 const cache = config.redis.clientCacheLength ? new LRUCache<RedisCommandArgument, string>({
-    max: config.redis.clientCacheLength
+    maxSize: config.redis.clientCacheLength,
+    sizeCalculation: (value) => value.length
 }) : null;
 
 // For redis
@@ -282,7 +284,8 @@ export function getRedisStats(): RedisStats {
         avgReadTime: readResponseTime.length > 0 ? readResponseTime.reduce((a, b) => a + b, 0) / readResponseTime.length : 0,
         avgWriteTime: writeResponseTime.length > 0 ? writeResponseTime.reduce((a, b) => a + b, 0) / writeResponseTime.length : 0,
         memoryCacheHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses),
-        memoryCacheLength: cache?.size ?? 0
+        memoryCacheLength: cache?.size ?? 0,
+        memoryCacheSize: cache?.calculatedSize ?? 0
     };
 }
 
