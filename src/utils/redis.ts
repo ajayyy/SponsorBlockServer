@@ -306,9 +306,9 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
     cacheConnectionClientId = String(await cacheClient.clientId());
 
     cacheClient.subscribe("__redis__:invalidate", (messages) => {
-        cache.delete(messages?.[0]);
-
-        lastInvalidation = Date.now();
+        if (cache.delete(messages?.[0])) {
+            lastInvalidation = Date.now();
+        }
     }).catch(Logger.error);
 }
 
