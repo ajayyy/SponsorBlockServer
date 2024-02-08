@@ -167,7 +167,7 @@ addDefaults(config, {
         stopWritingAfterResponseTime: 50,
         responseTimePause: 1000,
         disableHashCache: false,
-        clientCacheLength: 2000
+        clientCacheSize: 2000
     },
     redisRead: {
         enabled: false,

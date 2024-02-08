@@ -61,8 +61,8 @@ const writeResponseTime: number[] = [];
 let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
 
-const cache = config.redis.clientCacheLength ? new LRUCache<RedisCommandArgument, string>({
-    maxSize: config.redis.clientCacheLength,
+const cache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, string>({
+    maxSize: config.redis.clientCacheSize,
     sizeCalculation: (value) => value.length
 }) : null;
 
@@ -248,7 +248,7 @@ if (config.redis?.enabled) {
         void cacheClient.connect();
     };
 
-    if (config.redis.clientCacheLength) {
+    if (config.redis.clientCacheSize) {
         createCacheClient();
 
         client.on("ready", () => {
