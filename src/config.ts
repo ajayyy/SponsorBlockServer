@@ -239,7 +239,7 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
             loadFromEnv(data, fullKey);
         } else if (process.env[fullKey]) {
             const value = process.env[fullKey];
-            if (isNumber(value)) {
+            if (value !== "" && !isNaN(value as unknown as number)) {
                 config[key] = parseFloat(value);
             } else if (value.toLowerCase() === "true" || value.toLowerCase() === "false") {
                 config[key] = value === "true";
