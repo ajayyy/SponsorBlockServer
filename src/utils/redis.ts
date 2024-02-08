@@ -15,6 +15,8 @@ export interface RedisStats {
     writeRequests: number;
     avgReadTime: number;
     avgWriteTime: number;
+    memoryCacheHits: number
+    memoryCacheLength: number;
 }
 
 interface RedisSB {
@@ -50,10 +52,17 @@ let lastReadFail = 0;
 let activeRequests = 0;
 let writeRequests = 0;
 
+let memoryCacheHits = 0;
+let memoryCacheMisses = 0;
+
 const readResponseTime: number[] = [];
 const writeResponseTime: number[] = [];
 let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
+
+const cache = config.redis.clientCacheLength ? new LRUCache<RedisCommandArgument, string>({
+    max: config.redis.clientCacheLength
+}) : null;
 
 // For redis
 let cacheConnectionClientId = "";
@@ -71,13 +80,18 @@ if (config.redis?.enabled) {
     exportClient = client as unknown as RedisSB;
 
     let cacheClient = null as RedisClientType | null;
-    const cache = config.redis.clientCacheLength ? new LRUCache<RedisCommandArgument, string>({
-        max: config.redis.clientCacheLength
-    }) : null;
 
     exportClient.getCompressed = (key) => {
         if (cache && cacheClient && cache.has(key)) {
+            memoryCacheHits++;
             return Promise.resolve(cache.get(key));
+        } else {
+            memoryCacheMisses++;
+        }
+
+        if (memoryCacheHits + memoryCacheMisses > 50000) {
+            memoryCacheHits = 0;
+            memoryCacheMisses = 0;
         }
 
         return exportClient.get(key).then((reply) => {
@@ -267,6 +281,8 @@ export function getRedisStats(): RedisStats {
         writeRequests,
         avgReadTime: readResponseTime.length > 0 ? readResponseTime.reduce((a, b) => a + b, 0) / readResponseTime.length : 0,
         avgWriteTime: writeResponseTime.length > 0 ? writeResponseTime.reduce((a, b) => a + b, 0) / writeResponseTime.length : 0,
+        memoryCacheHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses),
+        memoryCacheLength: cache?.size ?? 0
     };
 }
 
