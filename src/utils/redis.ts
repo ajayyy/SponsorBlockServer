@@ -67,7 +67,9 @@ const maxStoredTimes = 200;
 
 const cache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, string>({
     maxSize: config.redis.clientCacheSize,
-    sizeCalculation: (value) => value.length
+    sizeCalculation: (value) => value.length,
+    ttl: 1000 * 60 * 30,
+    ttlResolution: 1000 * 60 * 15
 }) : null;
 
 // For redis
