@@ -43,20 +43,20 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             try {
                 if (db.highLoad() || privateDB.highLoad()) throw new Error("High load, not handling shadowhide");
 
-                cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = await promiseOrTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
+                cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = promiseOrTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
             } catch (e) {
                 // give up on shadowhide for now
                 cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = null;
             }
         }
 
-        const ipList = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
+        const ipList = await cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
 
         if (ipList?.length > 0 && cache.userHashedIP === undefined) {
             cache.userHashedIP = await cache.userHashedIPPromise;
         }
         //if this isn't their ip, don't send it to them
-        const shouldShadowHide = cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted]?.some(
+        const shouldShadowHide = ipList?.some(
             (shadowHiddenSegment) => shadowHiddenSegment.hashedIP === cache.userHashedIP) ?? false;
 
         if (shouldShadowHide) useCache = false;
