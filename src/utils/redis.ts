@@ -16,8 +16,10 @@ export interface RedisStats {
     avgReadTime: number;
     avgWriteTime: number;
     memoryCacheHits: number
+    memoryCacheTotalHits: number
     memoryCacheLength: number;
     memoryCacheSize: number;
+    lastInvalidation: number;
 }
 
 interface RedisSB {
@@ -55,6 +57,8 @@ let writeRequests = 0;
 
 let memoryCacheHits = 0;
 let memoryCacheMisses = 0;
+let memoryCacheUncachedMisses = 0;
+let lastInvalidation = 0;
 
 const readResponseTime: number[] = [];
 const writeResponseTime: number[] = [];
@@ -89,11 +93,14 @@ if (config.redis?.enabled) {
             return Promise.resolve(cache.get(key));
         } else if (shouldClientCacheKey(key)) {
             memoryCacheMisses++;
+        } else {
+            memoryCacheUncachedMisses++;
         }
 
         if (memoryCacheHits + memoryCacheMisses > 50000) {
             memoryCacheHits = 0;
             memoryCacheMisses = 0;
+            memoryCacheUncachedMisses = 0;
         }
 
         return exportClient.get(key).then((reply) => {
@@ -284,8 +291,10 @@ export function getRedisStats(): RedisStats {
         avgReadTime: readResponseTime.length > 0 ? readResponseTime.reduce((a, b) => a + b, 0) / readResponseTime.length : 0,
         avgWriteTime: writeResponseTime.length > 0 ? writeResponseTime.reduce((a, b) => a + b, 0) / writeResponseTime.length : 0,
         memoryCacheHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses),
+        memoryCacheTotalHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses + memoryCacheUncachedMisses),
         memoryCacheLength: cache?.size ?? 0,
-        memoryCacheSize: cache?.calculatedSize ?? 0
+        memoryCacheSize: cache?.calculatedSize ?? 0,
+        lastInvalidation
     };
 }
 
@@ -296,6 +305,8 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
 
     cacheClient.subscribe("__redis__:invalidate", (messages) => {
         cache.delete(messages?.[0]);
+
+        lastInvalidation = Date.now();
     }).catch(Logger.error);
 }
 
@@ -304,7 +315,7 @@ async function setupCacheClientTracking(client: RedisClientType,
 
     if (!client || !cacheClient.isReady) return;
 
-    await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", cacheConnectionClientId]);
+    await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", cacheConnectionClientId, "BCAST"]);
 }
 
 export default exportClient;
