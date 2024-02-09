@@ -25,11 +25,11 @@ export interface RedisStats {
 
 interface RedisSB {
     get(key: RedisCommandArgument, useClientCache?: boolean): Promise<string>;
-    getCompressed(key: RedisCommandArgument): Promise<string>;
+    getWithCache(key: RedisCommandArgument): Promise<string>;
     set(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
-    setCompressed(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
+    setWithCache(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
     setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
-    setExCompressed(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
+    setExWithCache(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
     del(...keys: [RedisCommandArgument]): Promise<number>;
     increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
     sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
@@ -39,11 +39,11 @@ interface RedisSB {
 
 let exportClient: RedisSB = {
     get: () => Promise.resolve(null),
-    getCompressed: () => Promise.resolve(null),
+    getWithCache: () => Promise.resolve(null),
     set: () => Promise.resolve(null),
-    setCompressed: () => Promise.resolve(null),
+    setWithCache: () => Promise.resolve(null),
     setEx: () => Promise.resolve(null),
-    setExCompressed: () => Promise.resolve(null),
+    setExWithCache: () => Promise.resolve(null),
     del: () => Promise.resolve(null),
     increment: () => Promise.resolve(null),
     sendCommand: () => Promise.resolve(null),
@@ -95,7 +95,9 @@ if (config.redis?.enabled) {
 
     let cacheClient = null as RedisClientType | null;
 
-    exportClient.getCompressed = (key) => {
+    const createKeyName = (key: RedisCommandArgument) => (key + (config.redis.useCompression ? ".c" : "")) as RedisCommandArgument;
+
+    exportClient.getWithCache = (key) => {
         if (cache && cacheClient && cache.has(key)) {
             memoryCacheHits++;
             return Promise.resolve(cache.get(key));
@@ -115,23 +117,34 @@ if (config.redis?.enabled) {
             return activeRequestPromises[key as string];
         }
 
-        const request = exportClient.get(key).then((reply) => {
+        const request = exportClient.get(createKeyName(key)).then((reply) => {
             if (reply === null) return null;
 
-            const decompressed = uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
-            if (cache && shouldClientCacheKey(key)) {
-                decompressed.then((d) => {
-                    if (!resetKeys.has(key)) {
-                        cache.set(key, d);
-                    }
+            if (config.redis.useCompression) {
+                const decompressed = uncompress(Buffer.from(reply, "base64")).then((decompressed) => decompressed.toString("utf-8"));
+                if (cache && shouldClientCacheKey(key)) {
+                    decompressed.then((d) => {
+                        if (!resetKeys.has(key)) {
+                            cache.set(key, d);
+                        }
 
+                        resetKeys.delete(key);
+                    }).catch(Logger.error);
+                } else {
                     resetKeys.delete(key);
-                }).catch(Logger.error);
-            } else {
-                resetKeys.delete(key);
-            }
+                }
 
-            return decompressed;
+                return decompressed;
+            } else {
+                if (cache && shouldClientCacheKey(key)) {
+                    if (!resetKeys.has(key)) {
+                        cache.set(key, reply);
+                    }
+                }
+
+                resetKeys.delete(key);
+                return reply;
+            }
         });
 
         activeRequestPromises[key as string] = request;
@@ -140,15 +153,32 @@ if (config.redis?.enabled) {
 
         return request;
     };
-    exportClient.setCompressed = (key, value, options) => {
-        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
-            exportClient.set(key, compressed.toString("base64"), options)
-        );
+    exportClient.setWithCache = (key, value, options) => {
+        if (config.redis.useCompression) {
+            return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
+                exportClient.set(createKeyName(key), compressed.toString("base64"), options)
+            );
+        } else {
+            return exportClient.set(createKeyName(key), value, options);
+        }
     };
-    exportClient.setExCompressed = (key, seconds, value) => {
-        return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
-            exportClient.setEx(key, seconds, compressed.toString("base64"))
-        );
+    exportClient.setExWithCache = (key, seconds, value) => {
+        if (config.redis.useCompression) {
+            return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
+                exportClient.setEx(createKeyName(key), seconds, compressed.toString("base64"))
+            );
+        } else {
+            return exportClient.setEx(createKeyName(key), seconds, value);
+        }
+    };
+
+    const del = client.del.bind(client);
+    exportClient.del = (...keys) => {
+        if (config.redis.useCompression) {
+            return del(...keys.map((key) => createKeyName(key)) as [RedisCommandArgument]);
+        } else {
+            return del(...keys);
+        }
     };
 
     const get = client.get.bind(client);

@@ -12,6 +12,7 @@ interface RedisConfig extends redis.RedisClientOptions {
     responseTimePause: number;
     disableHashCache: boolean;
     clientCacheSize: number;
+    useCompression: boolean;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {

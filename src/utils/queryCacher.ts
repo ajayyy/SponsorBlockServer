@@ -7,7 +7,7 @@ import { config } from "../config";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
-        const reply = await redis.getCompressed(key);
+        const reply = await redis.getWithCache(key);
         if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);
 
@@ -21,7 +21,7 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.setExCompressed(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+    redis.setExWithCache(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return data;
 }
@@ -36,7 +36,7 @@ async function getTraced<T>(fetchFromDB: () => Promise<T>, key: string): Promise
     const startTime = Date.now();
 
     try {
-        const reply = await redis.getCompressed(key);
+        const reply = await redis.getWithCache(key);
         if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);
 
@@ -55,7 +55,7 @@ async function getTraced<T>(fetchFromDB: () => Promise<T>, key: string): Promise
     const dbStartTime = Date.now();
     const data = await fetchFromDB();
 
-    redis.setExCompressed(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+    redis.setExWithCache(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return {
         data,
