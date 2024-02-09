@@ -103,8 +103,6 @@ if (config.redis?.enabled) {
             return Promise.resolve(cache.get(key));
         } else if (shouldClientCacheKey(key)) {
             memoryCacheMisses++;
-        } else {
-            memoryCacheUncachedMisses++;
         }
 
         if (memoryCacheHits + memoryCacheMisses > 50000) {
@@ -188,6 +186,9 @@ if (config.redis?.enabled) {
             reject(new TooManyActiveConnectionsError("Too many active requests in general"));
             return;
         }
+
+        // For tracking
+        if (!shouldClientCacheKey(key)) memoryCacheUncachedMisses++;
 
         const start = Date.now();
         activeRequests++;
