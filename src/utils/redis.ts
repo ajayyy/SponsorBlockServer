@@ -365,7 +365,9 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
         if (keys) {
             lastInvalidationMessage = Date.now();
 
-            for (const key of keys) {
+            for (let key of keys) {
+                if (config.redis.useCompression) key = key.replace(/.c$/, "");
+
                 if (cache.delete(key)) {
                     lastInvalidation = Date.now();
                 }
