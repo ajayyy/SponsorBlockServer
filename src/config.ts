@@ -167,7 +167,8 @@ addDefaults(config, {
         responseTimePause: 1000,
         disableHashCache: false,
         clientCacheSize: 2000,
-        useCompression: false
+        useCompression: false,
+        dragonflyMode: false
     },
     redisRead: {
         enabled: false,

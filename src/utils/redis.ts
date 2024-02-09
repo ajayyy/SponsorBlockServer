@@ -180,6 +180,12 @@ if (config.redis?.enabled) {
 
     const del = client.del.bind(client);
     exportClient.del = (...keys) => {
+        if (config.redis.dragonflyMode) {
+            for (const key of keys) {
+                void client.publish("__redis__:invalidate", key);
+            }
+        }
+
         if (config.redis.useCompression) {
             return del(...keys.map((key) => createKeyName(key)) as [RedisCommandArgument]);
         } else {
@@ -367,12 +373,15 @@ export function getRedisStats(): RedisStats {
 async function setupCacheClientListener(cacheClient: RedisClientType,
     cache: LRUCache<RedisCommandArgument, string>) {
 
-    cacheConnectionClientId = String(await cacheClient.clientId());
+    if (!config.redis.dragonflyMode) {
+        cacheConnectionClientId = String(await cacheClient.clientId());
+    }
 
-    cacheClient.subscribe("__redis__:invalidate", (keys) => {
-        if (keys) {
+    cacheClient.subscribe("__redis__:invalidate", (message) => {
+        if (message) {
             lastInvalidationMessage = Date.now();
 
+            const keys = Buffer.isBuffer(message) ? [message.toString()] : message;
             for (let key of keys) {
                 if (config.redis.useCompression) key = key.replace(/.c$/, "");
 
@@ -392,7 +401,7 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
 async function setupCacheClientTracking(client: RedisClientType,
     cacheClient: RedisClientType) {
 
-    if (!client || !cacheClient.isReady) return;
+    if (!client || !cacheClient.isReady || config.redis.dragonflyMode) return;
 
     await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", cacheConnectionClientId, "BCAST"]);
 }

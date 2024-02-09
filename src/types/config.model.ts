@@ -13,6 +13,7 @@ interface RedisConfig extends redis.RedisClientOptions {
     disableHashCache: boolean;
     clientCacheSize: number;
     useCompression: boolean;
+    dragonflyMode: boolean;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {
