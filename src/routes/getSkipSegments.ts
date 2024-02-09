@@ -14,6 +14,7 @@ import { getService } from "../utils/getService";
 import { promiseOrTimeout } from "../utils/promise";
 import { parseSkipSegments } from "../utils/parseSkipSegments";
 import { getEtag } from "../middleware/etag";
+import { shuffleArray } from "../utils/array";
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
@@ -220,11 +221,11 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     return await QueryCacher.get(fetchFromDB, skipSegmentsKey(videoID, service));
 }
 
-// Gets a weighted random choice from the choices array based on their `votes` property.
+// Gets the best choice from the choices array based on their `votes` property.
 // amountOfChoices specifies the maximum amount of choices to return, 1 or more.
 // Choices are unique
 // If a predicate is given, it will only filter choices following it, and will leave the rest in the list
-function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOfChoices: number, filterLocked = false, predicate?: (choice: T) => void): T[] {
+function getBestChoice<T extends VotableObject>(choices: T[], amountOfChoices: number, filterLocked = false, predicate?: (choice: T) => void): T[] {
     //trivial case: no need to go through the whole process
     if (amountOfChoices >= choices.length) {
         return choices;
@@ -247,39 +248,22 @@ function getWeightedRandomChoice<T extends VotableObject>(choices: T[], amountOf
     }
 
     //assign a weight to each choice
-    let totalWeight = 0;
-    const choicesWithWeights: TWithWeight[] = filteredChoices.map(choice => {
-        const boost = Math.min(choice.reputation, 4);
+    const choicesWithWeights: TWithWeight[] = shuffleArray(filteredChoices.map(choice => {
+        const boost = choice.reputation;
 
-        //The 3 makes -2 the minimum votes before being ignored completely
-        //this can be changed if this system increases in popularity.
-        const repFactor = choice.votes > 0 ? Math.max(1, choice.reputation + 1) : 1;
-        const weight = Math.exp(choice.votes * repFactor + 3 + boost);
-        totalWeight += Math.max(weight, 0);
-
+        const weight = choice.votes + boost;
         return { ...choice, weight };
-    });
+    })).sort((a, b) => b.weight - a.weight);
 
     // Nothing to filter for
     if (amountOfChoices >= choicesWithWeights.length) {
         return [...forceIncludedChoices, ...filteredChoices];
     }
 
-    //iterate and find amountOfChoices choices
+    // Pick the top options
     const chosen = [...forceIncludedChoices];
-    while (amountOfChoices-- > 0) {
-        //weighted random draw of one element of choices
-        const randomNumber = Math.random() * totalWeight;
-        let stackWeight = choicesWithWeights[0].weight;
-        let i = 0;
-        while (stackWeight < randomNumber) {
-            stackWeight += choicesWithWeights[++i].weight;
-        }
-
-        //add it to the chosen ones and remove it from the choices before the next iteration
+    for (let i = 0; i < amountOfChoices; i++) {
         chosen.push(choicesWithWeights[i]);
-        totalWeight -= choicesWithWeights[i].weight;
-        choicesWithWeights.splice(i, 1);
     }
 
     return chosen;
@@ -293,15 +277,15 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
         : await fetchData();
 
     // Filter for only 1 item for POI categories and Full video
-    let chosenGroups = getWeightedRandomChoice(groups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Full);
-    chosenGroups = getWeightedRandomChoice(chosenGroups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Poi);
-    return chosenGroups.map(//randomly choose 1 good segment per group and return them
-        group => getWeightedRandomChoice(group.segments, 1)[0]
+    let chosenGroups = getBestChoice(groups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Full);
+    chosenGroups = getBestChoice(chosenGroups, 1, true, (choice) => choice.segments[0].actionType === ActionType.Poi);
+    return chosenGroups.map(// choose 1 good segment per group and return them
+        group => getBestChoice(group.segments, 1)[0]
     );
 }
 
 //This function will find segments that are contained inside of eachother, called similar segments
-//Only one similar time will be returned, randomly generated based on the sqrt of votes.
+//Only one similar time will be returned, based on its score
 //This allows new less voted items to still sometimes appear to give them a chance at getting votes.
 //Segments with less than -1 votes are already ignored before this function is called
 async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
