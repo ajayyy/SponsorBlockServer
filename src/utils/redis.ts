@@ -361,17 +361,20 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
 
     cacheConnectionClientId = String(await cacheClient.clientId());
 
-    cacheClient.subscribe("__redis__:invalidate", (messages) => {
-        const key = messages?.[0];
+    cacheClient.subscribe("__redis__:invalidate", (keys) => {
+        if (keys) {
+            lastInvalidationMessage = Date.now();
 
-        lastInvalidationMessage = Date.now();
-        if (cache.delete(key)) {
-            lastInvalidation = Date.now();
-        }
+            for (const key of keys) {
+                if (cache.delete(key)) {
+                    lastInvalidation = Date.now();
+                }
 
-        // To tell it to not save the result of this currently running request
-        if (key && activeRequestPromises[key] !== undefined) {
-            resetKeys.add(key);
+                // To tell it to not save the result of this currently running request
+                if (key && activeRequestPromises[key] !== undefined) {
+                    resetKeys.add(key);
+                }
+            }
         }
     }).catch(Logger.error);
 }
