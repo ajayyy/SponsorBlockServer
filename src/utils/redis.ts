@@ -183,7 +183,7 @@ if (config.redis?.enabled) {
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {
         if (config.redis.maxConnections && activeRequests > config.redis.maxConnections) {
-            reject(new TooManyActiveConnectionsError("Too many active requests in general"));
+            reject(new TooManyActiveConnectionsError(`Too many active requests in general: ${activeRequests} over ${config.redis.maxConnections}`));
             return;
         }
 
