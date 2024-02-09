@@ -152,6 +152,10 @@ if (config.redis?.enabled) {
         return request;
     };
     exportClient.setWithCache = (key, value, options) => {
+        if (cache) {
+            cache.set(key, value as string);
+        }
+
         if (config.redis.useCompression) {
             return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
                 exportClient.set(createKeyName(key), compressed.toString("base64"), options)
@@ -161,6 +165,10 @@ if (config.redis?.enabled) {
         }
     };
     exportClient.setExWithCache = (key, seconds, value) => {
+        if (cache) {
+            cache.set(key, value as string);
+        }
+
         if (config.redis.useCompression) {
             return compress(Buffer.from(value as string, "utf-8")).then((compressed) =>
                 exportClient.setEx(createKeyName(key), seconds, compressed.toString("base64"))
