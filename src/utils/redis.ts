@@ -386,7 +386,7 @@ async function setupCacheClientTracking(client: RedisClientType,
 
     if (!client || !cacheClient.isReady) return;
 
-    await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", cacheConnectionClientId]);
+    await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", cacheConnectionClientId, "BCAST"]);
 }
 
 export default exportClient;
