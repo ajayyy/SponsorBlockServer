@@ -20,6 +20,7 @@ export interface RedisStats {
     memoryCacheLength: number;
     memoryCacheSize: number;
     lastInvalidation: number;
+    lastInvalidationMessage: number;
 }
 
 interface RedisSB {
@@ -58,6 +59,7 @@ let writeRequests = 0;
 let memoryCacheHits = 0;
 let memoryCacheMisses = 0;
 let memoryCacheUncachedMisses = 0;
+let lastInvalidationMessage = 0;
 let lastInvalidation = 0;
 
 const readResponseTime: number[] = [];
@@ -296,7 +298,8 @@ export function getRedisStats(): RedisStats {
         memoryCacheTotalHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses + memoryCacheUncachedMisses),
         memoryCacheLength: cache?.size ?? 0,
         memoryCacheSize: cache?.calculatedSize ?? 0,
-        lastInvalidation
+        lastInvalidation,
+        lastInvalidationMessage
     };
 }
 
@@ -306,6 +309,7 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
     cacheConnectionClientId = String(await cacheClient.clientId());
 
     cacheClient.subscribe("__redis__:invalidate", (messages) => {
+        lastInvalidationMessage = Date.now();
         if (cache.delete(messages?.[0])) {
             lastInvalidation = Date.now();
         }
