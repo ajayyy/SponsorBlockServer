@@ -4,7 +4,7 @@ import { db } from "../databases/databases";
 import { Request, Response } from "express";
 import axios from "axios";
 import { Logger } from "../utils/logger";
-import { getCWSUsers } from "../utils/getCWSUsers";
+import { getCWSUsers, getChromeUsers } from "../utils/getCWSUsers";
 
 // A cache of the number of chrome web store users
 let chromeUsersCache = 0;
@@ -79,27 +79,4 @@ function updateExtensionUsers() {
             getChromeUsers(chromeExtensionUrl)
                 .then(res => chromeUsersCache = res)
         );
-}
-
-/* istanbul ignore next */
-function getChromeUsers(chromeExtensionUrl: string): Promise<number> {
-    return axios.get(chromeExtensionUrl)
-        .then(res => {
-            const body = res.data;
-            // 2021-01-05
-            // [...]<span><meta itemprop="interactionCount" content="UserDownloads:100.000+"/><meta itemprop="opera[...]
-            const matchingString = '"UserDownloads:';
-            const matchingStringLen = matchingString.length;
-            const userDownloadsStartIndex = body.indexOf(matchingString);
-            /* istanbul ignore else */
-            if (userDownloadsStartIndex >= 0) {
-                const closingQuoteIndex = body.indexOf('"', userDownloadsStartIndex + matchingStringLen);
-                const userDownloadsStr = body.substr(userDownloadsStartIndex + matchingStringLen, closingQuoteIndex - userDownloadsStartIndex).replace(",", "").replace(".", "");
-                return parseInt(userDownloadsStr);
-            }
-        })
-        .catch(/* istanbul ignore next */ () => {
-            Logger.debug(`Failing to connect to ${chromeExtensionUrl}`);
-            return 0;
-        });
 }
