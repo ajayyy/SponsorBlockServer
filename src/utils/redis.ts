@@ -187,7 +187,7 @@ if (config.redis?.enabled) {
         }
 
         if (config.redis.useCompression) {
-            return del(...keys.map((key) => createKeyName(key)) as [RedisCommandArgument]);
+            return del(...keys.flatMap((key) => [key, createKeyName(key)]) as [RedisCommandArgument]);
         } else {
             return del(...keys);
         }
