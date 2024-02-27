@@ -12,7 +12,7 @@ export function userCounter(req: Request, res: Response, next: NextFunction): vo
         if (Math.random() < 1 / config.userCounterRatio) {
             axios({
                 method: "post",
-                url: `${config.userCounterURL}/api/v1/addIP?hashedIP=${getIP(req, true)}`,
+                url: `${config.userCounterURL}/api/v1/addIP?hashedIP=${getIP(req)}`,
                 httpAgent
             }).catch(() => /* instanbul skip next */ Logger.debug(`Failing to connect to user counter at: ${config.userCounterURL}`));
         }
