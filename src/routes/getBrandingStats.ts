@@ -7,7 +7,7 @@ import { Logger } from "../utils/logger";
 import { getCWSUsers, getChromeUsers } from "../utils/getCWSUsers";
 
 // A cache of the number of chrome web store users
-let chromeUsersCache = 0;
+let chromeUsersCache = 30000;
 let firefoxUsersCache = 0;
 
 interface DBStatsData {
@@ -64,7 +64,7 @@ async function getStats(): Promise<DBStatsData> {
 
 function updateExtensionUsers() {
     const mozillaAddonsUrl = "https://addons.mozilla.org/api/v3/addons/addon/dearrow/";
-    const chromeExtensionUrl = "https://chrome.google.com/webstore/detail/enamippconapkdmgfgjchkhakpfinmaj";
+    const chromeExtensionUrl = "https://chromewebstore.google.com/detail/dearrow-better-titles-and/enamippconapkdmgfgjchkhakpfinmaj";
     const chromeExtId = "enamippconapkdmgfgjchkhakpfinmaj";
 
     axios.get(mozillaAddonsUrl)
