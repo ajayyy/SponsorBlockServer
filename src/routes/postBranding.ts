@@ -186,6 +186,8 @@ async function handleExistingVotes(type: BrandingType, videoID: VideoID,
     hashedUserID: HashedUserID, UUID: BrandingUUID, hashedIP: HashedIP, voteType: BrandingVoteType) {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
 
+    const idsDealtWith: BrandingUUID[] = [];
+
     // Either votes of the same type, or on the same submission (undo a downvote)
     const existingVotes = await privateDB.prepare("all", `SELECT "id", "UUID", "type" from ${table} where "videoID" = ? AND "userID" = ? AND ("type" = ? OR "UUID" = ?)`, [videoID, hashedUserID, voteType, UUID]) as ExistingVote[];
     if (existingVotes.length > 0) {
@@ -194,8 +196,13 @@ async function handleExistingVotes(type: BrandingType, videoID: VideoID,
             for (const existingVote of existingVotes) {
                 switch (existingVote.type) {
                     case BrandingVoteType.Upvote:
-                        await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
-                        await privateDB.prepare("run", `UPDATE ${table} SET "type" = ?, "UUID" = ? WHERE "id" = ?`, [voteType, UUID, existingVote.id]);
+                        // Old case where there are duplicate rows in private db
+                        if (!idsDealtWith.includes(existingVote.UUID)) {
+                            idsDealtWith.push(existingVote.UUID);
+                            await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+                        }
+
+                        await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
                         break;
                     case BrandingVoteType.Downvote:
                         // Undoing a downvote now that it is being upvoted
@@ -206,10 +213,10 @@ async function handleExistingVotes(type: BrandingType, videoID: VideoID,
             }
         }
 
-    } else {
-        await privateDB.prepare("run", `INSERT INTO ${table} ("videoID", "UUID", "userID", "hashedIP", "type") VALUES (?, ?, ?, ?, ?)`,
-            [videoID, UUID, hashedUserID, hashedIP, voteType]);
     }
+
+    await privateDB.prepare("run", `INSERT INTO ${table} ("videoID", "UUID", "userID", "hashedIP", "type") VALUES (?, ?, ?, ?, ?)`,
+        [videoID, UUID, hashedUserID, hashedIP, voteType]);
 }
 
 /**
