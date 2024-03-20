@@ -88,7 +88,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
                 if (existingUUID) {
-                    await updateVoteTotals(BrandingType.Title, UUID, shouldLock, !!downvote);
+                    await updateVoteTotals(BrandingType.Title, UUID, hashedUserID, shouldLock, !!downvote);
                 } else {
                     if (downvote) {
                         throw new Error("Title submission doesn't exist");
@@ -134,7 +134,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
                 if (existingUUID) {
-                    await updateVoteTotals(BrandingType.Thumbnail, UUID, shouldLock, !!downvote);
+                    await updateVoteTotals(BrandingType.Thumbnail, UUID, hashedUserID, shouldLock, !!downvote);
                 } else {
                     if (downvote) {
                         throw new Error("Thumbnail submission doesn't exist");
@@ -185,7 +185,9 @@ export async function postBranding(req: Request, res: Response) {
 async function handleExistingVotes(type: BrandingType, videoID: VideoID,
     hashedUserID: HashedUserID, UUID: BrandingUUID, hashedIP: HashedIP, voteType: BrandingVoteType) {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
+    const table2 = type === BrandingType.Title ? `"titles"` : `"thumbnails"`;
 
+    const isUsersSubmission = (await db.prepare("get", `SELECT "userID" FROM ${table2} WHERE "UUID" = ?`, [UUID]))?.userID === hashedUserID;
     const idsDealtWith: BrandingUUID[] = [];
 
     // Either votes of the same type, or on the same submission (undo a downvote)
@@ -204,15 +206,33 @@ async function handleExistingVotes(type: BrandingType, videoID: VideoID,
 
                         await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
                         break;
-                    case BrandingVoteType.Downvote:
+                    case BrandingVoteType.Downvote: {
                         // Undoing a downvote now that it is being upvoted
-                        await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+
+                        // Only undo downvote if it is not their submission
+                        if (!isUsersSubmission) {
+                            await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+                        }
+
                         await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
                         break;
+                    }
+                }
+            }
+        } else if (isUsersSubmission) {
+            // Treat like upvoting another submission (undoing upvote)
+            let dealtWith = false;
+            for (const existingVote of existingVotes) {
+                if (existingVote.type === BrandingVoteType.Upvote && existingVote.UUID === UUID) {
+                    if (!dealtWith) {
+                        dealtWith = true;
+                        await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [UUID]);
+                    }
+
+                    await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
                 }
             }
         }
-
     }
 
     await privateDB.prepare("run", `INSERT INTO ${table} ("videoID", "UUID", "userID", "hashedIP", "type") VALUES (?, ?, ?, ?, ?)`,
@@ -223,11 +243,16 @@ async function handleExistingVotes(type: BrandingType, videoID: VideoID,
  * Only called if an existing vote exists.
  * Will update public vote totals and locked status.
  */
-async function updateVoteTotals(type: BrandingType, UUID: BrandingUUID, shouldLock: boolean, downvote: boolean): Promise<void> {
+async function updateVoteTotals(type: BrandingType, UUID: BrandingUUID, userID: HashedUserID, shouldLock: boolean, downvote: boolean): Promise<void> {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
+    const table2 = type === BrandingType.Title ? `"titles"` : `"thumbnails"`;
 
     if (downvote) {
-        await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+        // Only downvote if it is not their submission
+        const isUsersSubmission = (await db.prepare("get", `SELECT "userID" FROM ${table2} WHERE "UUID" = ?`, [UUID]))?.userID === userID;
+        if (!isUsersSubmission) {
+            await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+        }
     } else {
         await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" + 1 WHERE "UUID" = ?`, [UUID]);
     }
