@@ -104,13 +104,9 @@ export async function postBranding(req: Request, res: Response) {
                     await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
 
-                if (isVip && !downvote) {
+                if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    if (shouldLock) {
-                        await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
-                    } else {
-                        await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND t."videoID" = ?`, [videoID]);
-                    }
+                    await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
 
                 sendWebhooks(videoID, UUID).catch((e) => Logger.error(e));
@@ -152,13 +148,9 @@ export async function postBranding(req: Request, res: Response) {
                     }
                 }
 
-                if (isVip && !downvote) {
+                if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    if (shouldLock) {
-                        await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
-                    } else {
-                        await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND t."videoID" = ?`, [videoID]);
-                    }
+                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
             }
         })()]);

@@ -614,13 +614,21 @@ describe("postBranding", () => {
         });
 
         assert.strictEqual(res.status, 200);
-        const dbTitle = await queryTitleByVideo(videoID);
-        const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
-        const dbThumbnail = await queryThumbnailByVideo(videoID);
-        const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+            }
+        }
 
-        assert.strictEqual(dbTitleVotes.locked, 0);
-        assert.strictEqual(dbThumbnailVotes.locked, 0);
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+            }
+        }
     });
 
     it("Downvote title and thumbnail as VIP", async () => {
