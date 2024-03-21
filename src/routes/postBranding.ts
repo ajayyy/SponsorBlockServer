@@ -104,7 +104,7 @@ export async function postBranding(req: Request, res: Response) {
                     await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
 
-                if (isVip) {
+                if (isVip && !downvote) {
                     // unlock all other titles
                     if (shouldLock) {
                         await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
@@ -152,7 +152,7 @@ export async function postBranding(req: Request, res: Response) {
                     }
                 }
 
-                if (isVip) {
+                if (isVip && !downvote) {
                     // unlock all other titles
                     if (shouldLock) {
                         await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
