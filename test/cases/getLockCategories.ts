@@ -2,7 +2,7 @@ import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 import { insertLock } from "../utils/queryGen";
-import { multiGenRandomValue } from "../utils/getRandom";
+import { multiGenProxy } from "../utils/genRandom";
 
 const endpoint = "/api/lockCategories";
 const defaultActionTypes = ["skip", "mute"];
@@ -43,9 +43,8 @@ const validate404 = (videoID: string, overrides: lockOverrides = {}): Promise<vo
         .then(res => assert.strictEqual(res.status, 404));
 };
 
-const videoIDs = multiGenRandomValue("video", "getLockCategories", 3);
-
 describe("getLockCategories", () => {
+    const videoIDs = multiGenProxy("video", "getLockCategories");
     before(async () => {
         await insertLock(db, { videoID: videoIDs[0], reason: "1-short" });
         await insertLock(db, { videoID: videoIDs[0], reason: "1-longer-reason", actionType: "mute", category: "interaction" });

@@ -1,7 +1,7 @@
 import { db } from "../../src/databases/databases";
 import { client } from "../utils/httpClient";
 import assert from "assert";
-import { genUsers, User } from "../utils/genUser";
+import { genUsersProxy, User } from "../utils/genUser";
 import { insertSegment } from "../utils/segmentQueryGen";
 
 // helpers
@@ -11,12 +11,7 @@ const getViewsForUser = (userID: string) => client({
     params: { userID }
 });
 
-const cases = [
-    "u-1",
-    "u-2",
-    "u-3"
-];
-const users = genUsers("getViewUser", cases);
+const users = genUsersProxy("getViewUser");
 
 // set views for users
 users["u-1"].info["views1"] = 30;

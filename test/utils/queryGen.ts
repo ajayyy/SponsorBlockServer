@@ -1,9 +1,9 @@
 import { IDatabase } from "../../src/databases/IDatabase";
 import { HashedUserID } from "../../src/types/user.model";
-import { User, userArray, usernameUserArray } from "./genUser";
+import { User, UsernameUser, userArray, usernameUserArray } from "./genUser";
 import { Feature } from "../../src/types/user.model";
 import { ActionType, Category, Service, VideoIDHash } from "../../src/types/segments.model";
-import { genRandomValue } from "./getRandom";
+import { genRandomValue } from "./genRandom";
 import { getHash } from "../../src/utils/getHash";
 
 // segments
@@ -38,9 +38,16 @@ export const insertUsername = async (db: IDatabase, userID: HashedUserID, userNa
     const lockedValue = Number(locked);
     await db.prepare("run", query, [userID, userName, lockedValue]);
 };
+export const insertUsernameUser = async (db: IDatabase, user: UsernameUser, lock = false) => {
+    await insertUsername(db, user.pubID, user.username, lock);
+};
 export const insertUsernameBulk = async (db: IDatabase, users: usernameUserArray) => {
     for (const user of Object.values(users))
         await insertUsername(db, user.pubID, user.username, false);
+};
+export const deleteUsername = async (db: IDatabase, userID: HashedUserID) => {
+    const query = 'DELETE FROM "userNames" WHERE "userID" = ?';
+    await db.prepare("run", query, [userID]);
 };
 
 // videoInfo
@@ -67,7 +74,7 @@ export const insertLock = async(db: IDatabase, overrides: lockParams = {}) => {
         actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube
     };
     const params = { ...defaults, ...overrides };
-    params.hashedVideoID = getHash(params.videoID);
+    params.hashedVideoID = overrides?.hashedVideoID ?? getHash(params.videoID, 1) as VideoIDHash;
     await db.prepare("run", query, Object.values(params));
 };
 

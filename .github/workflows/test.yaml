@@ -60,13 +60,6 @@ jobs:
     needs: lint-build
     steps:
       - uses: actions/checkout@v3
-      - name: Build the docker-compose stack
-        env:
-          PG_USER: ci_db_user
-          PG_PASS: ci_db_pass
-        run: docker-compose -f docker/docker-compose-ci.yml up -d
-      - name: Check running containers
-        run: docker ps
       - uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -90,6 +83,28 @@ jobs:
         with:
           key: nyc-postgres-${{ github.sha }}
           path: ${{ github.workspace }}/.nyc_output
+    services:
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      postgres:
+        image: postgres:alpine
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_USER: ci_db_user
+          POSTGRES_PASSWORD: ci_db_pass
   codecov:
     needs: [test-sqlite, test-postgres]
     name: Run Codecov

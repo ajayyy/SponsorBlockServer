@@ -4,7 +4,7 @@ import { Feature } from "../../src/types/user.model";
 import { hasFeature } from "../../src/utils/features";
 import { client } from "../utils/httpClient";
 import { grantFeature, insertVip } from "../utils/queryGen";
-import { User, genUser, genUsers } from "../utils/genUser";
+import { User, genUser, genUsersProxy } from "../utils/genUser";
 
 const endpoint = "/api/feature";
 
@@ -19,12 +19,7 @@ const postAddFeatures = (userID: string, adminUserID: string, feature: Feature, 
     }
 });
 
-const cases = [
-    "grant",
-    "remove",
-    "update"
-];
-const users = genUsers("addFeatures", cases);
+const users = genUsersProxy("addFeatures");
 const vipUser = genUser("addFeatures", "vip");
 
 const testedFeature = Feature.ChapterSubmitter;

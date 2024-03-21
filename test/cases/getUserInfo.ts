@@ -3,36 +3,25 @@ import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 import { insertSegment, insertThumbnail, insertThumbnailVote, insertTitle, insertTitleVote } from "../utils/segmentQueryGen";
-import { genUsers, User } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+import { User, genUsersProxy } from "../utils/genUser";
+import { genRandomValue } from "../utils/genRandom";
 import { insertBan, insertUsername, insertWarning } from "../utils/queryGen";
 
 describe("getUserInfo", () => {
     const endpoint = "/api/userInfo";
 
-    const cases = [
-        "n-0",
-        "n-1",
-        "n-2",
-        "n-3",
-        "n-4",
-        "n-5",
-        "n-6",
-        "null",
-        "vip",
-        "warn-0",
-        "warn-1",
-        "warn-2",
-        "warn-3",
-        "ban-1",
-        "ban-2",
-    ];
-
-    const users = genUsers("endpoint", cases);
-    for (const [id, user] of Object.entries(users))
-        // generate last segment UUIDs
-        user.info["last"] = genRandomValue("uuid", id);
-
+    const baseUsersProxy = genUsersProxy("getUserInfo");
+    // override proxy for segment UUIDs
+    const users = new Proxy(baseUsersProxy, {
+        get: (target, prop, receiver) => {
+            const user = Reflect.get(target, prop, receiver);
+            // generate last segment UUIDs
+            if (!user.info?.["last"]) {
+                user.info["last"] = genRandomValue("uuid", prop as string);
+            }
+            return user;
+        }
+    });
     const checkValues = (user: User, expected: Record<string, string | number | boolean>) =>
         client.get(endpoint, { params: { userID: user.privID, value: Object.keys(expected) } })
             .then(res => {

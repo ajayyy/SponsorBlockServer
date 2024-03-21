@@ -1,5 +1,5 @@
 import { db } from "../../src/databases/databases";
-import { genUsers, User } from "../utils/genUser";
+import { genUsersProxy, User } from "../utils/genUser";
 import { client } from "../utils/httpClient";
 import assert from "assert";
 import { insertVip } from "../utils/queryGen";
@@ -13,11 +13,7 @@ const checkVipStatus = (user: User, expected: boolean) =>
             assert.strictEqual(res.data.vip, expected);
         });
 
-const cases = [
-    "vip",
-    "normal",
-];
-const users = genUsers("endpoint", cases);
+const users = genUsersProxy("getIsUserVIP");
 
 describe("getIsUserVIP", () => {
     before(async () => {

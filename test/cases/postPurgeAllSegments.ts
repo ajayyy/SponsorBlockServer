@@ -1,52 +1,40 @@
 import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import { IDatabase } from "../../src/databases/IDatabase";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
-async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
-    const votes = 0,
-        userID = 0,
-        timeSubmitted = 0,
-        views = 0,
-        shadowHidden = 0,
-        hidden = 0,
-        hashedVideoID = `hash_${UUID}`;
-    await db.prepare("run", `INSERT INTO
-        "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID",
-        "userID", "timeSubmitted", "views", "category", "shadowHidden", "hashedVideoID", "hidden")
-    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID, hidden]);
-}
+import { insertSegment } from "../utils/segmentQueryGen";
+import { genAnonUser, genUser } from "../utils/genUser";
+import { insertVipUser } from "../utils/queryGen";
 
 async function dbSponsorTimesCompareExpect(db: IDatabase, videoId: string, expectdHidden: number) {
-    const seg = await db.prepare("get", `SELECT "hidden", "UUID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoId]);
-    for (let i = 0, len = seg.length; i < len; i++) {
-        if (seg.hidden !== expectdHidden) {
-            return `${seg.UUID} hidden expected to be ${expectdHidden} but found ${seg.hidden}`;
-        }
-    }
+    const seg = await db.prepare("get", `SELECT "hidden", "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" != ? `, [videoId, expectdHidden]);
+    if (seg) return `${seg.UUID} expected to be ${expectdHidden} but found ${seg.hidden}}`;
     return;
 }
 
 describe("postPurgeAllSegments", function () {
-    const privateVipUserID = "VIPUser-purgeAll";
-    const vipUserID = getHash(privateVipUserID);
     const endpoint = "/api/purgeAllSegments";
-    const postSegmentShift = (videoID: string, userID: string) => client.post(endpoint, { videoID, userID });
+    const postPurgeSegments = (videoID: string, userID: string) => client.post(endpoint, { videoID, userID });
+    // users
+    const vipUser = genUser("postPurgeAllSegments", "vipUser");
+    const randomUser = genAnonUser();
+    // videos
+    const purgeID = "vsegpurge01";
+    const identifier = "vsegpurgetest01";
 
     before(async function () {
         // startTime and endTime get set in beforeEach for consistency
-        await dbSponsorTimesAdd(db, "vsegpurge01", 0, 1, "vsegpurgetest01uuid01", "intro");
-        await dbSponsorTimesAdd(db, "vsegpurge01", 0, 2, "vsegpurgetest01uuid02", "sponsor");
-        await dbSponsorTimesAdd(db, "vsegpurge01", 0, 3, "vsegpurgetest01uuid03", "interaction");
-        await dbSponsorTimesAdd(db, "vsegpurge01", 0, 4, "vsegpurgetest01uuid04", "outro");
-        await dbSponsorTimesAdd(db, "vseg-not-purged01", 0, 5, "vsegpurgetest01uuid05", "outro");
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
+        await insertSegment(db, { videoID: purgeID, category: "intro" }, identifier);
+        await insertSegment(db, { videoID: purgeID, category: "sponsor" }, identifier);
+        await insertSegment(db, { videoID: purgeID, category: "interaction" }, identifier);
+        await insertSegment(db, { videoID: purgeID, category: "outro" }, identifier);
+        await insertSegment(db, { videoID: "vseg-not-purged01", category: "outro" }, identifier);
+        await insertVipUser(db, vipUser);
     });
 
     it("Reject non-VIP user", function (done) {
-        postSegmentShift("vsegpurge01", "segshift_randomuser001")
+        postPurgeSegments(purgeID, randomUser.privID)
             .then(res => {
                 assert.strictEqual(res.status, 403);
                 done();
@@ -55,10 +43,10 @@ describe("postPurgeAllSegments", function () {
     });
 
     it("Purge all segments success", function (done) {
-        postSegmentShift("vsegpurge01", privateVipUserID)
+        postPurgeSegments(purgeID, vipUser.privID)
             .then(async res => {
                 assert.strictEqual(res.status, 200);
-                done(await dbSponsorTimesCompareExpect(db, "vsegpurge01", 1) || await dbSponsorTimesCompareExpect(db, "vseg-not-purged01", 0));
+                done(await dbSponsorTimesCompareExpect(db, purgeID, 1) || await dbSponsorTimesCompareExpect(db, "vseg-not-purged01", 0));
             })
             .catch(err => done(err));
     });

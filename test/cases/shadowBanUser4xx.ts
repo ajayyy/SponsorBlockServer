@@ -1,7 +1,8 @@
 import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { genUser } from "../utils/genUser";
+import { insertVip } from "../utils/queryGen";
 
 const endpoint = "/api/shadowBanUser";
 
@@ -12,37 +13,25 @@ const postShadowBan = (params: Record<string, string>) => client({
 });
 
 describe("shadowBanUser 4xx", () => {
-    const VIPuserID = "shadow-ban-4xx-vip";
+    const vip = genUser("shadowBanUser", "4xx");
 
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
+        await insertVip(db, vip.pubID);
     });
 
-    it("Should return 400 if no adminUserID", (done) => {
+    it("Should return 400 if no adminUserID", () => {
         const userID = "shadowBanned";
         postShadowBan({ userID })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+            .then(res => assert.strictEqual(res.status, 400));
     });
 
-    it("Should return 400 if no userID", (done) => {
-        postShadowBan({ adminUserID: VIPuserID })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 400 if no userID", () => {
+        postShadowBan({ adminUserID: vip.privID })
+            .then(res => assert.strictEqual(res.status, 400));
     });
 
-    it("Should return 403 if not authorized", (done) => {
+    it("Should return 403 if not authorized", () => {
         postShadowBan({ adminUserID: "notVIPUserID", userID: "shadowBanned" })
-            .then(res => {
-                assert.strictEqual(res.status, 403);
-                done();
-            })
-            .catch(err => done(err));
+            .then(res => assert.strictEqual(res.status, 403));
     });
 });

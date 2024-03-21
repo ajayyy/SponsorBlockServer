@@ -2,45 +2,46 @@ import { strictEqual, ok } from "assert";
 import { db } from "../../src/databases/databases";
 import { archiveDownvoteSegment } from "../../src/cronjob/downvoteSegmentArchiveJob";
 import { DBSegment } from "../../src/types/segments.model";
+import { insertSegment, insertSegmentParams } from "../utils/segmentQueryGen";
+import { multiGenProxy } from "../utils/genRandom";
 
 const oct2021 = new Date("October 1, 2021").getTime();
 const nov2021 = new Date("November 1, 2021").getTime();
 const dec2021 = new Date("December 17, 2021").getTime();
 const dec2022 = new Date("December 17, 2022").getTime();
 
-const records = [
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj00", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj01", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj02", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj03", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj04", "dsajUser", dec2021, 0, 0, 0,],
+const videoIDs = multiGenProxy("videoID", "downvoteSegmentArchiveJob");
 
-    ["dsajVideo1", 0, 0, 2, 0, "dsaj10", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo1", 0, 0, -3, 0, "dsaj11", "dsajUser", dec2021, 0, 0, 0],
-
-    ["dsajVideo2", 0, 0, 2, 0, "dsaj20", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo2", 0, 0, -4, 0, "dsaj21", "dsajUser", oct2021, 0, 0, 0],
-
-    ["dsajVideo3", 0, 0, 2, 1, "dsaj30", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo3", 0, 0, 100000, 0, "dsaj31", "dsajUser", dec2021, 0, 0, 0],
-
-    ["dsajVideo4", 0, 0, 100000, 0, "dsaj40", "dsajUser", dec2021, 0, 1, 0],
-
-    ["dsajVideo5", 0, 0, 2, 0, "dsaj50", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo5", 0, 0, -1, 0, "dsaj51", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo5", 0, 0, -2, 0, "dsaj52", "dsajUser", nov2021, 0, 0, 0],
-    ["dsajVideo5", 0, 0, 2, 0, "dsaj53", "dsajUser", dec2021, 0, 0, 0]
+const records: insertSegmentParams[] = [
+    // video0
+    { videoID: videoIDs[0], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[0], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[0], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[0], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[0], votes: 2, timeSubmitted: dec2021 },
+    // video1
+    { videoID: videoIDs[1], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[1], votes: -3, timeSubmitted: dec2021 },
+    // video2
+    { videoID: videoIDs[2], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[2], votes: -4, timeSubmitted: oct2021 },
+    // video3
+    { videoID: videoIDs[3], votes: 2, timeSubmitted: dec2021, locked: true },
+    { videoID: videoIDs[3], votes: 100000, timeSubmitted: dec2021 },
+    // video4
+    { videoID: videoIDs[4], votes: 100000, timeSubmitted: dec2021, hidden: true },
+    // video5
+    { videoID: videoIDs[5], votes: 2, timeSubmitted: dec2021 },
+    { videoID: videoIDs[5], votes: -1, timeSubmitted: dec2021 },
+    { videoID: videoIDs[5], votes: -2, timeSubmitted: nov2021 },
+    { videoID: videoIDs[5], votes: 2, timeSubmitted: dec2021 },
 ];
 
 describe("downvoteSegmentArchiveJob", () => {
     beforeEach(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "hidden", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-
         for (const record of records) {
-            await db.prepare("run", query, record);
+            await insertSegment(db, record);
         }
-
-        return;
     });
 
     it("Should update the database version when starting the application", async () => {

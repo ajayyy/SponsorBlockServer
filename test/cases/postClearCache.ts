@@ -1,17 +1,13 @@
 import { db } from "../../src/databases/databases";
 import assert from "assert";
 import { client } from "../utils/httpClient";
-import { genUsers, User } from "../utils/genUser";
+import { User, genUsersProxy } from "../utils/genUser";
 import { insertSegment, insertVip } from "../utils/queryGen";
 
 const endpoint = "/api/clearCache";
 const postClearCache = (user: User, videoID: string) => client({ method: "post", url: endpoint, params: { userID: user.privID, videoID } });
 
-const cases = [
-    "vip",
-    "normal",
-];
-const users = genUsers("postClearCache", cases);
+const users = genUsersProxy("postClearCache");
 
 describe("postClearCache", () => {
     before(async () => {

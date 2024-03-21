@@ -5,7 +5,7 @@ import { getHash } from "../../src/utils/getHash";
 import redis from "../../src/utils/redis";
 import assert from "assert";
 import { setTimeout } from "timers/promises";
-import { genRandom } from "../utils/getRandom";
+import { genRandom } from "../utils/genRandom";
 
 const rand1Hash = genRandom(24);
 const rand1Hash_Key = getHash(rand1Hash, 1);

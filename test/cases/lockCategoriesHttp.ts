@@ -5,7 +5,7 @@ import { UserID } from "../../src/types/user.model";
 import { Category, VideoID } from "../../src/types/segments.model";
 import { insertVipUser } from "../utils/queryGen";
 import { genUser } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+import { genRandomValue } from "../utils/genRandom";
 
 interface LockCategory {
     category: Category,

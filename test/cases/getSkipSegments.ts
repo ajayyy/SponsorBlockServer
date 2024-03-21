@@ -1,498 +1,245 @@
 import { db } from "../../src/databases/databases";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+import { arrayPartialDeepEquals, partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { genAnonUser } from "../utils/genUser";
+import { genRandomNumber, genRandomValue } from "../utils/genRandom";
+import { insertSegment, insertSegmentParams } from "../utils/segmentQueryGen";
+import { AxiosRequestConfig } from "axios";
+import { Service } from "../../src/types/segments.model";
+
+type ResponseSegment = {
+    segment?: [number, number] | number[],
+    category?: string,
+    UUID?: string,
+    videoDuration?: number,
+    actionType?: string,
+    votes?: number,
+    locked?: number,
+    description?: string
+};
+
+const defaultResponseSegment = {
+    segment: [1, 10] as [number, number],
+    category: "sponsor",
+    UUID: "",
+    videoDuration: 0,
+    actionType: "skip",
+    votes: 0,
+    locked: 0,
+    description: ""
+};
+
+const genRandomStartEnd = (min = 0, max = 100): [number, number] => {
+    const start = genRandomNumber(min, max);
+    const end = genRandomNumber(start + 1, max);
+    return [start, end];
+};
 
 describe("getSkipSegments", () => {
     const endpoint = "/api/skipSegments";
-    before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["getSkipSegmentID0", 1, 11, 1, 0, "uuid01", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID0", 12, 14, 2, 0, "uuid02", "testman", 0, 50, "sponsor", "mute", "YouTube", 100, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID0", 20, 33, 2, 0, "uuid03", "testman", 0, 50, "intro", "skip", "YouTube", 101, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID1", 1, 11, 2, 0, "uuid10", "testman", 0, 50, "sponsor", "skip", "PeerTube", 120, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID2", 1, 11, 2, 1, "uuid20", "testman", 0, 50, "sponsor", "skip", "YouTube", 140, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID3", 1, 11, 2, 0, "uuid30", "testman", 0, 50, "sponsor", "skip", "YouTube", 200, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID3", 7, 22, -3, 0, "uuid31", "testman", 0, 50, "sponsor", "skip", "YouTube", 300, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentMultiple", 1, 11, 2, 0, "uuid40", "testman", 0, 50, "intro", "skip", "YouTube", 400, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentMultiple", 20, 33, 2, 0, "uuid41", "testman", 0, 50, "intro", "skip", "YouTube", 500, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentLocked", 20, 33, 2, 1, "uuid50", "testman", 0, 50, "intro", "skip", "YouTube", 230, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentLocked", 20, 34, 100000, 0, "uuid51", "testman", 0, 50, "intro", "skip", "YouTube", 190, 0, 0, ""]);
-        await db.prepare("run", query, ["getSkipSegmentID6", 20, 34, 100000, 0, "uuid60", "testman", 0, 50, "sponsor", "skip", "YouTube", 190, 1, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 2, 0, "requiredSegmentVid1", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, -2, 0, "requiredSegmentVid2", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, -2, 0, "requiredSegmentVid3", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 2, 0, "requiredSegmentVid4", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 60, 70, 0, 0, "requiredSegmentVid-hidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 1, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentVid", 80, 90, 0, 0, "requiredSegmentVid-shadowhidden", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 1, ""]);
-        await db.prepare("run", query, ["chapterVid", 60, 80, 2, 0, "chapterVid-1", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 1"]);
-        await db.prepare("run", query, ["chapterVid", 70, 75, 2, 0, "chapterVid-2", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 2"]);
-        await db.prepare("run", query, ["chapterVid", 71, 75, 2, 0, "chapterVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 3"]);
-        await db.prepare("run", query, ["requiredSegmentHashVid", 10, 20, -2, 0, "1d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd428fb5f9e65c4e16e7807340fa", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
-        await db.prepare("run", query, ["requiredSegmentHashVid", 20, 30, -2, 0, "1ebde8e8ae03096b6c866aa2c8cc7ee1d720ca1fca27bea3f39a6a1b876577e71", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
-        return;
+    let randomVideoID: string;
+
+    beforeEach(() => {
+        randomVideoID = genRandomValue("video", "getSkipSegments");
     });
 
-    it("Should be able to get a time by category 1", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                assert.strictEqual(data[0].segment[0], 1);
-                assert.strictEqual(data[0].segment[1], 11);
-                assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "uuid01");
-                assert.strictEqual(data[0].votes, 1);
-                assert.strictEqual(data[0].locked, 0);
-                assert.strictEqual(data[0].videoDuration, 100);
-                done();
-            })
-            .catch(err => done(err));
+    const createSegment = async(segment: ResponseSegment = {}, overrides: insertSegmentParams = {}): Promise<ResponseSegment> => {
+        // setup random values
+        const user = genAnonUser();
+        const UUID = genRandomValue("uuid", "getSkipSegments");
+        // if description, add chapter
+        if (segment.description) {
+            segment.category = "chapter";
+            segment.actionType = "chapter";
+        }
+        // insert segments
+        const responseSegmentOverride: ResponseSegment = {
+            ...defaultResponseSegment,
+            UUID,
+            ...segment
+        };
+        const sanitizedResponseSegment = responseSegmentOverride as ResponseSegment;
+        delete sanitizedResponseSegment.segment;
+        const result: insertSegmentParams = {
+            ...sanitizedResponseSegment,
+            videoID: randomVideoID,
+            startTime: segment.segment?.[0] ?? 0,
+            endTime: segment.segment?.[1] ?? 10,
+            userID: user.pubID,
+            ...overrides
+        };
+        await insertSegment(db, result);
+        return responseSegmentOverride;
+    };
+
+    const createAndAssert = async (segments: ResponseSegment[] = [{}], request: AxiosRequestConfig, overrides: insertSegmentParams = {}) => {
+        const parsedSegments: ResponseSegment[] = [];
+        for (const segment of segments) {
+            parsedSegments.push(await createSegment(segment, overrides));
+        }
+        // fetch response
+        const obj = { url: endpoint, method: "get", ...request };
+        const res = await client(obj);
+        // assert response
+        assert.strictEqual(res.status, 200);
+        const data = res.data;
+        assert.ok(arrayPartialDeepEquals(data, parsedSegments), `Expected \n${JSON.stringify(parsedSegments, null, 2)} \nto equal \n${JSON.stringify(data, null, 2)}`);
+        assert.strictEqual(data.length, parsedSegments.length);
+    };
+
+    it("Should be able to get a time by category", () => {
+        const overrides = { category: "sponsor" };
+        return createAndAssert([overrides], { params: { videoID: randomVideoID, ...overrides } });
     });
 
-    it("Should be able to get a time by category and action type", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", actionType: "mute" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                const expected = [{
-                    segment: [12, 14],
-                    category: "sponsor",
-                    UUID: "uuid02",
-                    videoDuration: 100
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data.length, 1);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by category and action type", () => {
+        const overrides = { category: "sponsor", actionType: "mute" };
+        return createAndAssert([overrides], { params: { videoID: randomVideoID, ...overrides } });
     });
 
-    it("Should be able to get a time by category and getSkipSegmentMultiple action types", (done) => {
-        client.get(`${endpoint}?videoID=getSkipSegmentID0&category=sponsor&actionType=mute&actionType=skip`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                    videoDuration: 100
-                }, {
-                    UUID: "uuid02"
-                }];
-                assert.strictEqual(data.length, 2);
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by category and multiple action types", () => {
+        const override1 = { segment: genRandomStartEnd(), category: "intro", actionType: "mute" };
+        const override2 = { segment: genRandomStartEnd(), category: "intro", actionType: "skip" };
+        return createAndAssert([override1, override2], { url: `${endpoint}?videoID=${randomVideoID}&category=intro&actionType=mute&actionType=skip` });
     });
 
-    it("Should be able to get a time by category and getSkipSegmentMultiple action types (JSON array)", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", actionTypes: `["mute","skip"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                    videoDuration: 100
-                }, {
-                    UUID: "uuid02"
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by category and getSkipSegmentMultiple action types (JSON array)", () => {
+        const override1 = { segment: genRandomStartEnd(), category: "sponsor", actionType: "mute" };
+        const override2 = { segment: genRandomStartEnd(), category: "sponsor", actionType: "skip" };
+        return createAndAssert([override1, override2], { params: { videoID: randomVideoID, category: "sponsor", actionTypes: `["mute","skip"]` } });
     });
 
-    it("Should be able to get a time by category for a different service 1", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID1", category: "sponsor", service: "PeerTube" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid10",
-                    videoDuration: 120
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                assert.strictEqual(data.length, 1);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by category for a different service", () => {
+        const serviceOverride = { service: "PeerTube" as Service };
+        const override = { category: "sponsor" };
+        return createAndAssert([override], { params: { videoID: randomVideoID, ...override, ...serviceOverride } }, serviceOverride);
     });
 
-    it("Should be able to get a time by category 2", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "intro" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [20, 33],
-                    category: "intro",
-                    UUID: "uuid03"
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by category", () => {
+        const override = { category: "intro" };
+        return createAndAssert([override], { params: { videoID: randomVideoID, ...override } });
     });
 
-    it("Should be able to get a time by categories array", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["sponsor"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                    videoDuration: 100
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by categories array", () => {
+        return createAndAssert([{}], { params: { videoID: randomVideoID, categories: `["sponsor"]` } });
     });
 
-    it("Should be able to get a time by categories array 2", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["intro"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [20, 33],
-                    category: "intro",
-                    UUID: "uuid03",
-                    videoDuration: 101
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get a time by categories array", () => {
+        const override = { category: "intro" };
+        return createAndAssert([override], { params: { videoID: randomVideoID, categories: `["intro"]` } });
     });
 
-    it("Should return 404 if all submissions are hidden", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID6" } })
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 404 if all submissions are hidden", async () => {
+        await createSegment({}, { videoID: randomVideoID, hidden: true });
+        client.get(endpoint, { params: { videoID: randomVideoID } })
+            .then(res => assert.strictEqual(res.status, 404));
     });
 
-    it("Should be able to get getSkipSegmentMultiple times by category", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentMultiple",  categories: `["intro"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "intro",
-                    UUID: "uuid40",
-                }, {
-                    segment: [20, 33],
-                    category: "intro",
-                    UUID: "uuid41",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get getSkipSegmentMultiple times by category", () => {
+        const category = { category: "intro" };
+        const override1 = { segment: genRandomStartEnd(10), ...category };
+        const override2 = { segment: genRandomStartEnd(20), ...category };
+        return createAndAssert([override1, override2], { params: { videoID: randomVideoID, categories: `["intro"]` } });
     });
 
-    it("Should be able to get getSkipSegmentMultiple times by getSkipSegmentMultiple categories", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `["sponsor", "intro"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                }, {
-                    segment: [20, 33],
-                    category: "intro",
-                    UUID: "uuid03",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get getSkipSegmentMultiple times by getSkipSegmentMultiple categories", () => {
+        const override1 = { segment: genRandomStartEnd(), category: "sponsor" };
+        const override2 = { segment: genRandomStartEnd(), category: "intro" };
+        return createAndAssert([override1, override2], { params: { videoID: randomVideoID, categories: `["sponsor", "intro"]` } });
     });
 
-    it("Should be possible to send unexpected query parameters", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", fakeparam: "hello", category: "sponsor" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be possible to send unexpected query parameters", () => {
+        return createAndAssert([{}], { params: { videoID: randomVideoID, fakeparam: "hello" } });
     });
 
-    it("Low voted submissions should be hidden", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID3", category: "sponsor" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid30",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Low voted submissions should be hidden", async () => {
+        await createSegment({}, { videoID: randomVideoID, votes: -3 });
+        return createAndAssert([{}], { params: { videoID: randomVideoID } });
     });
 
-    it("Should return 404 if no segment found", (done) => {
-        client.get(endpoint, { params: { videoID: "notarealvideo" } })
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 404 if no segment found", () => {
+        client.get(endpoint, { params: { videoID: randomVideoID } })
+            .then(res => assert.strictEqual(res.status, 404));
     });
 
-    it("Should return 400 if bad categories argument", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", categories: `[not-quoted,not-quoted]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 400 if bad categories argument", () => {
+        client.get(endpoint, { params: { videoID: randomVideoID, categories: `[not-quoted,not-quoted]` } })
+            .then(res => assert.strictEqual(res.status, 400));
     });
 
-    it("Should be able send a comma in a query param", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID2", category: "sponsor" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid20",
-                    votes: 2,
-                    locked: 1
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should always get getSkipSegmentLocked segment", () => {
+        const nonLocked = { category: "intro", votes: 10000 };
+        const locked = { category: "intro", locked: 1 };
+        createAndAssert([nonLocked, locked], { params: { videoID: randomVideoID } });
     });
 
-    it("Should always get getSkipSegmentLocked segment", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentLocked", category: "intro" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [20, 33],
-                    category: "intro",
-                    UUID: "uuid50",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get getSkipSegmentMultiple categories with repeating parameters", () => {
+        const override1 = { segment: genRandomStartEnd(), category: "sponsor" };
+        const override2 = { segment: genRandomStartEnd(), category: "intro" };
+        return createAndAssert([override1, override2], { url: `${endpoint}?category=sponsor&category=intro`, params: { videoID: randomVideoID } });
     });
 
-    it("Should be able to get getSkipSegmentMultiple categories with repeating parameters", (done) => {
-        client.get(`${endpoint}?category=sponsor&category=intro`, { params: { videoID: "getSkipSegmentID0" } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                }, {
-                    segment: [20, 33],
-                    category: "intro",
-                    UUID: "uuid03",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get, categories param overriding repeating category", () => {
+        const override1 = { segment: genRandomStartEnd(), category: "sponsor" };
+        const override2 = { segment: genRandomStartEnd(), category: "intro" };
+        createSegment({ ...override2 }, { videoID: randomVideoID });
+        return createAndAssert([override1], { params: { videoID: randomVideoID, categories: ["sponsor"], category: "intro" } });
     });
 
-    it("Should be able to get, categories param overriding repeating category", (done) => {
-        client.get(`${endpoint}?videoID=getSkipSegmentID0&categories=["sponsor"]&category=intro`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 1);
-                const expected = [{
-                    segment: [1, 11],
-                    category: "sponsor",
-                    UUID: "uuid01",
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get specific segments with requiredSegments", () => {
+        const required1 = { segment: genRandomStartEnd(10, 20), UUID: genRandomValue("uuid", "getSkipSegments-req"), votes: -2 };
+        const required2 = { segment: genRandomStartEnd(20, 30), UUID: genRandomValue("uuid", "getSkipSegments-req"), votes: -2 };
+        return createAndAssert([required1, required2],
+            { params: { videoID: randomVideoID, requiredSegments: `["${required1.UUID}","${required2.UUID}"]` } });
     });
 
-    it("Should be able to get specific segments with requiredSegments", (done) => {
-        const required2 = "requiredSegmentVid2";
-        const required3 = "requiredSegmentVid3";
-        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${required2}","${required3}"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    UUID: required2,
-                }, {
-                    UUID: required3,
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get specific segments with repeating requiredSegment", () => {
+        const required1 = { segment: genRandomStartEnd(10, 20), UUID: genRandomValue("uuid", "getSkipSegments-req"), votes: -2 };
+        const required2 = { segment: genRandomStartEnd(20, 30), UUID: genRandomValue("uuid", "getSkipSegments-req"), votes: -2 };
+        return createAndAssert([required1, required2],
+            { url: `${endpoint}?requiredSegment=${required1.UUID}&requiredSegment=${required2.UUID}`, params: { videoID: randomVideoID } });
     });
 
-    it("Should be able to get specific segments with repeating requiredSegment", (done) => {
-        const required2 = "requiredSegmentVid2";
-        const required3 = "requiredSegmentVid3";
-        client.get(`${endpoint}?videoID=requiredSegmentVid&requiredSegment=${required2}&requiredSegment=${required3}`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    UUID: required2,
-                }, {
-                    UUID: required3,
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get overlapping chapter segments if very different", async () => {
+        const chapter1 = { segment: [60, 80], UUID: genRandomValue("uuid", "getSkipSegments-req"), description: "Chapter 1" };
+        const chapter2 = { segment: [70, 75], UUID: genRandomValue("uuid", "getSkipSegments-req"), description: "Chapter 2" };
+        const chapter3 = { segment: [71, 75], UUID: genRandomValue("uuid", "getSkipSegments-req"), description: "Chapter 3" };
+        for (const chapter of [chapter1, chapter2, chapter3]) {
+            createSegment(chapter, { videoID: randomVideoID });
+        }
+        const videoResponse = await client.get(endpoint, { params: { videoID: randomVideoID, actionType: "chapter", category: "chapter" } });
+        const ch12 = [chapter1, chapter2];
+        const ch13 = [chapter1, chapter3];
+        const data = videoResponse.data;
+        assert.strictEqual(data.length, 2);
+        return assert.ok(partialDeepEquals(data, ch12, false) || partialDeepEquals(data, ch13));
     });
 
-    it("Should be able to get overlapping chapter segments if very different", (done) => {
-        client.get(`${endpoint}?videoID=chapterVid&category=chapter&actionType=chapter`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    UUID: "chapterVid-1",
-                    description: "Chapter 1"
-                }, {
-                    UUID: "chapterVid-2",
-                    description: "Chapter 2"
-                }];
-                const expected2 = [{
-                    UUID: "chapterVid-1",
-                    description: "Chapter 1"
-                }, {
-                    UUID: "chapterVid-3",
-                    description: "Chapter 3"
-                }];
-
-                assert.ok(partialDeepEquals(data, expected, false) || partialDeepEquals(data, expected2));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should get 400 if no videoID passed in", () => {
+        return client.get(endpoint)
+            .then(res => assert.strictEqual(res.status, 400));
     });
 
-    it("Should get 400 if no videoID passed in", (done) => {
-        client.get(endpoint)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get requiredSegment by partial", () => {
+        const required1 = { segment: genRandomStartEnd(10, 20), UUID: genRandomValue("uuid", "getSkipSegments-req"), votes: -2 };
+        const required2 = { segment: genRandomStartEnd(20, 30), UUID: genRandomValue("uuid", "getSkipSegments-req"), votes: -2 };
+        return createAndAssert([required1, required2],
+            { url: `${endpoint}?requiredSegment=${required1.UUID.slice(0,8)}&requiredSegment=${required2.UUID.slice(0,8)}`, params: { videoID: randomVideoID } });
     });
 
-    it("Should be able to get requiredSegment by partial", (done) => {
-        const required1 = "1d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd428fb5f9e65c4e16e7807340fa";
-        const required2 = "1ebde8e8ae03096b6c866aa2c8cc7ee1d720ca1fca27bea3f39a6a1b876577e71";
-        client.get(`${endpoint}?videoID=requiredSegmentHashVid&requiredSegment=${required1.slice(0,8)}&requiredSegment=${required2.slice(0,8)}`)
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    UUID: required1,
-                }, {
-                    UUID: required2,
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get hidden segments with requiredSegments", () => {
+        const hidden = { UUID: genRandomValue("uuid", "getSkipSegments-req") };
+        return createAndAssert([hidden], { params: { videoID: randomVideoID, requiredSegment: hidden.UUID } }, { hidden: true });
     });
 
-    it("Should be able to get hidden segments with requiredSegments", (done) => {
-        const required3 = "requiredSegmentVid3";
-        const requiredHidden = "requiredSegmentVid-hidden";
-        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${requiredHidden}","${required3}"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    UUID: requiredHidden,
-                }, {
-                    UUID: required3,
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to get shadowhidden segments with requiredSegments", () => {
+        const shadowHidden = { UUID: genRandomValue("uuid", "getSkipSegments-req") };
+        return createAndAssert([shadowHidden], { params: { videoID: randomVideoID, requiredSegment: shadowHidden.UUID } }, { shadowHidden: true });
     });
 
-    it("Should be able to get shadowhidden segments with requiredSegments", (done) => {
-        const required2 = "requiredSegmentVid2";
-        const requiredShadowHidden = "requiredSegmentVid-shadowhidden";
-        client.get(endpoint, { params: { videoID: "requiredSegmentVid", requiredSegments: `["${required2}","${requiredShadowHidden}"]` } })
-            .then(res => {
-                assert.strictEqual(res.status, 200);
-                const data = res.data;
-                assert.strictEqual(data.length, 2);
-                const expected = [{
-                    UUID: required2,
-                }, {
-                    UUID: requiredShadowHidden,
-                }];
-                assert.ok(partialDeepEquals(data, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should get 400 for invalid category type", (done) => {
-        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: 1 } })
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should get 400 for invalid category type", () => {
+        return client.get(endpoint, { params: { videoID: randomVideoID, category: 1 } })
+            .then(res => assert.strictEqual(res.status, 400));
     });
 });

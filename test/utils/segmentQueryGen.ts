@@ -1,12 +1,12 @@
 import { IDatabase } from "../../src/databases/IDatabase";
 import { Service, VideoIDHash } from "../../src/types/segments.model";
 import { HashedUserID } from "../../src/types/user.model";
-import { genRandom, genRandomValue } from "./getRandom";
+import { genRandom, genRandomValue } from "./genRandom";
 import { getHash } from "../../src/utils/getHash";
 
 interface baseParams {
     videoID?: string
-    hashedVideoID?: VideoIDHash | ""
+    hashedVideoID?: string | VideoIDHash | ""
     userID?: HashedUserID | ""
     service?: Service
     timeSubmitted?: number
@@ -14,7 +14,7 @@ interface baseParams {
 }
 
 // sponsorTimes
-interface insertSegmentParams extends baseParams {
+export interface insertSegmentParams extends baseParams {
     startTime?: number,
     endTime?: number,
     votes?: number,
@@ -24,13 +24,16 @@ interface insertSegmentParams extends baseParams {
     actionType?: string,
     videoDuration?: number,
     hidden?: boolean | number,
+    reputation?: number,
     shadowHidden?: boolean | number,
+    hashedVideoID?: string | VideoIDHash,
+    userAgent?: string,
     description?: string
 }
 const defaultSegmentParams: insertSegmentParams = {
     videoID: "",
     startTime: 0,
-    endTime: 0,
+    endTime: 10,
     votes: 0,
     locked: false,
     UUID: "",
@@ -42,8 +45,10 @@ const defaultSegmentParams: insertSegmentParams = {
     service: Service.YouTube,
     videoDuration: 0,
     hidden: false,
+    reputation: 0,
     shadowHidden: false,
-    hashedVideoID: "",
+    hashedVideoID: "" as VideoIDHash,
+    userAgent: "",
     description: ""
 };
 
@@ -51,11 +56,11 @@ const generateDefaults = (identifier: string) => ({
     videoID: `vid-${identifier}`,
     hashedVideoID: getHash(`vid-${identifier}`),
     userID: `user-${identifier}`,
-    UUID: genRandomValue("uuid", identifier, 2),
+    UUID: genRandomValue("uuid", identifier),
 });
 
 export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
-    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // generate defaults
     identifier = identifier ?? genRandom();
     const defaults = generateDefaults(identifier);
@@ -64,6 +69,9 @@ export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams
     params.locked = Number(params.locked);
     params.hidden = Number(params.hidden);
     params.shadowHidden = Number(params.shadowHidden);
+    // generate hashedVideoID if not provided
+    params.hashedVideoID = (overrides?.hashedVideoID ?? getHash(params.videoID, 1)) as VideoIDHash;
+    // debug
     await db.prepare("run", query, Object.values(params));
 };
 export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {

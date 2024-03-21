@@ -2,7 +2,7 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 import redis from "../../src/utils/redis";
 import { config } from "../../src/config";
-import { genRandom } from "../utils/getRandom";
+import { genRandom } from "../utils/genRandom";
 
 const validateEtag = (expected: string, actual: string): boolean => {
     const [actualHashType, actualHashKey, actualService] = actual.split(";");

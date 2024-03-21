@@ -4,8 +4,8 @@ services:
     container_name: database-co
     image: postgres:alpine
     environment:
-      - POSTGRES_USER=${PG_USER}
-      - POSTGRES_PASSWORD=${PG_PASS}
+      - POSTGRES_USER=ci_db_user
+      - POSTGRES_PASSWORD=ci_db_pass
     ports:
       - 5432:5432
   redis:

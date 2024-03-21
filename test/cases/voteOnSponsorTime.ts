@@ -1,822 +1,609 @@
-import { config } from "../../src/config";
-import { db, privateDB } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
+import { db } from "../../src/databases/databases";
 import { ImportMock } from "ts-mock-imports";
 import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
 import { YouTubeApiMock } from "../mocks/youtubeMock";
 import assert from "assert";
-import { client } from "../utils/httpClient";
 import { arrayDeepEquals } from "../utils/partialDeepEquals";
+import { genRandomValue, multiGenProxy } from "../utils/genRandom";
+import { insertChapter, insertSegment } from "../utils/segmentQueryGen";
+import { User, genAnonUser, genUser } from "../utils/genUser";
+import { insertBan, insertLock, insertVipUser, insertWarning } from "../utils/queryGen";
+import { assertVotes, assertCategory, assertPrivateVote, assertCategoryVotes, assertSegmentStatus, postVote, postVoteCategory, getSegmentVotes } from "../utils/voteOnSponsorTime";
 
+// stubs
 const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
 const sinonStub = mockManager.mock("listVideos");
 sinonStub.callsFake(YouTubeApiMock.listVideos);
-const vipUser = "VIPUser";
-const randomID2 = "randomID2";
-const randomID2Hashed = getHash(randomID2);
-const categoryChangeUser = "category-change-user";
-const outroSubmitter = "outro-submitter";
-const badIntroSubmitter = "bad-intro-submitter";
-const hiddenInteractionSubmitter = "hidden-interaction-submitter";
 
-describe("voteOnSponsorTime", () => {
-    before(async () => {
-        const now = Date.now();
-        const warnVip01Hash = getHash("warn-vip01");
-        const warnUser01Hash = getHash("warn-voteuser01");
-        const warnUser02Hash = getHash("warn-voteuser02");
-        const categoryChangeUserHash = getHash(categoryChangeUser);
-        const MILLISECONDS_IN_HOUR = 3600000;
-        const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
-
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "shadowHidden", "hidden") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "vote-uuid-0", "testman", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 2, 0, "vote-uuid-1", "testman", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.5", "testman", 0, 50, "outro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.6", "testman", 0, 50, "interaction", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest3", 20, 33, 10, 0, "vote-uuid-2", "testman", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest,test", 1, 11, 100, 0, "vote-uuid-3", "testman", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 1, 11, 2, 0, "vote-uuid-4", "testman", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-test3", 7, 22, -3, 0, "vote-uuid-5", "testman", 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, 0, "vote-uuid-6", "testman", 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, 0, "vote-uuid-7", "testman", 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-9", randomID2Hashed, 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-10", getHash("randomID3"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-11", getHash("randomID4"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["own-submission-video", 1, 11, 500, 0, "own-submission-uuid", getHash("own-submission-id"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["not-own-submission-video", 1, 11, 500, 0, "not-own-submission-uuid", getHash("somebody-else-id"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["incorrect-category", 1, 11, 500, 0, "incorrect-category", getHash("somebody-else-id"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["incorrect-category-change", 1, 11, 500, 0, "incorrect-category-change", getHash("somebody-else-id"), 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "warnvote-uuid-0", "testman", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-0", "no-sponsor-segments", 0, 50, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-1", "no-sponsor-segments", 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["no-sponsor-segments-video", 1, 11, 2, 0, "no-sponsor-segments-uuid-2", "no-sponsor-segments", 0, 50, "sponsor", "mute", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["segment-locking-video", 1, 11, 2, 0, "segment-locking-uuid-1", "segment-locking-user", 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["segment-hidden-video", 1, 11, 2, 0, "segment-hidden-uuid-1", "segment-hidden-user", 0, 50, "intro", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 22, 0, 0, "category-change-uuid-1", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 22, 0, 1, "category-change-uuid-2", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 22, 0, 0, "category-change-uuid-3", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-4", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 13, 0, 0, "category-change-uuid-5", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 8, 12, 0, 1, "category-change-uuid-6", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 9, 14, 0, 0, "category-change-uuid-7", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-1", 7, 12, 0, 1, "category-change-uuid-8", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-2", 7, 14, 0, 0, "category-warnvote-uuid-0", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["category-change-test-2", 8, 13, 0, 0, "category-banvote-uuid-0", categoryChangeUserHash, 0, 50, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["duration-update", 1, 10, 0, 0, "duration-update-uuid-1", "testman", 0, 0, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["full-video", 1, 10, 0, 0, "full-video-uuid-1", "testman", 0, 0, "sponsor", "full", 0, 0]);
-        // videoDuration change
-        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 10, 0, 0, "duration-changed-uuid-1", "testman", 1, 0, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 11, 0, 0, "duration-changed-uuid-2", "testman", 10, 0, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 12, 0, 0, "duration-changed-uuid-3", "testman", 20, 0, "sponsor", "skip", 0, 0]);
-        // add videoDuration to duration-changed-uuid-2
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
-        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "chapter-uuid-1", "testman", 0, 0, "chapter", "chapter", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "non-chapter-uuid-2", "testman", 0, 0, "sponsor", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 11, 20, 0, 0, "chapter-uuid-2", randomID2Hashed, 0, 0, "chapter", "chapter", 0, 0]);
-        // segments for testing stricter voting requirements
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "good-outro-submission", getHash(outroSubmitter), 0, 0, "outro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, -2, 0, "bad-intro-submission", getHash(badIntroSubmitter), 0, 0, "intro", "skip", 0, 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "hidden-interaction-submission", getHash(hiddenInteractionSubmitter), 0, 0, "interaction", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-outro-skip-1", "testman", 0, 0, "outro", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-outro-skip-2", "testman", 0, 0, "outro", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-outro-mute-1", "testman", 0, 0, "outro", "mute", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-outro-mute-2", "testman", 0, 0, "outro", "mute", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-intro-skip-1", "testman", 0, 0, "intro", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-intro-skip-2", "testman", 0, 0, "intro", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 1, 10, 0, 0, "testing-interaction-skip-1", "testman", 0, 0, "interaction", "skip", 0, 1]);
-        await db.prepare("run", insertSponsorTimeQuery, ["vote-requirements-video", 22, 25, 0, 0, "testing-interaction-skip-2", "testman", 0, 0, "interaction", "skip", 0, 1]);
-
-        const insertWarningQuery = 'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled") VALUES(?, ?, ?, ?)';
-        await db.prepare("run", insertWarningQuery, [warnUser01Hash, now, warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 1000), warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 2000), warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 3601000), warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 1000)), warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash,  1]);
-
-
-        await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash(vipUser)]);
-        await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
-
-        const insertlockCategoriesQuery = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "actionType") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertlockCategoriesQuery, ["no-sponsor-segments-video", "someUser", "sponsor", "skip"]);
-        await db.prepare("run", insertlockCategoriesQuery, ["category-change-test-1", "someUser", "preview", "skip"]); // sponsor should stay unlocked
+describe("voteOnSponsorTime - 4xx", () => {
+    const user = genUser("vote", "4xx");
+    const uuids = multiGenProxy("uuid", "vote-vip");
+    let randomUUID: string;
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID });
+        await insertSegment(db, { UUID: uuids["full-4xx"], actionType: "full" });
     });
-    // constants
-    const endpoint = "/api/voteOnSponsorTime";
-    const postVote = (userID: string, UUID: string, type: number) => client({
-        method: "POST",
-        url: endpoint,
-        params: {
-            userID,
-            UUID,
-            type
-        }
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-categoryvote");
+        await insertSegment(db, { UUID: randomUUID });
     });
-    const postVoteCategory = (userID: string, UUID: string, category: string) => client({
-        method: "POST",
-        url: endpoint,
-        params: {
-            userID,
-            UUID,
-            category
-        }
+    // categoryVotes
+    it("Should not able to change to an invalid category", () => {
+        return assertCategory(user, randomUUID, "fakecategory", "sponsor", 400);
     });
-
-    const getSegmentVotes = (UUID: string) => db.prepare("get", `SELECT "votes" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-    const getSegmentCategory = (UUID: string) => db.prepare("get", `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-    const getPrivateVoteInfo = (UUID: string) => privateDB.prepare("all", `SELECT * FROM "votes" WHERE "UUID" = ?`, [UUID]);
-
-    it("Should be able to upvote a segment", (done) => {
-        const UUID = "vote-uuid-0";
-        postVote("randomID", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 3);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not able to change to highlight category", () => {
+        return assertCategory(user, randomUUID, "highlight", "sponsor", 400);
     });
-
-    it("Should be able to downvote a segment", (done) => {
-        const UUID = "vote-uuid-2";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes < 10);
-                const voteInfo = await getPrivateVoteInfo(UUID);
-                assert.strictEqual(voteInfo.length, 1);
-                assert.strictEqual(voteInfo[0].normalUserID, randomID2Hashed);
-                assert.strictEqual(voteInfo[0].type, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not able to change to chapter category", () => {
+        return assertCategory(user, randomUUID, "chapter", "sponsor", 400);
     });
-
-    it("Should not be able to downvote the same segment when voting from a different user on the same IP", (done) => {
-        const UUID = "vote-uuid-2";
-        postVote("randomID3", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 9);
-                done();
-            })
-            .catch(err => done(err));
+    // deprecated voteTypes
+    const assertStatus = async (user: User, UUID: string, voteType: number, status: number) => {
+        const voteRes = await postVote(user.privID, UUID, voteType);
+        assert.strictEqual(voteRes.status, status);
+    };
+    it("Should not be able to vote with type 10", () => {
+        return assertStatus(user, randomUUID, 10, 400);
     });
-
-    it("Should not be able to downvote a segment if the user is shadow banned", (done) => {
-        const UUID = "vote-uuid-1.6";
-        postVote("randomID4", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 10);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to vote with type 11", () => {
+        return assertStatus(user, randomUUID, 11, 400);
     });
-
-    it("Should not be able to upvote a segment if the user hasn't submitted yet", (done) => {
-        const UUID = "vote-uuid-1";
-        postVote("hasNotSubmittedID", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not be able to downvote a segment if the user hasn't submitted yet", (done) => {
-        const UUID = "vote-uuid-1.5";
-        postVote("hasNotSubmittedID", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 10);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("VIP should be able to completely downvote a segment", (done) => {
-        const UUID = "vote-uuid-3";
-        postVote(vipUser, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes <= -2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should be able to completely downvote your own segment (segment unlocked)", (done) => {
-        const UUID = "own-submission-uuid";
-        postVote("own-submission-id", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes <= -2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should not be able to completely downvote somebody elses segment", (done) => {
-        const UUID = "not-own-submission-uuid";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 499);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should be able to completely downvote chapter using malicious", (done) => {
-        const UUID = "chapter-uuid-1";
-        postVote(randomID2, UUID, 30)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -2);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("should not be able to completely downvote non-chapter using malicious", (done) => {
-        const UUID = "non-chapter-uuid-2";
-        postVote(randomID2, UUID, 30)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to vote for a category and it should add your vote to the database", (done) => {
-        const UUID = "vote-uuid-4";
-        postVoteCategory(randomID2, UUID, "intro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(categoryRows.length, 2);
-                assert.strictEqual(categoryRows[0].votes, 1);
-                assert.strictEqual(categoryRows[0].category, "intro");
-                assert.strictEqual(categoryRows[1].votes, 1);
-                assert.strictEqual(categoryRows[1].category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not able to change to an invalid category", (done) => {
-        const UUID = "incorrect-category";
-        postVoteCategory(randomID2, UUID, "fakecategory")
-            .then(async res => {
-                assert.strictEqual(res.status, 400);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not able to change to highlight category", (done) => {
-        const UUID = "incorrect-category";
-        postVoteCategory(randomID2, UUID, "highlight")
-            .then(async res => {
-                assert.strictEqual(res.status, 400);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not able to change to chapter category", (done) => {
-        const UUID = "incorrect-category";
-        postVoteCategory(randomID2, UUID, "chapter")
-            .then(async res => {
-                assert.strictEqual(res.status, 400);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to change your vote for a category and it should add your vote to the database(segment unlocked, nextCatgeory unlocked)", (done) => {
-        const UUID = "vote-uuid-4";
-        postVoteCategory(randomID2, UUID, "outro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200, "Status code should be 200");
-                const submissionRow = await getSegmentCategory(UUID);
-                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
-                let introVotes = 0;
-                let outroVotes = 0;
-                let sponsorVotes = 0;
-                for (const row of categoryRows) {
-                    if (row?.category === "intro") introVotes += row?.votes;
-                    if (row?.category === "outro") outroVotes += row?.votes;
-                    if (row?.category === "sponsor") sponsorVotes += row?.votes;
-                }
-                assert.strictEqual(submissionRow.category, "sponsor");
-                assert.strictEqual(categoryRows.length, 3);
-                assert.strictEqual(introVotes, 0);
-                assert.strictEqual(outroVotes, 1);
-                assert.strictEqual(sponsorVotes, 1);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-
-    it("Should not be able to change your vote to an invalid category", (done) => {
-        const UUID = "incorrect-category-change";
-        const vote = (inputCat: string, assertCat: string, callback: Mocha.Done) => {
-            postVoteCategory(randomID2, UUID, inputCat)
-                .then(async () => {
-                    const row = await getSegmentCategory(UUID);
-                    assert.strictEqual(row.category, assertCat);
-                    callback();
-                })
-                .catch(err => done(err));
-        };
-        vote("sponsor", "sponsor", () => {
-            vote("fakeCategory", "sponsor", done);
-        });
-    });
-
-    it("Submitter should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, notVip)", (done) => {
-        const userID = categoryChangeUser;
-        const UUID = "category-change-uuid-1";
-        const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Submitter's vote on the category should not work (segment locked, nextCatgeory unlocked, notVip)", (done) => {
-        const userID = categoryChangeUser;
-        const UUID = "category-change-uuid-2";
-        const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "intro");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Submitter's vote on the category should not work (segment unlocked, nextCatgeory locked, notVip)", (done) => {
-        const userID = categoryChangeUser;
-        const UUID = "category-change-uuid-3";
-        const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "intro");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Submitter's vote on the category should not work (segment locked, nextCatgeory locked, notVip)", (done) => {
-        const userID = categoryChangeUser;
-        const UUID = "category-change-uuid-4";
-        const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "intro");
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", (done) => {
-        const userID = vipUser;
-        const UUID = "category-change-uuid-5";
-        const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory unlocked, Vip)", (done) => {
-        const userID = vipUser;
-        const UUID = "category-change-uuid-6";
-        const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory locked, Vip)", (done) => {
-        const userID = vipUser;
-        const UUID = "category-change-uuid-7";
-        const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory locked, Vip)", (done) => {
-        const userID = vipUser;
-        const UUID = "category-change-uuid-8";
-        const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not be able to vote for a category of a segment (Too many warning)", (done) => {
-        const UUID = "category-warnvote-uuid-0";
-        const category = "preview";
-        postVoteCategory("warn-voteuser01", UUID, category)
-            .then(res => {
-                assert.strictEqual(res.status, 403);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to vote for a category as a shadowbanned user, but it shouldn't add your vote to the database", (done) => {
-        const UUID = "category-banvote-uuid-0";
-        const category = "preview";
-        postVoteCategory("randomID4", UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.category, "intro");
-                assert.strictEqual(categoryRows.length, 0);
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should not be able to category-vote on an invalid UUID submission", (done) => {
+    // invalid category-votes
+    it("Should not be able to category-vote on an invalid UUID submission", async () => {
         const UUID = "invalid-uuid";
-        postVoteCategory("randomID3", UUID, "intro")
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
+        const voteRes = await postVoteCategory(user.privID, UUID, "intro");
+        return assert.strictEqual(voteRes.status, 404);
     });
-
-    it("Should not be able to category-vote on a full video segment", (done) => {
-        const UUID = "full-video-uuid-1";
-        postVoteCategory("randomID3", UUID, "selfpromo")
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to category-vote on a full video segment", async () => {
+        const voteRes = await postVoteCategory(user.privID, uuids["full-4xx"], "selfpromo");
+        return assert.strictEqual(voteRes.status, 400);
     });
-
-    it('Non-VIP should not be able to upvote "dead" submission', (done) => {
-        const UUID = "vote-uuid-5";
-        postVote(randomID2, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 403);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -3);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to change your vote to an invalid category", async () => {
+        await assertCategory(user, randomUUID, "sponsor", "sponsor");
+        return assertCategory(user, randomUUID, "fakecategory", "sponsor", 400);
     });
+});
 
-    it('Non-VIP should not be able to downvote "dead" submission', (done) => {
-        const UUID = "vote-uuid-5";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -3);
-                done();
-            })
-            .catch(err => done(err));
+describe("voteOnSponsorTime - No Previous Submissions", () => {
+    // constants
+    const uuid = "uuid-vote-unchanged";
+    // helpers
+    const assertSegmentNotChanged = async (user: User, vote: number) => {
+        const uuid = "uuid-vote-unchanged";
+        const voteRes = await postVote(user.privID, uuid, vote);
+        assert.strictEqual(voteRes.status, 200);
+        const row = await getSegmentVotes(uuid);
+        assert.strictEqual(row.votes, 0);
+    };
+    // before
+    before(async () => {
+        await insertSegment(db, { UUID: uuid });
     });
-
-    it('VIP should be able to upvote "dead" submission', (done) => {
-        const UUID = "vote-uuid-5";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes > -3);
-                done();
-            })
-            .catch(err => done(err));
+    // tests
+    it("Should not be able to downvote or upvote a segment if the user hasn't submitted yet", () => {
+        const hasNotSubmitted = genAnonUser();
+        assertSegmentNotChanged(hasNotSubmitted, 0);
+        assertSegmentNotChanged(hasNotSubmitted, 1);
     });
+});
 
-    it("Should not be able to upvote a segment (Too many warning)", (done) => {
-        const UUID = "warnvote-uuid-0";
-        postVote("warn-voteuser01", UUID, 1)
-            .then(res => {
-                assert.strictEqual(res.status, 403);
-                done();
-            })
-            .catch(err => done(err));
+describe("voteOnSponsorTime - VIP", () => {
+    const vipUser = genUser("vote", "vip");
+    const uuids = multiGenProxy("uuid", "vote-vip");
+    let randomUUID: string;
+    // before
+    before (async () => {
+        await insertVipUser(db, vipUser);
+        await insertSegment(db, { UUID: uuids["locked"], locked: true });
+        await insertSegment(db, { UUID: uuids["hidden"], hidden: true });
+        await insertSegment(db, { UUID: uuids["dead"], votes: -2 });
+        await insertSegment(db, { UUID: uuids["duration-update"], videoID: "duration-update", videoDuration: 1000 });
+        await insertSegment(db, { UUID: uuids["category-locked"], locked: true });
+        // nextCategory locked
+        await insertLock(db, { videoID: "next-locked", actionType: "skip", category: "outro" });
+        await insertSegment(db, { videoID: "next-locked", UUID: uuids["next-locked"] });
+        // nextCategory, segment locked
+        await insertLock(db, { videoID: "locked-next-locked", actionType: "skip", category: "intro" });
+        await insertSegment(db, { videoID: "locked-next-locked", UUID: uuids["locked-next-locked"], locked: true });
     });
-
-    it("Non-VIP should not be able to downvote on a segment with no-segments category", (done) => {
-        const UUID = "no-sponsor-segments-uuid-0";
-        postVote("randomID", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 2);
-                done();
-            })
-            .catch(err => done(err));
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-vip");
+        await insertSegment(db, { UUID: randomUUID });
     });
-
-    it("Non-VIP should be able to upvote on a segment with no-segments category", (done) => {
-        const UUID = "no-sponsor-segments-uuid-0";
-        postVote("randomID", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 3);
-                done();
-            })
-            .catch(err => done(err));
+    // voting
+    it("VIP should be able to completely downvote a segment", () => {
+        return assertVotes(vipUser, randomUUID, 0, -2);
     });
-
-    it("Non-VIP should not be able to category vote on a segment with no-segments category", (done) => {
-        const UUID = "no-sponsor-segments-uuid-0";
-        postVoteCategory("randomID", UUID, "outro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+    // locking/ hiding
+    it("VIP upvote should lock segment", () => {
+        return assertSegmentStatus(vipUser, randomUUID, 1, "locked", 1);
     });
-
-    it("VIP upvote should lock segment", (done) => {
-        const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.locked, 1);
-                done();
-            })
-            .catch(err => done(err));
+    it("VIP downvote should unlock segment", () => {
+        return assertSegmentStatus(vipUser, uuids["locked"], 0, "locked", 0);
     });
-
-    it("VIP downvote should unlock segment", (done) => {
-        const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.locked, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it("VIP upvote should unhide segment", () => {
+        return assertSegmentStatus(vipUser, uuids["hidden"], 1, "hidden", 0);
     });
-
-    it("VIP upvote should unhide segment", (done) => {
-        const UUID = "segment-hidden-uuid-1";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.hidden, 0);
-                done();
-            })
-            .catch(err => done(err));
+    // dead submissions
+    it('VIP upvote should bring back "dead" submission', () => {
+        return assertVotes(vipUser, uuids["dead"], 1, -1);
     });
-
-    it("Should be able to undo-vote a segment", (done) => {
-        const UUID = "vote-uuid-2";
-        postVote(randomID2, UUID, 20)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 10);
-                done();
-            })
-            .catch(err => done(err));
+    // video duration
+    it("VIP upvote should updated videoDuration", () => {
+        return assertSegmentStatus(vipUser, uuids["duration-update"], 1, "videoDuration", 500);
     });
-
-    it("Should not be able to vote with type 10", (done) => {
-        const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 10)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    // category change
+    it("VIP vote for category should change (segment unlocked, nextCatgeory unlocked, VIP)", () => {
+        return assertCategory(vipUser, randomUUID, "outro", "outro");
     });
-
-    it("Should not be able to vote with type 11", (done) => {
-        const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 11)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("VIP vote for category should change (segment locked, nextCatgeory unlocked, VIP)", () => {
+        return assertCategory(vipUser, uuids["category-locked"], "outro", "outro");
     });
-
-    it("Should be able to update stored videoDuration with VIP upvote", (done) => {
-        const UUID = "duration-update-uuid-1";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(videoDuration, 500);
-                done();
-            });
+    it("VIP vote for category should change (segment unlocked, nextCatgeory locked, VIP)", () => {
+        return assertCategory(vipUser, uuids["next-locked"], "outro", "outro");
     });
+    it("VIP vote for a category should change (segment locked, nextCatgeory locked, VIP)", () => {
+        return assertCategory(vipUser, uuids["locked-next-locked"], "intro", "intro");
+    });
+});
 
-    it("Should hide changed submission on any downvote", (done) => {
-        const UUID = "duration-changed-uuid-3";
+describe("voteOnSponsorTime - user with submissions", () => {
+    const user = genUser("vote", "userWithSubmissions");
+    const uuids = multiGenProxy("uuid", "vote-usersubs");
+    const videoIDs = multiGenProxy("video", "vote-usersubs");
+    let randomUUID: string;
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID }); // user has submission
+        await insertChapter(db, "", { userID: user.pubID }); // user has chapters
+        await insertSegment(db, { UUID: uuids["same-ip"], votes: 10 });
+        await insertChapter(db, "", { UUID: uuids["chapter"] });
+        await insertSegment(db, { UUID: uuids["full-video-dead"], actionType: "full", votes: -2 });
+        // ajacent segment lock
+        await insertLock(db, { videoID: videoIDs["locked-sponsor"], actionType: "skip", category: "sponsor" });
+        await insertSegment(db, { videoID: videoIDs["locked-sponsor"], UUID: uuids["locked-sponsor"], actionType: "mute" });
+        // category change vote
+        await insertSegment(db, { UUID: uuids["category-change"], category: "sponsor" });
+    });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-usersubs");
+        await insertSegment(db, { UUID: randomUUID });
+    });
+    // tests
+    it("Should be able to upvote a segment", () => {
+        return assertVotes(user, randomUUID, 1, 1);
+    });
+    it ("Should be able to downvote a segment", async () => {
+        await assertVotes(user, uuids["same-ip"], 0, 9);
+        return assertPrivateVote(user, uuids["same-ip"], 0);
+    });
+    it("Should be able to downvote segment with ajacent actionType lock", () => {
+        return assertVotes(user, uuids["locked-sponsor"], 0, -1);
+    });
+    it ("Should not be able to completely downvote somebody elses segment", () => {
+        return assertVotes(user, randomUUID, 0, -1);
+    });
+    it("Should not be able to downvote the same segment when voting from a different user on the same IP", () => {
+        return assertVotes(genAnonUser(), uuids["same-ip"], 0, 9);
+    });
+    // dead segment
+    it("Should be able to revive full video segment as non-vip", () => {
+        return assertVotes(user, uuids["full-video-dead"], 1, -1);
+    });
+    // malicious votes
+    // user needs chapter submissions to malicious vote chapters
+    it("Should be able to completely downvote chapter using malicious", () => {
+        return assertVotes(user, uuids["chapter"], 30, -2);
+    });
+    it("Should not be able to completely downvote non-chapter using malicious", () => {
+        return assertVotes(user, randomUUID, 30, 0);
+    });
+    // category votes
+    it("Should be able to change your vote for a category and it should add your vote to the database (segment unlocked, nextCatgeory unlocked)", async () => {
+        const uuid = uuids["category-change"];
+        await assertCategory(user, uuid, "outro", "sponsor"); // vote for change
+        return assertCategoryVotes(uuid, "outro", 1);
+    });
+});
+
+describe("voteOnSponsorTime - category votes", () => {
+    // before
+    const originalCategory = "sponsor";
+    let voteForChange: (targetCategory: string, expectedCategory: string, count: number) => Promise<void>;
+    let voteNoConfirm: (targetCategory: string, count: number) => Promise<void>;
+    beforeEach (async () => {
+        const randomUUID = genRandomValue("uuid", "vote-category");
+        // create segment
+        await insertSegment(db, { UUID: randomUUID, category: "sponsor", votes: 1 });
+        voteNoConfirm = async (targetCategory: string, count: number) => {
+            // insert user for eligibility
+            const user = genUser("vote", "category-vote");
+            await insertSegment(db, { userID: user.pubID });
+            // vote
+            const categoryRes = await postVoteCategory(user.privID, randomUUID, targetCategory);
+            assert.strictEqual(categoryRes.status, 200);
+            await assertCategoryVotes(randomUUID, targetCategory, count);
+        };
+        voteForChange = async (targetCategory: string, expectedCategory: string, count: number) => {
+            // insert user for eligibility
+            const user = genUser("vote", "category-vote");
+            await insertSegment(db, { userID: user.pubID });
+            // vote
+            await assertCategory(user, randomUUID, targetCategory, expectedCategory);
+            await assertCategoryVotes(randomUUID, targetCategory, count);
+        };
+    });
+    // tests
+    it("Three votes should change the category", async () => {
+        const targetCategory = "outro";
+        await voteForChange(targetCategory, originalCategory, 1);
+        await voteForChange(targetCategory, originalCategory, 2);
+        await voteForChange(targetCategory, targetCategory, 3); // commit to change
+    });
+    it("2x2 votes should not change the category", async () => {
+        await voteForChange("outro", originalCategory, 1);
+        await voteForChange("outro", originalCategory, 2);
+        await voteForChange("intro", originalCategory, 1);
+        await voteForChange("intro", originalCategory, 2);
+    });
+    it("Three eventual votes should change the category", async () => {
+        await voteForChange("outro", originalCategory, 1);
+        await voteForChange("outro", originalCategory, 2);
+        await voteForChange("intro", originalCategory, 1);
+        await voteForChange("intro", originalCategory, 2);
+        await voteForChange("outro", "outro", 3); // commit to change
+    });
+    it("More votes should flip the category", async () => {
+        const firstTarget = "outro";
+        const secondTarget = "intro";
+        await voteNoConfirm(firstTarget, 1);
+        await voteNoConfirm(firstTarget, 2);
+        await voteNoConfirm(firstTarget, 3); // commit to change
+        await voteForChange(firstTarget, firstTarget, 4); // vote and assert change
+        await voteNoConfirm(secondTarget, 1);
+        await voteNoConfirm(secondTarget, 2);
+        await voteNoConfirm(secondTarget, 3);
+        await voteNoConfirm(secondTarget, 4); // match
+        await voteNoConfirm(secondTarget, 5);
+        await voteNoConfirm(secondTarget, 6);
+        await voteForChange(secondTarget, secondTarget, 7); // overcome by 3 and assert
+    });
+});
+
+describe("voteOnSponsorTime - changing votes", () => {
+    const user = genUser("vote", "changing-user");
+    let randomUUID: string;
+    const uuids = multiGenProxy("uuid", "vote-changing");
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID }); // user has submission
+        await insertChapter(db, "", { userID: user.pubID }); // user has chapter submission
+        await insertChapter(db, "chaptername", { UUID: uuids["chapter-undo"] });
+    });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: randomUUID });
+    });
+    // tests
+    // undovote
+    it("Should be able to undo-vote upvote", async () => {
+        await assertVotes(user, randomUUID, 1, 1); // upvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote downvote", async () => {
+        await assertVotes(user, randomUUID, 0, -1); // downvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote killing vote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        return assertVotes(user, uuid, 20, -1); // undo-vote
+    });
+    it("Should be able to override undo vote with upvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 1, 0); // upvote
+    });
+    it("Should be able to override undo vote with downvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 0, -2); // downvote
+    });
+    it("Should be able to continuously undo vote (SLOW)", async () => {
+        const times = Math.ceil(Math.random() * 10);
+        const finalVote = (times%2 == 0) ? 0 : 1;
+        for (let i = 0; i < times; i++) {
+            if (i%2 == 0) {
+                await assertVotes(user, randomUUID, 1, 1); // upvote
+            } else {
+                await assertVotes(user, randomUUID, 20, 0); // undo-vote
+            }
+        }
+        const votes = await getSegmentVotes(randomUUID);
+        assert.strictEqual(Number(votes.votes), finalVote);
+    });
+    it("Should be able to undo malicious vote", async () => {
+        await assertVotes(user, uuids["chapter-undo"], 30, -2); // malicious downvote
+        return assertVotes(user, uuids["chapter-undo"], 20, 0); // undo-vote
+    });
+});
+
+describe("voteOnSponsorTime - changing votes: VIP", () => {
+    const user = genUser("vote", "changing-vip");
+    let randomUUID: string;
+    const uuids = multiGenProxy("uuid", "vote-changing-vip");
+    // before
+    before (async () => {
+        await insertVipUser(db, user);
+        await insertChapter(db, "chaptername", { UUID: uuids["chapter-undo"] });
+    });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: randomUUID });
+    });
+    // tests
+    // undovote
+    it("Should be able to undo-vote upvote", async () => {
+        await assertVotes(user, randomUUID, 1, 1); // upvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote downvote", async () => {
+        await assertVotes(user, randomUUID, 0, -2); // downvote
+        return assertVotes(user, randomUUID, 20, 0); // undo-vote
+    });
+    it("Should be able to undo-vote killing vote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        return assertVotes(user, uuid, 20, -1); // undo-vote
+    });
+    it("Should be able to override undo vote with upvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 1, 0); // upvote
+    });
+    it("Should be able to override undo vote with downvote", async () => {
+        const uuid = genRandomValue("uuid", "vote-changing");
+        await insertSegment(db, { UUID: uuid, votes: -1 });
+        await assertVotes(user, uuid, 0, -2); // downvote
+        await assertVotes(user, uuid, 20, -1); // undo-vote
+        await assertVotes(user, uuid, 0, -2); // downvote
+    });
+    it("Should be able to continuously undo vote (SLOW)", async () => {
+        const times = Math.ceil(Math.random() * 10);
+        const finalVote = (times%2 == 0) ? 0 : 1;
+        for (let i = 0; i < times; i++) {
+            if (i%2 == 0) {
+                await assertVotes(user, randomUUID, 1, 1); // upvote
+            } else {
+                await assertVotes(user, randomUUID, 20, 0); // undo-vote
+            }
+        }
+        const votes = await getSegmentVotes(randomUUID);
+        assert.strictEqual(Number(votes.votes), finalVote);
+    });
+    it("Should be able to undo malicious vote", async () => {
+        await assertVotes(user, uuids["chapter-undo"], 30, -2); // malicious downvote
+        return assertVotes(user, uuids["chapter-undo"], 20, 0); // undo-vote
+    });
+});
+
+describe("voteOnSponsorTime - duration change", () => {
+    const user = genUser("vote", "userWithSubmissions");
+    const videoID = "duration-changed";
+    const uuids = multiGenProxy("uuid", "vote-usersubs");
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID }); // user has submission
+        //
+        await insertSegment(db, { UUID: uuids["duration-changed-1"], videoID, timeSubmitted: 10 });
+        await insertSegment(db, { UUID: uuids["duration-changed-2"], videoID, timeSubmitted: 20, videoDuration: 150 });
+        await insertSegment(db, { UUID: uuids["duration-changed-3"], videoID, timeSubmitted: 30 });
+    });
+    // tests
+    it("Should hide changed submission on any downvote", async () => {
+        const UUID = uuids["duration-changed-3"];
         const videoID = "duration-changed";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
-                assert.strictEqual(hiddenSegments.length, 2);
-                const expected = [{
-                    "UUID": "duration-changed-uuid-1",
-                }, {
-                    "UUID": "duration-changed-uuid-2",
-                }];
-                arrayDeepEquals(hiddenSegments, expected);
-                done();
-            });
+        await assertVotes(user, UUID, 0, -1);
+        const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
+        const expected = [{
+            "UUID": uuids["duration-changed-1"]
+        }, {
+            "UUID": uuids["duration-changed-2"],
+        }];
+        assert.strictEqual(hiddenSegments.length, 2);
+        assert.ok(arrayDeepEquals(hiddenSegments, expected));
     });
+});
 
-    it("Should be able to downvote segment with ajacent actionType lock", (done) => {
-        const UUID = "no-sponsor-segments-uuid-2";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 1);
-                done();
-            });
+describe("voteOnSponsorTime - warned", () => {
+    const user = genUser("vote", "warned");
+    let randomUUID: string;
+    // before
+    before (async () => {
+        await insertWarning(db, user.pubID, { issueTime: Date.now() }); // active warning
     });
-
-    it("Should not be able to revive full video segment as non-vip", (done) => {
-        const UUID = "full-video-uuid-1";
-        postVote("VIPUser", UUID, 0).then(() => {
-            postVote("randomID3", UUID, 1)
-                .then(async res => {
-                    assert.strictEqual(res.status, 200);
-                    const row = await getSegmentVotes(UUID);
-                    assert.strictEqual(row.votes, -2);
-                    done();
-                })
-                .catch(err => done(err));
-        });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-shadowbanned");
+        await insertSegment(db, { UUID: randomUUID });
     });
-
-    it("Should be able to upvote a segment if the user has submitted that in category", (done) => {
-        const UUID = "testing-outro-skip-1";
-        postVote(outroSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 1);
-                done();
-            })
-            .catch(err => done(err));
+    // tests
+    it("Should not be able to vote for a category of a segment (Too many warning)", () => {
+        return assertCategory(user, randomUUID, "outro", "sponsor", 403);
     });
-
-    it("Should be able to downvote a segment if the user has submitted that in category", (done) => {
-        const UUID = "testing-outro-skip-2";
-        postVote(outroSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -1);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to upvote a segment (Too many warning)", () => {
+        return assertVotes(user, randomUUID, 1, 0, 403);
     });
+});
 
-    it("Should be able to upvote a segment if the user has submitted that in category but different action", (done) => {
-        const UUID = "testing-outro-mute-1";
-        postVote(outroSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 1);
-                done();
-            })
-            .catch(err => done(err));
+describe("voteOnSponsorTime - shadowbanned", () => {
+    const user = genUser("vote", "shadowbanned");
+    let randomUUID: string;
+    // before
+    before (async () => {
+        await insertBan(db, user.pubID);
     });
-
-    it("Should be able to downvote a segment if the user has submitted that in category but different action", (done) => {
-        const UUID = "testing-outro-mute-2";
-        postVote(outroSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -1);
-                done();
-            })
-            .catch(err => done(err));
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-shadowbanned");
+        await insertSegment(db, { UUID: randomUUID });
     });
-
-    it("Should not be able to upvote a segment if the user's only submission of that category was downvoted", (done) => {
-        const UUID = "testing-intro-skip-1";
-        postVote(badIntroSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+    // tests
+    it("Should not be able to downvote a segment", () => {
+        return assertVotes(user, randomUUID, 0, 0);
     });
-
-    it("Should not be able to downvote a segment if the user's only submission of that category was downvoted", (done) => {
-        const UUID = "testing-intro-skip-2";
-        postVote(badIntroSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it ("Should not be able to upvote a segment", () => {
+        return assertVotes(user, randomUUID, 1, 0);
     });
-
-    it("Should not be able to upvote a segment if the user's only submission of that category was hidden", (done) => {
-        const UUID = "testing-interaction-skip-1";
-        postVote(hiddenInteractionSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to vote for a category as a shadowbanned user, but it shouldn't add your vote to the database", async () => {
+        await assertCategory(user, randomUUID, "outro", "sponsor"); // should pass
+        assertCategoryVotes(randomUUID, "outro", 1)
+            .then(() => assert.fail())
+            .catch(err => assert.strictEqual(err.message, "vote for category outro not found"));
     });
+});
 
-    it("Should not be able to downvote a segment if the user's only submission of that category was hidden", (done) => {
-        const UUID = "testing-interaction-skip-2";
-        postVote(hiddenInteractionSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+describe("voteOnSponsorTime - vote restrictions", () => {
+    let newUUID: string, videoID: string;
+    const user = genUser("vote", "vote-restricted");
+    // before
+    beforeEach(() => {
+        newUUID = genRandomValue("uuid", "vote-restricted");
+        videoID = genRandomValue("video", "vote-restricted");
+    });
+    // pass
+    it("Should be able to upvote (same category", async () => {
+        const category = "outro";
+        await insertSegment(db, { category, videoID, userID: user.pubID }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID  }); // vote target submission
+        return assertVotes(user, newUUID, 1, 1);
+    });
+    it("Should be able to downvote (same category)", async () => {
+        const category = "intro";
+        await insertSegment(db, { category, videoID, userID: user.pubID }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 0, -1);
+    });
+    it("Should be able to upvote (same category different action)", async () => {
+        const category = "selfpromo";
+        await insertSegment(db, { category, videoID, userID: user.pubID, actionType: "mute" }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 1, 1);
+    });
+    it("Should be able to downvote (same category different action)", async () => {
+        const category = "selfpromo";
+        await insertSegment(db, { category, videoID, userID: user.pubID, actionType: "mute" }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 0, -1);
+    });
+    // fail
+    it("Should not be able to upvote (only submission in category downvoted)", async () => {
+        const category = "interaction";
+        await insertSegment(db, { category, videoID, userID: user.pubID, votes: -2 }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 1, 0);
+    });
+    it("Should not be able to downvote (only submission in category downvoted)", async () => {
+        const category = "interaction";
+        await insertSegment(db, { category, videoID, userID: user.pubID, votes: -2 }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 0, 0);
+    });
+    it("Should not be able to upvote (only submission in category hidden)", async () => {
+        const category = "filler";
+        await insertSegment(db, { category, videoID, userID: user.pubID, hidden: true }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 1, 0);
+    });
+    it("Should not be able to downvote (only submission in category hidden)", async () => {
+        const category = "filler";
+        await insertSegment(db, { category, videoID, userID: user.pubID, hidden: true }); // existing submission
+        await insertSegment(db, { category, videoID, UUID: newUUID }); // vote target submission
+        return assertVotes(user, newUUID, 0, 0);
+    });
+});
+
+describe("voteOnSponsorTime - ownSubmission", () => {
+    const user = genUser("vote", "own-submission");
+    const uuids = multiGenProxy("uuid", "vote-ownsubmission");
+    const videoIDs = multiGenProxy("video", "vote-ownsubmission");
+    let randomUUID: string;
+    // before
+    before (async () => {
+        // locked segment
+        await insertSegment(db, { UUID: uuids["locked"], userID: user.pubID, locked: true });
+        // nextCategory locked
+        await insertSegment(db, { videoID: videoIDs["next-locked"],  UUID: uuids["next-locked"], userID: user.pubID });
+        await insertLock(db, { videoID: videoIDs["next-locked"], actionType: "skip", category: "intro" });
+        // locked, nextCategory locked
+        await insertSegment(db, { videoID: videoIDs["locked-next-locked"], UUID: uuids["locked-next-locked"], userID: user.pubID, locked: true });
+        await insertLock(db, { videoID: videoIDs["locked-next-locked"], actionType: "skip", category: "outro" });
+    });
+    beforeEach(async () => {
+        randomUUID = genRandomValue("uuid", "vote-ownsubmission");
+        await insertSegment(db, { UUID: randomUUID, userID: user.pubID });
+    });
+    // tests
+    it("should be able to completely downvote your own segment (unlocked)", () => {
+        return assertVotes(user, randomUUID, 0, -2);
+    });
+    // category votes
+    it("Submitter's vote on category should work (segment unlocked, nextCatgeory unlocked, notVip)", () => {
+        return assertCategory(user, randomUUID, "outro", "outro");
+    });
+    it("Submitter's vote on category should not work (segment locked, nextCatgeory unlocked, notVip)", () => {
+        return assertCategory(user, uuids["locked"], "outro", "sponsor");
+    });
+    it("Submitter's vote on category should not work (segment unlocked, nextCatgeory locked, notVip)", () => {
+        return assertCategory(user, uuids["next-locked"], "intro", "sponsor");
+    });
+    it("Submitter's vote on category should not work (segment locked, nextCatgeory locked, notVip)", () => {
+        return assertCategory(user, uuids["locked-next-locked"], "outro", "sponsor");
+    });
+});
+
+describe("voteOnSponsorTime - dead-segments", () => {
+    const user = genUser("vote", "dead-segments");
+    const deadUUID = genRandomValue("uuid", "vote-dead");
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID });
+        await insertSegment(db, { UUID: deadUUID, votes: -2 });
+    });
+    // tests
+    it('normal user should not be able to upvote "dead" submission', () => {
+        return assertVotes(user, deadUUID, 1, -2, 403);
+    });
+    it('normal user should not be able to downvote "dead" submission', () => {
+        return assertVotes(user, deadUUID, 0, -2);
+    });
+});
+
+describe("voteOnSponsorTime - locked", () => {
+    const user = genUser("vote", "locked");
+    const lockedVideo = genRandomValue("video", "vote-locked");
+    const lockedUUID = genRandomValue("uuid", "vote-locked");
+    // before
+    before (async () => {
+        await insertSegment(db, { userID: user.pubID });
+        await insertLock(db, { videoID: lockedVideo, actionType: "skip", category: "sponsor" });
+        await insertSegment(db, { videoID: lockedVideo, UUID: lockedUUID });
+    });
+    // tests
+    it("normal user should not be able to downvote on a segment on a locked video+category", () => {
+        return assertVotes(user, lockedUUID, 0, 0);
+    });
+    it("normal user should be able to upvote on a segment on a locked video+category", () => {
+        return assertVotes(user, lockedUUID, 1, 1);
+    });
+    it("normal user should not be able to category vote on a segment on a locked video+category", () => {
+        return assertCategory(user, lockedUUID, "outro", "sponsor");
     });
 });

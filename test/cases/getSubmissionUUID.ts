@@ -5,7 +5,7 @@ import { HashedUserID } from "../../src/types/user.model";
 import { getHash } from "../../src/utils/getHash";
 import { HashedValue } from "../../src/types/hash.model";
 import { genAnonUser } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+import { genRandomValue } from "../utils/genRandom";
 
 function testHash (segment: segment, version: number): HashedValue {
     const manualHash = getHash(Object.values(segment).join(""), 1) as HashedValue;
