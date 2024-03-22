@@ -247,8 +247,8 @@ describe("getBranding", () => {
     });
 
     it("should get 404 when nothing", async () => {
-        const result1 = await getBranding({ videoID: videoIDEmpty });
-        const result2 = await getBrandingByHash(videoIDEmptyHash, {});
+        const result1 = await getBranding({ videoID: videoIDEmpty, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDEmptyHash, { fetchAll: true });
 
         assert.strictEqual(result1.status, 404);
         assert.strictEqual(result2.status, 404);
@@ -257,8 +257,8 @@ describe("getBranding", () => {
     it("should get correct random time", async () => {
         const videoDuration = 100;
 
-        const result1 = await getBranding({ videoID: videoIDRandomTime });
-        const result2 = await getBrandingByHash(videoIDRandomTimeHash, {});
+        const result1 = await getBranding({ videoID: videoIDRandomTime, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDRandomTimeHash, { fetchAll: true });
 
         const randomTime = result1.data.randomTime;
         assert.strictEqual(randomTime, result2.data[videoIDRandomTime].randomTime);
@@ -316,8 +316,8 @@ describe("getBranding", () => {
         titles: TitleResult[],
         thumbnails: ThumbnailResult[]
     }) {
-        const result1 = await getBranding({ videoID });
-        const result2 = await getBrandingByHash(videoIDHash, {});
+        const result1 = await getBranding({ videoID, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDHash, { fetchAll: true });
 
         assert.strictEqual(result1.status, 200);
         assert.strictEqual(result2.status, 200);
