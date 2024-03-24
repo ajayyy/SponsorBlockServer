@@ -181,7 +181,7 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fe
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
         }))
-        .filter((a) => fetchAll || a.votes > 0 || a.locked)
+        .filter((a) => fetchAll || a.votes >= 0 || a.locked)
         .sort((a, b) => b.votes - a.votes)
         .sort((a, b) => +b.locked - +a.locked) as TitleResult[];
 
@@ -197,7 +197,7 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fe
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
         }))
-        .filter((a) => fetchAll || a.votes > 0 || a.locked) as ThumbnailResult[];
+        .filter((a) => fetchAll || a.votes >= 0 || a.locked) as ThumbnailResult[];
 
     return {
         titles,
