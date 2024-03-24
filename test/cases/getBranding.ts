@@ -55,7 +55,7 @@ describe("getBranding", () => {
         await Promise.all([
             db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0, 0, 0, 0]),
             db.prepare("run", titleVotesQuery, ["UUID2", 3, 0, 0, 0, 1, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID3", 1, 0, 0, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID3", 0, 0, 0, 0, 0, 0]),
             db.prepare("run", titleVotesQuery, ["UUID4", 5, 0, 0, 0, 0, 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID1T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID3T", 3]),
@@ -133,7 +133,7 @@ describe("getBranding", () => {
     });
 
     it("should get top titles and thumbnails", async () => {
-        await checkVideo(videoID1, videoID1Hash, {
+        await checkVideo(videoID1, videoID1Hash, false, {
             titles: [{
                 title: "title1",
                 original: false,
@@ -149,7 +149,7 @@ describe("getBranding", () => {
             }, {
                 title: "title3",
                 original: true,
-                votes: 1,
+                votes: 0,
                 locked: false,
                 UUID: "UUID3" as BrandingUUID
             }],
@@ -175,7 +175,7 @@ describe("getBranding", () => {
     });
 
     it("should get top titles and thumbnails prioritizing locks", async () => {
-        await checkVideo(videoID2Locked, videoID2LockedHash, {
+        await checkVideo(videoID2Locked, videoID2LockedHash, false, {
             titles: [{
                 title: "title3",
                 original: true,
@@ -217,7 +217,7 @@ describe("getBranding", () => {
     });
 
     it("should get top titles and hide shadow hidden", async () => {
-        await checkVideo(videoID2ShadowHide, videoID2ShadowHideHash, {
+        await checkVideo(videoID2ShadowHide, videoID2ShadowHideHash, false, {
             titles: [{
                 title: "title1",
                 original: false,
@@ -271,7 +271,7 @@ describe("getBranding", () => {
     });
 
     it("should get top titles and thumbnails that are unverified", async () => {
-        await checkVideo(videoIDUnverified, videoIDUnverifiedHash, {
+        await checkVideo(videoIDUnverified, videoIDUnverifiedHash, true, {
             titles: [{
                 title: "title1",
                 original: false,
@@ -312,12 +312,12 @@ describe("getBranding", () => {
         });
     });
 
-    async function checkVideo(videoID: string, videoIDHash: string, expected: {
+    async function checkVideo(videoID: string, videoIDHash: string, fetchAll: boolean, expected: {
         titles: TitleResult[],
         thumbnails: ThumbnailResult[]
     }) {
-        const result1 = await getBranding({ videoID, fetchAll: true });
-        const result2 = await getBrandingByHash(videoIDHash, { fetchAll: true });
+        const result1 = await getBranding({ videoID, fetchAll });
+        const result2 = await getBrandingByHash(videoIDHash, { fetchAll });
 
         assert.strictEqual(result1.status, 200);
         assert.strictEqual(result2.status, 200);
