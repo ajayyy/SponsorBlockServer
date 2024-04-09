@@ -13,7 +13,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
     let processTime, redisProcessTime = -1;
     try {
         const dbStartTime = Date.now();
-        const dbVersion = await promiseOrTimeout(db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"]), 5000)
+        const dbVersion = await promiseOrTimeout(db.prepare("get", "SELECT key, value FROM config where key = ?", ["version"]), 1000)
             .then(e => {
                 processTime = Date.now() - dbStartTime;
                 return e.value;
@@ -24,7 +24,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             });
         let statusRequests: unknown = 0;
         const redisStartTime = Date.now();
-        const numberRequests = await promiseOrTimeout(redis.increment("statusRequest"), 5000)
+        const numberRequests = await promiseOrTimeout(redis.increment("statusRequest"), 1000)
             .then(e => {
                 redisProcessTime = Date.now() - redisStartTime;
                 return e;
