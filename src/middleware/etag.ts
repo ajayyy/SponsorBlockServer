@@ -4,7 +4,7 @@ import { QueryCacher } from "../utils/queryCacher";
 import { skipSegmentsHashKey, skipSegmentsKey, videoLabelsHashKey, videoLabelsKey } from "../utils/redisKeys";
 
 type hashType = "skipSegments" | "skipSegmentsHash" | "videoLabel" | "videoLabelHash";
-type ETag = `${hashType};${VideoIDHash};${Service};${number}`;
+type ETag = `"${hashType};${VideoIDHash};${Service};${number}"`;
 type hashKey = string | VideoID | VideoIDHash;
 
 export function cacheMiddlware(req: Request, res: Response, next: NextFunction): void {
@@ -12,7 +12,7 @@ export function cacheMiddlware(req: Request, res: Response, next: NextFunction):
     // if weak etag, do not handle
     if (!reqEtag || reqEtag.startsWith("W/")) return next();
     // split into components
-    const [hashType, hashKey, service, lastModified] = reqEtag.split(";");
+    const [hashType, hashKey, service, lastModified] = reqEtag.replace(/^"|"$/g, "").split(";");
     // fetch last-modified
     getLastModified(hashType as hashType, hashKey as VideoIDHash, service as Service)
         .then(redisLastModified => {
