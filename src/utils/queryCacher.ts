@@ -143,6 +143,7 @@ async function getKeyLastModified(key: string): Promise<Date> {
     if (!config.redis?.enabled) return Promise.reject("ETag - Redis not enabled");
     return await redis.ttl(key)
         .then(ttl => {
+            if (ttl <= 0) return new Date();
             const sinceLive = config.redis?.expiryTime - ttl;
             const now = Math.floor(Date.now() / 1000);
             return new Date((now-sinceLive) * 1000);

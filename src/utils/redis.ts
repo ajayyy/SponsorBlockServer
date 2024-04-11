@@ -193,6 +193,15 @@ if (config.redis?.enabled) {
         }
     };
 
+    const ttl = client.ttl.bind(client);
+    exportClient.ttl = (key) => {
+        if (cache && cacheClient && cache.has(key)) {
+            return Promise.resolve(config.redis?.expiryTime - Math.floor((cache.ttl - cache.info(key).ttl) / 1000));
+        } else {
+            return ttl(createKeyName(key));
+        }
+    };
+
     const get = client.get.bind(client);
     const getRead = readClient?.get?.bind(readClient);
     exportClient.get = (key) => new Promise((resolve, reject) => {

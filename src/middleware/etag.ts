@@ -38,7 +38,7 @@ function getLastModified(hashType: hashType, hashKey: hashKey, service: Service)
 
 export async function getEtag(hashType: hashType, hashKey: hashKey, service: Service): Promise<ETag> {
     const lastModified = await getLastModified(hashType, hashKey, service);
-    return `${hashType};${hashKey};${service};${lastModified.getTime()}` as ETag;
+    return `"${hashType};${hashKey};${service};${lastModified.getTime()}"` as ETag;
 }
 
 /* example usage
