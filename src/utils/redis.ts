@@ -383,7 +383,7 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
 
             const keys = Buffer.isBuffer(message) ? [message.toString()] : message;
             for (let key of keys) {
-                if (config.redis.useCompression) key = key.replace(/.c$/, "");
+                if (config.redis.useCompression) key = key.replace(/\.c$/, "");
 
                 if (cache.delete(key)) {
                     lastInvalidation = Date.now();
