@@ -196,6 +196,9 @@ if (config.redis?.enabled) {
     const ttl = client.ttl.bind(client);
     exportClient.ttl = (key) => {
         if (cache && cacheClient && cache.has(key)) {
+            // Trigger usage of cache
+            cache.get(key);
+
             return Promise.resolve(config.redis?.expiryTime - Math.floor((cache.ttl - cache.info(key).ttl) / 1000));
         } else {
             return ttl(createKeyName(key));
