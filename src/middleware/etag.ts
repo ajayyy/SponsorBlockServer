@@ -18,7 +18,7 @@ export function cacheMiddlware(req: Request, res: Response, next: NextFunction):
         .then(redisLastModified => {
             if (redisLastModified <= new Date(Number(lastModified) + 1000)) {
                 // match cache, generate etag
-                const etag = `${hashType};${hashKey};${service};${redisLastModified.getTime()}` as ETag;
+                const etag = `"${hashType};${hashKey};${service};${redisLastModified.getTime()}"` as ETag;
                 res.status(304).set("etag", etag).send();
             }
             else next();
