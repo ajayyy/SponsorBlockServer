@@ -76,6 +76,12 @@ const cache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, 
     ttl: 1000 * 60 * 30,
     ttlResolution: 1000 * 60 * 15
 }) : null;
+// Used to cache ttl data
+const ttlCache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, number>({
+    max: config.redis.clientCacheSize / 10 / 4, // 4 byte integer per element
+    ttl: 1000 * 60 * 30,
+    ttlResolution: 1000 * 60 * 15
+}) : null;
 
 // For redis
 let cacheConnectionClientId = "";
@@ -194,14 +200,17 @@ if (config.redis?.enabled) {
     };
 
     const ttl = client.ttl.bind(client);
-    exportClient.ttl = (key) => {
-        if (cache && cacheClient && cache.has(key)) {
+    exportClient.ttl = async (key) => {
+        if (cache && cacheClient && ttlCache.has(key)) {
             // Trigger usage of cache
             cache.get(key);
 
-            return Promise.resolve(config.redis?.expiryTime - Math.floor((cache.ttl - cache.info(key).ttl) / 1000));
+            return ttlCache.get(key) + config.redis?.expiryTime - Math.floor(Date.now() / 1000);
         } else {
-            return ttl(createKeyName(key));
+            const result = await ttl(createKeyName(key));
+            if (ttlCache) ttlCache.set(key, Math.floor(Date.now() / 1000) - (config.redis?.expiryTime - result));
+
+            return result;
         }
     };
 
@@ -400,6 +409,8 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
                 if (cache.delete(key)) {
                     lastInvalidation = Date.now();
                 }
+
+                ttlCache.get(key);
 
                 // To tell it to not save the result of this currently running request
                 if (key && activeRequestPromises[key] !== undefined) {
