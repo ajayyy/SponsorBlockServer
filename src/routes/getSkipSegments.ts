@@ -42,7 +42,10 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             const fetchData = () => privateDB.prepare("all", 'SELECT "hashedIP" FROM "sponsorTimes" WHERE "videoID" = ? AND "timeSubmitted" = ? AND "service" = ?',
                 [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
             try {
-                if (db.highLoad() || privateDB.highLoad()) throw new Error("High load, not handling shadowhide");
+                if (db.highLoad() || privateDB.highLoad()) {
+                    Logger.error("High load, not handling shadowhide");
+                    return false;
+                }
 
                 cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = promiseOrTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
             } catch (e) {
@@ -51,7 +54,13 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             }
         }
 
-        const ipList = await cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
+        let ipList = [];
+        try {
+            ipList = await cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
+        } catch (e) {
+            Logger.error(`skipSegments: Error while trying to find IP: ${e}`);
+            return false;
+        }
 
         if (ipList?.length > 0 && cache.userHashedIP === undefined) {
             cache.userHashedIP = await cache.userHashedIPPromise;
@@ -186,7 +195,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
 
         return segments;
     } catch (err) /* istanbul ignore next */ {
-        Logger.error(err as string);
+        Logger.error(`get segments by hash error: ${err}`);
         return null;
     }
 }

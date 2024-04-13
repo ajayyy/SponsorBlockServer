@@ -223,6 +223,8 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
             return submitterIP.hashedIP === hashedIP;
         } catch (e) {
             // give up on shadow hide for now
+            Logger.error(`getBranding: Error while trying to find IP: ${e}`);
+
             return false;
         }
     }));
