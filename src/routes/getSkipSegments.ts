@@ -15,6 +15,7 @@ import { promiseOrTimeout } from "../utils/promise";
 import { parseSkipSegments } from "../utils/parseSkipSegments";
 import { getEtag } from "../middleware/etag";
 import { shuffleArray } from "../utils/array";
+import { Postgres } from "../databases/Postgres";
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
@@ -44,6 +45,10 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             try {
                 if (db.highLoad() || privateDB.highLoad()) {
                     Logger.error("High load, not handling shadowhide");
+                    if (db instanceof Postgres && privateDB instanceof Postgres) {
+                        Logger.error(`Postgres stats: ${JSON.stringify(db.getStats())}`);
+                        Logger.error(`Postgres private stats: ${JSON.stringify(privateDB.getStats())}`);
+                    }
                     return false;
                 }
 
@@ -59,6 +64,11 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             ipList = await cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
         } catch (e) {
             Logger.error(`skipSegments: Error while trying to find IP: ${e}`);
+            if (db instanceof Postgres && privateDB instanceof Postgres) {
+                Logger.error(`Postgres stats: ${JSON.stringify(db.getStats())}`);
+                Logger.error(`Postgres private stats: ${JSON.stringify(privateDB.getStats())}`);
+            }
+
             return false;
         }
 
