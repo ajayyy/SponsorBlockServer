@@ -5,8 +5,9 @@ import os from "os";
 import redis, { getRedisStats } from "../utils/redis";
 import { promiseOrTimeout } from "../utils/promise";
 import { Postgres } from "../databases/Postgres";
+import { Server } from "http";
 
-export async function getStatus(req: Request, res: Response): Promise<Response> {
+export async function getStatus(req: Request, res: Response, server: Server): Promise<Response> {
     const startTime = Date.now();
     let value = req.params.value as string[] | string;
     value = Array.isArray(value) ? value[0] : value;
@@ -42,6 +43,7 @@ export async function getStatus(req: Request, res: Response): Promise<Response> 
             processTime,
             redisProcessTime,
             loadavg: os.loadavg().slice(1), // only return 5 & 15 minute load average
+            connections: await new Promise((resolve) => server.getConnections((_, count) => resolve(count))),
             statusRequests,
             hostname: os.hostname(),
             postgresStats: (db as Postgres)?.getStats?.(),

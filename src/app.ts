@@ -81,13 +81,15 @@ export function createServer(callback: () => void): Server {
     // Set production mode
     app.set("env", config.mode || "production");
 
-    setupRoutes(router);
+    const server = app.listen(config.port, callback);
 
-    return app.listen(config.port, callback);
+    setupRoutes(router, server);
+
+    return server;
 }
 
 /* eslint-disable @typescript-eslint/no-misused-promises */
-function setupRoutes(router: Router) {
+function setupRoutes(router: Router, server: Server) {
     // Rate limit endpoint lists
     const voteEndpoints: RequestHandler[] = [voteOnSponsorTime];
     const viewEndpoints: RequestHandler[] = [viewedVideoSponsorTime];
@@ -200,8 +202,8 @@ function setupRoutes(router: Router) {
     router.get("/api/chapterNames", getChapterNames);
 
     // get status
-    router.get("/api/status/:value", getStatus);
-    router.get("/api/status", getStatus);
+    router.get("/api/status/:value", (req, res) => getStatus(req, res, server));
+    router.get("/api/status", (req, res) => getStatus(req, res, server));
 
     router.get("/api/youtubeApiProxy", youtubeApiProxy);
     // get user category stats
