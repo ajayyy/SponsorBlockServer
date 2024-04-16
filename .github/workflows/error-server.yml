@@ -1,0 +1,16 @@
+name: Docker image builds
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  error-server:
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      name: "error-server"
+      username: "ajayyy"
+      folder: "./containers/error-server"
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
