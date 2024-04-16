@@ -106,6 +106,7 @@ export interface SBSConfig {
     minUserIDLength: number,
     deArrowPaywall: boolean,
     useCacheForSegmentGroups: boolean
+    maxConnections: number;
 }
 
 export interface WebhookConfig {

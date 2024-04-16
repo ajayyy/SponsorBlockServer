@@ -56,6 +56,7 @@ import { hostHeader } from "./middleware/hostHeader";
 import { getBrandingStats } from "./routes/getBrandingStats";
 import { getTopBrandingUsers } from "./routes/getTopBrandingUsers";
 import { getFeatureFlag } from "./routes/getFeatureFlag";
+import { getReady } from "./routes/getReady";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -204,6 +205,8 @@ function setupRoutes(router: Router, server: Server) {
     // get status
     router.get("/api/status/:value", (req, res) => getStatus(req, res, server));
     router.get("/api/status", (req, res) => getStatus(req, res, server));
+
+    router.get("/api/ready", (req, res) => getReady(req, res, server));
 
     router.get("/api/youtubeApiProxy", youtubeApiProxy);
     // get user category stats
