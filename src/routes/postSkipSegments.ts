@@ -279,7 +279,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 errorMessage:
                     `Users have voted that all the segments required for this video have already been submitted for the following category: ` +
                     `'${segments[i].category}'\n` +
-                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}\n'` : ""}` +
+                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'\n` : ""}` +
                     `You may need to refresh if you don't see the segments.\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
