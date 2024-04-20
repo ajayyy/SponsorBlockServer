@@ -15,6 +15,7 @@ import { promiseOrTimeout } from "../utils/promise";
 import { QueryCacher } from "../utils/queryCacher";
 import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys";
 import * as SeedRandom from "seedrandom";
+import { getEtag } from "../middleware/etag";
 
 enum BrandingSubmissionType {
     Title = "title",
@@ -294,6 +295,10 @@ export async function getBranding(req: Request, res: Response) {
     try {
         const result = await getVideoBranding(res, videoID, service, ip, returnUserID, fetchAll);
 
+        await getEtag("branding", (videoID as string), service)
+            .then(etag => res.set("ETag", etag))
+            .catch(() => null);
+
         const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
         return res.status(status).json(result);
     } catch (e) {
@@ -316,6 +321,10 @@ export async function getBrandingByHashEndpoint(req: Request, res: Response) {
 
     try {
         const result = await getVideoBrandingByHash(hashPrefix, service, ip, returnUserID, fetchAll);
+
+        await getEtag("brandingHash", (hashPrefix as string), service)
+            .then(etag => res.set("ETag", etag))
+            .catch(() => null);
 
         const status = !isEmpty(result) ? 200 : 404;
         return res.status(status).json(result);
