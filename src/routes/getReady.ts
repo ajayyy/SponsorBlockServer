@@ -14,9 +14,9 @@ export async function getReady(req: Request, res: Response, server: Server): Pro
     if (!connections
             || (connections < config.maxConnections
                 && (!config.redis || redisStats.activeRequests < config.redis.maxConnections * 0.8)
-                && (!config.redis || redisStats.avgReadTime < 2000 || redisStats.activeRequests < 1)
+                && (!config.redis || redisStats.avgReadTime < config.maxResponseTime || redisStats.activeRequests < 1)
                 && (!config.postgres || postgresStats.activeRequests < config.postgres.maxActiveRequests * 0.8))
-                && (!config.postgres || postgresStats.avgReadTime < 2000)) {
+                && (!config.postgres || postgresStats.avgReadTime < config.maxResponseTime)) {
         return res.sendStatus(200);
     } else {
         return res.sendStatus(500);

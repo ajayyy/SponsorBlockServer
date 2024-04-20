@@ -193,7 +193,8 @@ addDefaults(config, {
     minUserIDLength: 30,
     deArrowPaywall: false,
     useCacheForSegmentGroups: false,
-    maxConnections: 100
+    maxConnections: 100,
+    maxResponseTime: 1000
 });
 loadFromEnv(config);
 migrate(config);
