@@ -429,4 +429,8 @@ async function setupCacheClientTracking(client: RedisClientType,
     await client.sendCommand(["CLIENT", "TRACKING", "ON", "REDIRECT", cacheConnectionClientId, "BCAST"]);
 }
 
+export function getRedisActiveRequests() {
+    return activeRequests;
+}
+
 export default exportClient;
