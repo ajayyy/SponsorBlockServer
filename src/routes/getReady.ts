@@ -1,19 +1,22 @@
 import { Request, Response } from "express";
 import { Server } from "http";
 import { config } from "../config";
-import { getRedisActiveRequests, getRedisStats } from "../utils/redis";
+import { getRedisStats } from "../utils/redis";
 import { Postgres } from "../databases/Postgres";
 import { db } from "../databases/databases";
 
 export async function getReady(req: Request, res: Response, server: Server): Promise<Response> {
     const connections = await new Promise((resolve) => server.getConnections((_, count) => resolve(count))) as number;
 
+    const redisStats = getRedisStats();
+    const postgresStats = (db as Postgres).getStats?.();
+
     if (!connections
             || (connections < config.maxConnections
-                && (!config.redis || getRedisActiveRequests() < config.redis.maxConnections * 0.8)
-                && (!config.redis || getRedisStats().avgReadTime < 2000)
-                && (!config.postgres || (db as Postgres).getStats().activeRequests < config.postgres.maxActiveRequests * 0.8))
-                && (!config.postgres || (db as Postgres).getStats().avgReadTime < 2000)) {
+                && (!config.redis || redisStats.activeRequests < config.redis.maxConnections * 0.8)
+                && (!config.redis || redisStats.avgReadTime < 2000 || redisStats.activeRequests < 1)
+                && (!config.postgres || postgresStats.activeRequests < config.postgres.maxActiveRequests * 0.8))
+                && (!config.postgres || postgresStats.avgReadTime < 2000)) {
         return res.sendStatus(200);
     } else {
         return res.sendStatus(500);
