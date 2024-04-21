@@ -194,7 +194,8 @@ addDefaults(config, {
     deArrowPaywall: false,
     useCacheForSegmentGroups: false,
     maxConnections: 100,
-    maxResponseTime: 1000
+    maxResponseTime: 1000,
+    maxResponseTimeWhileLoadingCache: 2000
 });
 loadFromEnv(config);
 migrate(config);

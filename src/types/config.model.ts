@@ -107,6 +107,8 @@ export interface SBSConfig {
     deArrowPaywall: boolean,
     useCacheForSegmentGroups: boolean
     maxConnections: number;
+    maxResponseTime: number;
+    maxResponseTimeWhileLoadingCache: number;
 }
 
 export interface WebhookConfig {
