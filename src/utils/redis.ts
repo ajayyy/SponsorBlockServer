@@ -410,7 +410,7 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
                     lastInvalidation = Date.now();
                 }
 
-                ttlCache.get(key);
+                ttlCache.delete(key);
 
                 // To tell it to not save the result of this currently running request
                 if (key && activeRequestPromises[key] !== undefined) {
