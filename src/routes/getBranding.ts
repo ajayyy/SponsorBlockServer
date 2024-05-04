@@ -237,8 +237,10 @@ export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResu
     let randomTime = SeedRandom.alea(videoID)();
 
     // Don't allow random times past 90% of the video if no endcard
-    if (!segments.some((s) => s.category === "outro") && randomTime > 0.9) {
-        randomTime -= 0.9;
+    if (!segments.some((s) => s.category === "outro")) {
+        // Since the randomTime is in range <0.0;1.0), *= 0.9 caps it to <0.0;0.9)
+        // without making some ranges more likely to be picked than others
+        randomTime *= 0.9;
     }
 
     if (segments.length === 0) return randomTime;
