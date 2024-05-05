@@ -3,6 +3,7 @@ import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { HashedValue } from "../types/hash.model";
 import { Logger } from "./logger";
 import { BrandingUUID } from "../types/branding.model";
+import { RedisCommandArgument } from "@redis/client/dist/lib/commands";
 
 export const skipSegmentsKey = (videoID: VideoID, service: Service): string =>
     `segments.v4.${service}.videoID.${videoID}`;
@@ -28,20 +29,20 @@ export function brandingHashKey(hashedVideoIDPrefix: VideoIDHash, service: Servi
 }
 
 export const brandingIPKey = (uuid: BrandingUUID): string =>
-    `branding.shadow.${uuid}`;
+    `branding.v1.shadow.${uuid}`;
 
 
 export const shadowHiddenIPKey = (videoID: VideoID, timeSubmitted: number, service: Service): string =>
-    `segments.${service}.videoID.${videoID}.shadow.${timeSubmitted}`;
+    `segments.v1.${service}.videoID.${videoID}.shadow.${timeSubmitted}`;
 
 export const reputationKey = (userID: UserID): string =>
-    `reputation.user.${userID}`;
+    `reputation.v1.user.${userID}`;
 
 export function ratingHashKey(hashPrefix: VideoIDHash, service: Service): string {
     hashPrefix = hashPrefix.substring(0, 4) as VideoIDHash;
     if (hashPrefix.length !== 4) Logger.warn(`Redis rating hash-prefix key is not length 4! ${hashPrefix}`);
 
-    return `rating.${service}.${hashPrefix}`;
+    return `rating.v1.${service}.${hashPrefix}`;
 }
 
 export function shaHashKey(singleIter: HashedValue): string {
@@ -64,5 +65,9 @@ export function videoLabelsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Se
 }
 
 export function userFeatureKey (userID: HashedUserID, feature: Feature): string {
-    return `user.${userID}.feature.${feature}`;
+    return `user.v1.${userID}.feature.${feature}`;
+}
+
+export function shouldClientCacheKey(key: RedisCommandArgument): boolean {
+    return (key as string).match(/^(?:segments\.|reputation\.|branding\.|labels\.)/) !== null;
 }

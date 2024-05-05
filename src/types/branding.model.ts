@@ -17,6 +17,7 @@ export interface TitleDBResult extends BrandingDBSubmission {
     title: string,
     original: number,
     votes: number,
+    downvotes: number,
     locked: number,
     verification: number,
     userID: UserID
@@ -35,6 +36,7 @@ export interface ThumbnailDBResult extends BrandingDBSubmission {
     timestamp?: number,
     original: number,
     votes: number,
+    downvotes: number,
     locked: number,
     userID: UserID
 }
@@ -83,6 +85,8 @@ export interface BrandingSubmission {
     videoID: VideoID;
     userID: UserID;
     service: Service;
+    autoLock: boolean | undefined;
+    downvote: boolean | undefined;
 }
 
 export interface BrandingSegmentDBResult {

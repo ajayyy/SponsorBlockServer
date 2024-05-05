@@ -15,7 +15,6 @@ describe("postBranding", () => {
     const userID5 = `PostBrandingUser5${".".repeat(16)}`;
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
-    const userID8 = `PostBrandingUser8${".".repeat(16)}`;
     const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
 
 
@@ -54,17 +53,26 @@ describe("postBranding", () => {
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0]);
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0]);
 
+        // Testing vip submission removal
+        await db.prepare("run", insertTitleQuery, ["postBrandRemoved1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved1"]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandRemoved1", 0, 1, 0, 0]);
+        await db.prepare("run", insertTitleQuery, ["postBrandRemoved1", "Some other title", 0, getHash(userID1), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved2"]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandRemoved2", 0, 1, 0, 0]);
+
+        // Testing vip submission removal
+        const insertThumbnailTimestampQuery = 'INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)';
+        await db.prepare("run", insertThumbnailQuery, ["postBrandRemoved1", 0, getHash(userID3), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved1"]);
+        await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandRemoved1", 12.34]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandRemoved1", 0, 1, 0]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandRemoved1", 0, getHash(userID3), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved2"]);
+        await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandRemoved2", 13.34]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandRemoved2", 0, 1, 0]);
+
         // Verified through title submissions
         await db.prepare("run", insertTitleQuery, ["postBrandVerified1", "Some title", 0, getHash(userID7), Service.YouTube, getHash("postBrandVerified1"), Date.now(), "postBrandVerified1"]);
         await db.prepare("run", insertTitleQuery, ["postBrandVerified2", "Some title", 1, getHash(userID7), Service.YouTube, getHash("postBrandVerified2"), Date.now(), "postBrandVerified2"]);
         await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified1", 5, 0, 0, -1]);
         await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified2", -1, 0, 0, -1]);
-
-        // Verified through SponsorBlock submissions
-        const insertSegment = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSegment, ["postBrandVerified3", 1, 11, 1, 0, "postBrandVerified3", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
-        await db.prepare("run", insertSegment, ["postBrandVerified3", 11, 21, 1, 0, "postBrandVerified32", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
-        await db.prepare("run", insertSegment, ["postBrandVerified3", 21, 31, 1, 0, "postBrandVerified33", getHash(userID8), 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, ""]);
 
         // Testing details for banned user handling
         await db.prepare("run", insertTitleQuery, ["postBrandBannedCustomVote",   "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandBannedCustomVote"), Date.now(), "postBrandBannedCustomVote"]);
@@ -75,7 +83,6 @@ describe("postBranding", () => {
         await db.prepare("run", insertThumbnailQuery, ["postBrandBannedOriginalVote", 1, getHash(userID1), Service.YouTube, getHash("postBrandBannedOriginalVote"), Date.now(), "postBrandBannedOriginalVote"]);
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedCustomVote", 0, 0, 0]);
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0]);
-        const insertThumbnailTimestampQuery = 'INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)';
         await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandBannedCustomVote", 12.34]);
     });
 
@@ -127,6 +134,7 @@ describe("postBranding", () => {
         assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
 
         assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.downvotes, 0);
         assert.strictEqual(dbVotes.locked, 0);
         assert.strictEqual(dbVotes.shadowHidden, 0);
     });
@@ -221,6 +229,271 @@ describe("postBranding", () => {
         assert.strictEqual(dbThumbnailVotes.votes, 0);
         assert.strictEqual(dbThumbnailVotes.locked, 0);
         assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+    });
+
+    it("Submit another title and thumbnail", async () => {
+        const videoID = "postBrand5";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 13.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID4,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbThumbnailTimestamps = await queryThumbnailTimestampsByUUID(dbThumbnail.UUID);
+        const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+
+        assert.strictEqual(dbTitleVotes.votes, 0);
+        assert.strictEqual(dbTitleVotes.locked, 0);
+        assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+
+        assert.strictEqual(dbThumbnailTimestamps.timestamp, thumbnail.timestamp);
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+
+        assert.strictEqual(dbThumbnailVotes.votes, 0);
+        assert.strictEqual(dbThumbnailVotes.locked, 0);
+        assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+    });
+
+    it("Downvote title and thumbnail", async () => {
+        const videoID = "postBrand5";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 13.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID6,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.votes, 0);
+                assert.strictEqual(dbTitleVotes.downvotes, 1);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+                assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+                assert.strictEqual(dbThumbnailVotes.votes, 0);
+                assert.strictEqual(dbThumbnailVotes.downvotes, 1);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+                assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+            }
+        }
+    });
+
+    it("Downvote your own title and thumbnail", async () => {
+        const videoID = "postBrand5";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 13.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID4,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.votes, -1);
+                assert.strictEqual(dbTitleVotes.downvotes, 1);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+                assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+                assert.strictEqual(dbThumbnailVotes.votes, -1);
+                assert.strictEqual(dbThumbnailVotes.downvotes, 1);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+                assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+            }
+        }
+    });
+
+    it("Downvote another title and thumbnail", async () => {
+        const videoID = "postBrand5";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID6,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.votes, 0);
+                assert.strictEqual(dbTitleVotes.downvotes, 1);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+                assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                assert.strictEqual(dbThumbnailVotes.votes, 0);
+                assert.strictEqual(dbThumbnailVotes.downvotes, 1);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+                assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+            }
+        }
+    });
+
+    it("Fail to downvote locked title and thumbnail", async () => {
+        const videoID = "postBrandRemoved1";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID6,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 403);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.votes, 0);
+                assert.strictEqual(dbTitleVotes.downvotes, 0);
+                assert.strictEqual(dbTitleVotes.locked, 1);
+                assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+                assert.strictEqual(dbThumbnailVotes.votes, 0);
+                assert.strictEqual(dbThumbnailVotes.downvotes, 0);
+                assert.strictEqual(dbThumbnailVotes.locked, 1);
+                assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+            }
+        }
+    });
+
+    it("Upvote after downvoting title and thumbnail", async () => {
+        const videoID = "postBrand5";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 13.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID6,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.votes, 0);
+                assert.strictEqual(dbTitleVotes.downvotes, 0);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+                assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+                assert.strictEqual(dbThumbnailVotes.votes, 0);
+                assert.strictEqual(dbThumbnailVotes.downvotes, 0);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+                assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+            }
+        }
     });
 
     it("Submit title and thumbnail as VIP", async () => {
@@ -318,6 +591,192 @@ describe("postBranding", () => {
         assert.strictEqual(otherSegmentTitleVotes2.locked, 1);
         assert.strictEqual(otherSegmentThumbnailVotes1.locked, 1);
         assert.strictEqual(otherSegmentThumbnailVotes2.locked, 1);
+    });
+
+    it("Submit title and thumbnail as VIP without locking", async () => {
+        const videoID = "postBrand6";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID,
+            autoLock: false
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+            }
+        }
+    });
+
+    it("Downvote title and thumbnail as VIP", async () => {
+        const videoID = "postBrandRemoved1";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+
+        const otherSegmentTitleVotes1 = await queryTitleVotesByUUID("postBrandRemoved1");
+        const otherSegmentTitleVotes2 = await queryTitleVotesByUUID("postBrandRemoved2");
+        const otherSegmentThumbnailVotes1 = await queryThumbnailVotesByUUID("postBrandRemoved1");
+        const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
+
+        assert.strictEqual(otherSegmentTitleVotes1.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.removed, 0);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes1.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.removed, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 0);
+    });
+
+    it("Downvote another title and thumbnail as VIP", async () => {
+        const videoID = "postBrandRemoved1";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 13.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+
+        const otherSegmentTitleVotes1 = await queryTitleVotesByUUID("postBrandRemoved1");
+        const otherSegmentTitleVotes2 = await queryTitleVotesByUUID("postBrandRemoved2");
+        const otherSegmentThumbnailVotes1 = await queryThumbnailVotesByUUID("postBrandRemoved1");
+        const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
+
+        assert.strictEqual(otherSegmentTitleVotes1.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 1);
+    });
+
+    it("Remove downvote on title and thumbnail as VIP", async () => {
+        const videoID = "postBrandRemoved1";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+
+        const otherSegmentTitleVotes1 = await queryTitleVotesByUUID("postBrandRemoved1");
+        const otherSegmentTitleVotes2 = await queryTitleVotesByUUID("postBrandRemoved2");
+        const otherSegmentThumbnailVotes1 = await queryThumbnailVotesByUUID("postBrandRemoved1");
+        const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
+
+        assert.strictEqual(otherSegmentTitleVotes1.removed, 0);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 0);
+        assert.strictEqual(otherSegmentTitleVotes2.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.removed, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes2.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 1);
+    });
+
+    it("Downvote title and thumbnail as VIP without removing", async () => {
+        const videoID = "postBrandRemoved1";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.34,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID,
+            downvote: true,
+            autoLock: false
+        });
+
+        assert.strictEqual(res.status, 200);
+
+        const otherSegmentTitleVotes1 = await queryTitleVotesByUUID("postBrandRemoved1");
+        const otherSegmentTitleVotes2 = await queryTitleVotesByUUID("postBrandRemoved2");
+        const otherSegmentThumbnailVotes1 = await queryThumbnailVotesByUUID("postBrandRemoved1");
+        const otherSegmentThumbnailVotes2 = await queryThumbnailVotesByUUID("postBrandRemoved2");
+
+        assert.strictEqual(otherSegmentTitleVotes1.removed, 0);
+        assert.strictEqual(otherSegmentTitleVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.removed, 1);
+        assert.strictEqual(otherSegmentTitleVotes2.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes1.removed, 0);
+        assert.strictEqual(otherSegmentThumbnailVotes1.downvotes, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.removed, 1);
+        assert.strictEqual(otherSegmentThumbnailVotes2.downvotes, 1);
     });
 
     it("Vote the same title again", async () => {
@@ -486,6 +945,7 @@ describe("postBranding", () => {
         assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
 
         assert.strictEqual(dbVotes.votes, 1);
+        assert.strictEqual(dbVotes.downvotes, 0);
         assert.strictEqual(dbVotes.locked, 0);
         assert.strictEqual(dbVotes.shadowHidden, 0);
     });
@@ -570,30 +1030,6 @@ describe("postBranding", () => {
 
         const dbVotes3 = await queryTitleVotesByUUID("postBrandVerified2");
         assert.strictEqual(dbVotes3.verification, 0);
-    });
-
-    it("Submit from verified user from SponsorBlock submissions", async () => {
-        const videoID = "postBrandVerified2-2";
-        const title = {
-            title: "Some title",
-            original: false
-        };
-
-        const res = await postBranding({
-            title,
-            userID: userID8,
-            service: Service.YouTube,
-            videoID
-        });
-
-        assert.strictEqual(res.status, 200);
-        const dbTitle = await queryTitleByVideo(videoID);
-        const dbVotes = await queryTitleVotesByUUID(dbTitle.UUID);
-
-        assert.strictEqual(dbTitle.title, title.title);
-        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
-
-        assert.strictEqual(dbVotes.verification, 0);
     });
 
     it("Banned users should not be able to vote (custom title)", async () => {

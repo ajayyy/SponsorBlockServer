@@ -279,7 +279,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
                 errorMessage:
                     `Users have voted that all the segments required for this video have already been submitted for the following category: ` +
                     `'${segments[i].category}'\n` +
-                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}\n'` : ""}` +
+                    `${lockedCategoryList[lockIndex].reason?.length !== 0 ? `\nReason: '${lockedCategoryList[lockIndex].reason}'\n` : ""}` +
                     `You may need to refresh if you don't see the segments.\n` +
                     `${(segments[i].category === "sponsor" ? "\nMaybe the segment you are submitting is a different category that you have not enabled and is not a sponsor. " +
                     "Categories that aren't sponsor, such as self-promotion can be enabled in the options.\n" : "")}` +
@@ -324,15 +324,18 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
         const duplicateCheck2Row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "startTime" = ?
             and "endTime" = ? and "category" = ? and "actionType" = ? and "description" = ? and "videoID" = ? and "service" = ?`, [startTime, endTime, segments[i].category, segments[i].actionType, segments[i].description, videoID, service]);
         if (duplicateCheck2Row) {
+            segments[i].ignoreSegment = true;
+
             if (segments[i].actionType === ActionType.Full) {
                 // Forward as vote
                 await vote(rawIP, duplicateCheck2Row.UUID, paramUserID, 1);
-                segments[i].ignoreSegment = true;
                 continue;
-            } else {
-                return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
             }
         }
+    }
+
+    if (segments.every((s) => s.ignoreSegment && s.actionType !== ActionType.Full)) {
+        return { pass: false, errorMessage: "Segment has already been submitted before.", errorCode: 409 };
     }
 
     return CHECK_PASS;

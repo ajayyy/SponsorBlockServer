@@ -15,10 +15,18 @@ import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { hasFeature } from "../utils/features";
 import { checkBanStatus } from "../utils/checkBan";
+import axios from "axios";
+import { getMaxResThumbnail } from "../utils/youtubeApi";
+import { getVideoDetails } from "../utils/getVideoDetails";
 
 enum BrandingType {
     Title,
     Thumbnail
+}
+
+enum BrandingVoteType {
+    Upvote = 1,
+    Downvote = 2
 }
 
 interface ExistingVote {
@@ -28,7 +36,7 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
-    const { videoID, userID, title, thumbnail } = req.body as BrandingSubmission;
+    const { videoID, userID, title, thumbnail, autoLock, downvote } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
 
     if (!videoID || !userID || userID.length < 30 || !service
@@ -42,6 +50,7 @@ export async function postBranding(req: Request, res: Response) {
     try {
         const hashedUserID = await getHashCache(userID);
         const isVip = await isUserVIP(hashedUserID);
+        const shouldLock = isVip && autoLock !== false;
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
@@ -53,7 +62,7 @@ export async function postBranding(req: Request, res: Response) {
         }
 
         const now = Date.now();
-        const voteType = 1;
+        const voteType: BrandingVoteType = downvote ? BrandingVoteType.Downvote : BrandingVoteType.Upvote;
 
         if (title && !isVip && title.title.length > config.maxTitleLength) {
             lock.unlock();
@@ -61,33 +70,46 @@ export async function postBranding(req: Request, res: Response) {
             return;
         }
 
+        let errorCode = 0;
+
         await Promise.all([(async () => {
             if (title) {
                 // ignore original submissions from banned users - hiding those would cause issues
                 if (title.original && isBanned) return;
 
                 const existingUUID = (await db.prepare("get", `SELECT "UUID" from "titles" where "videoID" = ? AND "title" = ?`, [videoID, title.title]))?.UUID;
+                const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
+                if (downvote && existingIsLocked && !isVip) {
+                    errorCode = 403;
+                    return;
+                }
                 const UUID = existingUUID || crypto.randomUUID();
 
-                const existingVote = await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
+                await handleExistingVotes(BrandingType.Title, videoID, hashedUserID, UUID, hashedIP, voteType);
                 if (existingUUID) {
-                    await updateVoteTotals(BrandingType.Title, existingVote, UUID, isVip);
+                    await updateVoteTotals(BrandingType.Title, UUID, hashedUserID, shouldLock, !!downvote);
                 } else {
+                    if (downvote) {
+                        throw new Error("Title submission doesn't exist");
+                    }
+
                     await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
                     const verificationValue = await getVerificationValue(hashedUserID, isVip);
                     await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, ?, ?);`,
-                        [UUID, isVip ? 1 : 0, isBanned ? 1 : 0, verificationValue]);
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, verificationValue]);
 
                     await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
 
-                if (isVip) {
+                if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
+
+                sendWebhooks(videoID, UUID).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -98,34 +120,49 @@ export async function postBranding(req: Request, res: Response) {
                     ? (await db.prepare("get", `SELECT "UUID" from "thumbnails" where "videoID" = ? AND "original" = 1`, [videoID]))?.UUID
                     : (await db.prepare("get", `SELECT "thumbnails"."UUID" from "thumbnailTimestamps" JOIN "thumbnails" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
                         WHERE "thumbnailTimestamps"."timestamp" = ? AND "thumbnails"."videoID" = ?`, [(thumbnail as TimeThumbnailSubmission).timestamp, videoID]))?.UUID;
+                const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "thumbnailVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
+                if (downvote && existingIsLocked && !isVip) {
+                    errorCode = 403;
+                    return;
+                }
                 const UUID = existingUUID || crypto.randomUUID();
 
-                const existingVote = await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
+                await handleExistingVotes(BrandingType.Thumbnail, videoID, hashedUserID, UUID, hashedIP, voteType);
                 if (existingUUID) {
-                    await updateVoteTotals(BrandingType.Thumbnail, existingVote, UUID, isVip);
+                    await updateVoteTotals(BrandingType.Thumbnail, UUID, hashedUserID, shouldLock, !!downvote);
                 } else {
+                    if (downvote) {
+                        throw new Error("Thumbnail submission doesn't exist");
+                    }
+
                     await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
                     await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, ?)`,
-                        [UUID, isVip ? 1 : 0, isBanned ? 1 : 0]);
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0]);
 
                     if (!thumbnail.original) {
                         await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
                             [UUID, (thumbnail as TimeThumbnailSubmission).timestamp]);
                     }
+                }
 
-                    if (isVip) {
-                        // unlock all other titles
-                        await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
-                    }
+                if (isVip && !downvote && shouldLock) {
+                    // unlock all other titles
+                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
             }
         })()]);
 
         QueryCacher.clearBrandingCache({ videoID, hashedVideoID, service });
-        res.status(200).send("OK");
+
+        if (errorCode) {
+            res.status(errorCode).send();
+        } else {
+            res.status(200).send("OK");
+        }
+
         lock.unlock();
     } catch (e) {
         Logger.error(e as string);
@@ -138,46 +175,93 @@ export async function postBranding(req: Request, res: Response) {
  * If no existing vote, it adds one.
  */
 async function handleExistingVotes(type: BrandingType, videoID: VideoID,
-    hashedUserID: HashedUserID, UUID: BrandingUUID, hashedIP: HashedIP, voteType: number): Promise<ExistingVote> {
+    hashedUserID: HashedUserID, UUID: BrandingUUID, hashedIP: HashedIP, voteType: BrandingVoteType) {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
+    const table2 = type === BrandingType.Title ? `"titles"` : `"thumbnails"`;
 
-    const existingVote = await privateDB.prepare("get", `SELECT "id", "UUID", "type" from ${table} where "videoID" = ? AND "userID" = ?`, [videoID, hashedUserID]);
-    if (existingVote && existingVote.UUID !== UUID) {
-        if (existingVote.type === 1) {
-            await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+    const isUsersSubmission = (await db.prepare("get", `SELECT "userID" FROM ${table2} WHERE "UUID" = ?`, [UUID]))?.userID === hashedUserID;
+    const idsDealtWith: BrandingUUID[] = [];
+
+    // Either votes of the same type, or on the same submission (undo a downvote)
+    const existingVotes = await privateDB.prepare("all", `SELECT "id", "UUID", "type" from ${table} where "videoID" = ? AND "userID" = ? AND ("type" = ? OR "UUID" = ?)`, [videoID, hashedUserID, voteType, UUID]) as ExistingVote[];
+    if (existingVotes.length > 0) {
+        // Only one upvote per video
+        if (voteType === BrandingVoteType.Upvote) {
+            for (const existingVote of existingVotes) {
+                switch (existingVote.type) {
+                    case BrandingVoteType.Upvote:
+                        // Old case where there are duplicate rows in private db
+                        if (!idsDealtWith.includes(existingVote.UUID)) {
+                            idsDealtWith.push(existingVote.UUID);
+                            await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+                        }
+
+                        await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
+                        break;
+                    case BrandingVoteType.Downvote: {
+                        // Undoing a downvote now that it is being upvoted
+
+                        // Only undo downvote if it is not their submission
+                        if (!isUsersSubmission) {
+                            await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" - 1 WHERE "UUID" = ?`, [existingVote.UUID]);
+                        }
+
+                        await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
+                        break;
+                    }
+                }
+            }
+        } else if (isUsersSubmission) {
+            // Treat like upvoting another submission (undoing upvote)
+            let dealtWith = false;
+            for (const existingVote of existingVotes) {
+                if (existingVote.type === BrandingVoteType.Upvote && existingVote.UUID === UUID) {
+                    if (!dealtWith) {
+                        dealtWith = true;
+                        await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" - 1 WHERE "UUID" = ?`, [UUID]);
+                    }
+
+                    await privateDB.prepare("run", `DELETE FROM ${table} WHERE "id" = ?`, [existingVote.id]);
+                }
+            }
         }
-
-        await privateDB.prepare("run", `UPDATE ${table} SET "type" = ?, "UUID" = ? WHERE "id" = ?`, [voteType, UUID, existingVote.id]);
-    } else if (!existingVote) {
-        await privateDB.prepare("run", `INSERT INTO ${table} ("videoID", "UUID", "userID", "hashedIP", "type") VALUES (?, ?, ?, ?, ?)`,
-            [videoID, UUID, hashedUserID, hashedIP, voteType]);
     }
 
-    return existingVote;
+    await privateDB.prepare("run", `INSERT INTO ${table} ("videoID", "UUID", "userID", "hashedIP", "type") VALUES (?, ?, ?, ?, ?)`,
+        [videoID, UUID, hashedUserID, hashedIP, voteType]);
 }
 
 /**
  * Only called if an existing vote exists.
  * Will update public vote totals and locked status.
  */
-async function updateVoteTotals(type: BrandingType, existingVote: ExistingVote, UUID: BrandingUUID, isVip: boolean): Promise<void> {
+async function updateVoteTotals(type: BrandingType, UUID: BrandingUUID, userID: HashedUserID, shouldLock: boolean, downvote: boolean): Promise<void> {
     const table = type === BrandingType.Title ? `"titleVotes"` : `"thumbnailVotes"`;
+    const table2 = type === BrandingType.Title ? `"titles"` : `"thumbnails"`;
 
-    // Don't upvote if we vote on the same submission
-    if (!existingVote || existingVote.UUID !== UUID) {
+    if (downvote) {
+        // Only downvote if it is not their submission
+        const isUsersSubmission = (await db.prepare("get", `SELECT "userID" FROM ${table2} WHERE "UUID" = ?`, [UUID]))?.userID === userID;
+        if (!isUsersSubmission) {
+            await db.prepare("run", `UPDATE ${table} SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+        }
+    } else {
         await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" + 1 WHERE "UUID" = ?`, [UUID]);
     }
 
-    if (isVip) {
-        await db.prepare("run", `UPDATE ${table} SET "locked" = 1 WHERE "UUID" = ?`, [UUID]);
+    if (shouldLock) {
+        if (downvote) {
+            await db.prepare("run", `UPDATE ${table} SET "removed" = 1 WHERE "UUID" = ?`, [UUID]);
+        } else {
+            await db.prepare("run", `UPDATE ${table} SET "locked" = 1, "removed" = 0 WHERE "UUID" = ?`, [UUID]);
+        }
     }
 }
 
 export async function getVerificationValue(hashedUserID: HashedUserID, isVip: boolean): Promise<number> {
     const voteSum = await db.prepare("get", `SELECT SUM("maxVotes") as "voteSum" FROM (SELECT MAX("votes") as "maxVotes" from "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? GROUP BY "titles"."videoID") t`, [hashedUserID]);
-    const sbSubmissions = () => db.prepare("get", `SELECT COUNT(*) as count FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > 0 LIMIT 3`, [hashedUserID]);
 
-    if (voteSum.voteSum >= 1 || isVip || (await sbSubmissions()).count > 2 || await hasFeature(hashedUserID, Feature.DeArrowTitleSubmitter)) {
+    if (voteSum.voteSum >= 1 || isVip || await hasFeature(hashedUserID, Feature.DeArrowTitleSubmitter)) {
         return 0;
     } else {
         return -1;
@@ -198,6 +282,47 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
             }
 
             await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, hashedUserID, verification]);
+        }
+    }
+}
+
+async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID) {
+    const lockedSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titles"."userID" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."videoID" = ? AND "titles"."UUID" != ? AND "titleVotes"."locked" = 1`, [videoID, UUID]);
+
+    if (lockedSubmission) {
+        const currentSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."UUID" = ?`, [UUID]);
+
+        // Time to warn that there may be an issue
+        if (currentSubmission.votes - lockedSubmission.votes > 2) {
+            const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [lockedSubmission.userID]);
+
+            const data = await getVideoDetails(videoID);
+            axios.post(config.discordDeArrowLockedWebhookURL, {
+                "embeds": [{
+                    "title": data?.title,
+                    "url": `https://www.youtube.com/watch?v=${videoID}`,
+                    "description": `**${lockedSubmission.votes}** Votes vs **${currentSubmission.votes}**\
+                        \n\n**Locked title:** ${lockedSubmission.title}\
+                        \n**New title:** ${currentSubmission.title}\
+                        \n\n**Submitted by:** ${usernameRow?.userName ?? ""}\n${lockedSubmission.userID}`,
+                    "color": 10813440,
+                    "thumbnail": {
+                        "url": getMaxResThumbnail(videoID),
+                    },
+                }],
+            })
+                .then(res => {
+                    if (res.status >= 400) {
+                        Logger.error("Error sending reported submission Discord hook");
+                        Logger.error(JSON.stringify((res.data)));
+                        Logger.error("\n");
+                    }
+                })
+                .catch(err => {
+                    Logger.error("Failed to send reported submission Discord hook.");
+                    Logger.error(JSON.stringify(err));
+                    Logger.error("\n");
+                });
         }
     }
 }

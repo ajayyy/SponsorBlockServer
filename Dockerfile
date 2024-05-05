@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 RUN apk add --no-cache git postgresql-client
 COPY --from=builder ./node_modules ./node_modules
 COPY --from=builder ./dist ./dist
-COPY ./.git ./.git
+COPY ./.git/ ./.git
 COPY entrypoint.sh .
 COPY databases/*.sql databases/
 EXPOSE 8080

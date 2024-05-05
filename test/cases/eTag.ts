@@ -31,7 +31,7 @@ describe("304 etag validation", () => {
     const endpoint = "/etag";
     for (const hashType of ["skipSegments", "skipSegmentsHash", "videoLabel", "videoLabelHash"]) {
         it(`${hashType} etag should return 304`, () => {
-            const etagKey = `${hashType};${genRandom};YouTube;${Date.now()}`;
+            const etagKey = `"${hashType};${genRandom};YouTube;${Date.now()}"`;
             return redis.setEx(etagKey, 8400, "test").then(() =>
                 client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
                     assert.strictEqual(res.status, 304);
@@ -43,14 +43,14 @@ describe("304 etag validation", () => {
     }
 
     it(`other etag type should not return 304`, () => {
-        const etagKey = `invalidHashType;${genRandom};YouTube;${Date.now()}`;
+        const etagKey = `"invalidHashType;${genRandom};YouTube;${Date.now()}"`;
         return client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
             assert.strictEqual(res.status, 404);
         });
     });
 
     it(`outdated etag type should not return 304`, () => {
-        const etagKey = `skipSegments;${genRandom};YouTube;5000`;
+        const etagKey = `"skipSegments;${genRandom};YouTube;5000"`;
         return client.get(endpoint, { headers: { "If-None-Match": etagKey } }).then(res => {
             assert.strictEqual(res.status, 404);
         });

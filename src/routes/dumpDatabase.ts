@@ -96,10 +96,12 @@ function removeOutdatedDumps(exportPath: string): Promise<void> {
             for (const tableName in tableFiles) {
                 const files = tableFiles[tableName].sort((a, b) => b.timestamp - a.timestamp);
                 for (let i = 2; i < files.length; i++) {
-                    // remove old file
-                    await unlink(files[i].file).catch((error: any) => {
-                        Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
-                    });
+                    if (!latestDumpFiles.some((file) => file.fileName === files[i].file.match(/[^/]+$/)[0])) {
+                        // remove old file
+                        await unlink(files[i].file).catch((error: any) => {
+                            Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
+                        });
+                    }
                 }
             }
             resolve();
@@ -234,11 +236,11 @@ async function queueDump(): Promise<void> {
                 const fileName = `${table.name}_${startTime}.csv`;
                 const file = `${appExportPath}/${fileName}`;
 
-                await new Promise<string>((resolve) => {
+                await new Promise<string>((resolve, reject) => {
                     exec(`psql -c "\\copy (SELECT * FROM \\"${table.name}\\"${table.order ? ` ORDER BY \\"${table.order}\\"` : ``})`
                             + ` TO '${file}' WITH (FORMAT CSV, HEADER true);"`, credentials, (error, stdout, stderr) => {
                         if (error) {
-                            Logger.error(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
+                            reject(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
                         }
 
                         resolve(error ? stderr : stdout);
@@ -253,10 +255,10 @@ async function queueDump(): Promise<void> {
             latestDumpFiles = [...dumpFiles];
 
             lastUpdate = startTime;
+            updateQueued = false;
         } catch(e) {
             Logger.error(e as string);
         } finally {
-            updateQueued = false;
             updateRunning = false;
         }
     }

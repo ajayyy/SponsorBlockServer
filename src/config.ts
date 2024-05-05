@@ -1,7 +1,6 @@
 import fs from "fs";
 import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
-import { isNumber } from "lodash";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_POSTGRES ? "ci.json"
@@ -45,6 +44,7 @@ addDefaults(config, {
     discordFailedReportChannelWebhookURL: null,
     discordReportChannelWebhookURL: null,
     discordMaliciousReportWebhookURL: null,
+    discordDeArrowLockedWebhookURL: null,
     minReputationToSubmitChapter: 0,
     minReputationToSubmitFiller: 0,
     getTopUsersCacheTimeMinutes: 240,
@@ -82,7 +82,8 @@ addDefaults(config, {
         maxTries: 3,
         maxActiveRequests: 0,
         timeout: 60000,
-        highLoadThreshold: 10
+        highLoadThreshold: 10,
+        redisTimeoutThreshold: 1000
     },
     postgresReadOnly: {
         enabled: false,
@@ -164,7 +165,10 @@ addDefaults(config, {
         commandsQueueMaxLength: 3000,
         stopWritingAfterResponseTime: 50,
         responseTimePause: 1000,
-        disableHashCache: false
+        disableHashCache: false,
+        clientCacheSize: 2000,
+        useCompression: false,
+        dragonflyMode: false
     },
     redisRead: {
         enabled: false,
@@ -187,7 +191,11 @@ addDefaults(config, {
     },
     tokenSeed: "",
     minUserIDLength: 30,
-    deArrowPaywall: false
+    deArrowPaywall: false,
+    useCacheForSegmentGroups: false,
+    maxConnections: 100,
+    maxResponseTime: 1000,
+    maxResponseTimeWhileLoadingCache: 2000
 });
 loadFromEnv(config);
 migrate(config);
@@ -235,7 +243,7 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
             loadFromEnv(data, fullKey);
         } else if (process.env[fullKey]) {
             const value = process.env[fullKey];
-            if (isNumber(value)) {
+            if (value !== "" && !isNaN(value as unknown as number)) {
                 config[key] = parseFloat(value);
             } else if (value.toLowerCase() === "true" || value.toLowerCase() === "false") {
                 config[key] = value === "true";

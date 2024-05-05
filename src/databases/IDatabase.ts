@@ -9,6 +9,8 @@ export interface IDatabase {
     prepare(type: QueryType, query: string, params?: any[], options?: QueryOption): Promise<any | any[] | void>;
 
     highLoad(): boolean;
+
+    shouldUseRedisTimeout(): boolean;
 }
 
 export type QueryType = "get" | "all" | "run";

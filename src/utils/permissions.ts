@@ -16,7 +16,7 @@ async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount", SUM(CASE WHEN "votes" < 0 AND "views" > 5 THEN 1 ELSE 0 END) AS "downvotedSubmissions" FROM "sponsorTimes" WHERE "userID" = ?`
         , [userID], { useReplica: true });
 
-    return result.submissionCount > 10 && result.downvotedSubmissions / result.submissionCount < 0.15;
+    return result.submissionCount > 5 && result.downvotedSubmissions / result.submissionCount < 0.10;
 }
 
 export async function canSubmit(userID: HashedUserID, category: Category): Promise<CanSubmitResult> {

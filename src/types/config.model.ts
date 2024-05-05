@@ -11,6 +11,9 @@ interface RedisConfig extends redis.RedisClientOptions {
     stopWritingAfterResponseTime: number;
     responseTimePause: number;
     disableHashCache: boolean;
+    clientCacheSize: number;
+    useCompression: boolean;
+    dragonflyMode: boolean;
 }
 
 interface RedisReadOnlyConfig extends redis.RedisClientOptions {
@@ -27,6 +30,7 @@ export interface CustomWritePostgresConfig extends CustomPostgresConfig {
     maxActiveRequests: number;
     timeout: number;
     highLoadThreshold: number;
+    redisTimeoutThreshold: number;
 }
 
 export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
@@ -48,6 +52,7 @@ export interface SBSConfig {
     discordFirstTimeSubmissionsWebhookURL?: string;
     discordCompletelyIncorrectReportWebhookURL?: string;
     discordMaliciousReportWebhookURL?: string;
+    discordDeArrowLockedWebhookURL?: string,
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
     minReputationToSubmitChapter: number;
@@ -99,7 +104,11 @@ export interface SBSConfig {
     },
     tokenSeed: string,
     minUserIDLength: number,
-    deArrowPaywall: boolean
+    deArrowPaywall: boolean,
+    useCacheForSegmentGroups: boolean
+    maxConnections: number;
+    maxResponseTime: number;
+    maxResponseTimeWhileLoadingCache: number;
 }
 
 export interface WebhookConfig {

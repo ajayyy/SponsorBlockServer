@@ -1,4 +1,4 @@
-import redis from "../utils/redis";
+import redis, { TooManyActiveConnectionsError } from "../utils/redis";
 import { Logger } from "../utils/logger";
 import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
@@ -7,17 +7,21 @@ import { config } from "../config";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
-        const reply = await redis.get(key);
+        const reply = await redis.getWithCache(key);
         if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);
 
             return JSON.parse(reply);
         }
-    } catch (e) { } //eslint-disable-line no-empty
+    } catch (e) {
+        if (e instanceof TooManyActiveConnectionsError) {
+            throw e;
+        }
+    }
 
     const data = await fetchFromDB();
 
-    redis.setEx(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+    redis.setExWithCache(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return data;
 }
@@ -32,7 +36,7 @@ async function getTraced<T>(fetchFromDB: () => Promise<T>, key: string): Promise
     const startTime = Date.now();
 
     try {
-        const reply = await redis.get(key);
+        const reply = await redis.getWithCache(key);
         if (reply) {
             Logger.debug(`Got data from redis: ${reply}`);
 
@@ -42,12 +46,16 @@ async function getTraced<T>(fetchFromDB: () => Promise<T>, key: string): Promise
                 endTime: Date.now()
             };
         }
-    } catch (e) { } //eslint-disable-line no-empty
+    } catch (e) {
+        if (e instanceof TooManyActiveConnectionsError) {
+            throw e;
+        }
+    }
 
     const dbStartTime = Date.now();
     const data = await fetchFromDB();
 
-    redis.setEx(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+    redis.setExWithCache(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
 
     return {
         data,
@@ -135,6 +143,7 @@ async function getKeyLastModified(key: string): Promise<Date> {
     if (!config.redis?.enabled) return Promise.reject("ETag - Redis not enabled");
     return await redis.ttl(key)
         .then(ttl => {
+            if (ttl <= 0) return new Date();
             const sinceLive = config.redis?.expiryTime - ttl;
             const now = Math.floor(Date.now() / 1000);
             return new Date((now-sinceLive) * 1000);

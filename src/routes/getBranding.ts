@@ -15,27 +15,28 @@ import { promiseOrTimeout } from "../utils/promise";
 import { QueryCacher } from "../utils/queryCacher";
 import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys";
 import * as SeedRandom from "seedrandom";
+import { getEtag } from "../middleware/etag";
 
 enum BrandingSubmissionType {
     Title = "title",
     Thumbnail = "thumbnail"
 }
 
-export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress, returnUserID: boolean): Promise<BrandingResult> {
+export async function getVideoBranding(res: Response, videoID: VideoID, service: Service, ip: IPAddress, returnUserID: boolean, fetchAll: boolean): Promise<BrandingResult> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."downvotes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification", "titles"."userID"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1`,
+        WHERE "titles"."videoID" = ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1 AND "titleVotes"."votes" - "titleVotes"."downvotes" > -2 AND "titleVotes"."removed" = 0`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
 
     const getThumbnails = () => db.prepare(
         "all",
-        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
+        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."downvotes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID", "thumbnails"."userID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
-        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2
+        WHERE "thumbnails"."videoID" = ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" - "thumbnailVotes"."downvotes" > -2 AND "thumbnailVotes"."removed" = 0
         ORDER BY "thumbnails"."timeSubmitted" ASC`,
         [videoID, service],
         { useReplica: true }
@@ -83,24 +84,24 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         currentIP: null as Promise<HashedIP> | null
     };
 
-    return filterAndSortBranding(videoID, returnUserID, branding.titles, branding.thumbnails, branding.segments, ip, cache);
+    return filterAndSortBranding(videoID, returnUserID, fetchAll, branding.titles, branding.thumbnails, branding.segments, ip, cache);
 }
 
-export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress, returnUserID: boolean): Promise<Record<VideoID, BrandingResult>> {
+export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress, returnUserID: boolean, fetchAll: boolean): Promise<Record<VideoID, BrandingResult>> {
     const getTitles = () => db.prepare(
         "all",
-        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
+        `SELECT "titles"."title", "titles"."original", "titleVotes"."votes", "titleVotes"."downvotes", "titleVotes"."locked", "titleVotes"."shadowHidden", "titles"."UUID", "titles"."videoID", "titles"."hashedVideoID", "titleVotes"."verification"
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID"
-        WHERE "titles"."hashedVideoID" LIKE ? AND "titles"."service" = ? AND "titleVotes"."votes" > -2`,
+        WHERE "titles"."hashedVideoID" LIKE ? AND "titles"."service" = ? AND "titleVotes"."votes" > -1 AND "titleVotes"."votes" - "titleVotes"."downvotes" > -2 AND "titleVotes"."removed" = 0`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
     ) as Promise<TitleDBResult[]>;
 
     const getThumbnails = () => db.prepare(
         "all",
-        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID"
+        `SELECT "thumbnailTimestamps"."timestamp", "thumbnails"."original", "thumbnailVotes"."votes", "thumbnailVotes"."downvotes", "thumbnailVotes"."locked", "thumbnailVotes"."shadowHidden", "thumbnails"."UUID", "thumbnails"."videoID", "thumbnails"."hashedVideoID"
         FROM "thumbnails" LEFT JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" LEFT JOIN "thumbnailTimestamps" ON "thumbnails"."UUID" = "thumbnailTimestamps"."UUID"
-        WHERE "thumbnails"."hashedVideoID" LIKE ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" > -2
+        WHERE "thumbnails"."hashedVideoID" LIKE ? AND "thumbnails"."service" = ? AND "thumbnailVotes"."votes" - "thumbnailVotes"."downvotes" > -2 AND "thumbnailVotes"."removed" = 0
         ORDER BY "thumbnails"."timeSubmitted" ASC`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
@@ -131,18 +132,18 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
             };
         };
 
-        (await branding.titles).map((title) => {
+        (await branding.titles).forEach((title) => {
             title.title = title.title.replace("<", "‹");
 
             initResult(title);
             dbResult[title.videoID].titles.push(title);
         });
-        (await branding.thumbnails).map((thumbnail) => {
+        (await branding.thumbnails).forEach((thumbnail) => {
             initResult(thumbnail);
             dbResult[thumbnail.videoID].thumbnails.push(thumbnail);
         });
 
-        (await branding.segments).map((segment) => {
+        (await branding.segments).forEach((segment) => {
             initResult(segment);
             dbResult[segment.videoID].segments.push(segment);
         });
@@ -158,14 +159,14 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
     const processedResult: Record<VideoID, BrandingResult> = {};
     await Promise.all(Object.keys(branding).map(async (key) => {
         const castedKey = key as VideoID;
-        processedResult[castedKey] = await filterAndSortBranding(castedKey, returnUserID, branding[castedKey].titles,
+        processedResult[castedKey] = await filterAndSortBranding(castedKey, returnUserID, fetchAll, branding[castedKey].titles,
             branding[castedKey].thumbnails, branding[castedKey].segments, ip, cache);
     }));
 
     return processedResult;
 }
 
-async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, dbTitles: TitleDBResult[],
+async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fetchAll: boolean, dbTitles: TitleDBResult[],
     dbThumbnails: ThumbnailDBResult[], dbSegments: BrandingSegmentDBResult[],
     ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null }): Promise<BrandingResult> {
 
@@ -176,11 +177,12 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, db
         .map((r) => ({
             title: r.title,
             original: r.original === 1,
-            votes: r.votes + r.verification,
+            votes: r.votes + r.verification - r.downvotes,
             locked: r.locked === 1,
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
         }))
+        .filter((a) => fetchAll || a.votes >= 0 || a.locked)
         .sort((a, b) => b.votes - a.votes)
         .sort((a, b) => +b.locked - +a.locked) as TitleResult[];
 
@@ -191,11 +193,12 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, db
         .map((r) => ({
             timestamp: r.timestamp,
             original: r.original === 1,
-            votes: r.votes,
+            votes: r.votes - r.downvotes,
             locked: r.locked === 1,
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
-        })) as ThumbnailResult[];
+        }))
+        .filter((a) => fetchAll || a.votes >= 0 || a.locked) as ThumbnailResult[];
 
     return {
         titles,
@@ -221,6 +224,8 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
             return submitterIP.hashedIP === hashedIP;
         } catch (e) {
             // give up on shadow hide for now
+            Logger.error(`getBranding: Error while trying to find IP: ${e}`);
+
             return false;
         }
     }));
@@ -280,6 +285,7 @@ export async function getBranding(req: Request, res: Response) {
     const videoID: VideoID = req.query.videoID as VideoID;
     const service: Service = getService(req.query.service as string);
     const returnUserID = req.query.returnUserID === "true";
+    const fetchAll = req.query.fetchAll === "true";
 
     if (!videoID) {
         return res.status(400).send("Missing parameter: videoID");
@@ -287,7 +293,11 @@ export async function getBranding(req: Request, res: Response) {
 
     const ip = getIP(req);
     try {
-        const result = await getVideoBranding(res, videoID, service, ip, returnUserID);
+        const result = await getVideoBranding(res, videoID, service, ip, returnUserID, fetchAll);
+
+        await getEtag("branding", (videoID as string), service)
+            .then(etag => res.set("ETag", etag))
+            .catch(() => null);
 
         const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
         return res.status(status).json(result);
@@ -307,9 +317,14 @@ export async function getBrandingByHashEndpoint(req: Request, res: Response) {
     const service: Service = getService(req.query.service as string);
     const ip = getIP(req);
     const returnUserID = req.query.returnUserID === "true";
+    const fetchAll = req.query.fetchAll === "true";
 
     try {
-        const result = await getVideoBrandingByHash(hashPrefix, service, ip, returnUserID);
+        const result = await getVideoBrandingByHash(hashPrefix, service, ip, returnUserID, fetchAll);
+
+        await getEtag("brandingHash", (hashPrefix as string), service)
+            .then(etag => res.set("ETag", etag))
+            .catch(() => null);
 
         const status = !isEmpty(result) ? 200 : 404;
         return res.status(status).json(result);
