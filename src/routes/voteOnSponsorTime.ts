@@ -128,82 +128,80 @@ async function sendWebhooks(voteData: VoteData) {
             webhookURL = config.discordCompletelyIncorrectReportWebhookURL;
         }
 
-        if (config.newLeafURLs !== null) {
-            const videoID = submissionInfoRow.videoID;
-            const data = await getVideoDetails(videoID);
+        const videoID = submissionInfoRow.videoID;
+        const data = await getVideoDetails(videoID);
 
-            const isUpvote = voteData.incrementAmount > 0;
-            // Send custom webhooks
-            dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
+        const isUpvote = voteData.incrementAmount > 0;
+        // Send custom webhooks
+        dispatchEvent(isUpvote ? "vote.up" : "vote.down", {
+            "user": {
+                "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
+            },
+            "video": {
+                "id": submissionInfoRow.videoID,
+                "title": data?.title,
+                "url": `https://www.youtube.com/watch?v=${videoID}`,
+                "thumbnail": getMaxResThumbnail(videoID),
+            },
+            "submission": {
+                "UUID": voteData.UUID,
+                "views": voteData.row.views,
+                "category": voteData.category,
+                "startTime": submissionInfoRow.startTime,
+                "endTime": submissionInfoRow.endTime,
                 "user": {
-                    "status": getVoteAuthorRaw(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission),
-                },
-                "video": {
-                    "id": submissionInfoRow.videoID,
-                    "title": data?.title,
-                    "url": `https://www.youtube.com/watch?v=${videoID}`,
-                    "thumbnail": getMaxResThumbnail(videoID),
-                },
-                "submission": {
-                    "UUID": voteData.UUID,
-                    "views": voteData.row.views,
-                    "category": voteData.category,
-                    "startTime": submissionInfoRow.startTime,
-                    "endTime": submissionInfoRow.endTime,
-                    "user": {
-                        "UUID": submissionInfoRow.userID,
-                        "username": submissionInfoRow.userName,
-                        "submissions": {
-                            "total": submissionInfoRow.count,
-                            "ignored": submissionInfoRow.disregarded,
-                        },
+                    "UUID": submissionInfoRow.userID,
+                    "username": submissionInfoRow.userName,
+                    "submissions": {
+                        "total": submissionInfoRow.count,
+                        "ignored": submissionInfoRow.disregarded,
                     },
                 },
-                "votes": {
-                    "before": voteData.row.votes,
-                    "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
-                },
-            });
+            },
+            "votes": {
+                "before": voteData.row.votes,
+                "after": (voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount),
+            },
+        });
 
-            // Send discord message
-            if (webhookURL !== null && !isUpvote) {
-                axios.post(webhookURL, {
-                    "embeds": [{
-                        "title": data?.title,
-                        "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}s#requiredSegment=${voteData.UUID}`,
-                        "description": `**${voteData.row.votes} Votes Prior | \
-                            ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
-                            Views**\n\n**Locked**: ${voteData.row.locked}\n\n**Submission ID:** ${voteData.UUID}\
-                            \n**Category:** ${submissionInfoRow.category}\
-                            \n\n**Submitted by:** ${submissionInfoRow.userName}\n${submissionInfoRow.userID}\
-                            \n\n**Total User Submissions:** ${submissionInfoRow.count}\
-                            \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}\
-                            \n\n**Timestamp:** \
-                            ${getFormattedTime(submissionInfoRow.startTime)} to ${getFormattedTime(submissionInfoRow.endTime)}`,
-                        "color": 10813440,
-                        "author": {
-                            "name": voteData.finalResponse?.webhookMessage ??
-                                    voteData.finalResponse?.finalMessage ??
-                                    `${getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission)}${voteData.row.locked ? " (Locked)" : ""}`,
-                        },
-                        "thumbnail": {
-                            "url": getMaxResThumbnail(videoID),
-                        },
-                    }],
-                })
-                    .then(res => {
-                        if (res.status >= 400) {
-                            Logger.error("Error sending reported submission Discord hook");
-                            Logger.error(JSON.stringify((res.data)));
-                            Logger.error("\n");
-                        }
-                    })
-                    .catch(err => {
-                        Logger.error("Failed to send reported submission Discord hook.");
-                        Logger.error(JSON.stringify(err));
+        // Send discord message
+        if (webhookURL !== null && !isUpvote) {
+            axios.post(webhookURL, {
+                "embeds": [{
+                    "title": data?.title,
+                    "url": `https://www.youtube.com/watch?v=${submissionInfoRow.videoID}&t=${(submissionInfoRow.startTime.toFixed(0) - 2)}s#requiredSegment=${voteData.UUID}`,
+                    "description": `**${voteData.row.votes} Votes Prior | \
+                        ${(voteData.row.votes + voteData.incrementAmount - voteData.oldIncrementAmount)} Votes Now | ${voteData.row.views} \
+                        Views**\n\n**Locked**: ${voteData.row.locked}\n\n**Submission ID:** ${voteData.UUID}\
+                        \n**Category:** ${submissionInfoRow.category}\
+                        \n\n**Submitted by:** ${submissionInfoRow.userName}\n${submissionInfoRow.userID}\
+                        \n\n**Total User Submissions:** ${submissionInfoRow.count}\
+                        \n**Ignored User Submissions:** ${submissionInfoRow.disregarded}\
+                        \n\n**Timestamp:** \
+                        ${getFormattedTime(submissionInfoRow.startTime)} to ${getFormattedTime(submissionInfoRow.endTime)}`,
+                    "color": 10813440,
+                    "author": {
+                        "name": voteData.finalResponse?.webhookMessage ??
+                                voteData.finalResponse?.finalMessage ??
+                                `${getVoteAuthor(userSubmissionCountRow.submissionCount, voteData.isTempVIP, voteData.isVIP, voteData.isOwnSubmission)}${voteData.row.locked ? " (Locked)" : ""}`,
+                    },
+                    "thumbnail": {
+                        "url": getMaxResThumbnail(videoID),
+                    },
+                }],
+            })
+                .then(res => {
+                    if (res.status >= 400) {
+                        Logger.error("Error sending reported submission Discord hook");
+                        Logger.error(JSON.stringify((res.data)));
                         Logger.error("\n");
-                    });
-            }
+                    }
+                })
+                .catch(err => {
+                    Logger.error("Failed to send reported submission Discord hook.");
+                    Logger.error(JSON.stringify(err));
+                    Logger.error("\n");
+                });
         }
     }
 }
