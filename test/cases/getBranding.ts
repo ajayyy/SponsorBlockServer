@@ -13,6 +13,7 @@ describe("getBranding", () => {
     const videoIDEmpty = "videoID4";
     const videoIDRandomTime = "videoID5";
     const videoIDUnverified = "videoID6";
+    const videoIDvidDuration = "videoID7";
 
     const videoID1Hash = getHash(videoID1, 1).slice(0, 4);
     const videoID2LockedHash = getHash(videoID2Locked, 1).slice(0, 4);
@@ -20,6 +21,7 @@ describe("getBranding", () => {
     const videoIDEmptyHash = "aaaa";
     const videoIDRandomTimeHash = getHash(videoIDRandomTime, 1).slice(0, 4);
     const videoIDUnverifiedHash = getHash(videoIDUnverified, 1).slice(0, 4);
+    const videoIDvidDurationHash = getHash(videoIDUnverified, 1).slice(0, 4);
 
     const endpoint = "/api/branding";
     const getBranding = (params: Record<string, any>) => client({
@@ -40,6 +42,7 @@ describe("getBranding", () => {
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?)`;
+        const segmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
@@ -107,9 +110,8 @@ describe("getBranding", () => {
             db.prepare("run", thumbnailVotesQuery, ["UUID32T", 1, 0, 1, 0, 0])
         ]);
 
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
-        await db.prepare("run", query, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
+        await db.prepare("run", segmentQuery, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
+        await db.prepare("run", segmentQuery, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoIDUnverified, "title1", 0, "userID1", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-1"]),
@@ -129,6 +131,17 @@ describe("getBranding", () => {
             db.prepare("run", thumbnailVotesQuery, ["UUID-uv-1T", 3, 0, 0, 0, 0]),
             db.prepare("run", thumbnailVotesQuery, ["UUID-uv-2T", 2, 0, 0, 0, 0]),
             db.prepare("run", thumbnailVotesQuery, ["UUID-uv-3T", 1, 0, 0, 0, 0])
+        ]);
+
+        // Video duration test segments
+        await Promise.all([
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 1, 0, 0, "uuidvd1", "testman", 10, 0, "sponsor", "skip", "YouTube", 0, 0, 0, "", videoIDvidDurationHash]),  // visible, no vid duration
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 2, -2, 0, "uuidvd2", "testman", 11, 0, "sponsor", "skip", "YouTube", 10, 0, 0, "", videoIDvidDurationHash]),  // downvoted
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 3, 0, 0, "uuidvd3", "testman", 12, 0, "sponsor", "skip", "YouTube", 10.1, 1, 0, "", videoIDvidDurationHash]),  // hidden
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 4, 0, 0, "uuidvd4", "testman", 13, 0, "sponsor", "skip", "YouTube", 20.1, 0, 1, "", videoIDvidDurationHash]),  // shadowhidden
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 5, 0, 0, "uuidvd5", "testman", 14, 0, "sponsor", "skip", "YouTube", 21.3, 0, 0, "", videoIDvidDurationHash]),  // oldest visible w/ duration, should be picked
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 6, 0, 0, "uuidvd6", "testman", 15, 0, "sponsor", "skip", "YouTube", 21.37, 0, 0, "", videoIDvidDurationHash]),  // not the oldest visible
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 7, -2, 0, "uuidvd7", "testman", 16, 0, "sponsor", "skip", "YouTube", 21.38, 0, 0, "", videoIDvidDurationHash]),  // downvoted, not the oldest
         ]);
     });
 
@@ -310,6 +323,16 @@ describe("getBranding", () => {
                 UUID: "UUID-uv-3T" as BrandingUUID
             }]
         });
+    });
+
+    it("should get the correct video duration", async () => {
+        const correctDuration = 21.3;
+
+        const result1 = await getBranding({ videoID: videoIDvidDuration, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDvidDurationHash, { fetchAll: true });
+
+        assert.strictEqual(result1.data.videoDuration, correctDuration);
+        assert.strictEqual(result2.data[videoIDvidDuration].videoDuration, correctDuration);
     });
 
     async function checkVideo(videoID: string, videoIDHash: string, fetchAll: boolean, expected: {
