@@ -87,6 +87,7 @@ export interface BrandingSubmission {
     service: Service;
     autoLock: boolean | undefined;
     downvote: boolean | undefined;
+    videoDuration: number | undefined;
 }
 
 export interface BrandingSegmentDBResult {
