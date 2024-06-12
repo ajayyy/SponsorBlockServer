@@ -36,7 +36,7 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
-    const { videoID, userID, title, thumbnail, autoLock, downvote } = req.body as BrandingSubmission;
+    const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
 
     if (!videoID || !userID || userID.length < 30 || !service
@@ -54,6 +54,10 @@ export async function postBranding(req: Request, res: Response) {
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
+
+        if (videoDuration && await checkForWrongVideoDuration(videoID, videoDuration)) {
+            res.status(403).send("YouTube is currently testing a new anti-adblock technique called server-side ad-injection. This causes skips and submissions to be offset by the duration of the ad. It seems that you are affected by this A/B test, so until a fix is developed, we cannot accept submissions from your device due to them potentially being inaccurate.");
+        }
 
         const lock = await acquireLock(`postBranding:${videoID}.${hashedUserID}`);
         if (!lock.status) {
@@ -325,4 +329,11 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID) {
                 });
         }
     }
+}
+
+async function checkForWrongVideoDuration(videoID: VideoID, duration: number): Promise<boolean> {
+    const apiVideoDetails = await getVideoDetails(videoID, true);
+    const apiDuration = apiVideoDetails?.duration;
+
+    return apiDuration && apiDuration > 2 && duration && duration > 2 && Math.abs(apiDuration - duration) > 3;
 }
