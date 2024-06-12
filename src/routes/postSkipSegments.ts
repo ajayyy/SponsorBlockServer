@@ -129,6 +129,11 @@ async function autoModerateSubmission(apiVideoDetails: videoDetails,
     // return false on undefined or 0
     if (!duration) return false;
 
+    if (apiDuration && apiDuration > 2 && duration && duration > 2 && Math.abs(apiDuration - duration) > 3) {
+        // YouTube server-side ad injection might be active, reject
+        return "YouTube is currently testing a new anti-adblock technique called server-side ad-injection. This causes skips and submissions to be offset by the duration of the ad. It seems that you are affected by this A/B test, so until a fix is developed, we cannot accept submissions from your device due to them potentially being inaccurate.";
+    }
+
     const segments = submission.segments;
     // map all times to float array
     const allSegmentTimes = segments.filter((s) => s.actionType !== ActionType.Chapter)
