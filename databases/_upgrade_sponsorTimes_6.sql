@@ -1,6 +1,6 @@
 BEGIN TRANSACTION;
 
-/* Add new voting field */
+/* Add 'locked' field */
 CREATE TABLE "sqlb_temp_table_6" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
