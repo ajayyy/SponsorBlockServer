@@ -1,4 +1,4 @@
-# SponsorTimesDB
+# Public
 
 - [vipUsers](#vipusers)
 - [sponsorTimes](#sponsortimes)
@@ -12,6 +12,11 @@
 - [config](#config)
 - [archivedSponsorTimes](#archivedsponsortimes)
 - [ratings](#ratings)
+- [userFeatures](#userFeatures)
+- [titles](#titles)
+- [titleVotes](#titleVotes)
+- [thumbnails](#thumbnails)
+- [thumbnailVotes](#thumbnailVotes)
 
 ### vipUsers
 | Name | Type | |
@@ -52,8 +57,10 @@
 | sponsorTime_timeSubmitted | timeSubmitted |
 | sponsorTime_userID | userID |
 | sponsorTimes_UUID | UUID |
-| sponsorTimes_hashedVideoID | hashedVideoID, category |
-| sponsorTimes_videoID | videoID, service, category, timeSubmitted |
+| sponsorTimes_hashedVideoID | service, hashedVideoID, startTime |
+| sponsorTimes_videoID | service, videoID, startTime |
+| sponsorTimes_videoID_category | videoID, category |
+| sponsorTimes_description_gin | description, category |
 
 ### userNames
 
@@ -107,7 +114,7 @@
 
 | index | field |
 | -- | :--: |
-| warnings_index | userID |
+| warnings_index | userID, issueTime, enabled |
 | warnings_issueTime | issueTime |
 
 ### shadowBannedUsers  
@@ -131,8 +138,8 @@
 
 | index | field |
 | -- | :--: |
-| videoInfo_videoID | timeSubmitted |
-| videoInfo_channelID | userID |
+| videoInfo_videoID | videoID |
+| videoInfo_channelID | channelID |
 
 ### unlistedVideos  
 
@@ -191,6 +198,39 @@
 | ratings_hashedVideoID_gin | hashedVideoID |
 | ratings_hashedVideoID | hashedVideoID, service |
 | ratings_videoID | videoID, service |
+
+### userFeatures
+
+| index | field |
+| -- | :--: |
+| userFeatures_userID | userID, feature |
+
+### titles
+
+| index | field |
+| -- | :--: |
+| titles_timeSubmitted | timeSubmitted |
+| titles_userID_timeSubmitted | videoID, service, userID, timeSubmitted |
+| titles_videoID | videoID, service |
+| titles_hashedVideoID_2 | service, hashedVideoID, timeSubmitted |
+
+### titleVotes
+| index | field |
+| -- | :--: |
+| titleVotes_votes | UUID, votes
+
+### thumbnails
+| index | field |
+| -- | :--: |
+| thumbnails_timeSubmitted | timeSubmitted |
+| thumbnails_votes_timeSubmitted | videoID, service, userID, timeSubmitted |
+| thumbnails_videoID | videoID, service |
+| thumbnails_hashedVideoID_2 | service, hashedVideoID, timeSubmitted |
+
+### thumbnailVotes
+| index | field |
+| -- | :--: |
+| thumbnailVotes_votes | UUID, votes
 
 # Private 
 
