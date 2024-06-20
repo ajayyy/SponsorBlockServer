@@ -268,7 +268,7 @@
 
 | index | field |
 | -- | :--: |
-| categoryVotes_UUID | UUID, userID, hasedIP, category |
+| categoryVotes_UUID | UUID, userID, hashedIP, category |
 
 ### sponsorTimes  
 
@@ -281,8 +281,7 @@
 
 | index | field |
 | -- | :--: |
-| sponsorTimes_hashedIP | hashedIP |
-| privateDB_sponsorTimes_videoID_v2 | videoID, service |
+| privateDB_sponsorTimes_v4 | videoID, service, timeSubmitted |
 
 ### config  
 
