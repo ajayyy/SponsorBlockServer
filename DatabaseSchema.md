@@ -1,15 +1,17 @@
 # SponsorTimesDB
 
-[vipUsers](#vipUsers)  
-[sponsorTimes](#sponsorTimes)  
-[userNames](#userNames)  
-[categoryVotes](#categoryVotes)  
-[lockCategories](#lockCategories)  
-[warnings](#warnings)  
-[shadowBannedUsers](#shadowBannedUsers)  
-[unlistedVideos](#unlistedVideos)  
-[config](#config)  
-[archivedSponsorTimes](#archivedSponsorTimes)
+- [vipUsers](#vipusers)
+- [sponsorTimes](#sponsortimes)
+- [userNames](#usernames)
+- [categoryVotes](#categoryvotes)
+- [lockCategories](#lockcategories)
+- [warnings](#warnings)
+- [shadowBannedUsers](#shadowbannedusers)
+- [videoInfo](#videoinfo)
+- [unlistedVideos](#unlistedvideos)
+- [config](#config)
+- [archivedSponsorTimes](#archivedsponsortimes)
+- [ratings](#ratings)
 
 ### vipUsers
 | Name | Type | |
@@ -192,13 +194,13 @@
 
 # Private 
 
-[votes](#votes)  
-[categoryVotes](#categoryVotes)  
-[sponsorTimes](#sponsorTimes)  
-[config](#config)  
-[ratings](#ratings)  
-[tempVipLog](#tempVipLog)  
-[userNameLogs](#userNameLogs)  
+- [votes](#votes)
+- [categoryVotes](#categoryVotes)
+- [sponsorTimes](#sponsorTimes)
+- [config](#config)
+- [ratings](#ratings)
+- [tempVipLog](#tempVipLog)
+- [userNameLogs](#userNameLogs)
 
 ### votes
 
