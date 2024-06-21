@@ -339,6 +339,7 @@
 | hashedIP | TEXT | not null |
 | type | INTEGER | not null |
 | originalVoteType | INTEGER | not null | # Since type was reused to also specify the number of votes removed when less than 0, this is being used for the actual type
+| id | SERIAL | primary key |
 
 | index | field |
 | -- | :--: |
@@ -353,6 +354,7 @@
 | hashedIP | TEXT | not null |
 | category | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
+| id | SERIAL | primary key |
 
 | index | field |
 | -- | :--: |
@@ -366,6 +368,7 @@
 | hashedIP | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
 | service | TEXT | not null, default 'YouTube' |
+| id | SERIAL | primary key |
 
 | index | field |
 | -- | :--: |
@@ -375,7 +378,7 @@
 
 | Name | Type | |
 | -- | :--: | -- |
-| key | TEXT | not null |
+| key | TEXT | not null, primary key |
 | value | TEXT | not null |
 
 ### ratings  
@@ -388,6 +391,7 @@
 | type | INTEGER | not null |
 | timeSubmitted | INTEGER | not null |
 | hashedIP | TEXT | not null |
+| id | SERIAL | primary key |
 
 | index | field |
 | -- | :--: |
@@ -400,6 +404,7 @@
 | targetUserID | TEXT | not null |
 | enabled | BOOLEAN | not null |
 | updatedAt | INTEGER | not null |
+| id | SERIAL | primary key |
 
 ### userNameLogs
 
@@ -410,3 +415,4 @@
 | oldUserName | TEXT | not null |
 | updatedByAdmin | BOOLEAN | not null |
 | updatedAt | INTEGER | not null |
+| id | SERIAL | primary key |
