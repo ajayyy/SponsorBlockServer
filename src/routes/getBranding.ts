@@ -200,7 +200,7 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fe
             UUID: r.UUID,
             userID: returnUserID ? r.userID : undefined
         }))
-        .filter((a) => fetchAll || a.votes >= 0 || a.locked) as ThumbnailResult[];
+        .filter((a) => fetchAll || a.votes >= 1 || (a.votes >= 0 && !a.original) || a.locked) as ThumbnailResult[];
 
     const videoDuration = dbSegments.filter(s => s.videoDuration !== 0)[0]?.videoDuration ?? null;
 
