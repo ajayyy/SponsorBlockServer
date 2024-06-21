@@ -1,6 +1,6 @@
 BEGIN TRANSACTION;
 
-/* Add Service field */
+/* Add 'videoDuration' field */
 CREATE TABLE "sqlb_temp_table_8" (
 	"videoID"	TEXT NOT NULL,
 	"startTime"	REAL NOT NULL,
