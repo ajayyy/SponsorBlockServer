@@ -212,6 +212,8 @@
 | ratings_videoID | videoID, service |
 
 ### userFeatures
+| Name | Type | |
+| -- | :--: | -- |
 | userID | TEXT | not null |
 | feature | INTEGER | not null |
 | issuerUserID | TEXT | not null |
