@@ -1,4 +1,4 @@
-# Public
+# SponsorTimesDB
 
 - [vipUsers](#vipusers)
 - [sponsorTimes](#sponsortimes)
