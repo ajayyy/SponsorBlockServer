@@ -27,7 +27,7 @@ import { corsMiddleware } from "./middleware/cors";
 import { apiCspMiddleware } from "./middleware/apiCsp";
 import { rateLimitMiddleware } from "./middleware/requestRateLimit";
 import dumpDatabase from "./routes/dumpDatabase";
-import { endpoint as getSegmentInfo } from "./routes/getSegmentInfo";
+import { getSegmentInfo } from "./routes/getSegmentInfo";
 import { postClearCache } from "./routes/postClearCache";
 import { addUnlistedVideo } from "./routes/addUnlistedVideo";
 import { postPurgeAllSegments } from "./routes/postPurgeAllSegments";

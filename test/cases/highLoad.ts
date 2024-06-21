@@ -23,7 +23,7 @@ describe("High load test", () => {
             .then(res => assert.strictEqual(res.status, 503))
     );
 
-    it("Should return 0 on getTotalStats", () =>
+    it("Should return 200 on getTotalStats", () =>
         client.get("/api/getTotalStats")
             .then(res => assert.strictEqual(res.status, 200))
     );

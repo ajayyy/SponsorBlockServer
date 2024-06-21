@@ -1,29 +1,27 @@
 import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import { deepStrictEqual } from "assert";
 import { client } from "../utils/httpClient";
 import assert from "assert";
+import { insertSegment } from "../utils/segmentQueryGen";
+import { genUser } from "../utils/genUser";
 
 // helpers
 const endpoint = "/api/getSavedTimeForUser";
-const getSavedTimeForUser = (userID: string) => client({
+const getSavedTimeForUser = (privID: string) => client({
     url: endpoint,
-    params: { userID }
+    params: { userID: privID }
 });
 
 describe("getSavedTimeForUser", () => {
-    const user1 = "getSavedTimeForUser1";
-    const user2 = "getSavedTimeforUser2";
+    const user1 = genUser("getSavedTimeForUser", "user1");
+    const user2 = genUser("getSavedTimeForUser", "user2");
     const [ start, end, views ] = [1, 11, 50];
 
     before(async () => {
-        const startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", "views", "shadowHidden") VALUES';
-        await db.prepare("run", `${startOfQuery}(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            ["getSavedTimeForUser", start, end, 2, "getSavedTimeUUID0", getHash(user1), 0, views, 0]);
-        return;
+        await insertSegment(db, { startTime: start, endTime: end, views, userID: user1.pubID });
     });
     it("Should be able to get a saved time", (done) => {
-        getSavedTimeForUser(user1)
+        getSavedTimeForUser(user1.privID)
             .then(res => {
                 // (end-start)*minute * views
                 const savedMinutes = ((end-start)/60) * views;
@@ -36,7 +34,7 @@ describe("getSavedTimeForUser", () => {
             .catch((err) => done(err));
     });
     it("Should return 404 if no submissions", (done) => {
-        getSavedTimeForUser(user2)
+        getSavedTimeForUser(user2.privID)
             .then(res => {
                 assert.strictEqual(res.status, 404);
                 done();
