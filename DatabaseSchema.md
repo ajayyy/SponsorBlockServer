@@ -13,15 +13,17 @@
 - [archivedSponsorTimes](#archivedsponsortimes)
 - [ratings](#ratings)
 - [userFeatures](#userFeatures)
+- [shadowBannedIPs](#shadowBannedIPs)
 - [titles](#titles)
 - [titleVotes](#titleVotes)
 - [thumbnails](#thumbnails)
+- [thumbnailTimestamps](#thumbnailTimestamps)
 - [thumbnailVotes](#thumbnailVotes)
 
 ### vipUsers
 | Name | Type | |
 | -- | :--: | -- |
-| userID | TEXT | not null |
+| userID | TEXT | not null, primary key |
 
 | index | field |
 | -- | :--: |
@@ -37,7 +39,7 @@
 | votes | INTEGER | not null |
 | locked | INTEGER | not null, default '0' |
 | incorrectVotes | INTEGER | not null, default 1 |
-| UUID | TEXT | not null, unique |
+| UUID | TEXT | not null, unique, primary key |
 | userID | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
 | views | INTEGER | not null |
@@ -66,7 +68,7 @@
 
 | Name | Type | |
 | -- | :--: | -- |
-| userID | TEXT | not null |
+| userID | TEXT | not null, primary key |
 | userName | TEXT | not null |
 | locked | INTEGER | not nul, default '0' |
 
@@ -81,6 +83,7 @@
 | UUID | TEXT | not null |
 | category | TEXT | not null |
 | votes | INTEGER | not null, default 0 |
+| id | SERIAL | primary key
 
 | index | field |
 | -- | :--: |
@@ -97,6 +100,7 @@
 | hashedVideoID | TEXT | not null, default '' |
 | reason | TEXT | not null, default '' |
 | service | TEXT | not null, default 'YouTube' |
+| id | SERIAL | primary key
 
 | index | field |
 | -- | :--: |
@@ -111,6 +115,11 @@
 | issuerUserID | TEXT | not null |
 | enabled | INTEGER | not null |
 | reason | TEXT | not null, default '' |
+| type | INTEGER | default 0 |
+
+| constraint | field |
+| -- | :--: |
+| PRIMARY KEY | userID, issueTime |
 
 | index | field |
 | -- | :--: |
@@ -121,7 +130,7 @@
 
 | Name | Type | |
 | -- | :--: | -- |
-| userID | TEXT | not null |
+| userID | TEXT | not null, primary key |
 
 | index | field |
 | -- | :--: |
@@ -151,12 +160,13 @@
 | channelID | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
 | service | TEXT | not null, default 'YouTube' |
+| id | SERIAL | primary key
 
 ### config
 
 | Name | Type | |
 | -- | :--: | -- |
-| key | TEXT | not null, unique |
+| key | TEXT | not null, unique, primary key |
 | value | TEXT | not null |
 
 ### archivedSponsorTimes
@@ -169,7 +179,7 @@
 | votes | INTEGER | not null |
 | locked | INTEGER | not null, default '0' |
 | incorrectVotes | INTEGER | not null, default 1 |
-| UUID | TEXT | not null, unique |
+| UUID | TEXT | not null, unique, primary key |
 | userID | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
 | views | INTEGER | not null |
@@ -182,6 +192,7 @@
 | shadowHidden | INTEGER | not null |
 | hashedVideoID | TEXT | not null, default '', sha256 |
 | userAgent | TEXT | not null, default '' |
+| description | TEXT | not null, default '' |
 
 ### ratings  
 
@@ -192,6 +203,7 @@
 | type | INTEGER | not null |
 | count | INTEGER | not null |
 | hashedVideoID | TEXT | not null |
+| id | SERIAL | primary key
 
 | index | field |
 | -- | :--: |
@@ -200,12 +212,37 @@
 | ratings_videoID | videoID, service |
 
 ### userFeatures
+| userID | TEXT | not null |
+| feature | INTEGER | not null |
+| issuerUserID | TEXT | not null |
+| timeSubmitted | INTEGER | not null |
+
+| constraint | field |
+| -- | :--: |
+| primary key | userID, feature |
 
 | index | field |
 | -- | :--: |
 | userFeatures_userID | userID, feature |
 
+### shadowBannedIPs
+
+| Name | Type | |
+| -- | :--: | -- |
+| hashedIP | TEXT | not null, primary key |
+
 ### titles
+
+| Name | Type | |
+| -- | :--: | -- |
+| videoID | TEXT | not null |
+| title | TEXT | not null |
+| original | INTEGER | default 0 |
+| userID | TEXT | not null
+| service | TEXT not null |
+| hashedVideoID | TEXT | not null |
+| timeSubmitted | INTEGER | not null |
+| UUID | TEXT | not null, primary key
 
 | index | field |
 | -- | :--: |
@@ -215,11 +252,37 @@
 | titles_hashedVideoID_2 | service, hashedVideoID, timeSubmitted |
 
 ### titleVotes
+
+| Name | Type | |
+| -- | :--: | -- |
+| UUID | TEXT | not null, primary key |
+| votes | INTEGER | not null, default 0 |
+| locked | INTEGER | not null, default 0 |
+| shadowHidden | INTEGER | not null, default 0 |
+| verification | INTEGER | default 0 |
+| downvotes | INTEGER | default 0 |
+| removed | INTEGER | default 0 |
+
+| constraint | field |
+| -- | :--: |
+| foreign key | UUID references "titles"("UUID")
+
 | index | field |
 | -- | :--: |
 | titleVotes_votes | UUID, votes
 
 ### thumbnails
+
+| Name | Type | |
+| -- | :--: | -- |
+| UUID | TEXT | not null |
+| original | INTEGER | default 0 |
+| userID | TEXT | not null |
+| service | TEXT | not null |
+| hashedVideoID | TEXT | not null |
+| timeSubmitted | INTEGER | not null |
+| UUID | TEXT | not null, primary key |
+
 | index | field |
 | -- | :--: |
 | thumbnails_timeSubmitted | timeSubmitted |
@@ -227,7 +290,32 @@
 | thumbnails_videoID | videoID, service |
 | thumbnails_hashedVideoID_2 | service, hashedVideoID, timeSubmitted |
 
+### thumbnailTimestamps
+
+| index | field |
+| -- | :--: |
+| UUID | TEXT | not null, primary key
+| timestamp | INTEGER | not null, default 0
+
+| constraint | field |
+| -- | :--: |
+| foreign key | UUID references "thumbnails"("UUID")
+
 ### thumbnailVotes
+
+| index | field |
+| -- | :--: |
+| UUID | TEXT | not null, primary key |
+| votes | INTEGER | not null, default 0 |
+| locked | INTEGER |not null, default 0 |
+| shadowHidden | INTEGER | not null, default 0 |
+| downvotes | INTEGER | default 0 |
+| removed | INTEGER | default 0 |
+
+| constraint | field |
+| -- | :--: |
+| foreign key | UUID references "thumbnails"("UUID")
+
 | index | field |
 | -- | :--: |
 | thumbnailVotes_votes | UUID, votes
