@@ -55,7 +55,7 @@ export async function postBranding(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        if (videoDuration && await checkForWrongVideoDuration(videoID, videoDuration)) {
+        if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
             res.status(403).send("YouTube is currently testing a new anti-adblock technique called server-side ad-injection. This causes skips and submissions to be offset by the duration of the ad. It seems that you are affected by this A/B test, so until a fix is developed, we cannot accept submissions from your device due to them potentially being inaccurate.");
         }
 
