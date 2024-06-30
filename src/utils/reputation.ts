@@ -47,10 +47,15 @@ export async function getReputation(userID: UserID): Promise<number> {
     const promise = activeReputationRequests[userID] ?? QueryCacher.get(fetchFromDB, reputationKey(userID));
     activeReputationRequests[userID] = promise;
 
-    const result = await promise;
-    delete activeReputationRequests[userID];
+    try {
+        const result = await promise;
 
-    return calculateReputationFromMetrics(result);
+        delete activeReputationRequests[userID];
+
+        return calculateReputationFromMetrics(result);
+    } catch (e) {
+        throw new Error(`${(e as Error)?.message}\n\n${userID}`);
+    }
 }
 
 // convert a number from one range to another.
