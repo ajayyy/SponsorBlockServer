@@ -5,7 +5,7 @@ import DiskCache from "./diskCache";
 
 const privateResponse = (videoId: string): innerTubeVideoDetails => ({
     videoId,
-    title: "",
+    title: "Private video?",
     channelId: "",
     // exclude video duration
     isOwnerViewing: false,
@@ -27,7 +27,7 @@ const privateResponse = (videoId: string): innerTubeVideoDetails => ({
     publishDate: ""
 });
 
-async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
+export async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
     // start subrequest
     const url = "https://www.youtube.com/youtubei/v1/player";
     const data = {
