@@ -3,9 +3,9 @@ import { Logger } from "./logger";
 import { innerTubeVideoDetails } from "../types/innerTubeApi.model";
 import DiskCache from "./diskCache";
 
-const privateResponse = (videoId: string): innerTubeVideoDetails => ({
+const privateResponse = (videoId: string, reason: string): innerTubeVideoDetails => ({
     videoId,
-    title: "Private video?",
+    title: reason,
     channelId: "",
     // exclude video duration
     isOwnerViewing: false,
@@ -44,7 +44,7 @@ export async function getFromITube (videoID: string): Promise<innerTubeVideoDeta
     });
     /* istanbul ignore else */
     if (result.status === 200) {
-        return result.data?.videoDetails ?? privateResponse(videoID);
+        return result.data?.videoDetails ?? privateResponse(videoID, result.data?.playabilityStatus?.reason ?? "Bad response");
     } else {
         return Promise.reject(`Innertube returned non-200 response: ${result.status}`);
     }
