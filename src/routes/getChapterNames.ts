@@ -27,10 +27,11 @@ export async function getChapterNames(req: Request, res: Response): Promise<Resp
                 FROM "videoInfo"
                 WHERE "channelID" = ?
             ) AND "description" != ''
+              AND similarity("description", ?) >= 0.1
             GROUP BY "description"
             ORDER BY SUM("votes"), similarity("description", ?) DESC
             LIMIT 5;`
-        , [channelID, description]) as { description: string }[];
+        , [channelID, description, description]) as { description: string }[];
 
         if (descriptions?.length > 0) {
             return res.status(200).json(descriptions.map(d => ({
