@@ -107,6 +107,8 @@
 | reason | TEXT | not null, default '' |
 | service | TEXT | not null, default 'YouTube' |
 | id | SERIAL | primary key
+| createdAt | INTEGER | not null |
+| updatedAt | INTEGER | not null |
 
 | index | field |
 | -- | :--: |
