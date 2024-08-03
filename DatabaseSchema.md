@@ -24,6 +24,7 @@
 | Name | Type | |
 | -- | :--: | -- |
 | userID | TEXT | not null, primary key |
+| createdAt | INTEGER | not null |
 
 | index | field |
 | -- | :--: |
