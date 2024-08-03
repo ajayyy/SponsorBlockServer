@@ -28,7 +28,8 @@ export async function postPurgeAllSegments(req: Request, res: Response): Promise
             });
         }
 
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1 WHERE "videoID" = ?`, [videoID]);
+        const currentTime = Date.now();
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1, "updatedAt" = ? WHERE "videoID" = ?`, [currentTime, videoID]);
 
         const hashedVideoID: VideoIDHash = await getHashCache(videoID, 1);
         QueryCacher.clearSegmentCache({

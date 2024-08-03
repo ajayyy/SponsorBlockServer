@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 
 export async function viewedVideoSponsorTime(req: Request, res: Response): Promise<Response> {
     const UUID = req.query?.UUID;
+    const currentTime = Date.now();
 
     if (!UUID) {
         //invalid request
@@ -10,7 +11,7 @@ export async function viewedVideoSponsorTime(req: Request, res: Response): Promi
     }
 
     //up the view count by one
-    await db.prepare("run", `UPDATE "sponsorTimes" SET views = views + 1 WHERE "UUID" = ?`, [UUID]);
+    await db.prepare("run", `UPDATE "sponsorTimes" SET views = views + 1, "updatedAt" = ? WHERE "UUID" = ?`, [currentTime, UUID]);
 
     return res.sendStatus(200);
 }
