@@ -85,6 +85,7 @@ export async function postBranding(req: Request, res: Response) {
                 const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 if (downvote && existingIsLocked && !isVip) {
+                    sendWebhooks(videoID, existingUUID, voteType).catch((e) => Logger.error(e));
                     errorCode = 403;
                     return;
                 }
@@ -291,15 +292,14 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
 }
 
 async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType) {
-    if (voteType === BrandingVoteType.Downvote) return; // Don't send messages to dearrow-locked-titles on downvotes
+    const currentSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titleVotes"."locked", "titles"."userID", "titleVotes"."votes"-"titleVotes"."downvotes"+"titleVotes"."verification" AS "score" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."UUID" = ?`, [UUID]);
 
-    const lockedSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titles"."userID" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."videoID" = ? AND "titles"."UUID" != ? AND "titleVotes"."locked" = 1`, [videoID, UUID]);
-
-    if (lockedSubmission) {
-        const currentSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."UUID" = ?`, [UUID]);
+    // Unlocked title getting more upvotes than the locked one
+    if (voteType === BrandingVoteType.Upvote) {
+        const lockedSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titles"."userID", "titleVotes"."votes"-"titleVotes"."downvotes"+"titleVotes"."verification" AS "score"  FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."videoID" = ? AND "titles"."UUID" != ? AND "titleVotes"."locked" = 1`, [videoID, UUID]);
 
         // Time to warn that there may be an issue
-        if (currentSubmission.votes - lockedSubmission.votes > 2) {
+        if (lockedSubmission && currentSubmission.score - lockedSubmission.score > 2) {
             const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [lockedSubmission.userID]);
 
             const data = await getVideoDetails(videoID);
@@ -307,7 +307,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
                 "embeds": [{
                     "title": data?.title,
                     "url": `https://www.youtube.com/watch?v=${videoID}`,
-                    "description": `**${lockedSubmission.votes}** Votes vs **${currentSubmission.votes}**\
+                    "description": `**${lockedSubmission.score}** score vs **${currentSubmission.score}**\
                         \n\n**Locked title:** ${lockedSubmission.title}\
                         \n**New title:** ${currentSubmission.title}\
                         \n\n**Submitted by:** ${usernameRow?.userName ?? ""}\n${lockedSubmission.userID}`,
@@ -330,6 +330,38 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
                     Logger.error("\n");
                 });
         }
+    }
+
+    // Downvotes on locked title
+    if (voteType === BrandingVoteType.Downvote && currentSubmission.locked === 1) {
+        const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [currentSubmission.userID]);
+
+        const data = await getVideoDetails(videoID);
+        axios.post(config.discordDeArrowLockedWebhookURL, {
+            "embeds": [{
+                "title": data?.title,
+                "url": `https://www.youtube.com/watch?v=${videoID}`,
+                "description": `Locked title with **${currentSubmission.score}** score received a downvote\
+                    \n\n**Locked title:** ${currentSubmission.title}\
+                    \n**Submitted by:** ${usernameRow?.userName ?? ""}\n${currentSubmission.userID}`,
+                "color": 10813440,
+                "thumbnail": {
+                    "url": getMaxResThumbnail(videoID),
+                },
+            }],
+        })
+            .then(res => {
+                if (res.status >= 400) {
+                    Logger.error("Error sending reported submission Discord hook");
+                    Logger.error(JSON.stringify((res.data)));
+                    Logger.error("\n");
+                }
+            })
+            .catch(err => {
+                Logger.error("Failed to send reported submission Discord hook.");
+                Logger.error(JSON.stringify(err));
+                Logger.error("\n");
+            });
     }
 }
 
