@@ -108,8 +108,8 @@ async function unHideSubmissionsByUser(categories: string[], deArrowTypes: DeArr
         });
 
     if (deArrowTypes.includes("title")) {
-        await db.prepare("run", `UPDATE "titleVotes" as tv SET "shadowHidden" = ${type} FROM "titles" t WHERE tv."UUID" = t."UUID" AND t."userID" = ?`,
-            [userID]);
+        await db.prepare("run", `UPDATE "titleVotes" as tv SET "shadowHidden" = ${type}, "updatedAt" = ? FROM "titles" t WHERE tv."UUID" = t."UUID" AND t."userID" = ?`,
+            [currentTime, userID]);
     }
 
     if (deArrowTypes.includes("thumbnail")) {
