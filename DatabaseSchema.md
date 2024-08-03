@@ -54,6 +54,7 @@
 | hashedVideoID | TEXT | not null, default '', sha256 |
 | userAgent | TEXT | not null, default '' |
 | description | TEXT | not null, default '' |
+| updatedAt | INTEGER | not null |
 
 | index | field |
 | -- | :--: |
