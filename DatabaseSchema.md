@@ -241,7 +241,7 @@
 | title | TEXT | not null |
 | original | INTEGER | default 0 |
 | userID | TEXT | not null
-| service | TEXT not null |
+| service | TEXT | not null |
 | hashedVideoID | TEXT | not null |
 | timeSubmitted | INTEGER | not null |
 | UUID | TEXT | not null, primary key
@@ -277,7 +277,6 @@
 
 | Name | Type | |
 | -- | :--: | -- |
-| UUID | TEXT | not null |
 | original | INTEGER | default 0 |
 | userID | TEXT | not null |
 | service | TEXT | not null |
@@ -305,8 +304,8 @@
 
 ### thumbnailVotes
 
-| index | field |
-| -- | :--: |
+| Name | Type | |
+| -- | :--: | -- |
 | UUID | TEXT | not null, primary key |
 | votes | INTEGER | not null, default 0 |
 | locked | INTEGER |not null, default 0 |
