@@ -73,6 +73,8 @@
 | userID | TEXT | not null, primary key |
 | userName | TEXT | not null |
 | locked | INTEGER | not nul, default '0' |
+| createdAt | INTEGER | not null |
+| updatedAt | INTEGER | not null |
 
 | index | field |
 | -- | :--: |
