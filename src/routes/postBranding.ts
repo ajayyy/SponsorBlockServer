@@ -292,11 +292,30 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
 }
 
 async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType) {
-    const currentSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titleVotes"."locked", "titles"."userID", "titleVotes"."votes"-"titleVotes"."downvotes"+"titleVotes"."verification" AS "score" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."UUID" = ?`, [UUID]);
+    const currentSubmission = await db.prepare(
+        "get",
+        `SELECT 
+            "titles"."title", 
+            "titleVotes"."locked", 
+            "titles"."userID", 
+            "titleVotes"."votes"-"titleVotes"."downvotes"+"titleVotes"."verification" AS "score" 
+        FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" 
+        WHERE "titles"."UUID" = ?`,
+        [UUID]);
 
     // Unlocked title getting more upvotes than the locked one
     if (voteType === BrandingVoteType.Upvote) {
-        const lockedSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titles"."userID", "titleVotes"."votes"-"titleVotes"."downvotes"+"titleVotes"."verification" AS "score"  FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."videoID" = ? AND "titles"."UUID" != ? AND "titleVotes"."locked" = 1`, [videoID, UUID]);
+        const lockedSubmission = await db.prepare(
+            "get",
+            `SELECT 
+                "titles"."title", 
+                "titles"."userID", 
+                "titleVotes"."votes"-"titleVotes"."downvotes"+"titleVotes"."verification" AS "score" 
+            FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" 
+            WHERE "titles"."videoID" = ? 
+              AND "titles"."UUID" != ? 
+              AND "titleVotes"."locked" = 1`,
+            [videoID, UUID]);
 
         // Time to warn that there may be an issue
         if (lockedSubmission && currentSubmission.score - lockedSubmission.score > 2) {
