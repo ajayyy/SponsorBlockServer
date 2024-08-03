@@ -586,10 +586,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description", "updatedAt")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0
-                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, isBanned ? 1 : 0, hashedVideoID, userAgent, segmentInfo.description
+                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, isBanned ? 1 : 0, hashedVideoID, userAgent, segmentInfo.description, timeSubmitted
                 ],
                 );
 
