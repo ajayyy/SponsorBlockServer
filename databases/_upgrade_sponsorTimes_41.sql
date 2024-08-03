@@ -23,6 +23,10 @@ ALTER TABLE "lockCategories" ADD "updatedAt" INTEGER NOT NULL;
 ALTER TABLE "titleVotes" ADD "createdAt" INTEGER NOT NULL;
 ALTER TABLE "titleVotes" ADD "updatedAt" INTEGER NOT NULL;
 
+-- thumbnailVotes
+ALTER TABLE "thumbnailVotes" ADD "createdAt" INTEGER NOT NULL;
+ALTER TABLE "thumbnailVotes" ADD "updatedAt" INTEGER NOT NULL;
+
 UPDATE "config" SET value = 41 WHERE key = 'version';
 
 COMMIT;

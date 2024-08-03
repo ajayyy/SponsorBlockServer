@@ -145,8 +145,8 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
-                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, ?)`,
-                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0]);
+                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, 0, ?, ?, ?, ?)`,
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, now, now]);
 
                     if (!thumbnail.original) {
                         await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
@@ -156,7 +156,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
+                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0, "updatedAt" = ? FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [now, UUID, videoID]);
                 }
             }
         })()]);

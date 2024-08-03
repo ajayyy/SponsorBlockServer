@@ -322,6 +322,8 @@
 | shadowHidden | INTEGER | not null, default 0 |
 | downvotes | INTEGER | default 0 |
 | removed | INTEGER | default 0 |
+| createdAt | INTEGER | not null |
+| updatedAt | INTEGER | not null |
 
 | constraint | field |
 | -- | :--: |
