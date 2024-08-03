@@ -93,11 +93,12 @@ export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmiss
 
 async function unHideSubmissionsByUser(categories: string[], deArrowTypes: DeArrowType[],
     userID: UserID, type = 1) {
+    const currentTime = Date.now();
 
     if (categories.length) {
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = '${type}' WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = '${type}', "updatedAt = ? WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                         AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
-                        "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [userID]);
+                        "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [currentTime, userID]);
     }
 
     // clear cache for all old videos
