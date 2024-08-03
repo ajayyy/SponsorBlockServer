@@ -79,6 +79,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [hashedUserID]);
         const locked = adminUserIDInput === undefined ? 0 : 1;
         let oldUserName = "";
+        const currentTime = Date.now();
 
         timings.push(Date.now());
 
@@ -88,11 +89,11 @@ export async function setUsername(req: Request, res: Response): Promise<Response
             if (userName == hashedUserID && !locked) {
                 await db.prepare("run", `DELETE FROM "userNames" WHERE "userID" = ?`, [hashedUserID]);
             } else {
-                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, hashedUserID]);
+                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ?, "updatedAt" = ? WHERE "userID" = ?`, [userName, locked, currentTime, hashedUserID]);
             }
         } else {
             //add to the db
-            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [hashedUserID, userName, locked]);
+            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?)`, [hashedUserID, userName, locked, currentTime, currentTime]);
         }
 
         timings.push(Date.now());
