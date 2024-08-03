@@ -113,7 +113,7 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
 
-                sendWebhooks(videoID, UUID).catch((e) => Logger.error(e));
+                sendWebhooks(videoID, UUID, voteType).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -290,7 +290,9 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
     }
 }
 
-async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID) {
+async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType) {
+    if (voteType === BrandingVoteType.Downvote) return; // Don't send messages to dearrow-locked-titles on downvotes
+
     const lockedSubmission = await db.prepare("get", `SELECT "titleVotes"."votes", "titles"."title", "titles"."userID" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."videoID" = ? AND "titles"."UUID" != ? AND "titleVotes"."locked" = 1`, [videoID, UUID]);
 
     if (lockedSubmission) {
