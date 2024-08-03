@@ -1,2 +1,5 @@
 BEGIN TRANSACTION;
+
+-- vipUsers
+ALTER TABLE "vipUsers" ADD "createdAt" INTEGER NOT NULL;
 COMMIT;
