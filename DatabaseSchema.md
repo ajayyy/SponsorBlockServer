@@ -88,6 +88,8 @@
 | category | TEXT | not null |
 | votes | INTEGER | not null, default 0 |
 | id | SERIAL | primary key
+| createdAt | INTEGER | not null |
+| updatedAt | INTEGER | not null |
 
 | index | field |
 | -- | :--: |

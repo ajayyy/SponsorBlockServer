@@ -248,10 +248,10 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
         // Add the vote
         if ((await db.prepare("get", `select count(*) as count from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category])).count > 0) {
             // Update the already existing db entry
-            await db.prepare("run", `update "categoryVotes" set "votes" = "votes" + ? where "UUID" = ? and "category" = ?`, [voteAmount, UUID, category]);
+            await db.prepare("run", `update "categoryVotes" set "votes" = "votes" + ?, "updatedAt" = ? where "UUID" = ? and "category" = ?`, [voteAmount, timeSubmitted, UUID, category]);
         } else {
             // Add a db entry
-            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, category, voteAmount]);
+            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes", "createdAt", "updatedAt") values (?, ?, ?, ?, ?)`, [UUID, category, voteAmount]);
         }
 
         // Add the info into the private db
