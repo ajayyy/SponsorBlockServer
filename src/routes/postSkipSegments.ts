@@ -392,12 +392,13 @@ async function updateDataIfVideoDurationChange(videoID: VideoID, service: Servic
 
     // Only treat as difference if both the api duration and submitted duration have changed
     if (videoDurationChanged(videoDuration) && (!videoDurationParam || videoDurationChanged(videoDurationParam))) {
+        const currentTime = Date.now();
         // Hide all previous submissions
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1, "updatedAt" = ?
             WHERE "videoID" = ? AND "service" = ? AND "videoDuration" != ?
             AND "hidden" = 0 AND "shadowHidden" = 0 AND 
             "actionType" != 'full' AND "votes" > -2`,
-        [videoID, service, videoDuration]);
+        [currentTime, videoID, service, videoDuration]);
 
         lockedCategoryList = [];
         deleteLockCategories(videoID, null, null, service).catch((e) => Logger.error(`deleting lock categories: ${e}`));
@@ -586,10 +587,10 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             const startingLocked = isVIP ? 1 : 0;
             try {
                 await db.prepare("run", `INSERT INTO "sponsorTimes" 
-                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description")
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                    ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "reputation", "shadowHidden", "hashedVideoID", "userAgent", "description", "updatedAt")
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     videoID, segmentInfo.segment[0], segmentInfo.segment[1], startingVotes, startingLocked, UUID, userID, timeSubmitted, 0
-                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, isBanned ? 1 : 0, hashedVideoID, userAgent, segmentInfo.description
+                    , segmentInfo.category, segmentInfo.actionType, service, videoDuration, reputation, isBanned ? 1 : 0, hashedVideoID, userAgent, segmentInfo.description, timeSubmitted
                 ],
                 );
 

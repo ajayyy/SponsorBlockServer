@@ -103,15 +103,15 @@ export async function postBranding(req: Request, res: Response) {
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
                     const verificationValue = await getVerificationValue(hashedUserID, isVip);
-                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, ?, ?);`,
-                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, verificationValue]);
+                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "createdAt", "updatedAt") VALUES (?, 0, ?, ?, ?, ?, ?);`,
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, verificationValue, now, now]);
 
                     await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
 
                 if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
+                    await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0, "updatedAt" = ? FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [now, UUID, videoID]);
                 }
 
                 sendWebhooks(videoID, UUID, voteType).catch((e) => Logger.error(e));
@@ -144,8 +144,8 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
-                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, ?)`,
-                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0]);
+                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, 0, ?, ?, ?, ?)`,
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, now, now]);
 
                     if (!thumbnail.original) {
                         await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
@@ -155,7 +155,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
+                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0, "updatedAt" = ? FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [now, UUID, videoID]);
                 }
             }
         })()]);
@@ -286,7 +286,8 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
                 });
             }
 
-            await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, hashedUserID, verification]);
+            const currentTime = Date.now();
+            await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ?, "updatedAt" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, currentTime, hashedUserID, verification]);
         }
     }
 }

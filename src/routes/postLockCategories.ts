@@ -61,11 +61,16 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
 
     // calculate hash of videoID
     const hashedVideoID: VideoIDHash = await getHashCache(videoID, 1);
+    const currentTime = Date.now();
 
     // create database entry
     for (const lock of locksToApply) {
         try {
-            await db.prepare("run", `INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service") VALUES(?, ?, ?, ?, ?, ?, ?)`, [videoID, userID, lock.actionType, lock.category, hashedVideoID, reason, service]);
+            await db.prepare(
+                "run",
+                `INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [videoID, userID, lock.actionType, lock.category, hashedVideoID, reason, service, currentTime, currentTime]
+            );
         } catch (err) /* istanbul ignore next */ {
             Logger.error(`Error submitting 'lockCategories' marker for category '${lock.category}' and actionType '${lock.actionType}' for video '${videoID}' (${service})`);
             Logger.error(err as string);
@@ -80,8 +85,8 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
         for (const lock of overwrittenLocks) {
             try {
                 await db.prepare("run",
-                    'UPDATE "lockCategories" SET "reason" = ?, "userID" = ? WHERE "videoID" = ? AND "actionType" = ? AND "category" = ? AND "service" = ?',
-                    [reason, userID, videoID, lock.actionType, lock.category, service]);
+                    'UPDATE "lockCategories" SET "reason" = ?, "userID" = ?, "updatedAt" = ? WHERE "videoID" = ? AND "actionType" = ? AND "category" = ? AND "service" = ?',
+                    [reason, userID, currentTime, videoID, lock.actionType, lock.category, service]);
             } catch (err) /* istanbul ignore next */  {
                 Logger.error(`Error submitting 'lockCategories' marker for category '${lock.category}' and actionType '${lock.actionType}' for video '${videoID}' (${service})`);
                 Logger.error(err as string);
