@@ -17,6 +17,11 @@ interface ReputationDBResult {
 const activeReputationRequests: Record<UserID, Promise<ReputationDBResult>> = {};
 
 export async function getReputation(userID: UserID): Promise<number> {
+    // Hardcode for NN-block because too many submissions
+    if (userID === "d6e8b39e6a79917166486066667caab54a2dec5e8384e46f92a82ef56e775005") {
+        return Promise.resolve(27);
+    }
+
     const weekAgo = Date.now() - 1000 * 60 * 60 * 24 * 7; // 45 days ago
     const pastDate = Date.now() - 1000 * 60 * 60 * 24 * 45; // 45 days ago
     // 1596240000000 is August 1st 2020, a little after auto upvote was disabled
