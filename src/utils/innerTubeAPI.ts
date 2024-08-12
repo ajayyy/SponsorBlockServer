@@ -2,6 +2,7 @@ import axios from "axios";
 import { Logger } from "./logger";
 import { innerTubeVideoDetails } from "../types/innerTubeApi.model";
 import DiskCache from "./diskCache";
+import { config } from "../config";
 
 const privateResponse = (videoId: string, reason: string): innerTubeVideoDetails => ({
     videoId,
@@ -34,13 +35,20 @@ export async function getFromITube (videoID: string): Promise<innerTubeVideoDeta
         context: {
             client: {
                 clientName: "WEB",
-                clientVersion: "2.20221215.04.01"
+                clientVersion: "2.20221215.04.01",
+                visitorData: config.youTubeKeys.visitorData
             }
         },
-        videoId: videoID
+        videoId: videoID,
+        serviceIntegrityDimensions: {
+            poToken: config.youTubeKeys.poToken
+        }
     };
     const result = await axios.post(url, data, {
-        timeout: 3500
+        timeout: 3500,
+        headers: {
+            "X-Goog-Visitor-Id": config.youTubeKeys.visitorData
+        }
     });
     /* istanbul ignore else */
     if (result.status === 200) {

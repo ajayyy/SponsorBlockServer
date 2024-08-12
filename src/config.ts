@@ -195,7 +195,12 @@ addDefaults(config, {
     useCacheForSegmentGroups: false,
     maxConnections: 100,
     maxResponseTime: 1000,
-    maxResponseTimeWhileLoadingCache: 2000
+    maxResponseTimeWhileLoadingCache: 2000,
+    etagExpiry: 5000,
+    youTubeKeys: {
+        visitorData: null,
+        poToken: null
+    }
 });
 loadFromEnv(config);
 migrate(config);

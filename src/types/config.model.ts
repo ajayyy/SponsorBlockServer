@@ -109,6 +109,11 @@ export interface SBSConfig {
     maxConnections: number;
     maxResponseTime: number;
     maxResponseTimeWhileLoadingCache: number;
+    etagExpiry: number;
+    youTubeKeys: {
+        visitorData: string | null;
+        poToken: string | null;
+    }
 }
 
 export interface WebhookConfig {
