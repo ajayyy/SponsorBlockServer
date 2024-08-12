@@ -46,6 +46,9 @@ jobs:
             ${{ github.workspace }}/node_modules
       - if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
+        env:
+          youTubeKeys_visitorData: ${{ secrets.YOUTUBEKEYS_VISITORDATA }}
+          youTubeKeys_poToken: ${{ secrets.YOUTUBEKEYS_POTOKEN }}
       - name: Run SQLite Tests
         timeout-minutes: 5
         run: npx nyc --silent npm test
@@ -83,6 +86,8 @@ jobs:
       - name: Run Postgres Tests
         env:
           TEST_POSTGRES: true
+          youTubeKeys_visitorData: ${{ secrets.YOUTUBEKEYS_VISITORDATA }}
+          youTubeKeys_poToken: ${{ secrets.YOUTUBEKEYS_POTOKEN }}
         timeout-minutes: 5
         run: npx nyc --silent npm test
       - name: cache nyc output
