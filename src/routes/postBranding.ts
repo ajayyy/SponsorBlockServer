@@ -57,6 +57,7 @@ export async function postBranding(req: Request, res: Response) {
 
         if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
             res.status(403).send("YouTube is currently testing a new anti-adblock technique called server-side ad-injection. This causes skips and submissions to be offset by the duration of the ad. It seems that you are affected by this A/B test, so until a fix is developed, we cannot accept submissions from your device due to them potentially being inaccurate.");
+            return;
         }
 
         const lock = await acquireLock(`postBranding:${videoID}.${hashedUserID}`);
