@@ -253,6 +253,13 @@ async function updateVoteTotals(type: BrandingType, UUID: BrandingUUID, userID: 
         }
     } else {
         await db.prepare("run", `UPDATE ${table} SET "votes" = "votes" + 1 WHERE "UUID" = ?`, [UUID]);
+
+        if (type === BrandingType.Title) {
+            const votedSubmitterUserID = (await db.prepare("get", `SELECT "userID" FROM ${table2} WHERE "UUID" = ?`, [UUID]))?.userID;
+            if (votedSubmitterUserID) {
+                await verifyOldSubmissions(votedSubmitterUserID, await getVerificationValue(votedSubmitterUserID, await isUserVIP(votedSubmitterUserID)));
+            }
+        }
     }
 
     if (shouldLock) {
