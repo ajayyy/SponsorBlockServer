@@ -251,16 +251,16 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
         // Add the vote
         if ((await db.prepare("get", `select count(*) as count from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category])).count > 0) {
             // Update the already existing db entry
-            await db.prepare("run", `update "categoryVotes" set "votes" = "votes" + ?, "updatedAt" = ? where "UUID" = ? and "category" = ?`, [voteAmount, timeSubmitted, UUID, category]);
+            await db.prepare("run", `update "categoryVotes" set "votes" = "votes" + ?, "updatedAt" = ? where "UUID" = ? and "category" = ?`, [voteAmount, isoTimestamp, UUID, category]);
         } else {
             // Add a db entry
-            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes", "createdAt", "updatedAt") values (?, ?, ?, ?, ?)`, [UUID, category, voteAmount]);
+            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes", "createdAt", "updatedAt") values (?, ?, ?, ?, ?)`, [UUID, category, voteAmount, isoTimestamp, isoTimestamp]);
         }
 
         // Add the info into the private db
         if (usersLastVoteInfo?.votes > 0) {
             // Reverse the previous vote
-            await db.prepare("run", `update "categoryVotes" set "votes" = "votes" - ? where "UUID" = ? and "category" = ?`, [voteAmount, UUID, usersLastVoteInfo.category]);
+            await db.prepare("run", `update "categoryVotes" set "votes" = "votes" - ?, "updatedAt" = ? where "UUID" = ? and "category" = ?`, [voteAmount, isoTimestamp, UUID, usersLastVoteInfo.category]);
 
             await privateDB.prepare("run", `update "categoryVotes" set "category" = ?, "timeSubmitted" = ?, "hashedIP" = ? where "userID" = ? and "UUID" = ?`, [category, timeSubmitted, hashedIP, userID, UUID]);
         } else {
@@ -280,7 +280,7 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
 
         // Add submission as vote
         if (!currentCategoryInfo && submissionInfo) {
-            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, segmentInfo.category, currentCategoryCount]);
+            await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes", "createdAt", "updatedAt") values (?, ?, ?)`, [UUID, segmentInfo.category, currentCategoryCount, isoTimestamp, isoTimestamp]);
             await privateDB.prepare("run", `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, submissionInfo.userID, "unknown", segmentInfo.category, submissionInfo.timeSubmitted]);
         }
 
