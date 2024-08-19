@@ -1,7 +1,7 @@
 BEGIN TRANSACTION;
 
 -- vipUsers
-ALTER TABLE "vipUsers" ADD "createdAt" INTEGER NOT NULL;
+ALTER TABLE "vipUsers" ADD "createdAt" TEXT NOT NULL;
 
 -- sponsorTimes
 -- Don't create createdAt -> timeSubmitted field
