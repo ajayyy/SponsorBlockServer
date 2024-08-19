@@ -65,10 +65,10 @@ async function updateSegmentVideoDuration(UUID: SegmentUUID) {
         apiVideoDetails = await getVideoDetails(videoID, true);
     }
     const apiVideoDuration = apiVideoDetails?.duration as VideoDuration;
-    const currentTime = Date.now();
+    const isoTimestamp = new Date().toISOString();
     if (videoDurationChanged(videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${videoDuration} to ${apiVideoDuration}`);
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ?, "updatedAt" ? WHERE "UUID" = ?`, [apiVideoDuration, currentTime, UUID]);
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = ?, "updatedAt" ? WHERE "UUID" = ?`, [apiVideoDuration, isoTimestamp, UUID]);
     }
 }
 
@@ -92,14 +92,14 @@ async function checkVideoDuration(UUID: SegmentUUID) {
         ORDER BY "timeSubmitted" DESC LIMIT 1`,
     [videoID, service]) as {videoDuration: VideoDuration, UUID: SegmentUUID, timeSubmitted: number};
 
-    const currentTime = Date.now();
+    const isoTimestamp = new Date().toISOString();
     if (latestSubmission && videoDurationChanged(latestSubmission.videoDuration, apiVideoDuration)) {
         Logger.info(`Video duration changed for ${videoID} from ${latestSubmission.videoDuration} to ${apiVideoDuration}`);
         await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 1, "updatedAt" = ?
             WHERE "videoID" = ? AND "service" = ? AND "timeSubmitted" <= ?
             AND "hidden" = 0 AND "shadowHidden" = 0 AND 
             "actionType" != 'full' AND "votes" > -2`,
-        [currentTime, videoID, service, latestSubmission.timeSubmitted]);
+        [isoTimestamp, videoID, service, latestSubmission.timeSubmitted]);
         deleteLockCategories(videoID, null, null, service).catch((e) => Logger.error(`delete lock categories after vote: ${e}`));
     }
 }
@@ -242,6 +242,7 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
     const nextCategoryInfo = await db.prepare("get", `select votes from "categoryVotes" where "UUID" = ? and category = ?`, [UUID, category], { useReplica: true });
 
     const timeSubmitted = Date.now();
+    const isoTimestamp = new Date(timeSubmitted).toISOString();
 
     const voteAmount = (isVIP || isTempVIP) ? 500 : 1;
     const ableToVote = finalResponse.finalStatus === 200; // ban status checks handled by vote() (caller function)
@@ -289,7 +290,7 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
         // VIPs change it every time
         if (isVIP || isTempVIP || isOwnSubmission || nextCategoryCount - currentCategoryCount >= Math.max(Math.ceil(submissionInfo?.votes / 2), 2)) {
             // Replace the category
-            await db.prepare("run", `update "sponsorTimes" set "category" = ?, "updatedAt" = ? where "UUID" = ?`, [category, timeSubmitted, UUID]);
+            await db.prepare("run", `update "sponsorTimes" set "category" = ?, "updatedAt" = ? where "UUID" = ?`, [category, isoTimestamp, UUID]);
         }
     }
     QueryCacher.clearSegmentCache(segmentInfo);
@@ -512,14 +513,14 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 await privateDB.prepare("run", `INSERT INTO "votes" ("UUID", "userID", "hashedIP", "type", "normalUserID", "originalType") VALUES(?, ?, ?, ?, ?, ?)`, [UUID, userID, hashedIP, type, nonAnonUserID, originalType]);
             }
 
-            const currentTime = Date.now();
+            const isoTimestamp = new Date().toISOString();
 
             // update the vote count on this sponsorTime
-            await db.prepare("run", `UPDATE "sponsorTimes" SET "votes" = "votes" + ?, "updatedAt" = ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, currentTime, UUID]);
+            await db.prepare("run", `UPDATE "sponsorTimes" SET "votes" = "votes" + ?, "updatedAt" = ? WHERE "UUID" = ?`, [incrementAmount - oldIncrementAmount, isoTimestamp, UUID]);
 
             // tempVIP can bring back hidden segments
             if (isTempVIP && incrementAmount > 0 && voteTypeEnum === voteTypes.normal) {
-                await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 0, "updatedAt" = ? WHERE "UUID" = ?`, [currentTime, UUID]);
+                await db.prepare("run", `UPDATE "sponsorTimes" SET "hidden" = 0, "updatedAt" = ? WHERE "UUID" = ?`, [isoTimestamp, UUID]);
             }
             // additional processing for VIP
             // on VIP upvote
@@ -527,10 +528,10 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
                 // Update video duration in case that caused it to be hidden
                 await updateSegmentVideoDuration(UUID);
                 // unhide & unlock
-                await db.prepare("run", 'UPDATE "sponsorTimes" SET "locked" = 1, "hidden" = 0, "shadowHidden" = 0, "updatedAt" = ? WHERE "UUID" = ?', [currentTime, UUID]);
+                await db.prepare("run", 'UPDATE "sponsorTimes" SET "locked" = 1, "hidden" = 0, "shadowHidden" = 0, "updatedAt" = ? WHERE "UUID" = ?', [isoTimestamp, UUID]);
             // on VIP downvote/ undovote, also unlock submission
             } else if (isVIP && incrementAmount <= 0 && voteTypeEnum === voteTypes.normal) {
-                await db.prepare("run", 'UPDATE "sponsorTimes" SET "locked" = 0, "updatedAt" = ? WHERE "UUID" = ?', [currentTime, UUID]);
+                await db.prepare("run", 'UPDATE "sponsorTimes" SET "locked" = 0, "updatedAt" = ? WHERE "UUID" = ?', [isoTimestamp, UUID]);
             }
 
             QueryCacher.clearSegmentCache(segmentInfo);

@@ -5,7 +5,7 @@ ALTER TABLE "vipUsers" ADD "createdAt" TEXT NOT NULL;
 
 -- sponsorTimes
 -- Don't create createdAt -> timeSubmitted field
-ALTER TABLE "sponsorTimes" ADD "updatedAt" INTEGER NOT NULL;
+ALTER TABLE "sponsorTimes" ADD "updatedAt" TEXT NOT NULL;
 
 -- userNames
 ALTER TABLE "userNames" ADD "createdAt" INTEGER NOT NULL;

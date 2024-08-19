@@ -79,16 +79,16 @@ export async function postSegmentShift(req: Request, res: Response): Promise<Res
             startTime,
             endTime,
         };
-        const currentTime = Date.now();
+        const isoTimestamp = new Date().toISOString();
 
         for (const segment of segments) {
             const result = shiftSegment(segment, shift);
             switch (result.action) {
                 case ACTION_UPDATE:
-                    await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "updatedAt" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, currentTime, result.segment.UUID]);
+                    await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "updatedAt" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, isoTimestamp, result.segment.UUID]);
                     break;
                 case ACTION_REMOVE:
-                    await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2, "updatedAt" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, currentTime, result.segment.UUID]);
+                    await db.prepare("run", 'UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "votes" = -2, "updatedAt" = ? WHERE "UUID" = ?', [result.segment.startTime, result.segment.endTime, isoTimestamp, result.segment.UUID]);
                     break;
             }
         }
