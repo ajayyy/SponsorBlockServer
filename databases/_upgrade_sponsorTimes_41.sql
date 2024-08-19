@@ -16,8 +16,8 @@ ALTER TABLE "categoryVotes" ADD "createdAt" TEXT NOT NULL;
 ALTER TABLE "categoryVotes" ADD "updatedAt" TEXT NOT NULL;
 
 -- lockCategories
-ALTER TABLE "lockCategories" ADD "createdAt" INTEGER NOT NULL;
-ALTER TABLE "lockCategories" ADD "updatedAt" INTEGER NOT NULL;
+ALTER TABLE "lockCategories" ADD "createdAt" TEXT NOT NULL;
+ALTER TABLE "lockCategories" ADD "updatedAt" TEXT NOT NULL;
 
 -- titleVotes
 ALTER TABLE "titleVotes" ADD "createdAt" INTEGER NOT NULL;
