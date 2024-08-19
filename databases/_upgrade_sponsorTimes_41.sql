@@ -8,8 +8,8 @@ ALTER TABLE "vipUsers" ADD "createdAt" TEXT NOT NULL;
 ALTER TABLE "sponsorTimes" ADD "updatedAt" TEXT NOT NULL;
 
 -- userNames
-ALTER TABLE "userNames" ADD "createdAt" INTEGER NOT NULL;
-ALTER TABLE "userNames" ADD "updatedAt" INTEGER NOT NULL;
+ALTER TABLE "userNames" ADD "createdAt" TEXT NOT NULL;
+ALTER TABLE "userNames" ADD "updatedAt" TEXT NOT NULL;
 
 -- categoryVotes
 ALTER TABLE "categoryVotes" ADD "createdAt" INTEGER NOT NULL;
