@@ -49,9 +49,22 @@ describe("postBranding", () => {
         const insertThumbnailQuery = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertThumbnailQuery, ["postBrandLocked1", 0, getHash(userID3), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandLocked2", 1, getHash(userID4), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
+
         const insertThumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?);';
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0]);
         await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0]);
+
+        // Approved original thumbnail submitter
+        await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb"), Date.now(), "postBrandOriginThumb"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb2", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb2"), Date.now(), "postBrandOriginThumb2"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb3", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb3"), Date.now(), "postBrandOriginThumb3"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb4", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb4"), Date.now(), "postBrandOriginThumb4"]);
+        await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb5", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb5"), Date.now(), "postBrandOriginThumb5"]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb", 4, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb2", 1, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb3", 0, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb4", 0, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb5", 0, 0, 0]);
 
         // Testing vip submission removal
         await db.prepare("run", insertTitleQuery, ["postBrandRemoved1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved1"]);
@@ -139,7 +152,7 @@ describe("postBranding", () => {
         assert.strictEqual(dbVotes.shadowHidden, 0);
     });
 
-    it("Submit only original thumbnail", async () => {
+    it("Submit only original thumbnail without permission", async () => {
         const videoID = "postBrand3";
         const thumbnail = {
             original: true
@@ -154,12 +167,55 @@ describe("postBranding", () => {
 
         assert.strictEqual(res.status, 200);
         const dbThumbnail = await queryThumbnailByVideo(videoID);
+
+        assert.strictEqual(dbThumbnail, undefined);
+    });
+
+    it("Submit only original thumbnail with permission", async () => {
+        const videoID = "postBrand3";
+        const thumbnail = {
+            original: true
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: userID4,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
         const dbVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
 
         assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
 
         assert.strictEqual(dbVotes.votes, 0);
         assert.strictEqual(dbVotes.locked, 0);
+        assert.strictEqual(dbVotes.shadowHidden, 0);
+    });
+
+    it("Submit only original thumbnail as VIP", async () => {
+        const videoID = "postBrandV3";
+        const thumbnail = {
+            original: true
+        };
+
+        const res = await postBranding({
+            thumbnail,
+            userID: vipUser,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+
+        assert.strictEqual(dbVotes.votes, 0);
+        assert.strictEqual(dbVotes.locked, 1);
         assert.strictEqual(dbVotes.shadowHidden, 0);
     });
 
@@ -873,7 +929,7 @@ describe("postBranding", () => {
 
         const res = await postBranding({
             thumbnail,
-            userID: userID3,
+            userID: userID4,
             service: Service.YouTube,
             videoID
         });

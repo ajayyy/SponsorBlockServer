@@ -120,7 +120,7 @@ export async function postBranding(req: Request, res: Response) {
         })(), (async () => {
             if (thumbnail) {
                 // ignore original submissions from banned users - hiding those would cause issues
-                if (thumbnail.original && isBanned) return;
+                if (thumbnail.original && (isBanned || !await canSubmitOriginal(hashedUserID, isVip))) return;
 
                 const existingUUID = thumbnail.original
                     ? (await db.prepare("get", `SELECT "UUID" from "thumbnails" where "videoID" = ? AND "original" = 1`, [videoID]))?.UUID
@@ -297,6 +297,14 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
             await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, hashedUserID, verification]);
         }
     }
+}
+
+async function canSubmitOriginal(hashedUserID: HashedUserID, isVip: boolean): Promise<boolean> {
+    const upvotedThumbs = (await db.prepare("get", `SELECT count(*) as upvotedThumbs FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" > 0 AND "thumbnails"."original" = 0 AND "thumbnails"."userID" = ?`, [hashedUserID])).upvotedThumbs;
+    const customThumbs = (await db.prepare("get", `SELECT count(*) as customThumbs FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" >= 0 AND "thumbnails"."original" = 0 AND "thumbnails"."userID" = ?`, [hashedUserID])).customThumbs;
+    const originalThumbs = (await db.prepare("get", `SELECT count(*) as originalThumbs FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" >= 0 AND "thumbnails"."original" = 1 AND "thumbnails"."userID" = ?`, [hashedUserID])).originalThumbs;
+
+    return isVip || (upvotedThumbs > 1 && customThumbs > 1 && originalThumbs / customThumbs < 0.4);
 }
 
 async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType) {
