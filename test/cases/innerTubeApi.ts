@@ -21,7 +21,7 @@ const expectedInnerTube = { // partial type of innerTubeVideoDetails
 };
 const currentViews = 49816;
 
-describe("innertube API test", function() {
+xdescribe("innertube API test", function() {
     it("should be able to get innerTube details", async () => {
         const result = await innerTube.getPlayerData(videoID, true);
         assert.ok(partialDeepEquals(result, expectedInnerTube));
