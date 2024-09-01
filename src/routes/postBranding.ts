@@ -300,9 +300,9 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
 }
 
 async function canSubmitOriginal(hashedUserID: HashedUserID, isVip: boolean): Promise<boolean> {
-    const upvotedThumbs = (await db.prepare("get", `SELECT count(*) as upvotedThumbs FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" > 0 AND "thumbnails"."original" = 0 AND "thumbnails"."userID" = ?`, [hashedUserID])).upvotedThumbs;
-    const customThumbs = (await db.prepare("get", `SELECT count(*) as customThumbs FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" >= 0 AND "thumbnails"."original" = 0 AND "thumbnails"."userID" = ?`, [hashedUserID])).customThumbs;
-    const originalThumbs = (await db.prepare("get", `SELECT count(*) as originalThumbs FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" >= 0 AND "thumbnails"."original" = 1 AND "thumbnails"."userID" = ?`, [hashedUserID])).originalThumbs;
+    const upvotedThumbs = (await db.prepare("get", `SELECT count(*) as "upvotedThumbs" FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" > 0 AND "thumbnails"."original" = 0 AND "thumbnails"."userID" = ?`, [hashedUserID])).upvotedThumbs;
+    const customThumbs = (await db.prepare("get", `SELECT count(*) as "customThumbs" FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" >= 0 AND "thumbnails"."original" = 0 AND "thumbnails"."userID" = ?`, [hashedUserID])).customThumbs;
+    const originalThumbs = (await db.prepare("get", `SELECT count(*) as "originalThumbs" FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnailVotes"."votes" >= 0 AND "thumbnails"."original" = 1 AND "thumbnails"."userID" = ?`, [hashedUserID])).originalThumbs;
 
     return isVip || (upvotedThumbs > 1 && customThumbs > 1 && originalThumbs / customThumbs < 0.4);
 }
