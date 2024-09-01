@@ -20,7 +20,7 @@
   "license": "AGPL-3.0-only",
   "dependencies": {
     "axios": "^1.6.0",
-    "better-sqlite3": "^8.0.1",
+    "better-sqlite3": "^11.2.1",
     "cron": "^2.1.0",
     "express": "^4.19.2",
     "express-promise-router": "^4.1.1",
