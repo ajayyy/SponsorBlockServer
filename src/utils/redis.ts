@@ -222,6 +222,12 @@ if (config.redis?.enabled) {
             return;
         }
 
+        if (config.redis.maxReadResponseTime && activeRequests > maxStoredTimes
+                && readResponseTime[readResponseTime.length - 1] > config.redis.maxReadResponseTime) {
+            reject(new TooManyActiveConnectionsError(`Redis response time too high in general: ${readResponseTime[readResponseTime.length - 1]}ms with ${activeRequests} connections`));
+            return;
+        }
+
         // For tracking
         if (!shouldClientCacheKey(key)) memoryCacheUncachedMisses++;
 

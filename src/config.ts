@@ -165,6 +165,7 @@ addDefaults(config, {
         commandsQueueMaxLength: 3000,
         stopWritingAfterResponseTime: 50,
         responseTimePause: 1000,
+        maxReadResponseTime: 500,
         disableHashCache: false,
         clientCacheSize: 2000,
         useCompression: false,

@@ -10,6 +10,7 @@ interface RedisConfig extends redis.RedisClientOptions {
     maxWriteConnections: number;
     stopWritingAfterResponseTime: number;
     responseTimePause: number;
+    maxReadResponseTime: number;
     disableHashCache: boolean;
     clientCacheSize: number;
     useCompression: boolean;
