@@ -16,6 +16,7 @@ import { parseSkipSegments } from "../utils/parseSkipSegments";
 import { getEtag } from "../middleware/etag";
 import { shuffleArray } from "../utils/array";
 import { Postgres } from "../databases/Postgres";
+import { getRedisStats } from "../utils/redis";
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
@@ -49,6 +50,7 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
                         Logger.error(`Postgres stats: ${JSON.stringify(db.getStats())}`);
                         Logger.error(`Postgres private stats: ${JSON.stringify(privateDB.getStats())}`);
                     }
+                    Logger.error(`Redis stats: ${JSON.stringify(getRedisStats())}`);
                     return false;
                 }
 
