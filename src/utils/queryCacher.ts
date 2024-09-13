@@ -21,7 +21,8 @@ async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
 
     const data = await fetchFromDB();
 
-    redis.setExWithCache(key, config.redis?.expiryTime, JSON.stringify(data)).catch((err) => Logger.error(err));
+    // Undefined can't be stringified, but null can
+    redis.setExWithCache(key, config.redis?.expiryTime, JSON.stringify(data ?? null)).catch((err) => Logger.error(err));
 
     return data;
 }
