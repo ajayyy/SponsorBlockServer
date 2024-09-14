@@ -24,7 +24,9 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
             return true; //required - always send
         }
 
-        if (segment.hidden || segment.votes < -1) {
+        if (segment.hidden
+                || segment.votes < -1
+                || segment.shadowHidden === Visibility.MORE_HIDDEN) {
             return false; //too untrustworthy, just ignore it
         }
 
