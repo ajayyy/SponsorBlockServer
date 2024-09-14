@@ -104,9 +104,10 @@ if (config.redis?.enabled) {
     const createKeyName = (key: RedisCommandArgument) => (key + (config.redis.useCompression ? ".c" : "")) as RedisCommandArgument;
 
     exportClient.getWithCache = (key) => {
-        if (cache && cacheClient && cache.has(key)) {
+        const cachedItem = cache && cacheClient && cache.get(key);
+        if (cachedItem != null) {
             memoryCacheHits++;
-            return Promise.resolve(cache.get(key));
+            return Promise.resolve(cachedItem);
         } else if (shouldClientCacheKey(key)) {
             memoryCacheMisses++;
         }
