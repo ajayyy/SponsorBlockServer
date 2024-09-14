@@ -154,7 +154,11 @@ if (config.redis?.enabled) {
 
         activeRequestPromises[key as string] = request;
 
-        void request.finally(() => delete activeRequestPromises[key as string]);
+        void request.finally(() => {
+            delete activeRequestPromises[key as string];
+
+            resetKeys.delete(key);
+        });
 
         return request;
     };
@@ -202,11 +206,12 @@ if (config.redis?.enabled) {
 
     const ttl = client.ttl.bind(client);
     exportClient.ttl = async (key) => {
-        if (cache && cacheClient && ttlCache.has(key)) {
+        const ttlResult = cache && cacheClient && ttlCache.get(key);
+        if (ttlResult != null) {
             // Trigger usage of cache
             cache.get(key);
 
-            return ttlCache.get(key) + config.redis?.expiryTime - Math.floor(Date.now() / 1000);
+            return ttlResult + config.redis?.expiryTime - Math.floor(Date.now() / 1000);
         } else {
             const result = await ttl(createKeyName(key));
             if (ttlCache) ttlCache.set(key, Math.floor(Date.now() / 1000) - (config.redis?.expiryTime - result));
