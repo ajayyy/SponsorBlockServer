@@ -153,7 +153,7 @@ if (config.redis?.enabled) {
 
         activeRequestPromises[key as string] = request;
 
-        void request.then(() => delete activeRequestPromises[key as string]);
+        void request.finally(() => delete activeRequestPromises[key as string]);
 
         return request;
     };
