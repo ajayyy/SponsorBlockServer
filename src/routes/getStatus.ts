@@ -30,7 +30,7 @@ export async function getStatus(req: Request, res: Response, server: Server): Pr
                 redisProcessTime = Date.now() - redisStartTime;
                 return e;
             }).catch(e => /* istanbul ignore next */ {
-                Logger.error(`status: redis increment timed out ${e}`);
+                Logger.error(`status: redis increment timed out ${e}\nload: ${os.loadavg().slice(1)} with ${JSON.stringify(getRedisStats())}\n${JSON.stringify((db as Postgres)?.getStats?.())}`);
                 return [-1];
             });
         statusRequests = numberRequests?.[0];
