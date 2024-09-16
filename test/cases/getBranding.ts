@@ -39,7 +39,7 @@ describe("getBranding", () => {
 
     before(async () => {
         const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "downvotes", "removed", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?)`;
@@ -57,10 +57,10 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0, 0, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID2", 3, 0, 0, 0, 1, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID3", 0, 0, 0, 0, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID4", 5, 0, 0, 0, 0, 1]),
+            db.prepare("run", titleVotesQuery, ["UUID1", 3, 0, 0, 0, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID2", 3, 0, 0, 0, 1, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID3", 0, 0, 0, 0, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID4", 5, 0, 0, 0, 0, 1, isoDate, isoDate]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID1T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID3T", 3]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID4T", 18]),
@@ -80,9 +80,9 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID11", 3, 0, 0, 0, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID21", 2, 0, 0, 0, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID31", 1, 1, 0, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID11", 3, 0, 0, 0, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID21", 2, 0, 0, 0, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID31", 1, 1, 0, 0, 0, 0, isoDate, isoDate]),
 
             db.prepare("run", thumbnailTimestampsQuery, ["UUID11T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID31T", 3]),
@@ -101,9 +101,9 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID12", 3, 0, 0, 0, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID22", 2, 0, 0, 0, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID32", 1, 0, 1, 0, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID12", 3, 0, 0, 0, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID22", 2, 0, 0, 0, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID32", 1, 0, 1, 0, 0, 0, isoDate, isoDate]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID12T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID32T", 3]),
             db.prepare("run", thumbnailVotesQuery, ["UUID12T", 3, 0, 0, 0, 0]),
@@ -124,9 +124,9 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", titleVotesQuery, ["UUID-uv-1", 3, 0, 0, -1, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID-uv-2", 2, 0, 0, -1, 0, 0]),
-            db.prepare("run", titleVotesQuery, ["UUID-uv-3", 0, 0, 0, -1, 0, 0]),
+            db.prepare("run", titleVotesQuery, ["UUID-uv-1", 3, 0, 0, -1, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID-uv-2", 2, 0, 0, -1, 0, 0, isoDate, isoDate]),
+            db.prepare("run", titleVotesQuery, ["UUID-uv-3", 0, 0, 0, -1, 0, 0, isoDate, isoDate]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID-uv-1T", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID-uv-3T", 3]),
             db.prepare("run", thumbnailVotesQuery, ["UUID-uv-1T", 3, 0, 0, 0, 0]),

@@ -99,9 +99,9 @@ export const insertTitle = async (db: IDatabase, overrides: insertTitleParams = 
     params.original = Number(params.original);
     await db.prepare("run", query, Object.values(params));
 };
-export const insertTitleVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, verification = false) => {
-    const query = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)';
-    const params = [UUID, votes, Number(locked), Number(shadowHidden), Number(verification)];
+export const insertTitleVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, verification = false, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const params = [UUID, votes, Number(locked), Number(shadowHidden), Number(verification), isoDate, isoDate];
     await db.prepare("run", query, params);
 };
 
