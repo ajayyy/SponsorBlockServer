@@ -14,18 +14,18 @@ describe("getLockCategoriesByHash", () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
         await db.prepare("run", insertVipUserQuery, [getHash("getLockCategoriesHashVIP"), isoDate]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "hashedVideoID") VALUES (?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "sponsor", "1-reason-short", getHash("getLockHash1", 1)]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "interaction", "1-reason-longer", getHash("getLockHash1", 1)]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "hashedVideoID", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "sponsor", "1-reason-short", getHash("getLockHash1", 1), isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash1", "skip", "interaction", "1-reason-longer", getHash("getLockHash1", 1), isoDate, isoDate]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash2", "skip", "preview", "2-reason", getHash("getLockHash2", 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash2", "skip", "preview", "2-reason", getHash("getLockHash2", 1), isoDate, isoDate]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash3", "skip", "nonmusic", "3-reason", getHash("getLockHash3", 1)]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "getLockHash3", "skip", "nonmusic", "3-reason", getHash("getLockHash3", 1), isoDate, isoDate]);
 
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-1", "mute", "outro", "fake1-reason", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "intro", "fake2-longer-reason", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "preview", "fake2-short", fakeHash]);
-        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "full", "sponsor", "fake2-notshown", fakeHash]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-1", "mute", "outro", "fake1-reason", fakeHash, isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "intro", "fake2-longer-reason", fakeHash, isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "mute", "preview", "fake2-short", fakeHash, isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [getHash("getLockCategoriesHashVIP"), "fakehash-2", "full", "sponsor", "fake2-notshown", fakeHash, isoDate, isoDate]);
     });
 
     it("Database should be greater or equal to version 29", async () => {

@@ -126,10 +126,10 @@ describe("reputation", () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
         await db.prepare("run", insertVipUserQuery, [users["locking-vip"].pubID, isoDate]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID, "sponsor"]);
-        await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID, "intro"]);
-        await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID2, "sponsor"]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID, "sponsor", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID, "intro", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID2, "sponsor", isoDate, isoDate]);
     });
 
     it("user in grace period", async () => {

@@ -26,8 +26,8 @@ describe("unBan", () => {
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
         await db.prepare("run", insertVipUserQuery, [getHash(VIPuser), isoDate]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES(?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [getHash(VIPuser), "unBan-videoID-1", "sponsor"]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [getHash(VIPuser), "unBan-videoID-1", "sponsor", isoDate, isoDate]);
 
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-0", 1, 11, 2, "unBan-uuid-0", "testMan-unBan", 0, 50, "sponsor", 1, getHash("unBan-videoID-0", 1), isoDate]);

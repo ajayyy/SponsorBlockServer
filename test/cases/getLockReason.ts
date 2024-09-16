@@ -22,13 +22,13 @@ describe("getLockReason", () => {
         await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1, isoDate, isoDate]);
         await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2, isoDate, isoDate]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason") VALUES (?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "sponsor", "sponsor-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "interaction", "interaction-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "preview", "preview-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "mute", "music_offtopic", "nonmusic-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "mute", "outro", "outro-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "full", "selfpromo", "selfpromo-reason"]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "sponsor", "sponsor-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "interaction", "interaction-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "preview", "preview-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "mute", "music_offtopic", "nonmusic-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "mute", "outro", "outro-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "full", "selfpromo", "selfpromo-reason", isoDate, isoDate]);
     });
 
     after(async () => {

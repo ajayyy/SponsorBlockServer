@@ -52,8 +52,8 @@ describe("shadowBanUser", () => {
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned3"]);
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned4"]);
 
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "service") VALUES (?, ?, ?, ?, ?)`,
-            [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube"]);
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "service", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube", isoDate, isoDate]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES(?, ?)`, [getHash(VIPuserID), isoDate]);
 

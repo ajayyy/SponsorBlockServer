@@ -103,9 +103,9 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)', [getHash(vipUser), isoDate]);
         await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
 
-        const insertlockCategoriesQuery = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "actionType") VALUES (?, ?, ?, ?)';
-        await db.prepare("run", insertlockCategoriesQuery, ["no-sponsor-segments-video", "someUser", "sponsor", "skip"]);
-        await db.prepare("run", insertlockCategoriesQuery, ["category-change-test-1", "someUser", "preview", "skip"]); // sponsor should stay unlocked
+        const insertlockCategoriesQuery = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "actionType", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertlockCategoriesQuery, ["no-sponsor-segments-video", "someUser", "sponsor", "skip", isoDate, isoDate]);
+        await db.prepare("run", insertlockCategoriesQuery, ["category-change-test-1", "someUser", "preview", "skip", isoDate, isoDate]); // sponsor should stay unlocked
     });
     // constants
     const endpoint = "/api/voteOnSponsorTime";

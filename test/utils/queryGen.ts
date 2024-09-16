@@ -56,15 +56,18 @@ interface lockParams {
     category?: Category | string,
     hashedVideoID?: VideoIDHash | "",
     reason?: string,
-    service?: Service | string
+    service?: Service | string,
+    createdAt?: string,
+    updatedAt?: string
 }
 
-export const insertLock = async(db: IDatabase, overrides: lockParams = {}) => {
-    const query = 'INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service") VALUES (?, ?, ?, ?, ?, ?, ?)';
+export const insertLock = async(db: IDatabase, overrides: lockParams = {}, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const identifier = "lock";
     const defaults = {
         videoID: genRandomValue("video", identifier), userID: genRandomValue("user", identifier),
-        actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube
+        actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube,
+        createdAt: isoDate, updatedAt: isoDate
     };
     const params = { ...defaults, ...overrides };
     params.hashedVideoID = getHash(params.videoID);

@@ -85,8 +85,8 @@ describe("postSkipSegments - duration", () => {
             segment: [1, 10],
             category: "sponsor",
         };
-        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category")
-            VALUES(?, ?, ?)`, [getHash("generic-VIP"), videoID, "sponsor"]);
+        await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "category", "createdAt", "updatedAt")
+            VALUES(?, ?, ?, ?, ?)`, [getHash("generic-VIP"), videoID, "sponsor", isoDate, isoDate]);
         try {
             const res = await postSkipSegmentJSON({
                 userID,
