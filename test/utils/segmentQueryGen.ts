@@ -127,8 +127,8 @@ export const insertThumbnail = async (db: IDatabase, overrides: insertThumbnailP
     await db.prepare("run", query, Object.values(params));
 };
 
-export const insertThumbnailVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false) => {
-    const query = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)';
-    const params = [UUID, votes, Number(locked), Number(shadowHidden)];
+export const insertThumbnailVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?)';
+    const params = [UUID, votes, Number(locked), Number(shadowHidden), isoDate, isoDate];
     await db.prepare("run", query, params);
 };

@@ -61,7 +61,7 @@ describe("shadowBanUser", () => {
         const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
-        const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)`;
+        const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?)`;
 
         await Promise.all([
             db.prepare("run", titleQuery, [video, "title1", 0, "userID1-ban", Service.YouTube, videohash, 1, "UUID1-ban"]),
@@ -78,9 +78,9 @@ describe("shadowBanUser", () => {
             db.prepare("run", titleVotesQuery, ["UUID3-ban", 1, 0, 0, 0, isoDate, isoDate]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID1T-ban", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID3T-ban", 3]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban", 3, 0, 0]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban", 2, 0, 0]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban", 1, 0, 0]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban", 3, 0, 0, isoDate, isoDate]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban", 2, 0, 0, isoDate, isoDate]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban", 1, 0, 0, isoDate, isoDate]),
         ]);
 
         await Promise.all([
@@ -98,9 +98,9 @@ describe("shadowBanUser", () => {
             db.prepare("run", titleVotesQuery, ["UUID3-ban2", 1, 0, 0, 0, isoDate, isoDate]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID1T-ban2", 1]),
             db.prepare("run", thumbnailTimestampsQuery, ["UUID3T-ban2", 3]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban2", 3, 0, 0]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban2", 2, 0, 0]),
-            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban2", 1, 0, 0])
+            db.prepare("run", thumbnailVotesQuery, ["UUID1T-ban2", 3, 0, 0, isoDate, isoDate]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID2T-ban2", 2, 0, 0, isoDate, isoDate]),
+            db.prepare("run", thumbnailVotesQuery, ["UUID3T-ban2", 1, 0, 0, isoDate, isoDate])
         ]);
 
         await Promise.all([
