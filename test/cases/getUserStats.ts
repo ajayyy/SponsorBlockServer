@@ -20,8 +20,8 @@ describe("getUserStats", () => {
         const insertBanQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertBanQuery, [userThreePublicID]);
 
-        const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
-        await db.prepare("run", insertUserNameQuery, [userOnePublicID, "Username user 01"]);
+        const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName", "createdAt", "updatedAt") VALUES(?, ?, ?, ?)';
+        await db.prepare("run", insertUserNameQuery, [userOnePublicID, "Username user 01", isoDate, isoDate]);
 
         const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "actionType", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", sponsorTimesQuery, [userOnePrivateID, 0, 60, 0, "skip", "getuserstatsuuid1", userOnePublicID, 1, 1, "sponsor", 0, isoDate]);

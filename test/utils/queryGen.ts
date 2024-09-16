@@ -33,10 +33,10 @@ export const bulkGrantFeature = async (db: IDatabase, users: userArray, feature:
 };
 
 // usernames
-export const insertUsername = async (db: IDatabase, userID: HashedUserID, userName: string, locked = false) => {
-    const query = 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)';
+export const insertUsername = async (db: IDatabase, userID: HashedUserID, userName: string, locked = false, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "userNames" ("userID", "userName", "locked", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?)';
     const lockedValue = Number(locked);
-    await db.prepare("run", query, [userID, userName, lockedValue]);
+    await db.prepare("run", query, [userID, userName, lockedValue, isoDate, isoDate]);
 };
 export const insertUsernameBulk = async (db: IDatabase, users: usernameUserArray) => {
     for (const user of Object.values(users))

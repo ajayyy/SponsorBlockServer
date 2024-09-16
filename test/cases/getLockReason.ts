@@ -18,9 +18,9 @@ describe("getLockReason", () => {
         await db.prepare("run", insertVipUserQuery, [vipUserID1, isoDate]);
         await db.prepare("run", insertVipUserQuery, [vipUserID2, isoDate]);
 
-        const insertVipUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES (?, ?)';
-        await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1]);
-        await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2]);
+        const insertVipUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName", "createdAt", "updatedAt") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1, isoDate, isoDate]);
+        await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2, isoDate, isoDate]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason") VALUES (?, ?, ?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "sponsor", "sponsor-reason"]);

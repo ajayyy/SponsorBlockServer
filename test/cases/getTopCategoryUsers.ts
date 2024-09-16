@@ -10,9 +10,9 @@ describe("getTopCategoryUsers", () => {
     const user1 = "gettopcategory_1";
     const user2 = "gettopcategory_2";
     before(async () => {
-        const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES(?, ?)';
-        await db.prepare("run", insertUserNameQuery, [getHash(user1), user1]);
-        await db.prepare("run", insertUserNameQuery, [getHash(user2), user2]);
+        const insertUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName", "createdAt", "updatedAt") VALUES(?, ?, ?, ?)';
+        await db.prepare("run", insertUserNameQuery, [getHash(user1), user1, isoDate, isoDate]);
+        await db.prepare("run", insertUserNameQuery, [getHash(user2), user2, isoDate, isoDate]);
 
         const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", sponsorTimesQuery, generateSegment(user1, "sponsor"));

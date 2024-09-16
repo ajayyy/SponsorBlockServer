@@ -17,10 +17,10 @@ const newUser_underLimit = "newUser_under";
 const newUser_overLimit = `newUser_over${"*".repeat(USERID_LIMIT)}`;
 // new username to someone else'e privateID
 const otherUser = `otherUser${"*".repeat(USERID_LIMIT)}`;
-
+const isoDate = new Date().toISOString();
 
 const addUsername = async (userID: string, userName: string, locked = 0) =>
-    await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
+    await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?)', [userID, userName, locked, isoDate, isoDate]);
 
 async function hasSetUsername(userID: string): Promise<boolean> {
     const row = await db.prepare("get", 'SELECT "userName", "locked" FROM "userNames" WHERE "userID" = ?', [userID]);
