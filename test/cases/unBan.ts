@@ -29,11 +29,11 @@ describe("unBan", () => {
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES(?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [getHash(VIPuser), "unBan-videoID-1", "sponsor"]);
 
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-0", 1, 11, 2, "unBan-uuid-0", "testMan-unBan", 0, 50, "sponsor", 1, getHash("unBan-videoID-0", 1)]);
-        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-1", 1, 11, 2, "unBan-uuid-1", "testWoman-unBan", 0, 50, "sponsor", 1, getHash("unBan-videoID-1", 1)]);
-        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-1", 1, 11, 2, "unBan-uuid-2", "testEntity-unBan", 0, 60, "sponsor", 1, getHash("unBan-videoID-1", 1)]);
-        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-2", 1, 11, 2, "unBan-uuid-3", "testEntity-unBan", 0, 60, "sponsor", 1, getHash("unBan-videoID-2", 1)]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "hashedVideoID", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-0", 1, 11, 2, "unBan-uuid-0", "testMan-unBan", 0, 50, "sponsor", 1, getHash("unBan-videoID-0", 1), isoDate]);
+        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-1", 1, 11, 2, "unBan-uuid-1", "testWoman-unBan", 0, 50, "sponsor", 1, getHash("unBan-videoID-1", 1), isoDate]);
+        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-1", 1, 11, 2, "unBan-uuid-2", "testEntity-unBan", 0, 60, "sponsor", 1, getHash("unBan-videoID-1", 1), isoDate]);
+        await db.prepare("run", insertSponsorTimeQuery, ["unBan-videoID-2", 1, 11, 2, "unBan-uuid-3", "testEntity-unBan", 0, 60, "sponsor", 1, getHash("unBan-videoID-2", 1), isoDate]);
     });
 
     it("Should be able to unban a user and re-enable shadow banned segments", (done) => {

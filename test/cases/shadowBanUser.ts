@@ -18,36 +18,36 @@ describe("shadowBanUser", () => {
     const isoDate = new Date().toISOString();
 
     before(async () => {
-        const insertQuery = `INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-10", "shadowBanned", 0, 50, "sponsor", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-11", "shadowBanned", 0, 50, "sponsor", "PeerTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-12", "shadowBanned", 0, 50, "intro", "YouTube", 0, videohash]);
+        const insertQuery = `INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "shadowHidden", "hashedVideoID", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-10", "shadowBanned", 0, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-11", "shadowBanned", 0, 50, "sponsor", "PeerTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-12", "shadowBanned", 0, 50, "intro", "YouTube", 0, videohash, isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-20", "shadowBanned2", 0, 50, "sponsor", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-21", "shadowBanned2", 0, 50, "sponsor", "PeerTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-22", "shadowBanned2", 0, 50, "intro", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-20", "shadowBanned2", 0, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-21", "shadowBanned2", 0, 50, "sponsor", "PeerTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-22", "shadowBanned2", 0, 50, "intro", "YouTube", 0, videohash, isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-30", "shadowBanned3", 0, 50, "sponsor", "YouTube", 1, videohash]);
-        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-31", "shadowBanned3", 0, 50, "sponsor", "PeerTube", 1, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-32", "shadowBanned3", 0, 50, "intro", "YouTube", 1, videohash]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-30", "shadowBanned3", 0, 50, "sponsor", "YouTube", 1, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 1, 11, 2, 0, "shadow-31", "shadowBanned3", 0, 50, "sponsor", "PeerTube", 1, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 33, 2, 0, "shadow-32", "shadowBanned3", 0, 50, "intro", "YouTube", 1, videohash, isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 21, 34, 2, 0, "shadow-40", "shadowBanned4", 0, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 21, 34, 2, 0, "shadow-40", "shadowBanned4", 0, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-50", "shadowBanned5", 0, 50, "sponsor", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-50", "shadowBanned5", 0, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 10, 10, 2, 1, "shadow-60", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, ["lockedVideo", 10, 10, 2, 1, "shadow-61", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, getHash("lockedVideo", 1)]);
+        await db.prepare("run", insertQuery, [video, 10, 10, 2, 1, "shadow-60", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, ["lockedVideo", 10, 10, 2, 1, "shadow-61", "shadowBanned6", 0, 50, "sponsor", "YouTube", 0, getHash("lockedVideo", 1), isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-70", "shadowBanned7", 383848, 50, "sponsor", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-71", "shadowBanned7", 2332, 50, "intro", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-72", "shadowBanned7", 4923, 50, "interaction", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-70", "shadowBanned7", 383848, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-71", "shadowBanned7", 2332, 50, "intro", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-72", "shadowBanned7", 4923, 50, "interaction", "YouTube", 0, videohash, isoDate]);
 
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-80", "shadowBanned8", 1674590916068933, 50, "sponsor", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-81", "shadowBanned8", 1674590916062936, 50, "intro", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-82", "shadowBanned8", 1674590916064324, 50, "interaction", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-90", "shadowBanned9", 1674590916062443, 50, "sponsor", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-91", "shadowBanned9", 1674590916062342, 50, "intro", "YouTube", 0, videohash]);
-        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-92", "shadowBanned9", 1674590916069491, 50, "interaction", "YouTube", 0, videohash]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-80", "shadowBanned8", 1674590916068933, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-81", "shadowBanned8", 1674590916062936, 50, "intro", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-82", "shadowBanned8", 1674590916064324, 50, "interaction", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-90", "shadowBanned9", 1674590916062443, 50, "sponsor", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-91", "shadowBanned9", 1674590916062342, 50, "intro", "YouTube", 0, videohash, isoDate]);
+        await db.prepare("run", insertQuery, [video, 20, 10, 2, 0, "shadow-92", "shadowBanned9", 1674590916069491, 50, "interaction", "YouTube", 0, videohash, isoDate]);
 
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned3"]);
         await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, ["shadowBanned4"]);

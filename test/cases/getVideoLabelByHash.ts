@@ -5,27 +5,29 @@ import { getHash } from "../../src/utils/getHash";
 
 describe("getVideoLabelHash", () => {
     const endpoint = "/api/videoLabels";
+    const isoDate = new Date().toISOString();
+
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "hashedVideoID", "votes", "locked", "UUID", "userID", "timeSubmitted", "category", "actionType", "hidden", "shadowHidden", "startTime", "endTime", "views") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)';
-        await db.prepare("run", query, ["getLabelHashSponsor"   , getHash("getLabelHashSponsor", 1)    , 2, 0, "labelhash01", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashEA"        , getHash("getLabelHashEA", 1)         , 2, 0, "labelhash02", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashSelfpromo" , getHash("getLabelHashSelfpromo", 1)  , 2, 0, "labelhash03", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "hashedVideoID", "votes", "locked", "UUID", "userID", "timeSubmitted", "category", "actionType", "hidden", "shadowHidden", "startTime", "endTime", "views", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)';
+        await db.prepare("run", query, ["getLabelHashSponsor"   , getHash("getLabelHashSponsor", 1)    , 2, 0, "labelhash01", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashEA"        , getHash("getLabelHashEA", 1)         , 2, 0, "labelhash02", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashSelfpromo" , getHash("getLabelHashSelfpromo", 1)  , 2, 0, "labelhash03", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
         // priority override
-        await db.prepare("run", query, ["getLabelHashPriority"  , getHash("getLabelHashPriority", 1)  , 2, 0, "labelhash04", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashPriority"  , getHash("getLabelHashPriority", 1)  , 2, 0, "labelhash05", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashPriority"  , getHash("getLabelHashPriority", 1)  , 2, 0, "labelhash06", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        await db.prepare("run", query, ["getLabelHashPriority"  , getHash("getLabelHashPriority", 1)  , 2, 0, "labelhash04", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashPriority"  , getHash("getLabelHashPriority", 1)  , 2, 0, "labelhash05", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashPriority"  , getHash("getLabelHashPriority", 1)  , 2, 0, "labelhash06", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
         // locked only
-        await db.prepare("run", query, ["getLabelHashLocked"    , getHash("getLabelHashLocked", 1)  , 2, 0, "labelhash07", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashLocked"    , getHash("getLabelHashLocked", 1)  , 2, 0, "labelhash08", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashLocked"    , getHash("getLabelHashLocked", 1)  , 2, 1, "labelhash09", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        await db.prepare("run", query, ["getLabelHashLocked"    , getHash("getLabelHashLocked", 1)  , 2, 0, "labelhash07", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashLocked"    , getHash("getLabelHashLocked", 1)  , 2, 0, "labelhash08", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashLocked"    , getHash("getLabelHashLocked", 1)  , 2, 1, "labelhash09", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
         // hidden segments
-        await db.prepare("run", query, ["getLabelHashDownvote"  , getHash("getLabelHashDownvote", 1)  , -2, 0, "labelhash10", "labeluser", 0, "selfpromo", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashHidden"    , getHash("getLabelHashHidden", 1)  , 2, 0, "labelhash11", "labeluser", 0, "selfpromo", "full", 1, 0]);
-        await db.prepare("run", query, ["getLabelHashShHidden"  , getHash("getLabelHashShHidden", 1)  , 2, 0, "labelhash12", "labeluser", 0, "selfpromo", "full", 0, 1]);
+        await db.prepare("run", query, ["getLabelHashDownvote"  , getHash("getLabelHashDownvote", 1)  , -2, 0, "labelhash10", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashHidden"    , getHash("getLabelHashHidden", 1)  , 2, 0, "labelhash11", "labeluser", 0, "selfpromo", "full", 1, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashShHidden"  , getHash("getLabelHashShHidden", 1)  , 2, 0, "labelhash12", "labeluser", 0, "selfpromo", "full", 0, 1, isoDate]);
         // priority override2
-        await db.prepare("run", query, ["getLabelHashPriority2" , getHash("getLabelHashPriority2", 1)  , -2, 0, "labelhash13", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashPriority2" , getHash("getLabelHashPriority2", 1)  , 2, 0, "labelhash14", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHashPriority2" , getHash("getLabelHashPriority2", 1)  , 2, 0, "labelhash15", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        await db.prepare("run", query, ["getLabelHashPriority2" , getHash("getLabelHashPriority2", 1)  , -2, 0, "labelhash13", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashPriority2" , getHash("getLabelHashPriority2", 1)  , 2, 0, "labelhash14", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHashPriority2" , getHash("getLabelHashPriority2", 1)  , 2, 0, "labelhash15", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
 
         return;
     });

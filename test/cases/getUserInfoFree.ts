@@ -14,10 +14,10 @@ describe("getUserInfo Free Chapters", () => {
     const isoDate = new Date().toISOString();
 
     before(async () => {
-        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "reputation", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-0", getHash(repQualifyUserID), postOldQualify, 0, "sponsor", "skip", 20, 0]);
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-1", getHash(oldQualifyUserID), 0, 0, "sponsor", "skip", 0, 0]); // submit at epoch
-        await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-2", getHash(newQualifyUserID), postOldQualify, 0, "sponsor", "skip", 0, 0]);
+        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "reputation", "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-0", getHash(repQualifyUserID), postOldQualify, 0, "sponsor", "skip", 20, 0, isoDate]);
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-1", getHash(oldQualifyUserID), 0, 0, "sponsor", "skip", 0, 0, isoDate]); // submit at epoch
+        await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-2", getHash(newQualifyUserID), postOldQualify, 0, "sponsor", "skip", 0, 0, isoDate]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)`, [getHash(vipQualifyUserID), isoDate]);
     });

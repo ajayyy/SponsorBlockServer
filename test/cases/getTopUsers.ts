@@ -3,7 +3,7 @@ import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
 
-const generateSegment = (userid: string, category: string) => ["getTopUsers", 0, 60, 50, `getTopUserUUID_${category}`, getHash(userid), 1, 1, category, 0];
+const generateSegment = (userid: string, category: string) => ["getTopUsers", 0, 60, 50, `getTopUserUUID_${category}`, getHash(userid), 1, 1, category, 0, new Date().toISOString()];
 
 describe("getTopUsers", () => {
     const endpoint = "/api/getTopUsers";
@@ -14,7 +14,7 @@ describe("getTopUsers", () => {
         await db.prepare("run", insertUserNameQuery, [getHash(user1), user1]);
         await db.prepare("run", insertUserNameQuery, [getHash(user2), user2]);
 
-        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", sponsorTimesQuery, generateSegment(user1, "sponsor"));
         await db.prepare("run", sponsorTimesQuery, generateSegment(user1, "selfpromo"));
         await db.prepare("run", sponsorTimesQuery, generateSegment(user2, "interaction"));

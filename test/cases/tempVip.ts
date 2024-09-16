@@ -58,10 +58,10 @@ describe("tempVIP test", function() {
     before(async function() {
         if (!config.redis?.enabled) this.skip();
 
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   0, 1, 0, 0, UUID0, "testman", 0, 50, "sponsor", 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   1, 9, 0, 1, "tempvip-submit", publicTempVIPOne, 0, 50, "sponsor", 0]);
-        await db.prepare("run", insertSponsorTimeQuery, ["otherchannel",        1, 9, 0, 1, UUID1, "testman", 0, 50, "sponsor", 0]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "shadowHidden", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   0, 1, 0, 0, UUID0, "testman", 0, 50, "sponsor", 0, isoDate]);
+        await db.prepare("run", insertSponsorTimeQuery, ["channelid-convert",   1, 9, 0, 1, "tempvip-submit", publicTempVIPOne, 0, 50, "sponsor", 0, isoDate]);
+        await db.prepare("run", insertSponsorTimeQuery, ["otherchannel",        1, 9, 0, 1, UUID1, "testman", 0, 50, "sponsor", 0, isoDate]);
 
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)', [publicPermVIP1, isoDate]);
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)', [publicPermVIP2, isoDate]);

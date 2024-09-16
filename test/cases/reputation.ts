@@ -26,70 +26,70 @@ describe("reputation", () => {
         const videoID = "reputation-videoID";
         const videoID2 = "reputation-videoID-2";
 
-        const sponsorTimesInsertQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "hidden", "shadowHidden") VALUES(?,?,?,?,?,?,?,?,?,?,?,?)';
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-0-uuid-0", users["low-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-0-uuid-1", users["low-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 100, 0, "reputation-0-uuid-2", users["low-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        const sponsorTimesInsertQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "hidden", "shadowHidden", "updatedAt") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)';
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-0-uuid-0", users["low-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-0-uuid-1", users["low-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 100, 0, "reputation-0-uuid-2", users["low-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
 
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-1-uuid-0", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-1", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-2", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-3", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-4", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-uuid-5", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-uuid-6", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-uuid-7", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-1-uuid-0", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-1", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-2", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-3", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -2, 0, "reputation-1-uuid-4", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-uuid-5", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-uuid-6", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-uuid-7", users["high-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
 
         // First video is considered a normal downvote, second is considered a self-downvote (ie. they didn't resubmit to fix their downvote)
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-uuid-0", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-uuid-0", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
         // Different category, same video
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-uuid-1", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-2", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-3", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-4", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-uuid-5", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-6", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-7", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-uuid-1", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-2", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-3", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-4", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-uuid-5", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-6", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-uuid-7", users["low-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
 
         // First videos is considered a normal downvote, last is considered a self-downvote (ie. they didn't resubmit to fix their downvote)
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-1-uuid-0", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, 2, 0, "reputation-1-1-1-uuid-0", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
         // Different category, same video
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}B`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1-b", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}C`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1-c", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-2", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-3", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-4", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-1-uuid-5", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-6", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-7", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}A`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}B`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1-b", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [`${videoID}C`, 1, 11, -2, 0, "reputation-1-1-1-uuid-1-c", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "intro", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-2", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-3", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-4", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-1-1-1-uuid-5", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-6", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-1-1-1-uuid-7", users["high-non-self-downvotes"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
 
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-0", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-1", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-2", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-3", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-4", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-2-uuid-5", users["new-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-2-uuid-6", users["new-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-2-uuid-7", users["new-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-0", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-1", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-2", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-3", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-2-uuid-4", users["new-submissions"].pubID, Date.now(), 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-2-uuid-5", users["new-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-2-uuid-6", users["new-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-2-uuid-7", users["new-submissions"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
 
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-3-uuid-0", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 1, 0, "reputation-3-uuid-1", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-2", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-3", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 1, 0, "reputation-3-uuid-4", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-3-uuid-5", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-6", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-7", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-3-uuid-0", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 1, 0, "reputation-3-uuid-1", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-2", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-3", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 1, 0, "reputation-3-uuid-4", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-3-uuid-5", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-6", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-3-uuid-7", users["low-sum"].pubID, 1606240000000, 50, "sponsor", 0, 0, isoDate]);
 
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-0", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-1", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-2", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-3", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-4", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-4-uuid-5", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-4-uuid-6", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
-        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-4-uuid-7", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-0", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-1", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-2", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-3", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-4-uuid-4", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, -1, 0, "reputation-4-uuid-5", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-4-uuid-6", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
+        await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-4-uuid-7", users["high-rep-before-manual-vote"].pubID, 0, 50, "sponsor", 0, 0, isoDate]);
 
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-5-uuid-0", users["high-rep"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 2, 0, "reputation-5-uuid-1", users["high-rep"].pubID, 1606240000000, 50, "sponsor", 0, 0]);

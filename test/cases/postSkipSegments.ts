@@ -52,8 +52,8 @@ describe("postSkipSegments", () => {
     const queryDatabaseVideoInfo = (videoID: string) => db.prepare("get", `SELECT * FROM "videoInfo" WHERE "videoID" = ?`, [videoID]);
 
     before(() => {
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, 0, "full_video_segment"]);
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, 0, "full_video_segment", isoDate]);
 
         const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
         db.prepare("run", insertVipUserQuery, [getHash(submitVIPuser), isoDate]);

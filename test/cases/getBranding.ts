@@ -7,6 +7,7 @@ import { BrandingUUID, ThumbnailResult, TitleResult } from "../../src/types/bran
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 describe("getBranding", () => {
+    const isoDate = new Date().toISOString();
     const videoID1 = "videoID1";
     const videoID2Locked = "videoID2";
     const videoID2ShadowHide = "videoID3";
@@ -42,7 +43,7 @@ describe("getBranding", () => {
         const thumbnailQuery = `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?)`;
-        const segmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const segmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
@@ -110,8 +111,8 @@ describe("getBranding", () => {
             db.prepare("run", thumbnailVotesQuery, ["UUID32T", 1, 0, 1, 0, 0])
         ]);
 
-        await db.prepare("run", segmentQuery, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
-        await db.prepare("run", segmentQuery, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
+        await db.prepare("run", segmentQuery, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash, isoDate]);
+        await db.prepare("run", segmentQuery, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash, isoDate]);
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoIDUnverified, "title1", 0, "userID1", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-1"]),
@@ -135,13 +136,13 @@ describe("getBranding", () => {
 
         // Video duration test segments
         await Promise.all([
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 1, 0, 0, "uuidvd1", "testman", 10, 0, "sponsor", "skip", "YouTube", 0, 0, 0, "", videoIDvidDurationHash]),  // visible, no vid duration
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 2, -2, 0, "uuidvd2", "testman", 11, 0, "sponsor", "skip", "YouTube", 10, 0, 0, "", videoIDvidDurationHash]),  // downvoted
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 3, 0, 0, "uuidvd3", "testman", 12, 0, "sponsor", "skip", "YouTube", 10.1, 1, 0, "", videoIDvidDurationHash]),  // hidden
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 4, 0, 0, "uuidvd4", "testman", 13, 0, "sponsor", "skip", "YouTube", 20.1, 0, 1, "", videoIDvidDurationHash]),  // shadowhidden
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 5, 0, 0, "uuidvd5", "testman", 14, 0, "sponsor", "skip", "YouTube", 21.3, 0, 0, "", videoIDvidDurationHash]),  // oldest visible w/ duration, should be picked
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 6, 0, 0, "uuidvd6", "testman", 15, 0, "sponsor", "skip", "YouTube", 21.37, 0, 0, "", videoIDvidDurationHash]),  // not the oldest visible
-            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 7, -2, 0, "uuidvd7", "testman", 16, 0, "sponsor", "skip", "YouTube", 21.38, 0, 0, "", videoIDvidDurationHash]),  // downvoted, not the oldest
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 1, 0, 0, "uuidvd1", "testman", 10, 0, "sponsor", "skip", "YouTube", 0, 0, 0, "", videoIDvidDurationHash, isoDate]),  // visible, no vid duration
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 2, -2, 0, "uuidvd2", "testman", 11, 0, "sponsor", "skip", "YouTube", 10, 0, 0, "", videoIDvidDurationHash, isoDate]),  // downvoted
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 3, 0, 0, "uuidvd3", "testman", 12, 0, "sponsor", "skip", "YouTube", 10.1, 1, 0, "", videoIDvidDurationHash, isoDate]),  // hidden
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 4, 0, 0, "uuidvd4", "testman", 13, 0, "sponsor", "skip", "YouTube", 20.1, 0, 1, "", videoIDvidDurationHash, isoDate]),  // shadowhidden
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 5, 0, 0, "uuidvd5", "testman", 14, 0, "sponsor", "skip", "YouTube", 21.3, 0, 0, "", videoIDvidDurationHash, isoDate]),  // oldest visible w/ duration, should be picked
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 6, 0, 0, "uuidvd6", "testman", 15, 0, "sponsor", "skip", "YouTube", 21.37, 0, 0, "", videoIDvidDurationHash, isoDate]),  // not the oldest visible
+            db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 7, -2, 0, "uuidvd7", "testman", 16, 0, "sponsor", "skip", "YouTube", 21.38, 0, 0, "", videoIDvidDurationHash, isoDate]),  // downvoted, not the oldest
         ]);
     });
 

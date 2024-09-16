@@ -25,7 +25,8 @@ interface insertSegmentParams extends baseParams {
     videoDuration?: number,
     hidden?: boolean | number,
     shadowHidden?: boolean | number,
-    description?: string
+    description?: string,
+    updatedAt?: string
 }
 const defaultSegmentParams: insertSegmentParams = {
     videoID: "",
@@ -44,7 +45,8 @@ const defaultSegmentParams: insertSegmentParams = {
     hidden: false,
     shadowHidden: false,
     hashedVideoID: "",
-    description: ""
+    description: "",
+    updatedAt: new Date().toISOString()
 };
 
 const generateDefaults = (identifier: string) => ({
@@ -54,8 +56,8 @@ const generateDefaults = (identifier: string) => ({
     UUID: genRandomValue("uuid", identifier, 2),
 });
 
-export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
-    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+export const insertSegment = async (db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
+    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // generate defaults
     identifier = identifier ?? genRandom();
     const defaults = generateDefaults(identifier);
@@ -66,7 +68,7 @@ export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams
     params.shadowHidden = Number(params.shadowHidden);
     await db.prepare("run", query, Object.values(params));
 };
-export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {
+export const insertChapter = async (db: IDatabase, description: string, params: insertSegmentParams = {}) => {
     const overrides = { category: "chapter", actionType: "chapter", description, ...params };
     await insertSegment(db, overrides);
 };
