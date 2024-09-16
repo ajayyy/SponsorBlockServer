@@ -73,7 +73,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 11, 0, 0, "duration-changed-uuid-2", "testman", 10, 0, "sponsor", "skip", 0, 0, isoDate]);
         await db.prepare("run", insertSponsorTimeQuery, ["duration-changed", 1, 12, 0, 0, "duration-changed-uuid-3", "testman", 20, 0, "sponsor", "skip", 0, 0, isoDate]);
         // add videoDuration to duration-changed-uuid-2
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150 WHERE "UUID" = 'duration-changed-uuid-2'`);
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "videoDuration" = 150, "updatedAt" = ? WHERE "UUID" = 'duration-changed-uuid-2'`, [new Date().toISOString()]);
         await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "chapter-uuid-1", "testman", 0, 0, "chapter", "chapter", 0, 0, isoDate]);
         await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 1, 10, 0, 0, "non-chapter-uuid-2", "testman", 0, 0, "sponsor", "skip", 0, 0, isoDate]);
         await db.prepare("run", insertSponsorTimeQuery, ["chapter-video", 11, 20, 0, 0, "chapter-uuid-2", randomID2Hashed, 0, 0, "chapter", "chapter", 0, 0, isoDate]);

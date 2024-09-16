@@ -20,8 +20,8 @@ describe("segmentShift", function () {
         [videoID, startTime, endTime, votes, UUID, userID, timeSubmitted, views, category, shadowHidden, hashedVideoID]);
     }
 
-    async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number) {
-        await db.prepare("run", `UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ? WHERE "UUID" = ?`, [startTime, endTime, UUID]);
+    async function dbSponsorTimesSetByUUID(db: IDatabase, UUID: string, startTime: number, endTime: number, isoDate: string = new Date().toISOString()) {
+        await db.prepare("run", `UPDATE "sponsorTimes" SET "startTime" = ?, "endTime" = ?, "updatedAt" = ? WHERE "UUID" = ?`, [startTime, endTime, isoDate, UUID]);
     }
 
     async function dbSponsorTimesCompareExpect(db: IDatabase, expect: any): Promise<void> {
