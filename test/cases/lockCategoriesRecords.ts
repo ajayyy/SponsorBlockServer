@@ -26,11 +26,12 @@ const submitEndpoint = "/api/skipSegments";
 const checkLockCategories = (videoID: string): Promise<LockCategory[]> => db.prepare("all", 'SELECT * FROM "lockCategories"  WHERE "videoID" = ?', [videoID]);
 const lockVIPUser = "lockCategoriesRecordsVIPUser";
 const lockVIPUserHash = getHash(lockVIPUser);
+const isoDate = new Date().toISOString();
 
 describe("lockCategoriesRecords", () => {
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [lockVIPUserHash]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [lockVIPUserHash, isoDate]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "service") VALUES (?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [lockVIPUserHash, "no-segments-video-id", "skip", "sponsor", "reason-1", "YouTube"]);

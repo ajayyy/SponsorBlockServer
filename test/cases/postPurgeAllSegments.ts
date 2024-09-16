@@ -33,6 +33,7 @@ describe("postPurgeAllSegments", function () {
     const privateVipUserID = "VIPUser-purgeAll";
     const vipUserID = getHash(privateVipUserID);
     const endpoint = "/api/purgeAllSegments";
+    const isoDate = new Date().toISOString();
     const postSegmentShift = (videoID: string, userID: string) => client.post(endpoint, { videoID, userID });
 
     before(async function () {
@@ -42,7 +43,7 @@ describe("postPurgeAllSegments", function () {
         await dbSponsorTimesAdd(db, "vsegpurge01", 0, 3, "vsegpurgetest01uuid03", "interaction");
         await dbSponsorTimesAdd(db, "vsegpurge01", 0, 4, "vsegpurgetest01uuid04", "outro");
         await dbSponsorTimesAdd(db, "vseg-not-purged01", 0, 5, "vsegpurgetest01uuid05", "outro");
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)`, [vipUserID, isoDate]);
     });
 
     it("Reject non-VIP user", function (done) {

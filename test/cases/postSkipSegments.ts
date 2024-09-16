@@ -43,6 +43,7 @@ describe("postSkipSegments", () => {
     const submitUserOne = `PostSkipUser1${".".repeat(18)}`;
     const submitUserTwo = `PostSkipUser2${".".repeat(18)}`;
     const submitUserTwoHash = getHash(submitUserTwo);
+    const isoDate = new Date().toISOString();
 
     const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
 
@@ -54,8 +55,8 @@ describe("postSkipSegments", () => {
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         db.prepare("run", insertSponsorTimeQuery, ["full_video_segment", 0, 0, 0, "full-video-uuid-0", submitUserTwoHash, 0, 0, "sponsor", "full", 0, 0, "full_video_segment"]);
 
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        db.prepare("run", insertVipUserQuery, [getHash(submitVIPuser)]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        db.prepare("run", insertVipUserQuery, [getHash(submitVIPuser), isoDate]);
     });
 
     it("Should be able to submit a single time (Params method)", (done) => {

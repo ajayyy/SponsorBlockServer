@@ -11,6 +11,7 @@ describe("getUserInfo Free Chapters", () => {
     const repQualifyUserID = "getUserInfo-Free-RepQualify";
     const oldQualifyUserID = "getUserInfo-Free-OldQualify";
     const postOldQualify = 1600000000000;
+    const isoDate = new Date().toISOString();
 
     before(async () => {
         const sponsorTimesQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "reputation", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
@@ -18,7 +19,7 @@ describe("getUserInfo Free Chapters", () => {
         await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-1", getHash(oldQualifyUserID), 0, 0, "sponsor", "skip", 0, 0]); // submit at epoch
         await db.prepare("run", sponsorTimesQuery, ["getUserInfoFree", 1, 2, 0, "uuid-guif-2", getHash(newQualifyUserID), postOldQualify, 0, "sponsor", "skip", 0, 0]);
 
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash(vipQualifyUserID)]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)`, [getHash(vipQualifyUserID), isoDate]);
     });
 
     const getUserInfo = (userID: string) => client.get(endpoint, { params: { userID, value: "freeChaptersAccess" } });

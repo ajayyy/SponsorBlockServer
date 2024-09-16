@@ -16,10 +16,11 @@ describe("postWarning", () => {
     const warningVipOne = "warning-vip-1";
     const warningVipTwo = "warning-vip-2";
     const nonVipUser = "warning-non-vip";
+    const isoDate = new Date().toISOString();
 
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash(warningVipOne)]);
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [getHash(warningVipTwo)]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)`, [getHash(warningVipOne), isoDate]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)`, [getHash(warningVipTwo), isoDate]);
     });
 
     it("Should be able to create warning if vip (exp 200)", (done) => {

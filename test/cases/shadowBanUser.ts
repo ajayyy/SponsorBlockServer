@@ -15,6 +15,7 @@ describe("shadowBanUser", () => {
     const VIPuserID = "shadow-ban-vip";
     const video = "shadowBanVideo";
     const videohash = getHash(video, 1);
+    const isoDate = new Date().toISOString();
 
     before(async () => {
         const insertQuery = `INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "service", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -54,7 +55,7 @@ describe("shadowBanUser", () => {
         await db.prepare("run", `INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "service") VALUES (?, ?, ?, ?, ?)`,
             [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube"]);
 
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES(?, ?)`, [getHash(VIPuserID), isoDate]);
 
         const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)`;

@@ -19,6 +19,7 @@ describe("reputation", () => {
         "have-most-upvoted-in-locked-video"
     ];
     const users = genUsers("reputation", cases);
+    const isoDate = new Date().toISOString();
 
     before(async function() {
         this.timeout(5000); // this preparation takes longer then usual
@@ -122,8 +123,8 @@ describe("reputation", () => {
         await db.prepare("run", sponsorTimesInsertQuery, [videoID, 1, 11, 0, 0, "reputation-7-uuid-7", users["have-most-upvoted-in-locked-video"].pubID, 1606240000000, 50, "sponsor", 0, 0]);
 
         // lock video
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [users["locking-vip"].pubID]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [users["locking-vip"].pubID, isoDate]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES (?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [users["locking-vip"].pubID, videoID, "sponsor"]);

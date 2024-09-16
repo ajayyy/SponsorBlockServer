@@ -4,6 +4,7 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 
 const endpoint = "/api/shadowBanUser";
+const isoDate = new Date().toISOString();
 
 const postShadowBan = (params: Record<string, string>) => client({
     method: "POST",
@@ -15,7 +16,7 @@ describe("shadowBanUser 4xx", () => {
     const VIPuserID = "shadow-ban-4xx-vip";
 
     before(async () => {
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES(?, ?)`, [getHash(VIPuserID), isoDate]);
     });
 
     it("Should return 400 if no adminUserID", (done) => {

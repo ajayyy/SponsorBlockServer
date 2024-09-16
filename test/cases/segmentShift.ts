@@ -41,6 +41,7 @@ describe("segmentShift", function () {
     const privateVipUserID = "VIPUser-segmentShift";
     const vipUserID = getHash(privateVipUserID);
     const endpoint = "/api/segmentShift";
+    const isoDate = new Date().toISOString();
     const postSegmentShift = (data: Record<string, any>) => client({
         method: "POST",
         url: endpoint,
@@ -53,7 +54,7 @@ describe("segmentShift", function () {
         await dbSponsorTimesAdd(db, "vsegshift01", 0, 0, "vsegshifttest01uuid02", "sponsor");
         await dbSponsorTimesAdd(db, "vsegshift01", 0, 0, "vsegshifttest01uuid03", "interaction");
         await dbSponsorTimesAdd(db, "vsegshift01", 0, 0, "vsegshifttest01uuid04", "outro");
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [vipUserID]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)`, [vipUserID, isoDate]);
     });
 
     beforeEach(async function () {

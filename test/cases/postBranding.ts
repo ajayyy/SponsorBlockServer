@@ -16,6 +16,7 @@ describe("postBranding", () => {
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
     const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
+    const isoDate = new Date().toISOString();
 
 
     const endpoint = "/api/branding";
@@ -32,9 +33,9 @@ describe("postBranding", () => {
     const queryThumbnailVotesByUUID = (UUID: string, all = false) => db.prepare(all ? "all" : "get", `SELECT * FROM "thumbnailVotes" WHERE "UUID" = ?`, [UUID]);
 
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash(vipUser)]);
-        await db.prepare("run", insertVipUserQuery, [getHash(vipUser2)]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [getHash(vipUser), isoDate]);
+        await db.prepare("run", insertVipUserQuery, [getHash(vipUser2), isoDate]);
 
         const insertBannedUserQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertBannedUserQuery, [getHash(bannedUser)]);

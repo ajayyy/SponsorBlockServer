@@ -10,12 +10,13 @@ const vipUserName1 = "getLockReason-vipUserName_1";
 const vipUserID1 = getHash("getLockReason-vipUserID_1");
 const vipUserName2 = "getLockReason-vipUserName_2";
 const vipUserID2 = getHash("getLockReason-vipUserID_2");
+const isoDate = new Date().toISOString();
 
 describe("getLockReason", () => {
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [vipUserID1]);
-        await db.prepare("run", insertVipUserQuery, [vipUserID2]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [vipUserID1, isoDate]);
+        await db.prepare("run", insertVipUserQuery, [vipUserID2, isoDate]);
 
         const insertVipUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES (?, ?)';
         await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1]);

@@ -6,6 +6,7 @@ import assert from "assert";
 describe("unBan", () => {
     const endpoint = "/api/shadowBanUser";
     const VIPuser = "VIPUser-unBan";
+    const isoDate = new Date().toISOString();
     const postUnBan = (userID: string, adminUserID: string, enabled: boolean) => client({
         url: endpoint,
         method: "POST",
@@ -22,8 +23,8 @@ describe("unBan", () => {
         await db.prepare("run", insertShadowBannedUserQuery, ["testWoman-unBan"]);
         await db.prepare("run", insertShadowBannedUserQuery, ["testEntity-unBan"]);
 
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash(VIPuser)]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [getHash(VIPuser), isoDate]);
 
         const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "category") VALUES(?, ?, ?)';
         await db.prepare("run", insertLockCategoryQuery, [getHash(VIPuser), "unBan-videoID-1", "sponsor"]);

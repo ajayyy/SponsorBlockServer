@@ -18,6 +18,7 @@ const categoryChangeUser = "category-change-user";
 const outroSubmitter = "outro-submitter";
 const badIntroSubmitter = "bad-intro-submitter";
 const hiddenInteractionSubmitter = "hidden-interaction-submitter";
+const isoDate = new Date().toISOString();
 
 describe("voteOnSponsorTime", () => {
     before(async () => {
@@ -98,7 +99,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash,  1]);
 
 
-        await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash(vipUser)]);
+        await db.prepare("run", 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)', [getHash(vipUser), isoDate]);
         await db.prepare("run", 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)', [getHash("randomID4")]);
 
         const insertlockCategoriesQuery = 'INSERT INTO "lockCategories" ("videoID", "userID", "category", "actionType") VALUES (?, ?, ?, ?)';

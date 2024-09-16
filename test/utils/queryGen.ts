@@ -11,8 +11,8 @@ export { insertSegment } from "./segmentQueryGen";
 
 // vip
 export const insertVip = async (db: IDatabase, userID: HashedUserID) => {
-    const query = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-    await db.prepare("run", query, [userID]);
+    const query = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+    await db.prepare("run", query, [userID, new Date().toISOString()]);
 };
 export const insertVipUser = async (db: IDatabase, user: User) => {
     await insertVip(db, user.pubID);
