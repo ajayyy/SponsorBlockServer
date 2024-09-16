@@ -38,11 +38,11 @@ export async function addUserAsVIP(req: AddUserAsVIPRequest, res: Response): Pro
     try {
         if (enabled && !userIsVIP) {
             // add them to the vip list
-            const isoTimestamp = new Date().toISOString();
+            const isoDate = new Date().toISOString();
             await db.prepare(
                 "run",
                 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES(?, ?)',
-                [userID, isoTimestamp]
+                [userID, isoDate]
             );
         }
 

@@ -93,12 +93,12 @@ export async function banUser(userID: UserID, enabled: boolean, unHideOldSubmiss
 
 async function unHideSubmissionsByUser(categories: string[], deArrowTypes: DeArrowType[],
     userID: UserID, type = 1) {
-    const isoTimestamp = new Date().toISOString();
+    const isoDate = new Date().toISOString();
 
     if (categories.length) {
         await db.prepare("run", `UPDATE "sponsorTimes" SET "shadowHidden" = '${type}', "updatedAt = ? WHERE "userID" = ? AND "category" in (${categories.map((c) => `'${c}'`).join(",")})
                         AND NOT EXISTS ( SELECT "videoID", "category" FROM "lockCategories" WHERE
-                        "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [isoTimestamp, userID]);
+                        "sponsorTimes"."videoID" = "lockCategories"."videoID" AND "sponsorTimes"."service" = "lockCategories"."service" AND "sponsorTimes"."category" = "lockCategories"."category")`, [isoDate, userID]);
     }
 
     // clear cache for all old videos
@@ -109,12 +109,12 @@ async function unHideSubmissionsByUser(categories: string[], deArrowTypes: DeArr
 
     if (deArrowTypes.includes("title")) {
         await db.prepare("run", `UPDATE "titleVotes" as tv SET "shadowHidden" = ${type}, "updatedAt" = ? FROM "titles" t WHERE tv."UUID" = t."UUID" AND t."userID" = ?`,
-            [isoTimestamp, userID]);
+            [isoDate, userID]);
     }
 
     if (deArrowTypes.includes("thumbnail")) {
         await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "shadowHidden" = ${type}, "updatedAt" = ? FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND t."userID" = ?`,
-            [isoTimestamp, userID]);
+            [isoDate, userID]);
     }
 
     (await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service" FROM "titles" WHERE "userID" = ?`, [userID]))

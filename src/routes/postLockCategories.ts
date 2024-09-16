@@ -61,7 +61,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
 
     // calculate hash of videoID
     const hashedVideoID: VideoIDHash = await getHashCache(videoID, 1);
-    const isoTimestamp = new Date().toISOString();
+    const isoDate = new Date().toISOString();
 
     // create database entry
     for (const lock of locksToApply) {
@@ -69,7 +69,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
             await db.prepare(
                 "run",
                 `INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [videoID, userID, lock.actionType, lock.category, hashedVideoID, reason, service, isoTimestamp, isoTimestamp]
+                [videoID, userID, lock.actionType, lock.category, hashedVideoID, reason, service, isoDate, isoDate]
             );
         } catch (err) /* istanbul ignore next */ {
             Logger.error(`Error submitting 'lockCategories' marker for category '${lock.category}' and actionType '${lock.actionType}' for video '${videoID}' (${service})`);
@@ -86,7 +86,7 @@ export async function postLockCategories(req: Request, res: Response): Promise<s
             try {
                 await db.prepare("run",
                     'UPDATE "lockCategories" SET "reason" = ?, "userID" = ?, "updatedAt" = ? WHERE "videoID" = ? AND "actionType" = ? AND "category" = ? AND "service" = ?',
-                    [reason, userID, isoTimestamp, videoID, lock.actionType, lock.category, service]);
+                    [reason, userID, isoDate, videoID, lock.actionType, lock.category, service]);
             } catch (err) /* istanbul ignore next */  {
                 Logger.error(`Error submitting 'lockCategories' marker for category '${lock.category}' and actionType '${lock.actionType}' for video '${videoID}' (${service})`);
                 Logger.error(err as string);
