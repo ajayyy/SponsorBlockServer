@@ -67,6 +67,7 @@ export async function postBranding(req: Request, res: Response) {
         }
 
         const now = Date.now();
+        const isoDate = new Date(now).toISOString();
         const voteType: BrandingVoteType = downvote ? BrandingVoteType.Downvote : BrandingVoteType.Upvote;
 
         if (title && !isVip && title.title.length > config.maxTitleLength) {
@@ -104,15 +105,15 @@ export async function postBranding(req: Request, res: Response) {
                         [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
                     const verificationValue = await getVerificationValue(hashedUserID, isVip);
-                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, ?, ?);`,
-                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, verificationValue]);
+                    await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "createdAt", "updatedAt") VALUES (?, 0, ?, ?, ?, ?, ?);`,
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, verificationValue, isoDate, isoDate]);
 
                     await verifyOldSubmissions(hashedUserID, verificationValue);
                 }
 
                 if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
+                    await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0, "updatedAt" = ? FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [isoDate, UUID, videoID]);
                 }
 
                 sendWebhooks(videoID, UUID, voteType).catch((e) => Logger.error(e));
@@ -145,8 +146,8 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
 
-                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, ?)`,
-                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0]);
+                    await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, 0, ?, ?, ?, ?)`,
+                        [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0, isoDate, isoDate]);
 
                     if (!thumbnail.original) {
                         await db.prepare("run", `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`,
@@ -156,7 +157,7 @@ export async function postBranding(req: Request, res: Response) {
 
                 if (isVip && !downvote && shouldLock) {
                     // unlock all other titles
-                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0 FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
+                    await db.prepare("run", `UPDATE "thumbnailVotes" as tv SET "locked" = 0, "updatedAt" = ? FROM "thumbnails" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [isoDate, UUID, videoID]);
                 }
             }
         })()]);
@@ -284,6 +285,7 @@ export async function getVerificationValue(hashedUserID: HashedUserID, isVip: bo
 export async function verifyOldSubmissions(hashedUserID: HashedUserID, verification: number): Promise<void> {
     if (verification >= 0) {
         const unverifiedSubmissions = await db.prepare("all", `SELECT "videoID", "hashedVideoID", "service" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."verification" < ? GROUP BY "videoID", "hashedVideoID", "service"`, [hashedUserID, verification]);
+        const isoDate = new Date().toISOString();
 
         if (unverifiedSubmissions.length > 0) {
             for (const submission of unverifiedSubmissions) {
@@ -294,7 +296,7 @@ export async function verifyOldSubmissions(hashedUserID: HashedUserID, verificat
                 });
             }
 
-            await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, hashedUserID, verification]);
+            await db.prepare("run", `UPDATE "titleVotes" as tv SET "verification" = ?, "updatedAt" = ? FROM "titles" WHERE "titles"."UUID" = tv."UUID" AND "titles"."userID" = ? AND tv."verification" < ?`, [verification, isoDate, hashedUserID, verification]);
         }
     }
 }

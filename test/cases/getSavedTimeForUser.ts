@@ -6,6 +6,8 @@ import assert from "assert";
 
 // helpers
 const endpoint = "/api/getSavedTimeForUser";
+const isoDate = new Date().toISOString();
+
 const getSavedTimeForUser = (userID: string) => client({
     url: endpoint,
     params: { userID }
@@ -17,9 +19,9 @@ describe("getSavedTimeForUser", () => {
     const [ start, end, views ] = [1, 11, 50];
 
     before(async () => {
-        const startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", "views", "shadowHidden") VALUES';
-        await db.prepare("run", `${startOfQuery}(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            ["getSavedTimeForUser", start, end, 2, "getSavedTimeUUID0", getHash(user1), 0, views, 0]);
+        const startOfQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", "views", "shadowHidden", "updatedAt") VALUES';
+        await db.prepare("run", `${startOfQuery}(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ["getSavedTimeForUser", start, end, 2, "getSavedTimeUUID0", getHash(user1), 0, views, 0, isoDate]);
         return;
     });
     it("Should be able to get a saved time", (done) => {

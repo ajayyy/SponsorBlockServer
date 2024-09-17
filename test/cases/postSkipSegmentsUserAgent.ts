@@ -14,6 +14,7 @@ describe("postSkipSegments - userAgent", () => {
     const VIPLockUser = "VIPUser-lockCategories";
     const videoID = "lockedVideo";
     const userID = userIDOne;
+    const isoDate = new Date().toISOString();
 
     const segment = {
         segment: [0, 10],
@@ -22,9 +23,9 @@ describe("postSkipSegments - userAgent", () => {
     const dbFormatSegment = convertSingleToDBFormat(segment);
 
     before(() => {
-        const insertLockCategoriesQuery = `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES(?, ?, ?, ?)`;
-        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "sponsor", "Custom Reason"]);
-        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "intro", ""]);
+        const insertLockCategoriesQuery = `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?, ?)`;
+        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "sponsor", "Custom Reason", isoDate, isoDate]);
+        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "intro", "", isoDate, isoDate]);
     });
 
     it("Should be able to submit with empty user-agent", (done) => {

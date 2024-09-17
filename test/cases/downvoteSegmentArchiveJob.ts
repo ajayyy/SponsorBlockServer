@@ -7,34 +7,37 @@ const oct2021 = new Date("October 1, 2021").getTime();
 const nov2021 = new Date("November 1, 2021").getTime();
 const dec2021 = new Date("December 17, 2021").getTime();
 const dec2022 = new Date("December 17, 2022").getTime();
+const oct2021AsIso = new Date(oct2021).toISOString();
+const nov2021AsIso = new Date(nov2021).toISOString();
+const dec2021AsIso = new Date(dec2021).toISOString();
 
 const records = [
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj00", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj01", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj02", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj03", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo0", 0, 0, 2, 0, "dsaj04", "dsajUser", dec2021, 0, 0, 0,],
+    ["dsajVideo0", 0, 0, 2, 0, "dsaj00", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo0", 0, 0, 2, 0, "dsaj01", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo0", 0, 0, 2, 0, "dsaj02", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo0", 0, 0, 2, 0, "dsaj03", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo0", 0, 0, 2, 0, "dsaj04", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
 
-    ["dsajVideo1", 0, 0, 2, 0, "dsaj10", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo1", 0, 0, -3, 0, "dsaj11", "dsajUser", dec2021, 0, 0, 0],
+    ["dsajVideo1", 0, 0, 2, 0, "dsaj10", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo1", 0, 0, -3, 0, "dsaj11", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
 
-    ["dsajVideo2", 0, 0, 2, 0, "dsaj20", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo2", 0, 0, -4, 0, "dsaj21", "dsajUser", oct2021, 0, 0, 0],
+    ["dsajVideo2", 0, 0, 2, 0, "dsaj20", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo2", 0, 0, -4, 0, "dsaj21", "dsajUser", oct2021, 0, 0, 0, oct2021AsIso],
 
-    ["dsajVideo3", 0, 0, 2, 1, "dsaj30", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo3", 0, 0, 100000, 0, "dsaj31", "dsajUser", dec2021, 0, 0, 0],
+    ["dsajVideo3", 0, 0, 2, 1, "dsaj30", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo3", 0, 0, 100000, 0, "dsaj31", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
 
-    ["dsajVideo4", 0, 0, 100000, 0, "dsaj40", "dsajUser", dec2021, 0, 1, 0],
+    ["dsajVideo4", 0, 0, 100000, 0, "dsaj40", "dsajUser", dec2021, 0, 1, 0, dec2021AsIso],
 
-    ["dsajVideo5", 0, 0, 2, 0, "dsaj50", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo5", 0, 0, -1, 0, "dsaj51", "dsajUser", dec2021, 0, 0, 0],
-    ["dsajVideo5", 0, 0, -2, 0, "dsaj52", "dsajUser", nov2021, 0, 0, 0],
-    ["dsajVideo5", 0, 0, 2, 0, "dsaj53", "dsajUser", dec2021, 0, 0, 0]
+    ["dsajVideo5", 0, 0, 2, 0, "dsaj50", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo5", 0, 0, -1, 0, "dsaj51", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso],
+    ["dsajVideo5", 0, 0, -2, 0, "dsaj52", "dsajUser", nov2021, 0, 0, 0, nov2021AsIso],
+    ["dsajVideo5", 0, 0, 2, 0, "dsaj53", "dsajUser", dec2021, 0, 0, 0, dec2021AsIso]
 ];
 
 describe("downvoteSegmentArchiveJob", () => {
     beforeEach(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "hidden", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "hidden", "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
         for (const record of records) {
             await db.prepare("run", query, record);

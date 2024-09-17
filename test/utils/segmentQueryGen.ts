@@ -25,7 +25,8 @@ interface insertSegmentParams extends baseParams {
     videoDuration?: number,
     hidden?: boolean | number,
     shadowHidden?: boolean | number,
-    description?: string
+    description?: string,
+    updatedAt?: string
 }
 const defaultSegmentParams: insertSegmentParams = {
     videoID: "",
@@ -44,7 +45,8 @@ const defaultSegmentParams: insertSegmentParams = {
     hidden: false,
     shadowHidden: false,
     hashedVideoID: "",
-    description: ""
+    description: "",
+    updatedAt: new Date().toISOString()
 };
 
 const generateDefaults = (identifier: string) => ({
@@ -54,8 +56,8 @@ const generateDefaults = (identifier: string) => ({
     UUID: genRandomValue("uuid", identifier, 2),
 });
 
-export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
-    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+export const insertSegment = async (db: IDatabase, overrides: insertSegmentParams = {}, identifier?: string) => {
+    const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "hashedVideoID", "description", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     // generate defaults
     identifier = identifier ?? genRandom();
     const defaults = generateDefaults(identifier);
@@ -66,7 +68,7 @@ export const insertSegment = async(db: IDatabase, overrides: insertSegmentParams
     params.shadowHidden = Number(params.shadowHidden);
     await db.prepare("run", query, Object.values(params));
 };
-export const insertChapter = async(db: IDatabase, description: string, params: insertSegmentParams = {}) => {
+export const insertChapter = async (db: IDatabase, description: string, params: insertSegmentParams = {}) => {
     const overrides = { category: "chapter", actionType: "chapter", description, ...params };
     await insertSegment(db, overrides);
 };
@@ -97,9 +99,9 @@ export const insertTitle = async (db: IDatabase, overrides: insertTitleParams = 
     params.original = Number(params.original);
     await db.prepare("run", query, Object.values(params));
 };
-export const insertTitleVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, verification = false) => {
-    const query = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)';
-    const params = [UUID, votes, Number(locked), Number(shadowHidden), Number(verification)];
+export const insertTitleVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, verification = false, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const params = [UUID, votes, Number(locked), Number(shadowHidden), Number(verification), isoDate, isoDate];
     await db.prepare("run", query, params);
 };
 
@@ -125,8 +127,8 @@ export const insertThumbnail = async (db: IDatabase, overrides: insertThumbnailP
     await db.prepare("run", query, Object.values(params));
 };
 
-export const insertThumbnailVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false) => {
-    const query = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?)';
-    const params = [UUID, votes, Number(locked), Number(shadowHidden)];
+export const insertThumbnailVote = async (db: IDatabase, UUID: string, votes: number, locked = false, shadowHidden = false, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?)';
+    const params = [UUID, votes, Number(locked), Number(shadowHidden), isoDate, isoDate];
     await db.prepare("run", query, params);
 };

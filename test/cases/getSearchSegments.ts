@@ -4,33 +4,34 @@ import assert from "assert";
 
 describe("getSearchSegments", () => {
     const endpoint = "/api/searchSegments";
+    const isoDate = new Date().toISOString();
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "views", "locked", "hidden", "shadowHidden", "timeSubmitted", "UUID", "userID", "category", "actionType") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", query, ["searchTest0", 0, 1,    2, 0,   0, 0, 0, 1, "search-normal",        "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest0", 0, 2,    -2, 0,  0, 0, 0, 2, "search-downvote",      "searchTestUser", "selfpromo", "skip",]);
-        await db.prepare("run", query, ["searchTest0", 0, 3,    1, 0,   1, 0, 0, 3, "search-locked",        "searchTestUser", "interaction", "skip"]);
-        await db.prepare("run", query, ["searchTest0", 0, 4,    1, 0,   0, 1, 0, 4, "search-hidden",        "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest0", 0, 5,    1, 0,   0, 0, 1, 5, "search-shadowhidden",  "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest1", 1, 2,    1, 5,   0, 0, 0, 6, "search-lowview",       "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest1", 1, 3,    1, 50,  0, 0, 0, 7, "search-highview",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest2", 1, 4,    -1, 0,  0, 0, 0, 8, "search-lowvote",       "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest2", 2, 3,    0, 0,   0, 0, 0, 9, "search-zerovote",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest2", 2, 4,    50, 0,  0, 0, 0, 10, "search-highvote",     "searchTestUser", "sponsor", "skip"]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "views", "locked", "hidden", "shadowHidden", "timeSubmitted", "UUID", "userID", "category", "actionType", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", query, ["searchTest0", 0, 1,    2, 0,   0, 0, 0, 1, "search-normal",        "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest0", 0, 2,    -2, 0,  0, 0, 0, 2, "search-downvote",      "searchTestUser", "selfpromo", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest0", 0, 3,    1, 0,   1, 0, 0, 3, "search-locked",        "searchTestUser", "interaction", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest0", 0, 4,    1, 0,   0, 1, 0, 4, "search-hidden",        "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest0", 0, 5,    1, 0,   0, 0, 1, 5, "search-shadowhidden",  "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest1", 1, 2,    1, 5,   0, 0, 0, 6, "search-lowview",       "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest1", 1, 3,    1, 50,  0, 0, 0, 7, "search-highview",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest2", 1, 4,    -1, 0,  0, 0, 0, 8, "search-lowvote",       "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest2", 2, 3,    0, 0,   0, 0, 0, 9, "search-zerovote",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest2", 2, 4,    50, 0,  0, 0, 0, 10, "search-highvote",     "searchTestUser", "sponsor", "skip", isoDate]);
         // page
-        await db.prepare("run", query, ["searchTest4", 3, 4,    1, 0,   0, 0, 0, 10, "search-page1-1",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 5,    1, 0,   0, 0, 0, 11, "search-page1-2",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 6,    1, 0,   0, 0, 0, 12, "search-page1-3",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 7,    1, 0,   0, 0, 0, 13, "search-page1-4",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 8,    1, 0,   0, 0, 0, 14, "search-page1-5",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 9,    1, 0,   0, 0, 0, 15, "search-page1-6",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 10,   1, 0,   0, 0, 0, 16, "search-page1-7",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 11,   1, 0,   0, 0, 0, 17, "search-page1-8",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 12,   1, 0,   0, 0, 0, 18, "search-page1-9",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 13,   1, 0,   0, 0, 0, 19, "search-page1-10",     "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 14,   1, 0,   0, 0, 0, 20, "search-page2-1",      "searchTestUser", "sponsor", "skip"]);
-        await db.prepare("run", query, ["searchTest4", 3, 15,   1, 0,   0, 0, 0, 21, "search-page2-2",      "searchTestUser", "sponsor", "skip"]);
+        await db.prepare("run", query, ["searchTest4", 3, 4,    1, 0,   0, 0, 0, 10, "search-page1-1",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 5,    1, 0,   0, 0, 0, 11, "search-page1-2",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 6,    1, 0,   0, 0, 0, 12, "search-page1-3",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 7,    1, 0,   0, 0, 0, 13, "search-page1-4",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 8,    1, 0,   0, 0, 0, 14, "search-page1-5",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 9,    1, 0,   0, 0, 0, 15, "search-page1-6",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 10,   1, 0,   0, 0, 0, 16, "search-page1-7",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 11,   1, 0,   0, 0, 0, 17, "search-page1-8",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 12,   1, 0,   0, 0, 0, 18, "search-page1-9",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 13,   1, 0,   0, 0, 0, 19, "search-page1-10",     "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 14,   1, 0,   0, 0, 0, 20, "search-page2-1",      "searchTestUser", "sponsor", "skip", isoDate]);
+        await db.prepare("run", query, ["searchTest4", 3, 15,   1, 0,   0, 0, 0, 21, "search-page2-2",      "searchTestUser", "sponsor", "skip", isoDate]);
         // test all values
-        await db.prepare("run", query, ["searchTest5", 0, 10,   1, 1,   1, 0, 0, 22, "search-values",       "searchTestUser", "filler", "mute"]);
+        await db.prepare("run", query, ["searchTest5", 0, 10,   1, 1,   1, 0, 0, 22, "search-values",       "searchTestUser", "filler", "mute", isoDate]);
         return;
     });
 
