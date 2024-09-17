@@ -22,7 +22,7 @@
     "axios": "^1.7.7",
     "better-sqlite3": "^11.2.1",
     "cron": "^2.1.0",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "express-promise-router": "^4.1.1",
     "express-rate-limit": "^6.7.0",
     "form-data": "^4.0.0",
