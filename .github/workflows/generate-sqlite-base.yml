@@ -26,7 +26,7 @@ jobs:
       - name: Run Server
         timeout-minutes: 10
         run: npm start
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: SponsorTimesDB.db
           path: databases/sponsorTimes.db
