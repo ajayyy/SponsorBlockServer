@@ -36,7 +36,7 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
-    const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration } = req.body as BrandingSubmission;
+    const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration, wasWarned } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
 
     if (!videoID || !userID || userID.length < 30 || !service
@@ -86,7 +86,7 @@ export async function postBranding(req: Request, res: Response) {
                 const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 if (downvote && existingIsLocked && !isVip) {
-                    sendWebhooks(videoID, existingUUID, voteType).catch((e) => Logger.error(e));
+                    sendWebhooks(videoID, existingUUID, voteType, wasWarned).catch((e) => Logger.error(e));
                     errorCode = 403;
                     return;
                 }
@@ -115,7 +115,7 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
 
-                sendWebhooks(videoID, UUID, voteType).catch((e) => Logger.error(e));
+                sendWebhooks(videoID, UUID, voteType, wasWarned).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -307,7 +307,7 @@ async function canSubmitOriginal(hashedUserID: HashedUserID, isVip: boolean): Pr
     return isVip || (upvotedThumbs > 1 && customThumbs > 1 && originalThumbs / customThumbs < 0.4);
 }
 
-async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType) {
+async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType, wasWarned: boolean) {
     const currentSubmission = await db.prepare(
         "get",
         `SELECT 
@@ -318,6 +318,34 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" 
         WHERE "titles"."UUID" = ?`,
         [UUID]);
+
+    if (wasWarned) {
+        const data = await getVideoDetails(videoID);
+        axios.post(config.discordDeArrowWarnedWebhookURL, {
+            "embeds": [{
+                "title": data?.title,
+                "url": `https://www.youtube.com/watch?v=${videoID}`,
+                "description": `**Submitted title:** ${currentSubmission.title}\
+                    \n\n**Submitted by:** ${currentSubmission.userID}`,
+                "color": 10813440,
+                "thumbnail": {
+                    "url": getMaxResThumbnail(videoID),
+                },
+            }],
+        })
+            .then(res => {
+                if (res.status >= 400) {
+                    Logger.error("Error sending reported submission Discord hook");
+                    Logger.error(JSON.stringify((res.data)));
+                    Logger.error("\n");
+                }
+            })
+            .catch(err => {
+                Logger.error("Failed to send reported submission Discord hook.");
+                Logger.error(JSON.stringify(err));
+                Logger.error("\n");
+            });
+    }
 
     // Unlocked title getting more upvotes than the locked one
     if (voteType === BrandingVoteType.Upvote) {
