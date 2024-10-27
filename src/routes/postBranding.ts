@@ -319,7 +319,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         WHERE "titles"."UUID" = ?`,
         [UUID]);
 
-    if (wasWarned) {
+    if (wasWarned && voteType === BrandingVoteType.Upvote) {
         const data = await getVideoDetails(videoID);
         axios.post(config.discordDeArrowWarnedWebhookURL, {
             "embeds": [{
