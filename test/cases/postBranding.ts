@@ -16,6 +16,7 @@ describe("postBranding", () => {
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
     const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
+    const isoDate = new Date().toISOString();
 
 
     const endpoint = "/api/branding";
@@ -32,9 +33,9 @@ describe("postBranding", () => {
     const queryThumbnailVotesByUUID = (UUID: string, all = false) => db.prepare(all ? "all" : "get", `SELECT * FROM "thumbnailVotes" WHERE "UUID" = ?`, [UUID]);
 
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [getHash(vipUser)]);
-        await db.prepare("run", insertVipUserQuery, [getHash(vipUser2)]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [getHash(vipUser), isoDate]);
+        await db.prepare("run", insertVipUserQuery, [getHash(vipUser2), isoDate]);
 
         const insertBannedUserQuery = 'INSERT INTO "shadowBannedUsers" ("userID") VALUES (?)';
         await db.prepare("run", insertBannedUserQuery, [getHash(bannedUser)]);
@@ -42,17 +43,17 @@ describe("postBranding", () => {
         const insertTitleQuery = 'INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertTitleQuery, ["postBrandLocked1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
         await db.prepare("run", insertTitleQuery, ["postBrandLocked2", "Some title", 1, getHash(userID2), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
-        const insertTitleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?);';
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked1", 0, 1, 0, 0]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked2", 0, 1, 0, 0]);
+        const insertTitleVotesQuery = 'INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?);';
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked1", 0, 1, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandLocked2", 0, 1, 0, 0, isoDate, isoDate]);
 
         const insertThumbnailQuery = 'INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertThumbnailQuery, ["postBrandLocked1", 0, getHash(userID3), Service.YouTube, getHash("postBrandLocked1"), Date.now(), "postBrandLocked1"]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandLocked2", 1, getHash(userID4), Service.YouTube, getHash("postBrandLocked2"), Date.now(), "postBrandLocked2"]);
 
-        const insertThumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, ?, ?, ?);';
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0]);
+        const insertThumbnailVotesQuery = 'INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?);';
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked1", 0, 1, 0, isoDate, isoDate]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandLocked2", 0, 1, 0, isoDate, isoDate]);
 
         // Approved original thumbnail submitter
         await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb"), Date.now(), "postBrandOriginThumb"]);
@@ -60,42 +61,42 @@ describe("postBranding", () => {
         await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb3", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb3"), Date.now(), "postBrandOriginThumb3"]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb4", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb4"), Date.now(), "postBrandOriginThumb4"]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandOriginThumb5", 0, getHash(userID4), Service.YouTube, getHash("postBrandOriginThumb5"), Date.now(), "postBrandOriginThumb5"]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb", 4, 0, 0]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb2", 1, 0, 0]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb3", 0, 0, 0]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb4", 0, 0, 0]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb5", 0, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb", 4, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb2", 1, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb3", 0, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb4", 0, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandOriginThumb5", 0, 0, 0, isoDate, isoDate]);
 
         // Testing vip submission removal
         await db.prepare("run", insertTitleQuery, ["postBrandRemoved1", "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved1"]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandRemoved1", 0, 1, 0, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandRemoved1", 0, 1, 0, 0, isoDate, isoDate]);
         await db.prepare("run", insertTitleQuery, ["postBrandRemoved1", "Some other title", 0, getHash(userID1), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved2"]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandRemoved2", 0, 1, 0, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandRemoved2", 0, 1, 0, 0, isoDate, isoDate]);
 
         // Testing vip submission removal
         const insertThumbnailTimestampQuery = 'INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)';
         await db.prepare("run", insertThumbnailQuery, ["postBrandRemoved1", 0, getHash(userID3), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved1"]);
         await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandRemoved1", 12.34]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandRemoved1", 0, 1, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandRemoved1", 0, 1, 0, isoDate, isoDate]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandRemoved1", 0, getHash(userID3), Service.YouTube, getHash("postBrandRemoved1"), Date.now(), "postBrandRemoved2"]);
         await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandRemoved2", 13.34]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandRemoved2", 0, 1, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandRemoved2", 0, 1, 0, isoDate, isoDate]);
 
         // Verified through title submissions
         await db.prepare("run", insertTitleQuery, ["postBrandVerified1", "Some title", 0, getHash(userID7), Service.YouTube, getHash("postBrandVerified1"), Date.now(), "postBrandVerified1"]);
         await db.prepare("run", insertTitleQuery, ["postBrandVerified2", "Some title", 1, getHash(userID7), Service.YouTube, getHash("postBrandVerified2"), Date.now(), "postBrandVerified2"]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified1", 5, 0, 0, -1]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified2", -1, 0, 0, -1]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified1", 5, 0, 0, -1, isoDate, isoDate]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandVerified2", -1, 0, 0, -1, isoDate, isoDate]);
 
         // Testing details for banned user handling
         await db.prepare("run", insertTitleQuery, ["postBrandBannedCustomVote",   "Some title", 0, getHash(userID1), Service.YouTube, getHash("postBrandBannedCustomVote"), Date.now(), "postBrandBannedCustomVote"]);
         await db.prepare("run", insertTitleQuery, ["postBrandBannedOriginalVote", "Some title", 1, getHash(userID1), Service.YouTube, getHash("postBrandBannedOriginalVote"), Date.now(), "postBrandBannedOriginalVote"]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandBannedCustomVote",   0, 0, 0, 0]);
-        await db.prepare("run", insertTitleVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0, 0]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandBannedCustomVote",   0, 0, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertTitleVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0, 0, isoDate, isoDate]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandBannedCustomVote",   0, getHash(userID1), Service.YouTube, getHash("postBrandBannedCustomVote"), Date.now(), "postBrandBannedCustomVote"]);
         await db.prepare("run", insertThumbnailQuery, ["postBrandBannedOriginalVote", 1, getHash(userID1), Service.YouTube, getHash("postBrandBannedOriginalVote"), Date.now(), "postBrandBannedOriginalVote"]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedCustomVote", 0, 0, 0]);
-        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedCustomVote", 0, 0, 0, isoDate, isoDate]);
+        await db.prepare("run", insertThumbnailVotesQuery, ["postBrandBannedOriginalVote", 0, 0, 0, isoDate, isoDate]);
         await db.prepare("run", insertThumbnailTimestampQuery, ["postBrandBannedCustomVote", 12.34]);
     });
 

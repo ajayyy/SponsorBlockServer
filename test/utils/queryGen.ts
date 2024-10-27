@@ -11,8 +11,8 @@ export { insertSegment } from "./segmentQueryGen";
 
 // vip
 export const insertVip = async (db: IDatabase, userID: HashedUserID) => {
-    const query = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-    await db.prepare("run", query, [userID]);
+    const query = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+    await db.prepare("run", query, [userID, new Date().toISOString()]);
 };
 export const insertVipUser = async (db: IDatabase, user: User) => {
     await insertVip(db, user.pubID);
@@ -33,10 +33,10 @@ export const bulkGrantFeature = async (db: IDatabase, users: userArray, feature:
 };
 
 // usernames
-export const insertUsername = async (db: IDatabase, userID: HashedUserID, userName: string, locked = false) => {
-    const query = 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)';
+export const insertUsername = async (db: IDatabase, userID: HashedUserID, userName: string, locked = false, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "userNames" ("userID", "userName", "locked", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?)';
     const lockedValue = Number(locked);
-    await db.prepare("run", query, [userID, userName, lockedValue]);
+    await db.prepare("run", query, [userID, userName, lockedValue, isoDate, isoDate]);
 };
 export const insertUsernameBulk = async (db: IDatabase, users: usernameUserArray) => {
     for (const user of Object.values(users))
@@ -56,15 +56,18 @@ interface lockParams {
     category?: Category | string,
     hashedVideoID?: VideoIDHash | "",
     reason?: string,
-    service?: Service | string
+    service?: Service | string,
+    createdAt?: string,
+    updatedAt?: string
 }
 
-export const insertLock = async(db: IDatabase, overrides: lockParams = {}) => {
-    const query = 'INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service") VALUES (?, ?, ?, ?, ?, ?, ?)';
+export const insertLock = async(db: IDatabase, overrides: lockParams = {}, isoDate: string = new Date().toISOString()) => {
+    const query = 'INSERT INTO "lockCategories" ("videoID", "userID", "actionType", "category", "hashedVideoID", "reason", "service", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const identifier = "lock";
     const defaults = {
         videoID: genRandomValue("video", identifier), userID: genRandomValue("user", identifier),
-        actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube
+        actionType: "skip", category: "sponsor", hashedVideoID: "", reason: "", service: Service.YouTube,
+        createdAt: isoDate, updatedAt: isoDate
     };
     const params = { ...defaults, ...overrides };
     params.hashedVideoID = getHash(params.videoID);
