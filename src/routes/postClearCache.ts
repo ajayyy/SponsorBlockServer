@@ -23,7 +23,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
 
     if (invalidFields.length !== 0) {
         // invalid request
-        const fields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ", " : "") + c, "");
+        const fields = invalidFields.join(", ");
         return res.status(400).send(`No valid ${fields} field(s) provided`);
     }
 
