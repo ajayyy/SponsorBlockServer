@@ -1,11 +1,13 @@
 import { db, privateDB } from "../databases/databases";
 import { Request, Response } from "express";
 import os from "os";
-import redis from "../utils/redis";
+import redis, { getRedisStats } from "../utils/redis";
 import { Postgres } from "../databases/Postgres";
 import { Server } from "http";
 
 export async function getMetrics(req: Request, res: Response, server: Server): Promise<Response> {
+    const redisStats = getRedisStats();
+
     return res.type("text").send([
         `# HELP sb_uptime Uptime of this instance`,
         `# TYPE sb_uptime counter`,
@@ -72,33 +74,33 @@ export async function getMetrics(req: Request, res: Response, server: Server): P
         `sb_postgres_private_pool_waiting ${(privateDB as Postgres)?.getStats?.()?.pool?.waiting ?? -1}`,
         `# HELP sb_redis_active_requests The number of active requests to redis`,
         `# TYPE sb_redis_active_requests gauge`,
-        `sb_redis_active_requests ${(redis as any)?.getStats?.()?.activeRequests ?? -1}`,
+        `sb_redis_active_requests ${redisStats.activeRequests}`,
         `# HELP sb_redis_write_requests The number of write requests to redis`,
         `# TYPE sb_redis_write_requests gauge`,
-        `sb_redis_write_requests ${(redis as any)?.getStats?.()?.writeRequests ?? -1}`,
+        `sb_redis_write_requests ${redisStats.writeRequests}`,
         `# HELP sb_redis_avg_read_time The average read time of redis`,
         `# TYPE sb_redis_avg_read_time gauge`,
-        `sb_redis_avg_read_time ${(redis as any)?.getStats?.()?.avgReadTime ?? -1}`,
+        `sb_redis_avg_read_time ${redisStats?.avgReadTime}`,
         `# HELP sb_redis_avg_write_time The average write time of redis`,
         `# TYPE sb_redis_avg_write_time gauge`,
-        `sb_redis_avg_write_time ${(redis as any)?.getStats?.()?.avgWriteTime ?? -1}`,
+        `sb_redis_avg_write_time ${redisStats.avgWriteTime}`,
         `# HELP sb_redis_memory_cache_hits The cache hit ratio in redis`,
         `# TYPE sb_redis_memory_cache_hits gauge`,
-        `sb_redis_memory_cache_hits ${(redis as any)?.getStats?.()?.memoryCacheHits ?? -1}`,
+        `sb_redis_memory_cache_hits ${redisStats.memoryCacheHits}`,
         `# HELP sb_redis_memory_cache_total_hits The cache hit ratio in redis including uncached items`,
         `# TYPE sb_redis_memory_cache_total_hits gauge`,
-        `sb_redis_memory_cache_total_hits ${(redis as any)?.getStats?.()?.memoryCacheTotalHits ?? -1}`,
+        `sb_redis_memory_cache_total_hits ${redisStats.memoryCacheTotalHits}`,
         `# HELP sb_redis_memory_cache_length The length of the memory cache in redis`,
         `# TYPE sb_redis_memory_cache_length gauge`,
-        `sb_redis_memory_cache_length ${(redis as any)?.getStats?.()?.memoryCacheLength ?? -1}`,
+        `sb_redis_memory_cache_length ${redisStats.memoryCacheLength}`,
         `# HELP sb_redis_memory_cache_size The size of the memory cache in redis`,
         `# TYPE sb_redis_memory_cache_size gauge`,
-        `sb_redis_memory_cache_size ${(redis as any)?.getStats?.()?.memoryCacheSize ?? -1}`,
+        `sb_redis_memory_cache_size ${redisStats.memoryCacheSize}`,
         `# HELP sb_redis_last_invalidation The time of the last successful invalidation in redis`,
         `# TYPE sb_redis_last_invalidation gauge`,
-        `sb_redis_last_invalidation ${(redis as any)?.getStats?.()?.lastInvalidation ?? -1}`,
+        `sb_redis_last_invalidation ${redisStats.lastInvalidation}`,
         `# HELP sb_redis_last_invalidation_message The time of the last invalidation message in redis`,
         `# TYPE sb_redis_last_invalidation_message gauge`,
-        `sb_redis_last_invalidation_message ${(redis as any)?.getStats?.()?.lastInvalidationMessage ?? -1}`,
+        `sb_redis_last_invalidation_message ${redisStats.lastInvalidationMessage}`,
     ].join("\n"));
 }
