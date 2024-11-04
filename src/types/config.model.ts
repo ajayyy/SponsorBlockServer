@@ -115,6 +115,8 @@ export interface SBSConfig {
     youTubeKeys: {
         visitorData: string | null;
         poToken: string | null;
+        floatieUrl: string | null;
+        floatieAuth: string | null;
     }
 }
 

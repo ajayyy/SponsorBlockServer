@@ -29,6 +29,23 @@ const privateResponse = (videoId: string, reason: string): innerTubeVideoDetails
 });
 
 export async function getFromITube (videoID: string): Promise<innerTubeVideoDetails> {
+    if (config.youTubeKeys.floatieUrl) {
+        const result = await axios.get(config.youTubeKeys.floatieUrl, {
+            params: {
+                videoID,
+                auth: config.youTubeKeys.floatieAuth
+            }
+        });
+
+        if (result.status === 200) {
+            return result.data?.videoDetails ?? privateResponse(videoID, result.data?.playabilityStatus?.reason ?? "Bad response");
+        } else if (result.status === 500) {
+            return privateResponse(videoID, result.data ?? "Bad response");
+        } else {
+            return Promise.reject(`Floatie returned non-200 response: ${result.status}`);
+        }
+    }
+
     // start subrequest
     const url = "https://www.youtube.com/youtubei/v1/player";
     const data = {

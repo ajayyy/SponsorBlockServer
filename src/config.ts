@@ -201,7 +201,9 @@ addDefaults(config, {
     etagExpiry: 5000,
     youTubeKeys: {
         visitorData: null,
-        poToken: null
+        poToken: null,
+        floatieUrl: null,
+        floatieAuth: null
     }
 });
 loadFromEnv(config);
