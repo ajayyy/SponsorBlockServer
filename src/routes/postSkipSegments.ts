@@ -348,7 +348,7 @@ async function checkEachSegmentValid(rawIP: IPAddress, paramUserID: UserID, user
 
 async function checkByAutoModerator(videoID: VideoID, userID: HashedUserID, segments: IncomingSegment[], service: Service, apiVideoDetails: videoDetails, videoDuration: number): Promise<CheckResult> {
     // Auto moderator check
-    if (service == Service.YouTube) {
+    if (service == Service.YouTube && apiVideoDetails) {
         const autoModerateResult = await autoModerateSubmission(apiVideoDetails, { videoID, userID, segments, service, videoDuration });
         if (autoModerateResult) {
             return {
