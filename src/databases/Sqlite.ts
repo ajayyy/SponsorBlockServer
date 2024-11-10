@@ -102,7 +102,9 @@ export class Sqlite implements IDatabase {
     }
 
     private static processUpgradeQuery(query: string): string {
-        return query.replace(/^.*--!sqlite-ignore/gm, "");
+        return query
+            .replace(/SERIAL PRIMARY KEY/gi, "INTEGER PRIMARY KEY AUTOINCREMENT")
+            .replace(/^.*--!sqlite-ignore/gm, "");
     }
 
     highLoad() {

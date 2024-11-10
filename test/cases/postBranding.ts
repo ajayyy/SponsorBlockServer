@@ -373,6 +373,51 @@ describe("postBranding", () => {
         }
     });
 
+    it("Double downvote title and thumbnail should only count once", async () => {
+        const videoID = "postBrand5";
+        const title = {
+            title: "Some other title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 13.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID6,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitles = await queryTitleByVideo(videoID, true);
+        for (const dbTitle of dbTitles) {
+            if (dbTitle.title === title.title) {
+                const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+                assert.strictEqual(dbTitleVotes.votes, 0);
+                assert.strictEqual(dbTitleVotes.downvotes, 1);
+                assert.strictEqual(dbTitleVotes.locked, 0);
+                assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+            }
+        }
+
+        const dbThumbnails = await queryThumbnailByVideo(videoID, true);
+        for (const dbThumbnail of dbThumbnails) {
+            if (dbThumbnail.timestamp === thumbnail.timestamp) {
+                const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+                assert.strictEqual(dbThumbnailVotes.votes, 0);
+                assert.strictEqual(dbThumbnailVotes.downvotes, 1);
+                assert.strictEqual(dbThumbnailVotes.locked, 0);
+                assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
+            }
+        }
+    });
+
     it("Downvote your own title and thumbnail", async () => {
         const videoID = "postBrand5";
         const title = {
