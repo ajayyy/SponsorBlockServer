@@ -384,7 +384,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
             "embeds": [{
                 "title": data?.title,
                 "url": `https://www.youtube.com/watch?v=${videoID}`,
-                "description": `Locked title ${vipAction ? 'was removed by a VIP' : `with **${currentSubmission.score}** score received a downvote`}\
+                "description": `Locked title ${vipAction ? "was removed by a VIP" : `with **${currentSubmission.score}** score received a downvote`}\
                     \n\n**Locked title:** ${currentSubmission.title}\
                     \n**Submitted by:** ${usernameRow?.userName ?? ""}\n${currentSubmission.userID}`,
                 "color": 10813440,
