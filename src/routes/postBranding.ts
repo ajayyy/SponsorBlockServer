@@ -86,7 +86,7 @@ export async function postBranding(req: Request, res: Response) {
                 const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 if (downvote && existingIsLocked && !isVip) {
-                    sendWebhooks(videoID, existingUUID, voteType, wasWarned).catch((e) => Logger.error(e));
+                    sendWebhooks(videoID, existingUUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
                     errorCode = 403;
                     return;
                 }
@@ -115,7 +115,7 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
 
-                sendWebhooks(videoID, UUID, voteType, wasWarned).catch((e) => Logger.error(e));
+                sendWebhooks(videoID, UUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -287,7 +287,7 @@ async function canSubmitOriginal(hashedUserID: HashedUserID, isVip: boolean): Pr
     return isVip || (upvotedThumbs > 1 && customThumbs > 1 && originalThumbs / customThumbs < 0.4);
 }
 
-async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType, wasWarned: boolean) {
+async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType, wasWarned: boolean, vipAction: boolean) {
     const currentSubmission = await db.prepare(
         "get",
         `SELECT 
@@ -384,7 +384,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
             "embeds": [{
                 "title": data?.title,
                 "url": `https://www.youtube.com/watch?v=${videoID}`,
-                "description": `Locked title with **${currentSubmission.score}** score received a downvote\
+                "description": `Locked title ${vipAction ? "was removed by a VIP" : `with **${currentSubmission.score}** score received a downvote`}\
                     \n\n**Locked title:** ${currentSubmission.title}\
                     \n**Submitted by:** ${usernameRow?.userName ?? ""}\n${currentSubmission.userID}`,
                 "color": 10813440,
