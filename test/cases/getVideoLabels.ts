@@ -4,27 +4,28 @@ import { client } from "../utils/httpClient";
 
 describe("getVideoLabels", () => {
     const endpoint = "/api/videoLabels";
+    const isoDate = new Date().toISOString();
     before(async () => {
-        const query = 'INSERT INTO "sponsorTimes" ("videoID", "votes", "locked", "UUID", "userID", "timeSubmitted", "category", "actionType", "hidden", "shadowHidden", "startTime", "endTime", "views") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)';
-        await db.prepare("run", query, ["getLabelSponsor"   , 2, 0, "label01", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelEA"        , 2, 0, "label02", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelSelfpromo" , 2, 0, "label03", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        const query = 'INSERT INTO "sponsorTimes" ("videoID", "votes", "locked", "UUID", "userID", "timeSubmitted", "category", "actionType", "hidden", "shadowHidden", "startTime", "endTime", "views", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)';
+        await db.prepare("run", query, ["getLabelSponsor"   , 2, 0, "label01", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelEA"        , 2, 0, "label02", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelSelfpromo" , 2, 0, "label03", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
         // priority override
-        await db.prepare("run", query, ["getLabelPriority"  , 2, 0, "label04", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelPriority"  , 2, 0, "label05", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelPriority"  , 2, 0, "label06", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        await db.prepare("run", query, ["getLabelPriority"  , 2, 0, "label04", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelPriority"  , 2, 0, "label05", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelPriority"  , 2, 0, "label06", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
         // locked only
-        await db.prepare("run", query, ["getLabelLocked"    , 2, 0, "label07", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelLocked"    , 2, 0, "label08", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelLocked"    , 2, 1, "label09", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        await db.prepare("run", query, ["getLabelLocked"    , 2, 0, "label07", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelLocked"    , 2, 0, "label08", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelLocked"    , 2, 1, "label09", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
         // hidden segments
-        await db.prepare("run", query, ["getLabelDownvote"  ,-2, 0, "label10", "labeluser", 0, "selfpromo", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelHidden"     ,2, 0, "label11", "labeluser", 0, "selfpromo", "full", 1, 0]);
-        await db.prepare("run", query, ["getLabelShadowHidden",2, 0, "label12", "labeluser", 0, "selfpromo", "full", 0, 1]);
+        await db.prepare("run", query, ["getLabelDownvote"  ,-2, 0, "label10", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelHidden"     ,2, 0, "label11", "labeluser", 0, "selfpromo", "full", 1, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelShadowHidden",2, 0, "label12", "labeluser", 0, "selfpromo", "full", 0, 1, isoDate]);
         // priority override2
-        await db.prepare("run", query, ["getLabelPriority2" , -2, 0, "label13", "labeluser", 0, "sponsor", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelPriority2" , 2, 0, "label14", "labeluser", 0, "exclusive_access", "full", 0, 0]);
-        await db.prepare("run", query, ["getLabelPriority2" , 2, 0, "label15", "labeluser", 0, "selfpromo", "full", 0, 0]);
+        await db.prepare("run", query, ["getLabelPriority2" , -2, 0, "label13", "labeluser", 0, "sponsor", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelPriority2" , 2, 0, "label14", "labeluser", 0, "exclusive_access", "full", 0, 0, isoDate]);
+        await db.prepare("run", query, ["getLabelPriority2" , 2, 0, "label15", "labeluser", 0, "selfpromo", "full", 0, 0, isoDate]);
 
         return;
     });

@@ -4,13 +4,14 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 
 const endpoint = "/api/getVideoSponsorTimes";
+const isoDate = new Date().toISOString();
 const getOldSponsorTime = (videoID: string) => client.get(endpoint, { params: { videoID } });
 
 describe("getVideoSponsorTime (Old get method)", () => {
     before(async () => {
-        const insertSponsorTimes = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime0",      1, 11, 2, "oldGetSponsorTime00", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0]);
-        await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime1,test", 1, 11, 2, "oldGetSponsorTime01", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0]);
+        const insertSponsorTimes = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime0",      1, 11, 2, "oldGetSponsorTime00", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0, isoDate]);
+        await db.prepare("run", insertSponsorTimes, ["oldGetSponsorTime1,test", 1, 11, 2, "oldGetSponsorTime01", "oldGetSponsorTimeUser", 0, 50, "sponsor", 0, isoDate]);
     });
 
     it("Should be able to get a time", (done) => {

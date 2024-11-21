@@ -24,6 +24,7 @@
 | Name | Type | |
 | -- | :--: | -- |
 | userID | TEXT | not null, primary key |
+| createdAt | TEXT | not null |
 
 | index | field |
 | -- | :--: |
@@ -53,6 +54,7 @@
 | hashedVideoID | TEXT | not null, default '', sha256 |
 | userAgent | TEXT | not null, default '' |
 | description | TEXT | not null, default '' |
+| updatedAt | TEXT | not null |
 
 | index | field |
 | -- | :--: |
@@ -71,6 +73,8 @@
 | userID | TEXT | not null, primary key |
 | userName | TEXT | not null |
 | locked | INTEGER | not nul, default '0' |
+| createdAt | TEXT | not null |
+| updatedAt | TEXT | not null |
 
 | index | field |
 | -- | :--: |
@@ -84,6 +88,8 @@
 | category | TEXT | not null |
 | votes | INTEGER | not null, default 0 |
 | id | SERIAL | primary key
+| createdAt | TEXT | not null |
+| updatedAt | TEXT | not null |
 
 | index | field |
 | -- | :--: |
@@ -101,6 +107,8 @@
 | reason | TEXT | not null, default '' |
 | service | TEXT | not null, default 'YouTube' |
 | id | SERIAL | primary key
+| createdAt | TEXT | not null |
+| updatedAt | TEXT | not null |
 
 | index | field |
 | -- | :--: |
@@ -264,6 +272,8 @@
 | verification | INTEGER | default 0 |
 | downvotes | INTEGER | default 0 |
 | removed | INTEGER | default 0 |
+| createdAt | TEXT | not null |
+| updatedAt | TEXT | not null |
 
 | constraint | field |
 | -- | :--: |
@@ -312,6 +322,8 @@
 | shadowHidden | INTEGER | not null, default 0 |
 | downvotes | INTEGER | default 0 |
 | removed | INTEGER | default 0 |
+| createdAt | TEXT | not null |
+| updatedAt | TEXT | not null |
 
 | constraint | field |
 | -- | :--: |
@@ -404,7 +416,7 @@
 | issuerUserID | TEXT | not null |
 | targetUserID | TEXT | not null |
 | enabled | BOOLEAN | not null |
-| updatedAt | INTEGER | not null |
+| updatedAt | TEXT | not null |
 | id | SERIAL | primary key |
 
 ### userNameLogs
@@ -415,5 +427,5 @@
 | newUserName | TEXT | not null |
 | oldUserName | TEXT | not null |
 | updatedByAdmin | BOOLEAN | not null |
-| updatedAt | INTEGER | not null |
+| updatedAt | TEXT | not null |
 | id | SERIAL | primary key |
