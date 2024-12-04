@@ -1,1 +1,1 @@
-restic forget --prune --keep-last 48 --keep-daily 7 --keep-weekly 8
+restic forget --prune --keep-hourly 24 --keep-daily 7 --keep-weekly 8
