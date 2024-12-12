@@ -242,11 +242,11 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
 
     if (invalidFields.length !== 0) {
         // invalid request
-        const formattedFields = invalidFields.reduce((p, c, i) => p + (i !== 0 ? ", " : "") + c, "");
-        const formattedErrors = errors.reduce((p, c, i) => p + (i !== 0 ? ". " : " ") + c, "");
+        const formattedFields = invalidFields.join(", ");
+        const formattedErrors = errors.join(". ");
         return {
             pass: false,
-            errorMessage: `No valid ${formattedFields}.${formattedErrors}`,
+            errorMessage: `No valid ${formattedFields}. ${formattedErrors}`,
             errorCode: 400
         };
     }
