@@ -10,24 +10,25 @@ const vipUserName1 = "getLockReason-vipUserName_1";
 const vipUserID1 = getHash("getLockReason-vipUserID_1");
 const vipUserName2 = "getLockReason-vipUserName_2";
 const vipUserID2 = getHash("getLockReason-vipUserID_2");
+const isoDate = new Date().toISOString();
 
 describe("getLockReason", () => {
     before(async () => {
-        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID") VALUES (?)';
-        await db.prepare("run", insertVipUserQuery, [vipUserID1]);
-        await db.prepare("run", insertVipUserQuery, [vipUserID2]);
+        const insertVipUserQuery = 'INSERT INTO "vipUsers" ("userID", "createdAt") VALUES (?, ?)';
+        await db.prepare("run", insertVipUserQuery, [vipUserID1, isoDate]);
+        await db.prepare("run", insertVipUserQuery, [vipUserID2, isoDate]);
 
-        const insertVipUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName") VALUES (?, ?)';
-        await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1]);
-        await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2]);
+        const insertVipUserNameQuery = 'INSERT INTO "userNames" ("userID", "userName", "createdAt", "updatedAt") VALUES (?, ?, ?, ?)';
+        await db.prepare("run", insertVipUserNameQuery, [vipUserID1, vipUserName1, isoDate, isoDate]);
+        await db.prepare("run", insertVipUserNameQuery, [vipUserID2, vipUserName2, isoDate, isoDate]);
 
-        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason") VALUES (?, ?, ?, ?, ?)';
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "sponsor", "sponsor-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "interaction", "interaction-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "preview", "preview-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "mute", "music_offtopic", "nonmusic-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "mute", "outro", "outro-reason"]);
-        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "full", "selfpromo", "selfpromo-reason"]);
+        const insertLockCategoryQuery = 'INSERT INTO "lockCategories" ("userID", "videoID", "actionType", "category", "reason", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?)';
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "sponsor", "sponsor-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "interaction", "interaction-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "skip", "preview", "preview-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID1, "getLockReason", "mute", "music_offtopic", "nonmusic-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "mute", "outro", "outro-reason", isoDate, isoDate]);
+        await db.prepare("run", insertLockCategoryQuery, [vipUserID2, "getLockReason", "full", "selfpromo", "selfpromo-reason", isoDate, isoDate]);
     });
 
     after(async () => {

@@ -21,9 +21,10 @@ const username06 = "Username 06";
 const user07PrivateUserID = "setUsername_07";
 const username07 = "Username 07";
 const user08PrivateUserID = "setUsername_08";
+const isoDate = new Date().toISOString();
 
 async function addUsername(userID: string, userName: string, locked = 0) {
-    await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
+    await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked", "createdAt", "updatedAt") VALUES(?, ?, ?, ?, ?)', [userID, userName, locked, isoDate, isoDate]);
     await addLogUserNameChange(userID, userName);
 }
 

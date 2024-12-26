@@ -10,6 +10,7 @@ describe("postSkipSegments Features - Chapters", () => {
     const submitUser_noPermissions = "postSkipSegments-chapters-noperm";
     const submitUser_reputation = "postSkipSegments-chapters-reputation";
     const submitUser_feature = "postSkipSegments-chapters-feature";
+    const isoDate = new Date().toISOString();
 
     const queryDatabaseChapter = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "category", "actionType", "description" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
     function createSegment(): Segment {
@@ -24,11 +25,11 @@ describe("postSkipSegments Features - Chapters", () => {
     before(() => {
         const submitNumberOfTimes = 10;
         const submitUser_reputationHash = getHash(submitUser_reputation);
-        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "shadowHidden", "updatedAt") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         for (let i = 0; i < submitNumberOfTimes; i++) {
             const uuid = `post_reputation_uuid-${i}`;
             const videoID = `post_reputation_video-${i}`;
-            db.prepare("run", insertSponsorTimeQuery, [videoID, 1, 11, 5, 1, uuid, submitUser_reputationHash, 1597240000000, 50, "sponsor", "skip", 0]);
+            db.prepare("run", insertSponsorTimeQuery, [videoID, 1, 11, 5, 1, uuid, submitUser_reputationHash, 1597240000000, 50, "sponsor", "skip", 0, isoDate]);
         }
         // user feature
         db.prepare("run", `INSERT INTO "userFeatures" ("userID", "feature", "issuerUserID", "timeSubmitted") VALUES(?, ?, ?, ?)`, [getHash(submitUser_feature), Feature.ChapterSubmitter, "generic-VIP", 0]);
