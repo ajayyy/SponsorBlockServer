@@ -2,26 +2,26 @@ import { Request, Response } from "express";
 import { db } from "../databases/databases";
 import { videoLabelsHashKey, videoLabelsKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
-import { DBSegment, Segment, Service, VideoData, VideoID, VideoIDHash } from "../types/segments.model";
+import { Category, DBSegment, Segment, Service, VideoData, VideoID, VideoIDHash } from "../types/segments.model";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getService } from "../utils/getService";
 
-function transformDBSegments(segments: DBSegment[]): Segment[] {
+interface FullVideoSegment {
+    category: Category;
+}
+
+interface FullVideoSegmentVideoData {
+    segments: FullVideoSegment[];
+}
+
+function transformDBSegments(segments: DBSegment[]): FullVideoSegment[] {
     return segments.map((chosenSegment) => ({
-        category: chosenSegment.category,
-        actionType: chosenSegment.actionType,
-        segment: [chosenSegment.startTime, chosenSegment.endTime],
-        UUID: chosenSegment.UUID,
-        locked: chosenSegment.locked,
-        votes: chosenSegment.votes,
-        videoDuration: chosenSegment.videoDuration,
-        userID: chosenSegment.userID,
-        description: chosenSegment.description
+        category: chosenSegment.category
     }));
 }
 
-async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<Segment[]> {
+async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<FullVideoSegment[]> {
     try {
         const segments: DBSegment[] = await getSegmentsFromDBByVideoID(videoID, service);
         return chooseSegment(segments);
@@ -33,8 +33,8 @@ async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<S
     }
 }
 
-async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<SBRecord<VideoID, VideoData>> {
-    const segments: SBRecord<VideoID, VideoData> = {};
+async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<SBRecord<VideoID, FullVideoSegmentVideoData>> {
+    const segments: SBRecord<VideoID, FullVideoSegmentVideoData> = {};
 
     try {
         type SegmentWithHashPerVideoID = SBRecord<VideoID, { hash: VideoIDHash, segments: DBSegment[] }>;
@@ -53,7 +53,7 @@ async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Servic
             }, {});
 
         for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
-            const data: VideoData = {
+            const data: FullVideoSegmentVideoData = {
                 segments: chooseSegment(videoData.segments),
             };
 
@@ -97,7 +97,7 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
     return await QueryCacher.get(fetchFromDB, videoLabelsKey(videoID, service));
 }
 
-function chooseSegment<T extends DBSegment>(choices: T[]): Segment[] {
+function chooseSegment<T extends DBSegment>(choices: T[]): FullVideoSegment[] {
     // filter out -2 segments
     choices = choices.filter((segment) => segment.votes > -2);
     const results = [];
@@ -125,7 +125,7 @@ function chooseSegment<T extends DBSegment>(choices: T[]): Segment[] {
     return transformDBSegments(results);
 }
 
-async function handleGetLabel(req: Request, res: Response): Promise<Segment[] | false> {
+async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSegment[] | false> {
     const videoID = req.query.videoID as VideoID;
     if (!videoID) {
         res.status(400).send("videoID not specified");

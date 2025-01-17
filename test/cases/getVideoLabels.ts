@@ -31,10 +31,6 @@ describe("getVideoLabels", () => {
 
     function validateLabel(result: any) {
         assert.strictEqual(result.length, 1);
-        assert.strictEqual(result[0].segment[0], 0);
-        assert.strictEqual(result[0].segment[1], 0);
-        assert.strictEqual(result[0].actionType, "full");
-        assert.strictEqual(result[0].userID, "labeluser");
     }
 
     const get = (videoID: string) => client.get(endpoint, { params: { videoID } });
@@ -46,8 +42,6 @@ describe("getVideoLabels", () => {
                 const data = res.data;
                 validateLabel(data);
                 assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "label01");
-                assert.strictEqual(data[0].locked, 0);
                 done();
             })
             .catch(err => done(err));
@@ -60,8 +54,6 @@ describe("getVideoLabels", () => {
                 const data = res.data;
                 validateLabel(data);
                 assert.strictEqual(data[0].category, "exclusive_access");
-                assert.strictEqual(data[0].UUID, "label02");
-                assert.strictEqual(data[0].locked, 0);
                 done();
             })
             .catch(err => done(err));
@@ -74,8 +66,6 @@ describe("getVideoLabels", () => {
                 const data = res.data;
                 validateLabel(data);
                 assert.strictEqual(data[0].category, "selfpromo");
-                assert.strictEqual(data[0].UUID, "label03");
-                assert.strictEqual(data[0].locked, 0);
                 done();
             })
             .catch(err => done(err));
@@ -88,8 +78,6 @@ describe("getVideoLabels", () => {
                 const data = res.data;
                 validateLabel(data);
                 assert.strictEqual(data[0].category, "sponsor");
-                assert.strictEqual(data[0].UUID, "label04");
-                assert.strictEqual(data[0].locked, 0);
                 done();
             })
             .catch(err => done(err));
@@ -102,8 +90,6 @@ describe("getVideoLabels", () => {
                 const data = res.data;
                 validateLabel(data);
                 assert.strictEqual(data[0].category, "selfpromo");
-                assert.strictEqual(data[0].UUID, "label09");
-                assert.strictEqual(data[0].locked, 1);
                 done();
             })
             .catch(err => done(err));
@@ -116,8 +102,6 @@ describe("getVideoLabels", () => {
                 const data = res.data;
                 validateLabel(data);
                 assert.strictEqual(data[0].category, "exclusive_access");
-                assert.strictEqual(data[0].UUID, "label14");
-                assert.strictEqual(data[0].locked, 0);
                 done();
             })
             .catch(err => done(err));
