@@ -150,7 +150,7 @@ async function getSegmentsByVideoID(req: Request, videoID: VideoID, categories: 
 }
 
 async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash, categories: Category[],
-    actionTypes: ActionType[], requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
+    actionTypes: ActionType[], trimUUIDs: number, requiredSegments: SegmentUUID[], service: Service): Promise<SBRecord<VideoID, VideoData>> {
     const cache: SegmentCache = { shadowHiddenSegmentIPs: {} };
     const segments: SBRecord<VideoID, VideoData> = {};
 
@@ -188,7 +188,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                     category: segment.category,
                     actionType: segment.actionType,
                     segment: segment.segment,
-                    UUID: segment.UUID,
+                    UUID: trimUUIDs ? segment.UUID.substring(0, trimUUIDs) as SegmentUUID : segment.UUID,
                     videoDuration: segment.videoDuration,
                     locked: segment.locked,
                     votes: segment.votes,

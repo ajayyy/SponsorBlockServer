@@ -17,10 +17,10 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     if (parseResult.errors.length > 0) {
         return res.status(400).send(parseResult.errors);
     }
-    const { categories, actionTypes, requiredSegments, service } = parseResult;
+    const { categories, actionTypes, trimUUIDs, requiredSegments, service } = parseResult;
 
     // Get all video id's that match hash prefix
-    const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, requiredSegments, service);
+    const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, trimUUIDs, requiredSegments, service);
 
     try {
         await getEtag("skipSegmentsHash", hashPrefix, service)

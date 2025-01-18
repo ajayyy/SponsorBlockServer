@@ -9,12 +9,14 @@ const errorMessage = (parameter: string) => `${parameter} parameter does not mat
 export function parseSkipSegments(req: Request): {
     categories: Category[];
     actionTypes: ActionType[];
+    trimUUIDs: number | null;
     requiredSegments: SegmentUUID[];
     service: Service;
     errors: string[];
 } {
     const categories: Category[] = parseCategories(req, [ "sponsor" as Category ]);
     const actionTypes: ActionType[] = parseActionTypes(req, [ActionType.Skip]);
+    const trimUUIDs: number | null = req.query.trimUUIDs ? (parseInt(req.query.trimUUIDs as string) || null) : null;
     const requiredSegments: SegmentUUID[] = parseRequiredSegments(req);
     const service: Service = getService(req.query.service, req.body.services);
     const errors: string[] = [];
@@ -27,6 +29,7 @@ export function parseSkipSegments(req: Request): {
     return {
         categories,
         actionTypes,
+        trimUUIDs,
         requiredSegments,
         service,
         errors
