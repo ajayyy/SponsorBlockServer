@@ -34,7 +34,7 @@ async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<F
     }
 }
 
-async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Service): Promise<SBRecord<VideoID, FullVideoSegmentVideoData>> {
+async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Service, checkHasStartSegment: boolean): Promise<SBRecord<VideoID, FullVideoSegmentVideoData>> {
     const segments: SBRecord<VideoID, FullVideoSegmentVideoData> = {};
 
     try {
@@ -57,10 +57,10 @@ async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Servic
             const result = chooseSegment(videoData.segments);
             const data: FullVideoSegmentVideoData = {
                 segments: result.segments,
-                hasStartSegment: result.hasStartSegment
+                hasStartSegment: checkHasStartSegment ? result.hasStartSegment : undefined
             };
 
-            if (data.segments.length > 0 || data.hasStartSegment) {
+            if (data.segments.length > 0 || (data.hasStartSegment && checkHasStartSegment)) {
                 segments[videoID] = data;
             }
         }
@@ -153,7 +153,7 @@ async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSeg
         return false;
     }
 
-    const hasStartSegment = !!req.query.hasStartSegment;
+    const hasStartSegment = req.query.hasStartSegment === "true";
 
     const service = getService(req.query.service, req.body.service);
     const segmentData = await getLabelsByVideoID(videoID, service);

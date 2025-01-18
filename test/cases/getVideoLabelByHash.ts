@@ -36,11 +36,11 @@ describe("getVideoLabelHash", () => {
         assert.strictEqual(data[0].segments.length, 1);
     }
 
-    const get = (videoID: string) => client.get(`${endpoint}/${getHash(videoID, 1).substring(0, 4)}`);
+    const get = (videoID: string, hasStartSegment = false) => client.get(`${endpoint}/${getHash(videoID, 1).substring(0, 4)}?hasStartSegment=${hasStartSegment}`);
 
     it("Should be able to get sponsor only label", (done) => {
         const videoID = "getLabelHashSponsor";
-        get(videoID)
+        get(videoID, true)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -55,7 +55,7 @@ describe("getVideoLabelHash", () => {
 
     it("Should be able to get exclusive access only label", (done) => {
         const videoID = "getLabelHashEA";
-        get(videoID)
+        get(videoID, true)
             .then(res => {
                 assert.strictEqual(res.status, 200);
                 const data = res.data;
@@ -77,6 +77,7 @@ describe("getVideoLabelHash", () => {
                 validateLabel(data, videoID);
                 const result = data[0].segments[0];
                 assert.strictEqual(result.category, "selfpromo");
+                assert.strictEqual(data[0].hasStartSegment, undefined);
                 done();
             })
             .catch(err => done(err));
