@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { db } from "../databases/databases";
-import { videoLabelsHashKey, videoLabelsKey } from "../utils/redisKeys";
+import { videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, DBSegment, Segment, Service, VideoData, VideoID, VideoIDHash } from "../types/segments.model";
+import { ActionType, Category, DBSegment, Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getService } from "../utils/getService";
@@ -81,8 +81,10 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
             [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
 
-    if (hashedVideoIDPrefix.length === 3 || hashedVideoIDPrefix.length === 4) {
+    if (hashedVideoIDPrefix.length === 3) {
         return await QueryCacher.get(fetchFromDB, videoLabelsHashKey(hashedVideoIDPrefix, service));
+    } else if (hashedVideoIDPrefix.length === 4) {
+        return await QueryCacher.get(fetchFromDB, videoLabelsLargerHashKey(hashedVideoIDPrefix, service));
     }
 
     return await fetchFromDB();

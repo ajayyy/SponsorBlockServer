@@ -58,9 +58,17 @@ export const videoLabelsKey = (videoID: VideoID, service: Service): string =>
     `labels.v2.${service}.videoID.${videoID}`;
 
 export function videoLabelsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
-    const length = hashedVideoIDPrefix.length;
+    hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 3) as VideoIDHash;
+    if (hashedVideoIDPrefix.length !== 3) Logger.warn(`Redis video labels hash-prefix key is not length 3! ${hashedVideoIDPrefix}`);
 
-    return `labels.v1.${length}.${service}.${hashedVideoIDPrefix}`;
+    return `labels.v2.3.${service}.${hashedVideoIDPrefix}`;
+}
+
+export function videoLabelsLargerHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
+    hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 4) as VideoIDHash;
+    if (hashedVideoIDPrefix.length !== 4) Logger.warn(`Redis video labels hash-prefix key is not length 4! ${hashedVideoIDPrefix}`);
+
+    return `labels.v2.4.${service}.${hashedVideoIDPrefix}`;
 }
 
 export function userFeatureKey (userID: HashedUserID, feature: Feature): string {
