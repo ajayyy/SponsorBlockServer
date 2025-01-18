@@ -31,6 +31,7 @@ describe("voteOnSponsorTime", () => {
 
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "shadowHidden", "hidden") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "vote-uuid-0", "testman", 0, 50, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest---sdaas", 1, 11, 2, 0, "vote-u34113123", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 2, 0, "vote-uuid-1", "testman", 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.5", "testman", 0, 50, "outro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest2", 1, 11, 10, 0, "vote-uuid-1.6", "testman", 0, 50, "interaction", "skip", 0, 0]);
@@ -41,6 +42,7 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 1, 11, 2, 0, "vote-uuid-6", "testman", 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["vote-multiple", 20, 33, 2, 0, "vote-uuid-7", "testman", 0, 50, "intro", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-8", getHash("randomID"), 0, 50, "sponsor", "skip", 0, 0]);
+        await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter", 1, 11, 2, 0, "vote-uuid-87", getHash("randomIDpartial"), 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-9", randomID2Hashed, 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-10", getHash("randomID3"), 0, 50, "sponsor", "skip", 0, 0]);
         await db.prepare("run", insertSponsorTimeQuery, ["voter-submitter2", 1, 11, 2, 0, "vote-uuid-11", getHash("randomID4"), 0, 50, "sponsor", "skip", 0, 0]);
@@ -107,13 +109,14 @@ describe("voteOnSponsorTime", () => {
     });
     // constants
     const endpoint = "/api/voteOnSponsorTime";
-    const postVote = (userID: string, UUID: string, type: number) => client({
+    const postVote = (userID: string, UUID: string, type: number, videoID?: string) => client({
         method: "POST",
         url: endpoint,
         params: {
             userID,
             UUID,
-            type
+            type,
+            videoID
         }
     });
     const postVoteCategory = (userID: string, UUID: string, category: string) => client({
@@ -133,6 +136,18 @@ describe("voteOnSponsorTime", () => {
     it("Should be able to upvote a segment", (done) => {
         const UUID = "vote-uuid-0";
         postVote("randomID", UUID, 1)
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await getSegmentVotes(UUID);
+                assert.strictEqual(row.votes, 3);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to upvote a segment with a partial ID", (done) => {
+        const UUID = "vote-u34113123";
+        postVote("randomIDpartial", UUID.substring(0, 9), 1, "vote-testtesttest---sdaas")
             .then(async res => {
                 assert.strictEqual(res.status, 200);
                 const row = await getSegmentVotes(UUID);

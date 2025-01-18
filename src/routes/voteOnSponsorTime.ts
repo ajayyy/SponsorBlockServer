@@ -303,9 +303,10 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     const paramUserID = getUserID(req);
     const type = req.query.type !== undefined ? parseInt(req.query.type as string) : undefined;
     const category = req.query.category as Category;
+    const videoID = req.query.videoID as VideoID;
     const ip = getIP(req);
 
-    const result = await vote(ip, UUID, paramUserID, type, category);
+    const result = await vote(ip, UUID, paramUserID, type, videoID, category);
 
     const response = res.status(result.status);
     if (result.message) {
@@ -317,7 +318,7 @@ export async function voteOnSponsorTime(req: Request, res: Response): Promise<Re
     }
 }
 
-export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID, type: number, category?: Category): Promise<{ status: number, message?: string, json?: unknown }> {
+export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID, type: number, videoID?: VideoID, category?: Category): Promise<{ status: number, message?: string, json?: unknown }> {
     // missing key parameters
     if (!UUID || !paramUserID || !(type !== undefined || category)) {
         return { status: 400 };
@@ -325,6 +326,14 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     // Ignore this vote, invalid
     if (paramUserID.length < config.minUserIDLength) {
         return { status: 200 };
+    }
+
+    if (videoID && UUID.length < 60) {
+        // Get the full UUID
+        const segmentInfo: DBSegment = await db.prepare("get", `SELECT "UUID" from "sponsorTimes" WHERE "UUID" LIKE ? AND "videoID" = ?`, [`${UUID}%`, videoID]);
+        if (segmentInfo) {
+            UUID = segmentInfo.UUID;
+        }
     }
 
     const originalType = type;
