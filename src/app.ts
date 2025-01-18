@@ -58,6 +58,7 @@ import { getTopBrandingUsers } from "./routes/getTopBrandingUsers";
 import { getFeatureFlag } from "./routes/getFeatureFlag";
 import { getReady } from "./routes/getReady";
 import { getMetrics } from "./routes/getMetrics";
+import { getSegmentID } from "./routes/getSegmentID";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -121,6 +122,8 @@ function setupRoutes(router: Router, server: Server) {
     //Endpoint when a submission is skipped
     router.get("/api/viewedVideoSponsorTime", ...viewEndpoints);
     router.post("/api/viewedVideoSponsorTime", ...viewEndpoints);
+
+    router.get("/api/segmentID", getSegmentID);
 
     //To set your username for the stats view
     router.post("/api/setUsername", setUsername);
