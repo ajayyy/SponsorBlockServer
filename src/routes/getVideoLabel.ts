@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../databases/databases";
 import { videoLabelsHashKey, videoLabelsKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
-import { Category, DBSegment, Segment, Service, VideoData, VideoID, VideoIDHash } from "../types/segments.model";
+import { ActionType, Category, DBSegment, Segment, Service, VideoData, VideoID, VideoIDHash } from "../types/segments.model";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
 import { getService } from "../utils/getService";
@@ -13,6 +13,7 @@ interface FullVideoSegment {
 
 interface FullVideoSegmentVideoData {
     segments: FullVideoSegment[];
+    hasStartSegment: boolean;
 }
 
 function transformDBSegments(segments: DBSegment[]): FullVideoSegment[] {
@@ -21,7 +22,7 @@ function transformDBSegments(segments: DBSegment[]): FullVideoSegment[] {
     }));
 }
 
-async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<FullVideoSegment[]> {
+async function getLabelsByVideoID(videoID: VideoID, service: Service): Promise<FullVideoSegmentVideoData> {
     try {
         const segments: DBSegment[] = await getSegmentsFromDBByVideoID(videoID, service);
         return chooseSegment(segments);
@@ -53,11 +54,13 @@ async function getLabelsByHash(hashedVideoIDPrefix: VideoIDHash, service: Servic
             }, {});
 
         for (const [videoID, videoData] of Object.entries(segmentPerVideoID)) {
+            const result = chooseSegment(videoData.segments);
             const data: FullVideoSegmentVideoData = {
-                segments: chooseSegment(videoData.segments),
+                segments: result.segments,
+                hasStartSegment: result.hasStartSegment
             };
 
-            if (data.segments.length > 0) {
+            if (data.segments.length > 0 || data.hasStartSegment) {
                 segments[videoID] = data;
             }
         }
@@ -74,7 +77,7 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
         .prepare(
             "all",
             `SELECT "startTime", "endTime", "videoID", "votes", "locked", "UUID", "userID", "category", "actionType", "hashedVideoID", "description" FROM "sponsorTimes"
-            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "actionType" = 'full' AND "hidden" = 0 AND "shadowHidden" = 0`,
+            WHERE "hashedVideoID" LIKE ? AND "service" = ? AND "hidden" = 0 AND "shadowHidden" = 0`,
             [`${hashedVideoIDPrefix}%`, service]
         ) as Promise<DBSegment[]>;
 
@@ -90,22 +93,34 @@ async function getSegmentsFromDBByVideoID(videoID: VideoID, service: Service): P
         .prepare(
             "all",
             `SELECT "startTime", "endTime", "votes", "locked", "UUID", "userID", "category", "actionType", "description" FROM "sponsorTimes" 
-            WHERE "videoID" = ? AND "service" = ? AND "actionType" = 'full' AND "hidden" = 0 AND "shadowHidden" = 0`,
+            WHERE "videoID" = ? AND "service" = ? AND "hidden" = 0 AND "shadowHidden" = 0`,
             [videoID, service]
         ) as Promise<DBSegment[]>;
 
     return await QueryCacher.get(fetchFromDB, videoLabelsKey(videoID, service));
 }
 
-function chooseSegment<T extends DBSegment>(choices: T[]): FullVideoSegment[] {
+function chooseSegment<T extends DBSegment>(choices: T[]): FullVideoSegmentVideoData {
     // filter out -2 segments
     choices = choices.filter((segment) => segment.votes > -2);
+
+    const hasStartSegment = !!choices.some((segment) => segment.startTime < 5
+        && (segment.actionType === ActionType.Skip || segment.actionType === ActionType.Mute));
+
+    choices = choices.filter((segment) => segment.actionType === ActionType.Full);
+
     const results = [];
     // trivial decisions
     if (choices.length === 0) {
-        return [];
+        return {
+            segments: [],
+            hasStartSegment
+        };
     } else if (choices.length === 1) {
-        return transformDBSegments(choices);
+        return {
+            segments: transformDBSegments(choices),
+            hasStartSegment
+        }
     }
     // if locked, only choose from locked
     const locked = choices.filter((segment) => segment.locked);
@@ -114,7 +129,10 @@ function chooseSegment<T extends DBSegment>(choices: T[]): FullVideoSegment[] {
     }
     //no need to filter, just one label
     if (choices.length === 1) {
-        return transformDBSegments(choices);
+        return {
+            segments: transformDBSegments(choices),
+            hasStartSegment
+        };
     }
     // sponsor > exclusive > selfpromo
     const findCategory = (category: string) => choices.find((segment) => segment.category === category);
@@ -122,25 +140,36 @@ function chooseSegment<T extends DBSegment>(choices: T[]): FullVideoSegment[] {
     const categoryResult = findCategory("sponsor") ?? findCategory("exclusive_access") ?? findCategory("selfpromo");
     if (categoryResult) results.push(categoryResult);
 
-    return transformDBSegments(results);
+    return {
+        segments: transformDBSegments(results),
+        hasStartSegment
+    };
 }
 
-async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSegment[] | false> {
+async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSegmentVideoData | FullVideoSegment[] | false> {
     const videoID = req.query.videoID as VideoID;
     if (!videoID) {
         res.status(400).send("videoID not specified");
         return false;
     }
 
+    const hasStartSegment = !!req.query.hasStartSegment;
+
     const service = getService(req.query.service, req.body.service);
-    const segments = await getLabelsByVideoID(videoID, service);
+    const segmentData = await getLabelsByVideoID(videoID, service);
+    const segments = segmentData.segments;
 
     if (!segments || segments.length === 0) {
         res.sendStatus(404);
         return false;
     }
 
-    return segments;
+    if (hasStartSegment) {
+        return segmentData;
+    } else {
+        return segments;
+    }
+
 }
 
 async function endpoint(req: Request, res: Response): Promise<Response> {

@@ -55,7 +55,7 @@ export const tempVIPKey = (userID: HashedUserID): string =>
     `vip.temp.${userID}`;
 
 export const videoLabelsKey = (videoID: VideoID, service: Service): string =>
-    `labels.v1.${service}.videoID.${videoID}`;
+    `labels.v2.${service}.videoID.${videoID}`;
 
 export function videoLabelsHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
     hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 3) as VideoIDHash;
