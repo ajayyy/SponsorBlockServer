@@ -3,6 +3,8 @@ import { UserID } from "./user.model";
 
 export type BrandingUUID = string & { readonly __brandingUUID: unique symbol };
 
+export type CasualCategory = ("funny" | "creative" | "clever" | "descriptive" | "other") & { __casualCategoryBrand: unknown };
+
 export interface BrandingDBSubmissionData {
     videoID: VideoID,
 }
@@ -50,17 +52,24 @@ export interface ThumbnailResult {
     userID?: UserID
 }
 
+export interface CasualVote {
+    id: string,
+    count: number
+}
+
 export interface BrandingResult {
     titles: TitleResult[],
     thumbnails: ThumbnailResult[],
+    casualVotes: CasualVote[],
     randomTime: number,
     videoDuration: number | null
 }
 
 export interface BrandingHashDBResult {
-    titles: TitleDBResult[],
-    thumbnails: ThumbnailDBResult[],
-    segments: BrandingSegmentDBResult[]
+    titles: TitleDBResult[];
+    thumbnails: ThumbnailDBResult[];
+    segments: BrandingSegmentDBResult[];
+    casualVotes: CasualVoteDBResult[];
 }
 
 export interface OriginalThumbnailSubmission {
@@ -89,6 +98,15 @@ export interface BrandingSubmission {
     downvote: boolean | undefined;
     videoDuration: number | undefined;
     wasWarned: boolean | undefined;
+    casualMode: boolean | undefined;
+}
+
+export interface CasualVoteSubmission {
+    videoID: VideoID;
+    userID: UserID;
+    service: Service;
+    downvote: boolean | undefined;
+    category: CasualCategory;
 }
 
 export interface BrandingSegmentDBResult {
@@ -98,9 +116,21 @@ export interface BrandingSegmentDBResult {
     videoDuration: number;
 }
 
+export interface CasualVoteDBResult {
+    category: CasualCategory;
+    upvotes: number;
+    downvotes: number;
+}
+
 export interface BrandingSegmentHashDBResult extends BrandingDBSubmissionData {
     startTime: number;
     endTime: number;
     category: Category;
     videoDuration: number;
+}
+
+export interface CasualVoteHashDBResult extends BrandingDBSubmissionData {
+    category: CasualCategory;
+    upvotes: number;
+    downvotes: number;
 }

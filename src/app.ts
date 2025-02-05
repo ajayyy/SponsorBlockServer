@@ -59,6 +59,7 @@ import { getFeatureFlag } from "./routes/getFeatureFlag";
 import { getReady } from "./routes/getReady";
 import { getMetrics } from "./routes/getMetrics";
 import { getSegmentID } from "./routes/getSegmentID";
+import { postCasual } from "./routes/postCasual";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -233,6 +234,8 @@ function setupRoutes(router: Router, server: Server) {
     router.get("/api/branding", getBranding);
     router.get("/api/branding/:prefix", getBrandingByHashEndpoint);
     router.post("/api/branding", postBranding);
+
+    router.post("/api/casual", postCasual);
 
     /* istanbul ignore next */
     if (config.postgres?.enabled) {

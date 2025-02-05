@@ -73,6 +73,7 @@ export interface SBSConfig {
     readOnly: boolean;
     webhooks: WebhookConfig[];
     categoryList: string[];
+    casualCategoryList: string[];
     deArrowTypes: DeArrowType[];
     categorySupport: Record<string, string[]>;
     maxTitleLength: number;

@@ -3,7 +3,7 @@ import assert from "assert";
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import { Service } from "../../src/types/segments.model";
-import { BrandingUUID, ThumbnailResult, TitleResult } from "../../src/types/branding.model";
+import { BrandingUUID, CasualVote, ThumbnailResult, TitleResult } from "../../src/types/branding.model";
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 
 describe("getBranding", () => {
@@ -14,6 +14,8 @@ describe("getBranding", () => {
     const videoIDRandomTime = "videoID5";
     const videoIDUnverified = "videoID6";
     const videoIDvidDuration = "videoID7";
+    const videoIDCasual = "videoIDCasual";
+    const videoIDCasualDownvoted = "videoIDCasualDownvoted";
 
     const videoID1Hash = getHash(videoID1, 1).slice(0, 4);
     const videoID2LockedHash = getHash(videoID2Locked, 1).slice(0, 4);
@@ -22,6 +24,8 @@ describe("getBranding", () => {
     const videoIDRandomTimeHash = getHash(videoIDRandomTime, 1).slice(0, 4);
     const videoIDUnverifiedHash = getHash(videoIDUnverified, 1).slice(0, 4);
     const videoIDvidDurationHash = getHash(videoIDUnverified, 1).slice(0, 4);
+    const videoIDCasualHash = getHash(videoIDCasual, 1).slice(0, 4);
+    const videoIDCasualDownvotedHash = getHash(videoIDCasualDownvoted, 1).slice(0, 4);
 
     const endpoint = "/api/branding";
     const getBranding = (params: Record<string, any>) => client({
@@ -43,6 +47,7 @@ describe("getBranding", () => {
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?)`;
         const segmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const insertCasualVotesQuery = `INSERT INTO "casualVotes" ("UUID", "videoID", "service", "hashedVideoID", "category", "upvotes", "downvotes", "timeSubmitted") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
@@ -142,6 +147,12 @@ describe("getBranding", () => {
             db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 5, 0, 0, "uuidvd5", "testman", 14, 0, "sponsor", "skip", "YouTube", 21.3, 0, 0, "", videoIDvidDurationHash]),  // oldest visible w/ duration, should be picked
             db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 6, 0, 0, "uuidvd6", "testman", 15, 0, "sponsor", "skip", "YouTube", 21.37, 0, 0, "", videoIDvidDurationHash]),  // not the oldest visible
             db.prepare("run", segmentQuery, [videoIDvidDuration, 0, 7, -2, 0, "uuidvd7", "testman", 16, 0, "sponsor", "skip", "YouTube", 21.38, 0, 0, "", videoIDvidDurationHash]),  // downvoted, not the oldest
+        ]);
+
+        await Promise.all([
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual1", videoIDCasual, Service.YouTube, videoIDCasualHash, "clever", 1, 0, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual2", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "clever", 1, 1, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual3", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "other", 4, 1, Date.now()])
         ]);
     });
 
@@ -335,9 +346,28 @@ describe("getBranding", () => {
         assert.strictEqual(result2.data[videoIDvidDuration].videoDuration, correctDuration);
     });
 
+    it("should get casual votes", async () => {
+        await checkVideo(videoIDCasual, videoIDCasualHash, true, {
+            casualVotes: [{
+                id: "clever",
+                count: 1
+            }]
+        });
+    });
+
+    it("should not get casual votes with downvotes", async () => {
+        await checkVideo(videoIDCasualDownvoted, videoIDCasualDownvotedHash, true, {
+            casualVotes: [{
+                id: "other",
+                count: 3
+            }]
+        });
+    });
+
     async function checkVideo(videoID: string, videoIDHash: string, fetchAll: boolean, expected: {
-        titles: TitleResult[],
-        thumbnails: ThumbnailResult[]
+        titles?: TitleResult[],
+        thumbnails?: ThumbnailResult[],
+        casualVotes?: CasualVote[]
     }) {
         const result1 = await getBranding({ videoID, fetchAll });
         const result2 = await getBrandingByHash(videoIDHash, { fetchAll });

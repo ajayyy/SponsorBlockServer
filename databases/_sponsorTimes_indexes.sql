@@ -174,3 +174,25 @@ CREATE INDEX IF NOT EXISTS "thumbnailVotes_votes"
     ON public."thumbnailVotes" USING btree
     ("UUID" COLLATE pg_catalog."default" ASC NULLS LAST, "votes" DESC NULLS LAST)
     TABLESPACE pg_default;
+
+-- casualVotes
+
+CREATE INDEX IF NOT EXISTS "casualVotes_timeSubmitted"
+    ON public."casualVotes" USING btree
+    ("timeSubmitted" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "casualVotes_userID_timeSubmitted"
+    ON public."casualVotes" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "userID" COLLATE pg_catalog."default" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "casualVotes_videoID"
+    ON public."casualVotes" USING btree
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "casualVotes_hashedVideoID_2"
+    ON public."casualVotes" USING btree
+    (service COLLATE pg_catalog."default" ASC NULLS LAST, "hashedVideoID" text_pattern_ops ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST)
+    TABLESPACE pg_default;

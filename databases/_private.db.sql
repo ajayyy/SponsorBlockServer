@@ -44,4 +44,15 @@ CREATE TABLE IF NOT EXISTS "thumbnailVotes" (
 	"type"	INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "casualVotes" (
+	"UUID" SERIAL PRIMARY KEY,
+	"videoID"	TEXT NOT NULL,
+	"service"	TEXT NOT NULL,
+	"userID"	TEXT NOT NULL,
+	"hashedIP"	TEXT NOT NULL,
+	"category"	TEXT NOT NULL,
+	"type"	INTEGER NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL
+);
+
 COMMIT;

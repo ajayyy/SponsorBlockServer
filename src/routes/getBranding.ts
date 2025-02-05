@@ -3,7 +3,7 @@ import { isEmpty } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
-import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
+import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, CasualVoteDBResult, CasualVoteHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
 import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
 import { shuffleArray } from "../utils/array";
 import { getHashCache } from "../utils/getHashCache";
@@ -51,10 +51,20 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         { useReplica: true }
     ) as Promise<BrandingSegmentDBResult[]>;
 
+    const getCasualVotes = () => db.prepare(
+        "all",
+        `SELECT "category", "upvotes", "downvotes" FROM "casualVotes" 
+        WHERE "videoID" = ? AND "service" = ?
+        ORDER BY "timeSubmitted" ASC`,
+        [videoID, service],
+        { useReplica: true }
+    ) as Promise<CasualVoteDBResult[]>;
+
     const getBranding = async () => {
         const titles = getTitles();
         const thumbnails = getThumbnails();
         const segments = getSegments();
+        const casualVotes = getCasualVotes();
 
         for (const title of await titles) {
             title.title = title.title.replace("<", "‹");
@@ -63,7 +73,8 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         return {
             titles: await titles,
             thumbnails: await thumbnails,
-            segments: await segments
+            segments: await segments,
+            casualVotes: await casualVotes
         };
     };
 
@@ -85,7 +96,8 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         currentIP: null as Promise<HashedIP> | null
     };
 
-    return filterAndSortBranding(videoID, returnUserID, fetchAll, branding.titles, branding.thumbnails, branding.segments, ip, cache);
+    return filterAndSortBranding(videoID, returnUserID, fetchAll, branding.titles,
+        branding.thumbnails, branding.segments, branding.casualVotes, ip, cache);
 }
 
 export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, service: Service, ip: IPAddress, returnUserID: boolean, fetchAll: boolean): Promise<Record<VideoID, BrandingResult>> {
@@ -117,12 +129,22 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         { useReplica: true }
     ) as Promise<BrandingSegmentHashDBResult[]>;
 
+    const getCasualVotes = () => db.prepare(
+        "all",
+        `SELECT "videoID", "category", "upvotes", "downvotes" FROM "casualVotes" 
+        WHERE "hashedVideoID" LIKE ? AND "service" = ?
+        ORDER BY "timeSubmitted" ASC`,
+        [`${videoHashPrefix}%`, service],
+        { useReplica: true }
+    ) as Promise<CasualVoteHashDBResult[]>;
+
     const branding = await QueryCacher.get(async () => {
         // Make sure they are both called in parallel
         const branding = {
             titles: getTitles(),
             thumbnails: getThumbnails(),
-            segments: getSegments()
+            segments: getSegments(),
+            casualVotes: getCasualVotes()
         };
 
         const dbResult: Record<VideoID, BrandingHashDBResult> = {};
@@ -130,7 +152,8 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
             dbResult[submission.videoID] = dbResult[submission.videoID] || {
                 titles: [],
                 thumbnails: [],
-                segments: []
+                segments: [],
+                casualVotes: []
             };
         };
 
@@ -150,6 +173,11 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
             dbResult[segment.videoID].segments.push(segment);
         });
 
+        (await branding.casualVotes).forEach((casualVote) => {
+            initResult(casualVote);
+            dbResult[casualVote.videoID].casualVotes.push(casualVote);
+        });
+
         return dbResult;
     }, brandingHashKey(videoHashPrefix, service));
 
@@ -162,14 +190,14 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
     await Promise.all(Object.keys(branding).map(async (key) => {
         const castedKey = key as VideoID;
         processedResult[castedKey] = await filterAndSortBranding(castedKey, returnUserID, fetchAll, branding[castedKey].titles,
-            branding[castedKey].thumbnails, branding[castedKey].segments, ip, cache);
+            branding[castedKey].thumbnails, branding[castedKey].segments, branding[castedKey].casualVotes, ip, cache);
     }));
 
     return processedResult;
 }
 
 async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fetchAll: boolean, dbTitles: TitleDBResult[],
-    dbThumbnails: ThumbnailDBResult[], dbSegments: BrandingSegmentDBResult[],
+    dbThumbnails: ThumbnailDBResult[], dbSegments: BrandingSegmentDBResult[], dbCasualVotes: CasualVoteDBResult[],
     ip: IPAddress, cache: { currentIP: Promise<HashedIP> | null }): Promise<BrandingResult> {
 
     const shouldKeepTitles = shouldKeepSubmission(dbTitles, BrandingSubmissionType.Title, ip, cache);
@@ -202,11 +230,17 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fe
         }))
         .filter((a) => (fetchAll && !a.original) || a.votes >= 1 || (a.votes >= 0 && !a.original) || a.locked) as ThumbnailResult[];
 
+    const casualVotes = dbCasualVotes.map((r) => ({
+        id: r.category,
+        count: r.upvotes - r.downvotes
+    })).filter((a) => a.count > 0);
+
     const videoDuration = dbSegments.filter(s => s.videoDuration !== 0)[0]?.videoDuration ?? null;
 
     return {
         titles,
         thumbnails,
+        casualVotes,
         randomTime: findRandomTime(videoID, dbSegments, videoDuration),
         videoDuration: videoDuration,
     };
@@ -303,7 +337,7 @@ export async function getBranding(req: Request, res: Response) {
             .then(etag => res.set("ETag", etag))
             .catch(() => null);
 
-        const status = result.titles.length > 0 || result.thumbnails.length > 0 ? 200 : 404;
+        const status = result.titles.length > 0 || result.thumbnails.length > 0 || result.casualVotes.length > 0 ? 200 : 404;
         return res.status(status).json(result);
     } catch (e) {
         Logger.error(e as string);

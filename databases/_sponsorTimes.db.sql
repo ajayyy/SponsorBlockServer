@@ -84,6 +84,17 @@ CREATE TABLE IF NOT EXISTS "thumbnailVotes" (
 	FOREIGN KEY("UUID") REFERENCES "thumbnails"("UUID")
 );
 
+CREATE TABLE IF NOT EXISTS "casualVotes" (
+	"UUID" TEXT PRIMARY KEY,
+	"videoID"	TEXT NOT NULL,
+	"service"	TEXT NOT NULL,
+	"hashedVideoID"	TEXT NOT NULL,
+	"category" TEXT NOT NULL,
+	"upvotes"	INTEGER NOT NULL default 0,
+	"downvotes"	INTEGER NOT NULL default 0,
+	"timeSubmitted"	INTEGER NOT NULL
+);
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
 

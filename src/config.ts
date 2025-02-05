@@ -20,6 +20,7 @@ addDefaults(config, {
     readOnly: false,
     webhooks: [],
     categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight", "chapter"],
+    casualCategoryList: ["funny", "creative", "clever", "descriptive", "other"],
     categorySupport: {
         sponsor: ["skip", "mute", "full"],
         selfpromo: ["skip", "mute", "full"],
