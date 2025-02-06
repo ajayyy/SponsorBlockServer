@@ -184,7 +184,7 @@ CREATE INDEX IF NOT EXISTS "casualVotes_timeSubmitted"
 
 CREATE INDEX IF NOT EXISTS "casualVotes_userID_timeSubmitted"
     ON public."casualVotes" USING btree
-    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "userID" COLLATE pg_catalog."default" DESC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
+    ("videoID" COLLATE pg_catalog."default" ASC NULLS LAST, "service" COLLATE pg_catalog."default" ASC NULLS LAST, "timeSubmitted" DESC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "casualVotes_videoID"
