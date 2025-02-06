@@ -106,7 +106,7 @@ export interface CasualVoteSubmission {
     userID: UserID;
     service: Service;
     downvote: boolean | undefined;
-    category: CasualCategory;
+    categories: CasualCategory[];
 }
 
 export interface BrandingSegmentDBResult {

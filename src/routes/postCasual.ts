@@ -25,13 +25,13 @@ interface ExistingVote {
 }
 
 export async function postCasual(req: Request, res: Response) {
-    const { videoID, userID, downvote, category } = req.body as CasualVoteSubmission;
+    const { videoID, userID, downvote, categories } = req.body as CasualVoteSubmission;
     const service = getService(req.body.service);
 
-    if (!videoID || !userID || userID.length < 30 || !service || !category) {
+    if (!videoID || !userID || userID.length < 30 || !service || !categories || !Array.isArray(categories)) {
         return res.status(400).send("Bad Request");
     }
-    if (!config.casualCategoryList.includes(category)) {
+    if (!categories.every((c) => config.casualCategoryList.includes(c))) {
         return res.status(400).send("Invalid category");
     }
 
@@ -54,28 +54,25 @@ export async function postCasual(req: Request, res: Response) {
         const now = Date.now();
         const voteType: CasualVoteType = downvote ? CasualVoteType.Downvote : CasualVoteType.Upvote;
 
-        const existingUUID = (await db.prepare("get", `SELECT "UUID" from "casualVotes" where "videoID" = ? AND "category" = ?`, [videoID, category]))?.UUID;
-        const UUID = existingUUID || crypto.randomUUID();
+        for (const category of categories) {
+            const existingUUID = (await db.prepare("get", `SELECT "UUID" from "casualVotes" where "videoID" = ? AND "category" = ?`, [videoID, category]))?.UUID;
+            const UUID = existingUUID || crypto.randomUUID();
 
-        const alreadyVotedTheSame = await handleExistingVotes(videoID, service, UUID, hashedUserID, hashedIP, category, voteType, now);
-        if (existingUUID) {
-            if (!alreadyVotedTheSame) {
-                if (downvote) {
-                    await db.prepare("run", `UPDATE "casualVotes" SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
-                } else {
-                    await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+            const alreadyVotedTheSame = await handleExistingVotes(videoID, service, UUID, hashedUserID, hashedIP, category, voteType, now);
+            if (existingUUID) {
+                if (!alreadyVotedTheSame) {
+                    if (downvote) {
+                        await db.prepare("run", `UPDATE "casualVotes" SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+                    } else {
+                        await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" + 1 WHERE "UUID" = ?`, [UUID]);
+                    }
                 }
+            } else {
+                await db.prepare("run", `INSERT INTO "casualVotes" ("videoID", "service", "hashedVideoID", "timeSubmitted", "UUID", "category", "upvotes", "downvotes") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [videoID, service, hashedVideoID, now, UUID, category, downvote ? 0 : 1, downvote ? 1 : 0]);
             }
-        } else {
-            if (downvote) {
-                throw new Error("Title submission doesn't exist");
-            }
-
-            await db.prepare("run", `INSERT INTO "casualVotes" ("videoID", "service", "hashedVideoID", "timeSubmitted", "UUID", "category", "upvotes", "downvotes") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [videoID, service, hashedVideoID, now, UUID, category, downvote ? 0 : 1, downvote ? 1 : 0]);
         }
 
-        //todo: cache clearing
         QueryCacher.clearBrandingCache({ videoID, hashedVideoID, service });
 
         res.status(200).send("OK");

@@ -22,7 +22,7 @@ describe("postCasual", () => {
         const videoID = "postCasual1";
 
         const res = await postCasual({
-            category: "clever",
+            categories: ["clever"],
             userID: userID1,
             service: Service.YouTube,
             videoID
@@ -40,7 +40,7 @@ describe("postCasual", () => {
         const videoID = "postCasual1";
 
         const res = await postCasual({
-            category: "clever",
+            categories: ["clever"],
             userID: userID1,
             service: Service.YouTube,
             videoID
@@ -58,7 +58,7 @@ describe("postCasual", () => {
         const videoID = "postCasual1";
 
         const res = await postCasual({
-            category: "clever",
+            categories: ["clever"],
             userID: userID2,
             service: Service.YouTube,
             videoID
@@ -76,7 +76,7 @@ describe("postCasual", () => {
         const videoID = "postCasual1";
 
         const res = await postCasual({
-            category: "clever",
+            categories: ["clever"],
             downvote: true,
             userID: userID1,
             service: Service.YouTube,
@@ -95,7 +95,7 @@ describe("postCasual", () => {
         const videoID = "postCasual1";
 
         const res = await postCasual({
-            category: "clever",
+            categories: ["clever"],
             downvote: true,
             userID: userID3,
             service: Service.YouTube,
@@ -114,7 +114,7 @@ describe("postCasual", () => {
         const videoID = "postCasual1";
 
         const res = await postCasual({
-            category: "clever",
+            categories: ["clever"],
             downvote: false,
             userID: userID3,
             service: Service.YouTube,
@@ -127,6 +127,51 @@ describe("postCasual", () => {
         assert.strictEqual(dbVotes.category, "clever");
         assert.strictEqual(dbVotes.upvotes, 2);
         assert.strictEqual(dbVotes.downvotes, 1);
+    });
+
+    it("submit multiple casual votes", async () => {
+        const videoID = "postCasual2";
+
+        const res = await postCasual({
+            categories: ["clever", "other"],
+            userID: userID1,
+            service: Service.YouTube,
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbVotes = await queryCasualVotesByVideo(videoID, true);
+
+        assert.strictEqual(dbVotes[0].category, "clever");
+        assert.strictEqual(dbVotes[0].upvotes, 1);
+        assert.strictEqual(dbVotes[0].downvotes, 0);
+
+        assert.strictEqual(dbVotes[1].category, "other");
+        assert.strictEqual(dbVotes[1].upvotes, 1);
+        assert.strictEqual(dbVotes[1].downvotes, 0);
+    });
+
+    it("submit multiple casual downvotes", async () => {
+        const videoID = "postCasual3";
+
+        const res = await postCasual({
+            categories: ["clever", "other"],
+            userID: userID1,
+            service: Service.YouTube,
+            videoID,
+            downvote: true
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbVotes = await queryCasualVotesByVideo(videoID, true);
+
+        assert.strictEqual(dbVotes[0].category, "clever");
+        assert.strictEqual(dbVotes[0].upvotes, 0);
+        assert.strictEqual(dbVotes[0].downvotes, 1);
+
+        assert.strictEqual(dbVotes[1].category, "other");
+        assert.strictEqual(dbVotes[1].upvotes, 0);
+        assert.strictEqual(dbVotes[1].downvotes, 1);
     });
 
 });
