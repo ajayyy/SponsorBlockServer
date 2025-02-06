@@ -36,7 +36,7 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
-    const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration, wasWarned } = req.body as BrandingSubmission;
+    const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration, wasWarned, casualMode } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
 
     if (!videoID || !userID || userID.length < 30 || !service
@@ -100,8 +100,8 @@ export async function postBranding(req: Request, res: Response) {
                         throw new Error("Title submission doesn't exist");
                     }
 
-                    await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
+                    await db.prepare("run", `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID", "casualMode") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [videoID, title.title, title.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID, casualMode ? 1 : 0]);
 
                     const verificationValue = await getVerificationValue(hashedUserID, isVip);
                     await db.prepare("run", `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, 0, ?, ?, ?);`,
@@ -142,8 +142,8 @@ export async function postBranding(req: Request, res: Response) {
                         throw new Error("Thumbnail submission doesn't exist");
                     }
 
-                    await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                        [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID]);
+                    await db.prepare("run", `INSERT INTO "thumbnails" ("videoID", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID", "casualMode") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [videoID, thumbnail.original ? 1 : 0, hashedUserID, service, hashedVideoID, now, UUID, casualMode ? 1 : 0]);
 
                     await db.prepare("run", `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden") VALUES (?, 0, ?, ?)`,
                         [UUID, shouldLock ? 1 : 0, isBanned ? 1 : 0]);

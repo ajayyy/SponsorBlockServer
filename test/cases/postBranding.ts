@@ -15,6 +15,7 @@ describe("postBranding", () => {
     const userID5 = `PostBrandingUser5${".".repeat(16)}`;
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
+    const userID8 = `PostBrandingUser8${".".repeat(16)}`;
     const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
 
 
@@ -119,6 +120,7 @@ describe("postBranding", () => {
 
         assert.strictEqual(dbTitle.title, title.title);
         assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+        assert.strictEqual(dbTitle.casualMode, 0);
 
         assert.strictEqual(dbVotes.votes, 0);
         assert.strictEqual(dbVotes.locked, 0);
@@ -1131,6 +1133,50 @@ describe("postBranding", () => {
 
         const dbVotes3 = await queryTitleVotesByUUID("postBrandVerified2");
         assert.strictEqual(dbVotes3.verification, 0);
+    });
+
+    it("Submit title and thumbnail with casual mode", async () => {
+        const videoID = "postBrandCasual1";
+        const title = {
+            title: "Some title",
+            original: false
+        };
+        const thumbnail = {
+            timestamp: 12.42,
+            original: false
+        };
+
+        const res = await postBranding({
+            title,
+            thumbnail,
+            userID: userID5,
+            service: Service.YouTube,
+            videoID,
+            casualMode: true
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbTitle = await queryTitleByVideo(videoID);
+        const dbTitleVotes = await queryTitleVotesByUUID(dbTitle.UUID);
+        const dbThumbnail = await queryThumbnailByVideo(videoID);
+        const dbThumbnailTimestamps = await queryThumbnailTimestampsByUUID(dbThumbnail.UUID);
+        const dbThumbnailVotes = await queryThumbnailVotesByUUID(dbThumbnail.UUID);
+
+        assert.strictEqual(dbTitle.title, title.title);
+        assert.strictEqual(dbTitle.original, title.original ? 1 : 0);
+        assert.strictEqual(dbTitle.casualMode, 1);
+
+        assert.strictEqual(dbTitleVotes.votes, 0);
+        assert.strictEqual(dbTitleVotes.locked, 0);
+        assert.strictEqual(dbTitleVotes.shadowHidden, 0);
+
+        assert.strictEqual(dbThumbnailTimestamps.timestamp, thumbnail.timestamp);
+        assert.strictEqual(dbThumbnail.original, thumbnail.original ? 1 : 0);
+        assert.strictEqual(dbThumbnail.casualMode, 1);
+
+        assert.strictEqual(dbThumbnailVotes.votes, 0);
+        assert.strictEqual(dbThumbnailVotes.locked, 0);
+        assert.strictEqual(dbThumbnailVotes.shadowHidden, 0);
     });
 
     it("Banned users should not be able to vote (custom title)", async () => {
