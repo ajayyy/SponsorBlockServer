@@ -1,4 +1,4 @@
-import { db } from "../databases/databases";
+import { db, privateDB } from "../databases/databases";
 import { getHashCache } from "../utils/getHashCache";
 import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
@@ -144,6 +144,16 @@ async function getThumbnailSubmissionCount(userID: HashedUserID): Promise<number
     }
 }
 
+async function getCasualSubmissionCount(userID: HashedUserID): Promise<number> {
+    try {
+        const row = await privateDB.prepare("get", `SELECT COUNT(DISTINCT "videoID") as "casualSubmissionCount" FROM "casualVotes" WHERE "userID" = ?`, [userID], { useReplica: true });
+        return row?.casualSubmissionCount ?? 0;
+    } catch (err) /* istanbul ignore next */ {
+        return null;
+    }
+}
+
+
 type cases = Record<string, any>
 
 const executeIfFunction = (f: any) =>
@@ -173,6 +183,7 @@ const dbGetValue = (userID: HashedUserID, property: string): Promise<string|Segm
         freeChaptersAccess: () => true,
         titleSubmissionCount: () => getTitleSubmissionCount(userID),
         thumbnailSubmissionCount: () => getThumbnailSubmissionCount(userID),
+        casualSubmissionCount: () => getCasualSubmissionCount(userID),
     })("")(property);
 };
 
@@ -183,7 +194,7 @@ async function getUserInfo(req: Request, res: Response): Promise<Response> {
         "viewCount", "ignoredViewCount", "warnings", "warningReason", "reputation",
         "vip", "lastSegmentID"];
     const allProperties: string[] = [...defaultProperties, "banned", "permissions", "freeChaptersAccess",
-        "ignoredSegmentCount", "titleSubmissionCount", "thumbnailSubmissionCount", "deArrowWarningReason"];
+        "ignoredSegmentCount", "titleSubmissionCount", "thumbnailSubmissionCount", "casualSubmissionCount", "deArrowWarningReason"];
     let paramValues: string[] = req.query.values
         ? JSON.parse(req.query.values as string)
         : req.query.value
