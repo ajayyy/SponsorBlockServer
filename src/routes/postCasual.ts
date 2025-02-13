@@ -14,25 +14,24 @@ import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
 
-enum CasualVoteType {
-    Upvote = 1,
-    Downvote = 2
-}
-
 interface ExistingVote {
     UUID: BrandingUUID;
     type: number;
 }
 
 export async function postCasual(req: Request, res: Response) {
-    const { videoID, userID, downvote, categories } = req.body as CasualVoteSubmission;
+    const { videoID, userID, downvote } = req.body as CasualVoteSubmission;
+    let categories = req.body.categories as CasualCategory[];
     const service = getService(req.body.service);
+
+    if (downvote) {
+        categories = ["downvote" as CasualCategory];
+    } else if (!categories.every((c) => config.casualCategoryList.includes(c))) {
+        return res.status(400).send("Invalid category");
+    }
 
     if (!videoID || !userID || userID.length < 30 || !service || !categories || !Array.isArray(categories)) {
         return res.status(400).send("Bad Request");
-    }
-    if (!categories.every((c) => config.casualCategoryList.includes(c))) {
-        return res.status(400).send("Invalid category");
     }
 
     try {
@@ -52,24 +51,18 @@ export async function postCasual(req: Request, res: Response) {
         }
 
         const now = Date.now();
-        const voteType: CasualVoteType = downvote ? CasualVoteType.Downvote : CasualVoteType.Upvote;
-
         for (const category of categories) {
             const existingUUID = (await db.prepare("get", `SELECT "UUID" from "casualVotes" where "videoID" = ? AND "category" = ?`, [videoID, category]))?.UUID;
             const UUID = existingUUID || crypto.randomUUID();
 
-            const alreadyVotedTheSame = await handleExistingVotes(videoID, service, UUID, hashedUserID, hashedIP, category, voteType, now);
+            const alreadyVotedTheSame = await handleExistingVotes(videoID, service, UUID, hashedUserID, hashedIP, category, downvote, now);
             if (existingUUID) {
                 if (!alreadyVotedTheSame) {
-                    if (downvote) {
-                        await db.prepare("run", `UPDATE "casualVotes" SET "downvotes" = "downvotes" + 1 WHERE "UUID" = ?`, [UUID]);
-                    } else {
-                        await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" + 1 WHERE "UUID" = ?`, [UUID]);
-                    }
+                    await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" + 1 WHERE "UUID" = ?`, [UUID]);
                 }
             } else {
-                await db.prepare("run", `INSERT INTO "casualVotes" ("videoID", "service", "hashedVideoID", "timeSubmitted", "UUID", "category", "upvotes", "downvotes") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [videoID, service, hashedVideoID, now, UUID, category, downvote ? 0 : 1, downvote ? 1 : 0]);
+                await db.prepare("run", `INSERT INTO "casualVotes" ("videoID", "service", "hashedVideoID", "timeSubmitted", "UUID", "category", "upvotes") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [videoID, service, hashedVideoID, now, UUID, category, 1]);
             }
         }
 
@@ -85,24 +78,30 @@ export async function postCasual(req: Request, res: Response) {
 }
 
 async function handleExistingVotes(videoID: VideoID, service: Service, UUID: string,
-    hashedUserID: HashedUserID, hashedIP: HashedIP, category: CasualCategory, voteType: CasualVoteType, now: number): Promise<boolean> {
-    const existingVote = await privateDB.prepare("get", `SELECT "UUID", "type" from "casualVotes" WHERE "videoID" = ? AND "service" = ? AND "userID" = ? AND category = ?`, [videoID, service, hashedUserID, category]) as ExistingVote;
+    hashedUserID: HashedUserID, hashedIP: HashedIP, category: CasualCategory, downvote: boolean, now: number): Promise<boolean> {
+    const existingVote = await privateDB.prepare("get", `SELECT "UUID" from "casualVotes" WHERE "videoID" = ? AND "service" = ? AND "userID" = ? AND "category" = ?`, [videoID, service, hashedUserID, category]) as ExistingVote;
     if (existingVote) {
-        if (existingVote.type === voteType) {
-            return true;
-        }
-
-        if (existingVote.type === CasualVoteType.Upvote) {
-            await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" - 1 WHERE "UUID" = ?`, [UUID]);
+        return true;
+    } else {
+        if (downvote) {
+            // Remove upvotes for all categories on this video
+            const existingUpvotes = await privateDB.prepare("all", `SELECT "category" from "casualVotes" WHERE "category" != 'downvote' AND "videoID" = ? AND "service" = ? AND "userID" = ?`, [videoID, service, hashedUserID]);
+            for (const existingUpvote of existingUpvotes) {
+                await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" - 1 WHERE "videoID" = ? AND "category" = ?`, [videoID, existingUpvote.category]);
+                await privateDB.prepare("run", `DELETE FROM "casualVotes" WHERE "videoID" = ? AND "userID" = ? AND "category" = ?`, [videoID, hashedUserID, existingUpvote.category]);
+            }
         } else {
-            await db.prepare("run", `UPDATE "casualVotes" SET "downvotes" = "downvotes" - 1 WHERE "UUID" = ?`, [UUID]);
+            // Undo a downvote if it exists
+            const existingDownvote = await privateDB.prepare("get", `SELECT "UUID" from "casualVotes" WHERE "category" = 'downvote' AND "videoID" = ? AND "service" = ? AND "userID" = ?`, [videoID, service, hashedUserID]) as ExistingVote;
+            if (existingDownvote) {
+                await db.prepare("run", `UPDATE "casualVotes" SET "upvotes" = "upvotes" - 1 WHERE "category" = 'downvote' AND "videoID" = ?`, [videoID]);
+                await privateDB.prepare("run", `DELETE FROM "casualVotes" WHERE "category" = 'downvote' AND "videoID" = ? AND "userID" = ?`, [videoID, hashedUserID]);
+            }
         }
-
-        await privateDB.prepare("run", `DELETE FROM "casualVotes" WHERE "UUID" = ?`, [existingVote.UUID]);
     }
 
-    await privateDB.prepare("run", `INSERT INTO "casualVotes" ("videoID", "service", "userID", "hashedIP", "category", "type", "timeSubmitted") VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [videoID, service, hashedUserID, hashedIP, category, voteType, now]);
+    await privateDB.prepare("run", `INSERT INTO "casualVotes" ("videoID", "service", "userID", "hashedIP", "category", "timeSubmitted") VALUES (?, ?, ?, ?, ?, ?)`,
+        [videoID, service, hashedUserID, hashedIP, category, now]);
 
     return false;
 }

@@ -3,7 +3,7 @@ import { UserID } from "./user.model";
 
 export type BrandingUUID = string & { readonly __brandingUUID: unique symbol };
 
-export type CasualCategory = ("funny" | "creative" | "clever" | "descriptive" | "other") & { __casualCategoryBrand: unknown };
+export type CasualCategory = ("funny" | "creative" | "clever" | "descriptive" | "other" | "downvote") & { __casualCategoryBrand: unknown };
 
 export interface BrandingDBSubmissionData {
     videoID: VideoID,

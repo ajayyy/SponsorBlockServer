@@ -47,7 +47,7 @@ describe("getBranding", () => {
         const thumbnailTimestampsQuery = `INSERT INTO "thumbnailTimestamps" ("UUID", "timestamp") VALUES (?, ?)`;
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?)`;
         const segmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        const insertCasualVotesQuery = `INSERT INTO "casualVotes" ("UUID", "videoID", "service", "hashedVideoID", "category", "upvotes", "downvotes", "timeSubmitted") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const insertCasualVotesQuery = `INSERT INTO "casualVotes" ("UUID", "videoID", "service", "hashedVideoID", "category", "upvotes", "timeSubmitted") VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
@@ -150,9 +150,10 @@ describe("getBranding", () => {
         ]);
 
         await Promise.all([
-            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual1", videoIDCasual, Service.YouTube, videoIDCasualHash, "clever", 1, 0, Date.now()]),
-            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual2", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "clever", 1, 1, Date.now()]),
-            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual3", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "other", 4, 1, Date.now()])
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual1", videoIDCasual, Service.YouTube, videoIDCasualHash, "clever", 1, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual2", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "clever", 1, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual2d", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "downvote", 1, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual3", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "other", 4, Date.now()]),
         ]);
     });
 

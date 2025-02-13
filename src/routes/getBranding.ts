@@ -53,7 +53,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 
     const getCasualVotes = () => db.prepare(
         "all",
-        `SELECT "category", "upvotes", "downvotes" FROM "casualVotes" 
+        `SELECT "category", "upvotes" FROM "casualVotes" 
         WHERE "videoID" = ? AND "service" = ?
         ORDER BY "timeSubmitted" ASC`,
         [videoID, service],
@@ -131,7 +131,7 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
 
     const getCasualVotes = () => db.prepare(
         "all",
-        `SELECT "videoID", "category", "upvotes", "downvotes" FROM "casualVotes" 
+        `SELECT "videoID", "category", "upvotes" FROM "casualVotes" 
         WHERE "hashedVideoID" LIKE ? AND "service" = ?
         ORDER BY "timeSubmitted" ASC`,
         [`${videoHashPrefix}%`, service],
@@ -230,9 +230,10 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fe
         }))
         .filter((a) => (fetchAll && !a.original) || a.votes >= 1 || (a.votes >= 0 && !a.original) || a.locked) as ThumbnailResult[];
 
-    const casualVotes = dbCasualVotes.map((r) => ({
+    const casualDownvotes = dbCasualVotes.filter((r) => r.category === "downvote")[0];
+    const casualVotes = dbCasualVotes.filter((r) => r.category !== "downvote").map((r) => ({
         id: r.category,
-        count: r.upvotes - r.downvotes
+        count: r.upvotes - (casualDownvotes?.upvotes ?? 0)
     })).filter((a) => a.count > 0);
 
     const videoDuration = dbSegments.filter(s => s.videoDuration !== 0)[0]?.videoDuration ?? null;
