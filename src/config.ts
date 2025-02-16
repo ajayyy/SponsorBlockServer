@@ -149,6 +149,10 @@ addDefaults(config, {
         },
         {
             name: "thumbnailVotes"
+        },
+        {
+            name: "casualVotes",
+            order: "timeSubmitted"
         }]
     },
     diskCacheURL: null,
