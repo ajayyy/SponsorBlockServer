@@ -10,7 +10,7 @@ export const partialDeepEquals = (actual: Record<string, any>, expected: Record<
     // loop over key, value of expected
     for (const [key, value] of Object.entries(expected)) {
         // if value is object or array, recurse
-        if (Array.isArray(value) || typeof value === "object") {
+        if (Array.isArray(value) || (typeof value === "object" && value !== null)) {
             if (!partialDeepEquals(actual?.[key], value, false)) {
                 if (print) printActualExpected(actual, expected, key);
                 return false;

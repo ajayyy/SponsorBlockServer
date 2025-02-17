@@ -16,7 +16,7 @@ describe("postCasual", () => {
         data
     });
 
-    const queryCasualVotesByVideo = (videoID: string, all = false) => db.prepare(all ? "all" : "get", `SELECT * FROM "casualVotes" WHERE "videoID" = ? ORDER BY "timeSubmitted" ASC`, [videoID]);
+    const queryCasualVotesByVideo = (videoID: string, all = false, titleID = 0) => db.prepare(all ? "all" : "get", `SELECT * FROM "casualVotes" WHERE "videoID" = ? AND "titleID" = ? ORDER BY "timeSubmitted" ASC`, [videoID, titleID]);
 
     it("submit casual vote", async () => {
         const videoID = "postCasual1";
@@ -25,6 +25,7 @@ describe("postCasual", () => {
             categories: ["clever"],
             userID: userID1,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -42,6 +43,7 @@ describe("postCasual", () => {
             categories: ["clever"],
             userID: userID1,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -59,6 +61,7 @@ describe("postCasual", () => {
             categories: ["clever"],
             userID: userID2,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -96,6 +99,7 @@ describe("postCasual", () => {
             downvote: true,
             userID: userID3,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -117,6 +121,7 @@ describe("postCasual", () => {
             downvote: false,
             userID: userID3,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -137,6 +142,7 @@ describe("postCasual", () => {
             categories: ["clever", "other"],
             userID: userID1,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -157,6 +163,7 @@ describe("postCasual", () => {
             downvote: true,
             userID: userID1,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -180,6 +187,7 @@ describe("postCasual", () => {
             categories: ["clever", "other"],
             userID: userID1,
             service: Service.YouTube,
+            title: "title",
             videoID
         });
 
@@ -199,6 +207,7 @@ describe("postCasual", () => {
         const res = await postCasual({
             userID: userID1,
             service: Service.YouTube,
+            title: "title",
             videoID,
             downvote: true
         });
@@ -208,6 +217,35 @@ describe("postCasual", () => {
 
         assert.strictEqual(dbVotes.category, "downvote");
         assert.strictEqual(dbVotes.upvotes, 1);
+    });
+
+    it("submit multiple casual votes for different title", async () => {
+        const videoID = "postCasual2";
+
+        const res = await postCasual({
+            categories: ["clever", "funny"],
+            userID: userID2,
+            service: Service.YouTube,
+            title: "title 2",
+            videoID
+        });
+
+        assert.strictEqual(res.status, 200);
+        const dbVotes = await queryCasualVotesByVideo(videoID, true, 1);
+
+        assert.strictEqual(dbVotes[0].category, "clever");
+        assert.strictEqual(dbVotes[0].upvotes, 1);
+
+        assert.strictEqual(dbVotes[1].category, "funny");
+        assert.strictEqual(dbVotes[1].upvotes, 1);
+
+        const dbVotesOriginal = await queryCasualVotesByVideo(videoID, true, 0);
+
+        assert.strictEqual(dbVotesOriginal[0].category, "clever");
+        assert.strictEqual(dbVotesOriginal[0].upvotes, 1);
+
+        assert.strictEqual(dbVotesOriginal[1].category, "other");
+        assert.strictEqual(dbVotesOriginal[1].upvotes, 1);
     });
 
 });

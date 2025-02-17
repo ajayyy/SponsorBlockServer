@@ -16,6 +16,7 @@ describe("getBranding", () => {
     const videoIDvidDuration = "videoID7";
     const videoIDCasual = "videoIDCasual";
     const videoIDCasualDownvoted = "videoIDCasualDownvoted";
+    const videoIDCasualTitle = "videoIDCasualTitle";
 
     const videoID1Hash = getHash(videoID1, 1).slice(0, 4);
     const videoID2LockedHash = getHash(videoID2Locked, 1).slice(0, 4);
@@ -26,6 +27,7 @@ describe("getBranding", () => {
     const videoIDvidDurationHash = getHash(videoIDUnverified, 1).slice(0, 4);
     const videoIDCasualHash = getHash(videoIDCasual, 1).slice(0, 4);
     const videoIDCasualDownvotedHash = getHash(videoIDCasualDownvoted, 1).slice(0, 4);
+    const videoIDCasualTitleHash = getHash(videoIDCasualTitle, 1).slice(0, 4);
 
     const endpoint = "/api/branding";
     const getBranding = (params: Record<string, any>) => client({
@@ -48,6 +50,7 @@ describe("getBranding", () => {
         const thumbnailVotesQuery = `INSERT INTO "thumbnailVotes" ("UUID", "votes", "locked", "shadowHidden", "downvotes", "removed") VALUES (?, ?, ?, ?, ?, ?)`;
         const segmentQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "service", "videoDuration", "hidden", "shadowHidden", "description", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         const insertCasualVotesQuery = `INSERT INTO "casualVotes" ("UUID", "videoID", "service", "hashedVideoID", "category", "upvotes", "timeSubmitted") VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        const insertCasualVotesTitleQuery = `INSERT INTO "casualVoteTitles" ("videoID", "service", "hashedVideoID", "id", "title") VALUES (?, ?, ?, ?, ?)`;
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoID1, "title1", 0, "userID1", Service.YouTube, videoID1Hash, 1, "UUID1"]),
@@ -154,6 +157,13 @@ describe("getBranding", () => {
             db.prepare("run", insertCasualVotesQuery, ["postBrandCasual2", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "clever", 1, Date.now()]),
             db.prepare("run", insertCasualVotesQuery, ["postBrandCasual2d", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "downvote", 1, Date.now()]),
             db.prepare("run", insertCasualVotesQuery, ["postBrandCasual3", videoIDCasualDownvoted, Service.YouTube, videoIDCasualDownvotedHash, "other", 4, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual4", videoIDCasualTitle, Service.YouTube, videoIDCasualTitleHash, "clever", 8, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual4d", videoIDCasualTitle, Service.YouTube, videoIDCasualTitleHash, "downvote", 4, Date.now()]),
+            db.prepare("run", insertCasualVotesQuery, ["postBrandCasual4o", videoIDCasualTitle, Service.YouTube, videoIDCasualTitleHash, "other", 3, Date.now()]),
+        ]);
+
+        await Promise.all([
+            db.prepare("run", insertCasualVotesTitleQuery, [videoIDCasualTitle, Service.YouTube, videoIDCasualTitleHash, 0, "a cool title"]),
         ]);
     });
 
@@ -351,7 +361,8 @@ describe("getBranding", () => {
         await checkVideo(videoIDCasual, videoIDCasualHash, true, {
             casualVotes: [{
                 id: "clever",
-                count: 1
+                count: 1,
+                title: null
             }]
         });
     });
@@ -360,7 +371,18 @@ describe("getBranding", () => {
         await checkVideo(videoIDCasualDownvoted, videoIDCasualDownvotedHash, true, {
             casualVotes: [{
                 id: "other",
-                count: 3
+                count: 3,
+                title: null
+            }]
+        });
+    });
+
+    it("should get casual votes with title", async () => {
+        await checkVideo(videoIDCasualTitle, videoIDCasualTitleHash, true, {
+            casualVotes: [{
+                id: "clever",
+                count: 4,
+                title: "a cool title"
             }]
         });
     });

@@ -53,9 +53,10 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 
     const getCasualVotes = () => db.prepare(
         "all",
-        `SELECT "category", "upvotes" FROM "casualVotes" 
-        WHERE "videoID" = ? AND "service" = ?
-        ORDER BY "timeSubmitted" ASC`,
+        `SELECT "casualVotes"."category", "casualVotes"."upvotes", "casualVoteTitles"."title"
+        FROM "casualVotes" LEFT JOIN "casualVoteTitles" ON "casualVotes"."videoID" = "casualVoteTitles"."videoID" AND "casualVotes"."service" = "casualVoteTitles"."service" AND "casualVotes"."titleID" = "casualVoteTitles"."id"
+        WHERE "casualVotes"."videoID" = ? AND "casualVotes"."service" = ?
+        ORDER BY "casualVotes"."timeSubmitted" ASC`,
         [videoID, service],
         { useReplica: true }
     ) as Promise<CasualVoteDBResult[]>;
@@ -131,9 +132,10 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
 
     const getCasualVotes = () => db.prepare(
         "all",
-        `SELECT "videoID", "category", "upvotes" FROM "casualVotes" 
-        WHERE "hashedVideoID" LIKE ? AND "service" = ?
-        ORDER BY "timeSubmitted" ASC`,
+        `SELECT "casualVotes"."videoID", "casualVotes"."category", "casualVotes"."upvotes", "casualVoteTitles"."title"
+        FROM "casualVotes" LEFT JOIN "casualVoteTitles" ON "casualVotes"."videoID" = "casualVoteTitles"."videoID" AND "casualVotes"."service" = "casualVoteTitles"."service" AND "casualVotes"."titleID" = "casualVoteTitles"."id"
+        WHERE "casualVotes"."hashedVideoID" LIKE ? AND "casualVotes"."service" = ?
+        ORDER BY "casualVotes"."timeSubmitted" ASC`,
         [`${videoHashPrefix}%`, service],
         { useReplica: true }
     ) as Promise<CasualVoteHashDBResult[]>;
@@ -233,7 +235,8 @@ async function filterAndSortBranding(videoID: VideoID, returnUserID: boolean, fe
     const casualDownvotes = dbCasualVotes.filter((r) => r.category === "downvote")[0];
     const casualVotes = dbCasualVotes.filter((r) => r.category !== "downvote").map((r) => ({
         id: r.category,
-        count: r.upvotes - (casualDownvotes?.upvotes ?? 0)
+        count: r.upvotes - (casualDownvotes?.upvotes ?? 0),
+        title: r.title
     })).filter((a) => a.count > 0);
 
     const videoDuration = dbSegments.filter(s => s.videoDuration !== 0)[0]?.videoDuration ?? null;

@@ -54,7 +54,8 @@ export interface ThumbnailResult {
 
 export interface CasualVote {
     id: string,
-    count: number
+    count: number,
+    title: string | null
 }
 
 export interface BrandingResult {
@@ -107,6 +108,7 @@ export interface CasualVoteSubmission {
     service: Service;
     downvote: boolean | undefined;
     categories: CasualCategory[];
+    title?: string;
 }
 
 export interface BrandingSegmentDBResult {
@@ -120,6 +122,7 @@ export interface CasualVoteDBResult {
     category: CasualCategory;
     upvotes: number;
     downvotes: number;
+    title?: string;
 }
 
 export interface BrandingSegmentHashDBResult extends BrandingDBSubmissionData {

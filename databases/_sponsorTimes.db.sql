@@ -95,6 +95,15 @@ CREATE TABLE IF NOT EXISTS "casualVotes" (
 	"timeSubmitted"	INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "casualVoteTitles" (
+	"videoID"	TEXT NOT NULL,
+	"service"	TEXT NOT NULL,
+	"id"	INTEGER NOT NULL,
+	"hashedVideoID"	TEXT NOT NULL,
+	"title" TEXT NOT NULL,
+	PRIMARY KEY("videoID", "service", "id")
+);
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
 
