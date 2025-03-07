@@ -16,7 +16,7 @@ export function getService<T extends string>(...value: T[]): Service {
     return Service.YouTube;
 }
 
-export function getUnsupportedService<T extends string>(...value: T[]): string | undefined {
+export function getUnsupportedService<T extends string>(...value: T[]): string | null {
     const serviceByName = Object.values(Service).reduce((acc, serviceName) => {
         acc[serviceName.toLowerCase()] = serviceName;
 
@@ -25,12 +25,12 @@ export function getUnsupportedService<T extends string>(...value: T[]): string |
 
     let unsupportedValue;
     for (const name of value) {
-        const cleanName = name?.trim().toLowerCase()
+        const cleanName = name?.trim().toLowerCase();
         if (cleanName in serviceByName) {
-            return null
+            return null;
         }
-        if(cleanName) unsupportedValue = name
+        if (cleanName) unsupportedValue = name;
     }
 
-    return unsupportedValue
+    return unsupportedValue;
 }

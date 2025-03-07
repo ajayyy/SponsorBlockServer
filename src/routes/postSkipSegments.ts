@@ -500,9 +500,9 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         proxySubmission(req);
     }
 
-    const unsupportedValue = getUnsupportedService(req.query.service, req.body.service)
-    if (unsupportedValue) {
-        return res.status(400).send(`Service is not supported: ${unsupportedValue}`);
+    const unsupportedService = getUnsupportedService(req.query.service, req.body.service);
+    if (unsupportedService) {
+        return res.status(400).send(`Service is not supported: ${unsupportedService}`);
     }
 
     // eslint-disable-next-line prefer-const
