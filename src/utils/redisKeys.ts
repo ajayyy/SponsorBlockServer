@@ -18,6 +18,13 @@ export function skipSegmentsHashKey(hashedVideoIDPrefix: VideoIDHash, service: S
     return `segments.v4.${service}.${hashedVideoIDPrefix}`;
 }
 
+export function skipSegmentsLargerHashKey(hashedVideoIDPrefix: VideoIDHash, service: Service): string {
+    hashedVideoIDPrefix = hashedVideoIDPrefix.substring(0, 5) as VideoIDHash;
+    if (hashedVideoIDPrefix.length !== 5) Logger.warn(`Redis skip segment hash-prefix key is not length 5! ${hashedVideoIDPrefix}`);
+
+    return `segments.v4.${service}.${hashedVideoIDPrefix}`;
+}
+
 export const brandingKey = (videoID: VideoID, service: Service): string =>
     `branding.v3.${service}.videoID.${videoID}`;
 

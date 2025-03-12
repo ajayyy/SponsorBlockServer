@@ -23,7 +23,8 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
     const segments = await getSegmentsByHash(req, hashPrefix, categories, actionTypes, trimUUIDs, requiredSegments, service);
 
     try {
-        await getEtag("skipSegmentsHash", hashPrefix, service)
+        const hashKey = hashPrefix.length === 4 ? "skipSegmentsHash" : "skipSegmentsLargerHash";
+        await getEtag(hashKey, hashPrefix, service)
             .then(etag => res.set("ETag", etag))
             .catch(/* istanbul ignore next */ () => null);
         const output = Object.entries(segments).map(([videoID, data]) => ({

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { partition } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
-import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey, shadowHiddenIPKey } from "../utils/redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey, shadowHiddenIPKey, skipSegmentsLargerHashKey } from "../utils/redisKeys";
 import { SBRecord } from "../types/lib.model";
 import { ActionType, Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
 import { getHashCache } from "../utils/getHashCache";
@@ -226,6 +226,8 @@ async function getSegmentsFromDBByHash(hashedVideoIDPrefix: VideoIDHash, service
 
     if (hashedVideoIDPrefix.length === 4) {
         return await QueryCacher.get(fetchFromDB, skipSegmentsHashKey(hashedVideoIDPrefix, service));
+    } else if (hashedVideoIDPrefix.length === 5) {
+        return await QueryCacher.get(fetchFromDB, skipSegmentsLargerHashKey(hashedVideoIDPrefix, service));
     }
 
     return await fetchFromDB();
