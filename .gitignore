@@ -49,3 +49,5 @@ working
 # nyc coverage output
 .nyc_output/
 coverage/
+
+.vscode
