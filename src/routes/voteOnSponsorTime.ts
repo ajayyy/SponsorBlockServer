@@ -17,7 +17,7 @@ import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
-import { canSubmitGlobal } from "../utils/permissions";
+import { canVote } from "../utils/permissions";
 
 const voteTypes = {
     normal: 0,
@@ -343,7 +343,7 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
 
-    const permission = await canSubmitGlobal(nonAnonUserID);
+    const permission = await canVote(nonAnonUserID);
     if (!permission.canSubmit) {
         return {
             status: 403,

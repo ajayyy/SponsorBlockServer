@@ -13,7 +13,7 @@ import crypto from "crypto";
 import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
-import { canSubmitGlobal } from "../utils/permissions";
+import { canSubmitDeArrow } from "../utils/permissions";
 
 interface ExistingVote {
     UUID: BrandingUUID;
@@ -42,7 +42,7 @@ export async function postCasual(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        const permission = await canSubmitGlobal(hashedUserID);
+        const permission = await canSubmitDeArrow(hashedUserID);
         if (!permission.canSubmit) {
             res.status(403).send(permission.reason);
             return;
