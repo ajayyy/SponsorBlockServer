@@ -13,6 +13,7 @@ import crypto from "crypto";
 import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
+import { canVote } from "../utils/permissions";
 
 interface ExistingVote {
     UUID: BrandingUUID;
@@ -40,6 +41,10 @@ export async function postCasual(req: Request, res: Response) {
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
+
+        if (!await canVote(hashedUserID)) {
+            res.status(200).send("OK");
+        }
 
         const lock = await acquireLock(`postCasual:${videoID}.${hashedUserID}`);
         if (!lock.status) {

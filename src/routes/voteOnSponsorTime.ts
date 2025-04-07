@@ -17,6 +17,7 @@ import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
+import { canVote } from "../utils/permissions";
 
 const voteTypes = {
     normal: 0,
@@ -341,6 +342,10 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     //hash the userID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
+
+    if (!await canVote(nonAnonUserID)) {
+        return { status: 200 };
+    }
 
     //hash the ip 5000 times so no one can get it from the database
     const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);

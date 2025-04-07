@@ -18,6 +18,7 @@ import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
 import { getMaxResThumbnail } from "../utils/youtubeApi";
 import { getVideoDetails } from "../utils/getVideoDetails";
+import { canVote } from "../utils/permissions";
 
 enum BrandingType {
     Title,
@@ -54,6 +55,10 @@ export async function postBranding(req: Request, res: Response) {
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
+
+        if (!await canVote(hashedUserID)) {
+            res.status(200).send("OK");
+        }
 
         if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
             res.status(403).send("YouTube is currently testing a new anti-adblock technique called server-side ad-injection. This causes skips and submissions to be offset by the duration of the ad. It seems that you are affected by this A/B test, so until a fix is developed, we cannot accept submissions from your device due to them potentially being inaccurate.");

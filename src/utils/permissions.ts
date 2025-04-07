@@ -46,3 +46,12 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
             };
     }
 }
+
+export async function canVote(userID: HashedUserID): Promise<CanSubmitResult> {
+    return {
+        canSubmit: await oneOf([isUserVIP(userID),
+            oldSubmitter(userID)
+        ]),
+        reason: "We are currently experiencing a mass spam attack"
+    };
+}
