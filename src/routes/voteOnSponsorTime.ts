@@ -343,8 +343,12 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
 
-    if (!await canVote(nonAnonUserID)) {
-        return { status: 200 };
+    const permission = await canVote(nonAnonUserID);
+    if (!permission.canSubmit) {
+        return {
+            status: 403,
+            message: permission.reason
+        };
     }
 
     //hash the ip 5000 times so no one can get it from the database

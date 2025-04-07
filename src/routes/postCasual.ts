@@ -42,8 +42,10 @@ export async function postCasual(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        if (!await canVote(hashedUserID)) {
-            res.status(200).send("OK");
+        const permission = await canVote(hashedUserID);
+        if (!permission.canSubmit) {
+            res.status(403).send(permission.reason);
+            return;
         }
 
         const lock = await acquireLock(`postCasual:${videoID}.${hashedUserID}`);
