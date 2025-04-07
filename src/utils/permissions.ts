@@ -19,6 +19,13 @@ async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
     return result.submissionCount > 5 && result.downvotedSubmissions / result.submissionCount < 0.10;
 }
 
+async function oldSubmitter(userID: HashedUserID): Promise<boolean> {
+    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
+        , [userID], { useReplica: true });
+
+    return result.submissionCount > 1;
+}
+
 export async function canSubmit(userID: HashedUserID, category: Category): Promise<CanSubmitResult> {
     switch (category) {
         case "chapter":
@@ -32,8 +39,10 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
             };
         default:
             return {
-                canSubmit: true,
-                reason: ""
+                canSubmit: await oneOf([isUserVIP(userID),
+                    oldSubmitter(userID)
+                ]),
+                reason: "We are currently experiencing a mass spam attack"
             };
     }
 }
