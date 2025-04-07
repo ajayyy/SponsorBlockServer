@@ -18,7 +18,7 @@ import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
 import { getMaxResThumbnail } from "../utils/youtubeApi";
 import { getVideoDetails } from "../utils/getVideoDetails";
-import { canVote } from "../utils/permissions";
+import { canSubmitGlobal } from "../utils/permissions";
 
 enum BrandingType {
     Title,
@@ -56,7 +56,7 @@ export async function postBranding(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        const permission = await canVote(hashedUserID);
+        const permission = await canSubmitGlobal(hashedUserID);
         if (!permission.canSubmit) {
             res.status(403).send(permission.reason);
             return;
