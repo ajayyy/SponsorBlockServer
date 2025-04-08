@@ -238,7 +238,7 @@ function setupRoutes(router: Router, server: Server) {
     router.post("/api/branding", postBranding);
 
     router.get("/api/config", getConfigEndpoint);
-    router.get("/api/config", setConfig);
+    router.post("/api/config", setConfig);
 
     router.post("/api/casual", postCasual);
 
