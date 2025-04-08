@@ -511,6 +511,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
     const permission = await canSubmitGlobal(userID);
     if (!permission.canSubmit) {
+        Logger.warn(`New user trying to submit: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(403).send(permission.reason);
     }
 

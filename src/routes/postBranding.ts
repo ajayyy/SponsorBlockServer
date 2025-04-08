@@ -58,6 +58,8 @@ export async function postBranding(req: Request, res: Response) {
 
         const permission = await canSubmitDeArrow(hashedUserID);
         if (!permission.canSubmit) {
+            Logger.warn(`New user trying to submit dearrow: ${userID} ${videoID} ${title} ${req.headers["user-agent"]}`);
+
             res.status(403).send(permission.reason);
             return;
         }
