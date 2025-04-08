@@ -60,6 +60,8 @@ import { getReady } from "./routes/getReady";
 import { getMetrics } from "./routes/getMetrics";
 import { getSegmentID } from "./routes/getSegmentID";
 import { postCasual } from "./routes/postCasual";
+import { getConfigEndpoint } from "./routes/getConfig";
+import { setConfig } from "./routes/setConfig";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -234,6 +236,9 @@ function setupRoutes(router: Router, server: Server) {
     router.get("/api/branding", getBranding);
     router.get("/api/branding/:prefix", getBrandingByHashEndpoint);
     router.post("/api/branding", postBranding);
+
+    router.get("/api/config", getConfigEndpoint);
+    router.get("/api/config", setConfig);
 
     router.post("/api/casual", postCasual);
 

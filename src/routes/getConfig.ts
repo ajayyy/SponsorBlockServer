@@ -1,11 +1,11 @@
 import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { UserID } from "../types/user.model";
 import { Logger } from "../utils/logger";
+import { getServerConfig } from "../utils/serverConfig";
 
-export async function getConfig(req: Request, res: Response): Promise<Response> {
+export async function getConfigEndpoint(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as string;
     const key = req.query.key as string;
 
@@ -24,10 +24,8 @@ export async function getConfig(req: Request, res: Response): Promise<Response> 
     }
 
     try {
-        const row = await db.prepare("run", `SELECT "value" FROM "config" WHERE "key" = ?`, [key]);
-
         return res.status(200).json({
-            value: row.value
+            value: getServerConfig(key)
         });
     } catch (e) {
         Logger.error(e as string);
