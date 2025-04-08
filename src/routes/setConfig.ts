@@ -36,7 +36,7 @@ export async function setConfig(req: SetConfigRequest, res: Response): Promise<R
     }
 
     try {
-        await db.prepare("run", `INSERT OR REPLACE INTO "config" ("key", "value") VALUES(?, ?)`, [key, value]);
+        await db.prepare("run", `INSERT INTO "config" ("key", "value") VALUES(?, ?) ON CONFLICT ("key") DO UPDATE SET "value" = ?`, [key, value, value]);
 
         return res.sendStatus(200);
     } catch (e) {
