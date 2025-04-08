@@ -6,6 +6,7 @@ import { hasFeature } from "./features";
 import { isUserVIP } from "./isUserVIP";
 import { oneOf } from "./promise";
 import { getReputation } from "./reputation";
+import { getServerConfig } from "./serverConfig";
 
 interface CanSubmitResult {
     canSubmit: boolean;
@@ -20,15 +21,25 @@ async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
 }
 
 async function oldSubmitter(userID: HashedUserID): Promise<boolean> {
-    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
-        , [userID], { useReplica: true });
+    const submitterThreshold = await getServerConfig("old-submitter-block-date");
+    if (!submitterThreshold) {
+        return true;
+    }
+
+    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < ?`
+        , [userID, parseInt(submitterThreshold)], { useReplica: true });
 
     return result.submissionCount >= 1;
 }
 
 async function oldDeArrowSubmitter(userID: HashedUserID): Promise<boolean> {
+    const submitterThreshold = await getServerConfig("old-submitter-block-date");
+    if (!submitterThreshold) {
+        return true;
+    }
+
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
-        , [userID], { useReplica: true });
+        , [userID, parseInt(submitterThreshold)], { useReplica: true });
 
     return result.submissionCount >= 1;
 }
