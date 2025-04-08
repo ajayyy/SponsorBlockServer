@@ -20,7 +20,7 @@ import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
-import { canSubmit } from "../utils/permissions";
+import { canSubmit, canSubmitGlobal } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
 import { acquireLock } from "../utils/redisLock";
@@ -508,6 +508,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(400).send("No userID provided");
     }
     const userID: HashedUserID = await getHashCache(paramUserID);
+
+    const permission = await canSubmitGlobal(userID);
+    if (!permission.canSubmit) {
+        return res.status(403).send(permission.reason);
+    }
 
     const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
     if (!invalidCheckResult.pass) {

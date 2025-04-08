@@ -23,14 +23,14 @@ async function oldSubmitter(userID: HashedUserID): Promise<boolean> {
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
         , [userID], { useReplica: true });
 
-    return result.submissionCount > 1;
+    return result.submissionCount >= 1;
 }
 
 async function oldDeArrowSubmitter(userID: HashedUserID): Promise<boolean> {
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
         , [userID], { useReplica: true });
 
-    return result.submissionCount > 1;
+    return result.submissionCount >= 1;
 }
 
 export async function canSubmit(userID: HashedUserID, category: Category): Promise<CanSubmitResult> {
@@ -46,12 +46,19 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
             };
         default:
             return {
-                canSubmit: await oneOf([isUserVIP(userID),
-                    oldSubmitter(userID)
-                ]),
-                reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
+                canSubmit: true,
+                reason: ""
             };
     }
+}
+
+export async function canSubmitGlobal(userID: HashedUserID): Promise<CanSubmitResult> {
+    return {
+        canSubmit: await oneOf([isUserVIP(userID),
+            oldSubmitter(userID)
+        ]),
+        reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
+    };
 }
 
 export async function canVote(userID: HashedUserID): Promise<CanSubmitResult> {
