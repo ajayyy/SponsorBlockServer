@@ -25,7 +25,7 @@ export async function getConfigEndpoint(req: Request, res: Response): Promise<Re
 
     try {
         return res.status(200).json({
-            value: getServerConfig(key)
+            value: await getServerConfig(key)
         });
     } catch (e) {
         Logger.error(e as string);
