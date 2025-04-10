@@ -58,6 +58,14 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boole
 
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
+        if (!submitterThreshold) {
+            const voteResult = await db.prepare("get", `SELECT "UUID" from "titleVotes" where "userID" = ?`, [userID], { useReplica: true });
+            if (voteResult?.UUID) {
+                // Count at least one vote as an old submitter as well
+                return true;
+            }
+        }
+
         await redis.zRemRangeByScore("submittersDeArrow", "-inf", Date.now() - fiveMinutes);
         const last5MinUsers = await redis.zCard("submittersDeArrow");
 
