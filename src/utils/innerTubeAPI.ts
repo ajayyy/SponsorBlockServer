@@ -47,10 +47,10 @@ export async function getFromITube (videoID: string): Promise<innerTubeVideoDeta
             if (e instanceof AxiosError) {
                 const result = e.response;
 
-                if (result.status === 500) {
+                if (result && result.status === 500) {
                     return privateResponse(videoID, result.data ?? "Bad response");
                 } else {
-                    return Promise.reject(`Floatie returned non-200 response: ${result.status}`);
+                    return Promise.reject(`Floatie returned non-200 response: ${result?.status}`);
                 }
             }
         }
