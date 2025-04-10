@@ -53,7 +53,7 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boole
         return true;
     }
 
-    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
+    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < ?`
         , [userID, parseInt(submitterThreshold) || Infinity], { useReplica: true });
 
     const isOldSubmitter = result.submissionCount >= 1;
