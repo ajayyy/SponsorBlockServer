@@ -24,18 +24,18 @@ async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
 const fiveMinutes = 5 * 60 * 1000;
 async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
     const submitterThreshold = await getServerConfig("old-submitter-block-date");
-    if (!submitterThreshold) {
+    const maxUsers = await getServerConfig("max-users-per-minute");
+    if (!submitterThreshold && !maxUsers) {
         return true;
     }
 
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < ?`
-        , [userID, parseInt(submitterThreshold)], { useReplica: true });
+        , [userID, parseInt(submitterThreshold) || Infinity], { useReplica: true });
 
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
         await redis.zRemRangeByScore("submitters", "-inf", Date.now() - fiveMinutes);
         const last5MinUsers = await redis.zCard("submitters");
-        const maxUsers = await getServerConfig("max-users-per-minute");
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submitters", { score: Date.now(), value: userID });
@@ -48,18 +48,18 @@ async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
 
 async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
     const submitterThreshold = await getServerConfig("old-submitter-block-date");
-    if (!submitterThreshold) {
+    const maxUsers = await getServerConfig("max-users-per-minute-dearrow");
+    if (!submitterThreshold && !maxUsers) {
         return true;
     }
 
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
-        , [userID, parseInt(submitterThreshold)], { useReplica: true });
+        , [userID, parseInt(submitterThreshold) || Infinity], { useReplica: true });
 
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
         await redis.zRemRangeByScore("submittersDeArrow", "-inf", Date.now() - fiveMinutes);
         const last5MinUsers = await redis.zCard("submittersDeArrow");
-        const maxUsers = await getServerConfig("max-users-per-minute-dearrow");
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submittersDeArrow", { score: Date.now(), value: userID });
