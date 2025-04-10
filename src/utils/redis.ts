@@ -9,6 +9,7 @@ import { Postgres } from "../databases/Postgres";
 import { compress, uncompress } from "lz4-napi";
 import { LRUCache } from "lru-cache";
 import { shouldClientCacheKey } from "./redisKeys";
+import { ZMember } from "@redis/client/dist/lib/commands/generic-transformers";
 
 export interface RedisStats {
     activeRequests: number;
@@ -35,6 +36,9 @@ interface RedisSB {
     sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
     ttl(key: RedisCommandArgument): Promise<number>;
     quit(): Promise<void>;
+    zRemRangeByScore(key: string, min: number | RedisCommandArgument, max: number | RedisCommandArgument): Promise<number>;
+    zAdd(key: string, members: ZMember | ZMember[]): Promise<number>;
+    zCard(key: string): Promise<number>;
 }
 
 let exportClient: RedisSB = {
@@ -49,6 +53,9 @@ let exportClient: RedisSB = {
     sendCommand: () => Promise.resolve(null),
     quit: () => Promise.resolve(null),
     ttl: () => Promise.resolve(null),
+    zRemRangeByScore: () => Promise.resolve(null),
+    zAdd: () => Promise.resolve(null),
+    zCard: () => Promise.resolve(null)
 };
 
 let lastClientFail = 0;
@@ -308,6 +315,9 @@ if (config.redis?.enabled) {
             .then((reply) => resolve(reply))
             .catch((err) => reject(err))
     );
+    exportClient.zRemRangeByScore = client.zRemRangeByScore.bind(client);
+    exportClient.zAdd = client.zAdd.bind(client);
+    exportClient.zCard = client.zCard.bind(client);
     /* istanbul ignore next */
     client.on("error", function(error) {
         lastClientFail = Date.now();

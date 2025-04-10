@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Logger } from "../utils/logger";
 import { isUserVIP } from "../utils/isUserVIP";
 import { isUserTempVIP } from "../utils/isUserTempVIP";
-import { getMaxResThumbnail, YouTubeAPI } from "../utils/youtubeApi";
+import { getMaxResThumbnail } from "../utils/youtubeApi";
 import { db, privateDB } from "../databases/databases";
 import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
 import { getFormattedTime } from "../utils/getFormattedTime";
@@ -17,7 +17,6 @@ import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import { deleteLockCategories } from "./deleteLockCategories";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
-import { canVote } from "../utils/permissions";
 
 const voteTypes = {
     normal: 0,
@@ -342,14 +341,6 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
     //hash the userID
     const nonAnonUserID = await getHashCache(paramUserID);
     const userID = await getHashCache(paramUserID + UUID);
-
-    const permission = await canVote(nonAnonUserID);
-    if (!permission.canSubmit) {
-        return {
-            status: 403,
-            message: permission.reason
-        };
-    }
 
     //hash the ip 5000 times so no one can get it from the database
     const hashedIP: HashedIP = await getHashCache((ip + config.globalSalt) as IPAddress);

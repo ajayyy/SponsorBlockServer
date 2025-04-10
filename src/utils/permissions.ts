@@ -5,6 +5,7 @@ import { Feature, HashedUserID } from "../types/user.model";
 import { hasFeature } from "./features";
 import { isUserVIP } from "./isUserVIP";
 import { oneOf } from "./promise";
+import redis from "./redis";
 import { getReputation } from "./reputation";
 import { getServerConfig } from "./serverConfig";
 
@@ -20,7 +21,8 @@ async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
     return result.submissionCount > 5 && result.downvotedSubmissions / result.submissionCount < 0.10;
 }
 
-async function oldSubmitter(userID: HashedUserID): Promise<boolean> {
+const fiveMinutes = 5 * 60 * 1000;
+async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
     const submitterThreshold = await getServerConfig("old-submitter-block-date");
     if (!submitterThreshold) {
         return true;
@@ -29,10 +31,22 @@ async function oldSubmitter(userID: HashedUserID): Promise<boolean> {
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < ?`
         , [userID, parseInt(submitterThreshold)], { useReplica: true });
 
-    return result.submissionCount >= 1;
+    const isOldSubmitter = result.submissionCount >= 1;
+    if (!isOldSubmitter) {
+        await redis.zRemRangeByScore("submitters", "-inf", Date.now() - fiveMinutes);
+        const last5MinUsers = await redis.zCard("submitters");
+        const maxUsers = await getServerConfig("max-users-per-minute");
+
+        if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
+            await redis.zAdd("submitters", { score: Date.now(), value: userID });
+            return true;
+        }
+    }
+
+    return isOldSubmitter;
 }
 
-async function oldDeArrowSubmitter(userID: HashedUserID): Promise<boolean> {
+async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
     const submitterThreshold = await getServerConfig("old-submitter-block-date");
     if (!submitterThreshold) {
         return true;
@@ -41,7 +55,19 @@ async function oldDeArrowSubmitter(userID: HashedUserID): Promise<boolean> {
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < 1743827196000`
         , [userID, parseInt(submitterThreshold)], { useReplica: true });
 
-    return result.submissionCount >= 1;
+    const isOldSubmitter = result.submissionCount >= 1;
+    if (!isOldSubmitter) {
+        await redis.zRemRangeByScore("submittersDeArrow", "-inf", Date.now() - fiveMinutes);
+        const last5MinUsers = await redis.zCard("submittersDeArrow");
+        const maxUsers = await getServerConfig("max-users-per-minute-dearrow");
+
+        if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
+            await redis.zAdd("submittersDeArrow", { score: Date.now(), value: userID });
+            return true;
+        }
+    }
+
+    return isOldSubmitter;
 }
 
 export async function canSubmit(userID: HashedUserID, category: Category): Promise<CanSubmitResult> {
@@ -66,16 +92,7 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
 export async function canSubmitGlobal(userID: HashedUserID): Promise<CanSubmitResult> {
     return {
         canSubmit: await oneOf([isUserVIP(userID),
-            oldSubmitter(userID)
-        ]),
-        reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
-    };
-}
-
-export async function canVote(userID: HashedUserID): Promise<CanSubmitResult> {
-    return {
-        canSubmit: await oneOf([isUserVIP(userID),
-            oldSubmitter(userID)
+            oldSubmitterOrAllowed(userID)
         ]),
         reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
     };
@@ -84,7 +101,7 @@ export async function canVote(userID: HashedUserID): Promise<CanSubmitResult> {
 export async function canSubmitDeArrow(userID: HashedUserID): Promise<CanSubmitResult> {
     return {
         canSubmit: await oneOf([isUserVIP(userID),
-            oldDeArrowSubmitter(userID)
+            oldDeArrowSubmitterOrAllowed(userID)
         ]),
         reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
     };
