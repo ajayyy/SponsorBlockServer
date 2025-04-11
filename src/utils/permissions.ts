@@ -1,5 +1,5 @@
 import { config } from "../config";
-import { db } from "../databases/databases";
+import { db, privateDB } from "../databases/databases";
 import { Category } from "../types/segments.model";
 import { Feature, HashedUserID } from "../types/user.model";
 import { hasFeature } from "./features";
@@ -59,7 +59,7 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boole
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
         if (!submitterThreshold) {
-            const voteResult = await db.prepare("get", `SELECT "UUID" from "titleVotes" where "userID" = ?`, [userID], { useReplica: true });
+            const voteResult = await privateDB.prepare("get", `SELECT "UUID" from "titleVotes" where "userID" = ?`, [userID], { useReplica: true });
             if (voteResult?.UUID) {
                 // Count at least one vote as an old submitter as well
                 return true;
