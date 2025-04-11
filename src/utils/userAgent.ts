@@ -10,7 +10,7 @@ export function parseUserAgent(userAgent: string): string {
         return revanced[0];
     }
 
-    if (ua.match(/(mpv_sponsorblock\/)|(^python-requests)|(^GuzzleHttp\/)|(^PostmanRuntime\/)/)) {
+    if (ua.match(/(mpv_sponsorblock)|(^python-requests)|(^GuzzleHttp\/)|(^PostmanRuntime\/)/)) {
         return ua;
     }
 
