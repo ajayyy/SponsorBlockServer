@@ -46,7 +46,10 @@ async function newLeafWrapper(videoId: string, ignoreCache: boolean) {
 export function getVideoDetails(videoId: string, ignoreCache = false): Promise<videoDetails> {
     if (!config.newLeafURLs) {
         return getPlayerData(videoId, ignoreCache)
-            .then(data => convertFromInnerTube(data));
+            .then(data => convertFromInnerTube(data))
+            .catch(() => {
+                return null;
+            });
     }
     return Promise.any([
         newLeafWrapper(videoId, ignoreCache)
