@@ -29,7 +29,7 @@ async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
         return true;
     }
 
-    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "timeSubmitted" < ?`
+    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = 0 AND "votes" >= 0 AND "timeSubmitted" < ?`
         , [userID, parseInt(submitterThreshold) || Infinity], { useReplica: true });
 
     const isOldSubmitter = result.submissionCount >= 1;
@@ -53,7 +53,7 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boole
         return true;
     }
 
-    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" WHERE "userID" = ? AND "timeSubmitted" < ?`
+    const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "userID" = ? AND "shadowHidden" = 0 AND "votes" >= 0 AND "timeSubmitted" < ?`
         , [userID, parseInt(submitterThreshold) || Infinity], { useReplica: true });
 
     const isOldSubmitter = result.submissionCount >= 1;
