@@ -9,8 +9,19 @@ import redis from "./redis";
 import { getReputation } from "./reputation";
 import { getServerConfig } from "./serverConfig";
 
+interface OldSubmitterResult {
+    canSubmit: boolean;
+    newUser: boolean;
+}
+
 interface CanSubmitResult {
     canSubmit: boolean;
+    reason: string;
+}
+
+interface CanSubmitGlobalResult {
+    canSubmit: boolean;
+    newUser: boolean;
     reason: string;
 }
 
@@ -22,11 +33,11 @@ async function lowDownvotes(userID: HashedUserID): Promise<boolean> {
 }
 
 const fiveMinutes = 5 * 60 * 1000;
-async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
+async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<OldSubmitterResult> {
     const submitterThreshold = await getServerConfig("old-submitter-block-date");
     const maxUsers = await getServerConfig("max-users-per-minute");
     if (!submitterThreshold && !maxUsers) {
-        return true;
+        return { canSubmit: true, newUser: false };
     }
 
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = 0 AND "votes" >= 0 AND "timeSubmitted" < ?`
@@ -39,18 +50,18 @@ async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submitters", { score: Date.now(), value: userID });
-            return true;
+            return { canSubmit: true, newUser: true };
         }
     }
 
-    return isOldSubmitter;
+    return { canSubmit: isOldSubmitter, newUser: false };
 }
 
-async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boolean> {
+async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<OldSubmitterResult> {
     const submitterThreshold = await getServerConfig("old-submitter-block-date");
     const maxUsers = await getServerConfig("max-users-per-minute-dearrow");
     if (!submitterThreshold && !maxUsers) {
-        return true;
+        return { canSubmit: true, newUser: false };
     }
 
     const result = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "userID" = ? AND "shadowHidden" = 0 AND "votes" >= 0 AND "timeSubmitted" < ?`
@@ -62,7 +73,7 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boole
             const voteResult = await privateDB.prepare("get", `SELECT "UUID" from "titleVotes" where "userID" = ?`, [userID], { useReplica: true });
             if (voteResult?.UUID) {
                 // Count at least one vote as an old submitter as well
-                return true;
+                return { canSubmit: true, newUser: false };
             }
         }
 
@@ -71,11 +82,11 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<boole
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submittersDeArrow", { score: Date.now(), value: userID });
-            return true;
+            return { canSubmit: true, newUser: true };
         }
     }
 
-    return isOldSubmitter;
+    return { canSubmit: isOldSubmitter, newUser: false };
 }
 
 export async function canSubmit(userID: HashedUserID, category: Category): Promise<CanSubmitResult> {
@@ -97,20 +108,26 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
     }
 }
 
-export async function canSubmitGlobal(userID: HashedUserID): Promise<CanSubmitResult> {
+export async function canSubmitGlobal(userID: HashedUserID): Promise<CanSubmitGlobalResult> {
+    const oldSubmitterOrAllowedPromise = oldSubmitterOrAllowed(userID);
+
     return {
         canSubmit: await oneOf([isUserVIP(userID),
-            oldSubmitterOrAllowed(userID)
+            (async () => (await oldSubmitterOrAllowedPromise).canSubmit)()
         ]),
+        newUser: (await oldSubmitterOrAllowedPromise).newUser,
         reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
     };
 }
 
-export async function canSubmitDeArrow(userID: HashedUserID): Promise<CanSubmitResult> {
+export async function canSubmitDeArrow(userID: HashedUserID): Promise<CanSubmitGlobalResult> {
+    const oldSubmitterOrAllowedPromise = oldDeArrowSubmitterOrAllowed(userID);
+
     return {
         canSubmit: await oneOf([isUserVIP(userID),
-            oldDeArrowSubmitterOrAllowed(userID)
+            (async () => (await oldSubmitterOrAllowedPromise).canSubmit)()
         ]),
+        newUser: (await oldSubmitterOrAllowedPromise).newUser,
         reason: "We are currently experiencing a mass spam attack, we are restricting submissions for now"
     };
 }

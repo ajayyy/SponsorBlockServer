@@ -55,6 +55,7 @@ export interface SBSConfig {
     discordMaliciousReportWebhookURL?: string;
     discordDeArrowLockedWebhookURL?: string,
     discordDeArrowWarnedWebhookURL?: string,
+    discordNewUserWebhookURL?: string;
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
     minReputationToSubmitChapter: number;

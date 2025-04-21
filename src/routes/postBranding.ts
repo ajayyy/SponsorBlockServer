@@ -60,10 +60,36 @@ export async function postBranding(req: Request, res: Response) {
 
         const permission = await canSubmitDeArrow(hashedUserID);
         if (!permission.canSubmit) {
-            Logger.warn(`New user trying to submit dearrow: ${userID} ${videoID} ${title} ${req.headers["user-agent"]}`);
+            Logger.warn(`New user trying to submit dearrow: ${userID} ${videoID} ${videoDuration} ${title} ${req.headers["user-agent"]}`);
 
             res.status(403).send(permission.reason);
             return;
+        } else if (permission.newUser && config.discordNewUserWebhookURL) {
+            axios.post(config.discordNewUserWebhookURL, {
+                "embeds": [{
+                    "title": userID,
+                    "url": `https://www.youtube.com/watch?v=${videoID}`,
+                    "description": `**User Agent**: ${userAgent}\
+                        \n\n**Real User Agent**: ${req.headers["user-agent"]}\
+                        \n**Video Duration**: ${videoDuration}`,
+                    "color": 10813440,
+                    "thumbnail": {
+                        "url": getMaxResThumbnail(videoID),
+                    },
+                }],
+            })
+                .then(res => {
+                    if (res.status >= 400) {
+                        Logger.error("Error sending reported submission Discord hook");
+                        Logger.error(JSON.stringify((res.data)));
+                        Logger.error("\n");
+                    }
+                })
+                .catch(err => {
+                    Logger.error("Failed to send reported submission Discord hook.");
+                    Logger.error(JSON.stringify(err));
+                    Logger.error("\n");
+                });
         }
 
         if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
