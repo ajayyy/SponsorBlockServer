@@ -72,7 +72,7 @@ export async function postBranding(req: Request, res: Response) {
                     "description": `**User Agent**: ${userAgent}\
                         \n**Real User Agent**: ${req.headers["user-agent"]}\
                         \n**Video Duration**: ${videoDuration}`,
-                    "color": 10813440,
+                    "color": 1184701,
                     "thumbnail": {
                         "url": getMaxResThumbnail(videoID),
                     },
