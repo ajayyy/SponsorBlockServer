@@ -113,7 +113,7 @@ export function validSubmittedData(userAgent: string): boolean {
         return true;
     }
 
-    return new RegExp(config.validityCheck.userAgent).test(userAgent);
+    return !new RegExp(config.validityCheck.userAgent).test(userAgent);
 }
 
 export async function canSubmitGlobal(userID: HashedUserID): Promise<CanSubmitGlobalResult> {
