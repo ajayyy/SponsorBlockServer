@@ -519,6 +519,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 "title": userID,
                 "url": `https://www.youtube.com/watch?v=${videoID}`,
                 "description": `**User Agent**: ${userAgent}\
+                    \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
                     \n**Real User Agent**: ${req.headers["user-agent"]}\
                     \n**Video Duration**: ${videoDurationParam}`,
                 "color": 10813440,

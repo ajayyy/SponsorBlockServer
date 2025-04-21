@@ -70,6 +70,7 @@ export async function postBranding(req: Request, res: Response) {
                     "title": hashedUserID,
                     "url": `https://www.youtube.com/watch?v=${videoID}`,
                     "description": `**User Agent**: ${userAgent}\
+                        \n**Sent User Agent**: ${req.body.userAgent}\
                         \n**Real User Agent**: ${req.headers["user-agent"]}\
                         \n**Video Duration**: ${videoDuration}`,
                     "color": 1184701,
