@@ -85,6 +85,9 @@ export interface SBSConfig {
         vote: RateLimitConfig;
         view: RateLimitConfig;
     };
+    validityCheck: {
+        userAgent: string | null;
+    }
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: RedisConfig;

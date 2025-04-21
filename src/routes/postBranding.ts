@@ -18,7 +18,7 @@ import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
 import { getMaxResThumbnail } from "../utils/youtubeApi";
 import { getVideoDetails } from "../utils/getVideoDetails";
-import { canSubmitDeArrow } from "../utils/permissions";
+import { canSubmitDeArrow, validSubmittedData } from "../utils/permissions";
 import { parseUserAgent } from "../utils/userAgent";
 
 enum BrandingType {
@@ -57,6 +57,12 @@ export async function postBranding(req: Request, res: Response) {
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
+
+        if (!validSubmittedData(userAgent)) {
+            Logger.warn(`Rejecting submission based on invalid data: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]}`);
+            res.status(200).send("OK");
+            return;
+        }
 
         const permission = await canSubmitDeArrow(hashedUserID);
         if (!permission.canSubmit) {

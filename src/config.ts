@@ -69,6 +69,9 @@ addDefaults(config, {
             message: "OK",
         }
     },
+    validityCheck: {
+        userAgent: null,
+    },
     userCounterURL: null,
     userCounterRatio: 10,
     newLeafURLs: null,

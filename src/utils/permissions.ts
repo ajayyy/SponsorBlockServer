@@ -108,6 +108,14 @@ export async function canSubmit(userID: HashedUserID, category: Category): Promi
     }
 }
 
+export function validSubmittedData(userAgent: string): boolean {
+    if (!config.validityCheck.userAgent) {
+        return true;
+    }
+
+    return new RegExp(config.validityCheck.userAgent).test(userAgent);
+}
+
 export async function canSubmitGlobal(userID: HashedUserID): Promise<CanSubmitGlobalResult> {
     const oldSubmitterOrAllowedPromise = oldSubmitterOrAllowed(userID);
 
