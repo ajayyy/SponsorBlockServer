@@ -514,39 +514,6 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         return res.status(200).send("OK");
     }
 
-    const permission = await canSubmitGlobal(userID);
-    if (!permission.canSubmit) {
-        Logger.warn(`New user trying to submit: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
-        return res.status(403).send(permission.reason);
-    } else if (permission.newUser && config.discordNewUserWebhookURL) {
-        axios.post(config.discordNewUserWebhookURL, {
-            "embeds": [{
-                "title": userID,
-                "url": `https://www.youtube.com/watch?v=${videoID}`,
-                "description": `**User Agent**: ${userAgent}\
-                    \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
-                    \n**Real User Agent**: ${req.headers["user-agent"]}\
-                    \n**Video Duration**: ${videoDurationParam}`,
-                "color": 10813440,
-                "thumbnail": {
-                    "url": getMaxResThumbnail(videoID),
-                },
-            }],
-        })
-            .then(res => {
-                if (res.status >= 400) {
-                    Logger.error("Error sending reported submission Discord hook");
-                    Logger.error(JSON.stringify((res.data)));
-                    Logger.error("\n");
-                }
-            })
-            .catch(err => {
-                Logger.error("Failed to send reported submission Discord hook.");
-                Logger.error(JSON.stringify(err));
-                Logger.error("\n");
-            });
-    }
-
     const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
     if (!invalidCheckResult.pass) {
         return res.status(invalidCheckResult.errorCode).send(invalidCheckResult.errorMessage);
@@ -583,9 +550,43 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         if (!(isVIP || isTempVIP)) {
             const autoModerateCheckResult = await checkByAutoModerator(videoID, userID, segments, service, apiVideoDetails, videoDurationParam);
             if (!autoModerateCheckResult.pass) {
-                lock.unlock();
                 return res.status(autoModerateCheckResult.errorCode).send(autoModerateCheckResult.errorMessage);
             }
+        }
+
+        const permission = await canSubmitGlobal(userID);
+        if (!permission.canSubmit) {
+            lock.unlock();
+
+            Logger.warn(`New user trying to submit: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
+            return res.status(403).send(permission.reason);
+        } else if (permission.newUser && config.discordNewUserWebhookURL) {
+            axios.post(config.discordNewUserWebhookURL, {
+                "embeds": [{
+                    "title": userID,
+                    "url": `https://www.youtube.com/watch?v=${videoID}`,
+                    "description": `**User Agent**: ${userAgent}\
+                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
+                        \n**Real User Agent**: ${req.headers["user-agent"]}\
+                        \n**Video Duration**: ${videoDurationParam}`,
+                    "color": 10813440,
+                    "thumbnail": {
+                        "url": getMaxResThumbnail(videoID),
+                    },
+                }],
+            })
+                .then(res => {
+                    if (res.status >= 400) {
+                        Logger.error("Error sending reported submission Discord hook");
+                        Logger.error(JSON.stringify((res.data)));
+                        Logger.error("\n");
+                    }
+                })
+                .catch(err => {
+                    Logger.error("Failed to send reported submission Discord hook.");
+                    Logger.error(JSON.stringify(err));
+                    Logger.error("\n");
+                });
         }
 
         // Will be filled when submitting
