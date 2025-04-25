@@ -73,7 +73,7 @@ export async function postBranding(req: Request, res: Response) {
             },
             endpoint: "dearrow-postBranding",
         })) {
-            Logger.warn(`Rejecting submission based on invalid data: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
+            Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;
         }

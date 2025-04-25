@@ -520,7 +520,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         segments,
         endpoint: "sponsorblock-postSkipSegments"
     })) {
-        Logger.warn(`Rejecting submission based on invalid data: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
+        Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");
     }
 
