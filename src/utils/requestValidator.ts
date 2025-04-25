@@ -1,5 +1,9 @@
 import { config } from "../config";
-import { ThumbnailSubmission, TitleSubmission } from "../types/branding.model";
+import {
+    CasualCategory,
+    ThumbnailSubmission,
+    TitleSubmission,
+} from "../types/branding.model";
 import { ValidatorPattern, RequestValidatorRule } from "../types/config.model";
 import { IncomingSegment } from "../types/segments.model";
 
@@ -7,6 +11,7 @@ export interface RequestValidatorInput {
     userAgent?: string;
     userAgentHeader?: string;
     videoDuration?: string | number;
+    videoID?: string;
     userID?: string;
     service?: string;
     segments?: IncomingSegment[];
@@ -15,10 +20,15 @@ export interface RequestValidatorInput {
         thumbnail?: ThumbnailSubmission;
         downvote: boolean;
     };
+    casualCategories?: CasualCategory[];
+    newUsername?: string;
+    endpoint?: string;
 }
 export type CompiledValidityCheck = (input: RequestValidatorInput) => boolean;
 type CompiledSegmentCheck = (input: IncomingSegment) => boolean;
-type InputExtractor = (input: RequestValidatorInput) => string | number | undefined | null;
+type InputExtractor = (
+    input: RequestValidatorInput,
+) => string | number | undefined | null;
 type SegmentExtractor = (input: IncomingSegment) => string | undefined | null;
 type BooleanRules = "titleOriginal" | "thumbnailOriginal" | "dearrowDownvote";
 type RuleEntry =
@@ -27,14 +37,17 @@ type RuleEntry =
 
 let compiledRules: CompiledValidityCheck;
 
+function patternToRegex(pattern: ValidatorPattern): RegExp {
+    return typeof pattern === "string"
+        ? new RegExp(pattern, "i")
+        : new RegExp(...pattern);
+}
+
 function compilePattern(
     pattern: ValidatorPattern,
     extractor: InputExtractor,
 ): CompiledValidityCheck {
-    const regex =
-        typeof pattern === "string"
-            ? new RegExp(pattern, "i")
-            : new RegExp(...pattern);
+    const regex = patternToRegex(pattern);
 
     return (input: RequestValidatorInput) => {
         const field = extractor(input);
@@ -47,10 +60,7 @@ function compileSegmentPattern(
     pattern: ValidatorPattern,
     extractor: SegmentExtractor,
 ): CompiledSegmentCheck {
-    const regex =
-        typeof pattern === "string"
-            ? new RegExp(pattern, "i")
-            : new RegExp(...pattern);
+    const regex = patternToRegex(pattern);
 
     return (input: IncomingSegment) => {
         const field = extractor(input);
@@ -91,6 +101,11 @@ export function compileRules(
                             rulePattern,
                             (input) => input.videoDuration,
                         ),
+                    );
+                    break;
+                case "videoID":
+                    ruleComponents.push(
+                        compilePattern(rulePattern, (input) => input.videoID),
                     );
                     break;
                 case "userID":
@@ -153,7 +168,8 @@ export function compileRules(
                     break;
                 case "titleOriginal":
                     ruleComponents.push(
-                        (input) => input.dearrow?.title?.original === rulePattern,
+                        (input) =>
+                            input.dearrow?.title?.original === rulePattern,
                     );
                     break;
                 case "thumbnailTimestamp":
@@ -172,10 +188,39 @@ export function compileRules(
                     break;
                 case "dearrowDownvote":
                     ruleComponents.push(
-                        (input) =>
-                            input.dearrow?.downvote === rulePattern,
+                        (input) => input.dearrow?.downvote === rulePattern,
                     );
                     break;
+                case "newUsername":
+                    ruleComponents.push(
+                        compilePattern(
+                            rulePattern,
+                            (input) => input.newUsername,
+                        ),
+                    );
+                    break;
+                case "endpoint":
+                    ruleComponents.push(
+                        compilePattern(rulePattern, (input) => input.endpoint),
+                    );
+                    break;
+                case "casualCategory": {
+                    const regex = patternToRegex(rulePattern);
+                    ruleComponents.push((input) => {
+                        if (input.casualCategories === undefined) {
+                            return false;
+                        }
+                        for (const category of input.casualCategories) {
+                            if (regex.test(category)) return true;
+                        }
+                        return false;
+                    });
+                    break;
+                }
+                default: {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const _exhaustive: never = ruleKey;
+                }
             }
         }
         if (segmentRuleComponents.length > 0) {

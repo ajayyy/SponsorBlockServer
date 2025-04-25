@@ -43,24 +43,30 @@ export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
 
 export type ValidatorPattern = string | [string, string];
 export interface RequestValidatorRule {
-    // universal
+    // mostly universal
     userAgent?: ValidatorPattern;
     userAgentHeader?: ValidatorPattern;
     videoDuration?: ValidatorPattern;
+    videoID?: ValidatorPattern;
     userID?: ValidatorPattern;
     service?: ValidatorPattern;
-    // sb
+    endpoint?: ValidatorPattern;
+    // sb postSkipSegments
     startTime?: ValidatorPattern;
     endTime?: ValidatorPattern;
     category?: ValidatorPattern;
     actionType?: ValidatorPattern;
     description?: ValidatorPattern;
-    // dearrow
+    // dearrow postBranding
     title?: ValidatorPattern;
     titleOriginal?: boolean;
     thumbnailTimestamp?: ValidatorPattern;
     thumbnailOriginal?: boolean;
     dearrowDownvote?: boolean;
+    // postCasual
+    casualCategory?: ValidatorPattern;
+    // setUsername
+    newUsername?: ValidatorPattern;
 }
 
 export interface SBSConfig {

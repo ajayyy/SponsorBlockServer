@@ -514,9 +514,11 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         userAgent,
         userAgentHeader: req.headers["user-agent"],
         videoDuration,
+        videoID,
         userID: paramUserID,
         service,
         segments,
+        endpoint: "sponsorblock-postSkipSegments"
     })) {
         Logger.warn(`Rejecting submission based on invalid data: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");

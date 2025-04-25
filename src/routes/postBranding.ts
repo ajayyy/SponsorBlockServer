@@ -63,13 +63,15 @@ export async function postBranding(req: Request, res: Response) {
             userAgent,
             userAgentHeader: req.headers["user-agent"],
             videoDuration,
+            videoID,
             userID,
             service,
             dearrow: {
                 title,
                 thumbnail,
                 downvote,
-            }
+            },
+            endpoint: "dearrow-postBranding",
         })) {
             Logger.warn(`Rejecting submission based on invalid data: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
