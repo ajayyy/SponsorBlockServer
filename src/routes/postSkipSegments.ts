@@ -20,11 +20,12 @@ import { parseUserAgent } from "../utils/userAgent";
 import { getService } from "../utils/getService";
 import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
-import { canSubmit, canSubmitGlobal, validSubmittedData } from "../utils/permissions";
+import { canSubmit, canSubmitGlobal } from "../utils/permissions";
 import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import * as youtubeID from "../utils/youtubeID";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
+import { isRequestInvalid } from "../utils/requestValidator";
 
 type CheckResult = {
     pass: boolean,
@@ -509,8 +510,17 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
     const userID: HashedUserID = await getHashCache(paramUserID);
 
-    if (!validSubmittedData(userAgent, req.headers["user-agent"])) {
-        Logger.warn(`Rejecting submission based on invalid data: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
+    if (isRequestInvalid({
+        userAgent,
+        userAgentHeader: req.headers["user-agent"],
+        videoDuration,
+        videoID,
+        userID: paramUserID,
+        service,
+        segments,
+        endpoint: "sponsorblock-postSkipSegments"
+    })) {
+        Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");
     }
 

@@ -14,6 +14,8 @@ import { QueryCacher } from "../utils/queryCacher";
 import { acquireLock } from "../utils/redisLock";
 import { checkBanStatus } from "../utils/checkBan";
 import { canSubmitDeArrow } from "../utils/permissions";
+import { isRequestInvalid } from "../utils/requestValidator";
+import { parseUserAgent } from "../utils/userAgent";
 
 interface ExistingVote {
     UUID: BrandingUUID;
@@ -22,6 +24,7 @@ interface ExistingVote {
 
 export async function postCasual(req: Request, res: Response) {
     const { videoID, userID, downvote } = req.body as CasualVoteSubmission;
+    const userAgent = req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
     let categories = req.body.categories as CasualCategory[];
     const title = (req.body.title as string)?.toLowerCase();
     const service = getService(req.body.service);
@@ -34,6 +37,19 @@ export async function postCasual(req: Request, res: Response) {
 
     if (!videoID || !userID || userID.length < 30 || !service || !categories || !Array.isArray(categories)) {
         return res.status(400).send("Bad Request");
+    }
+
+    if (isRequestInvalid({
+        userID,
+        videoID,
+        userAgent,
+        userAgentHeader: req.headers["user-agent"],
+        casualCategories: categories,
+        service,
+        endpoint: "dearrow-postCasual",
+    })) {
+        Logger.warn(`Casual vote rejected by request validator: ${userAgent} ${req.headers["user-agent"]} ${categories} ${service} ${videoID}`);
+        return res.status(200).send("OK");
     }
 
     try {

@@ -18,8 +18,9 @@ import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
 import { getMaxResThumbnail } from "../utils/youtubeApi";
 import { getVideoDetails } from "../utils/getVideoDetails";
-import { canSubmitDeArrow, validSubmittedData } from "../utils/permissions";
+import { canSubmitDeArrow } from "../utils/permissions";
 import { parseUserAgent } from "../utils/userAgent";
+import { isRequestInvalid } from "../utils/requestValidator";
 
 enum BrandingType {
     Title,
@@ -58,8 +59,21 @@ export async function postBranding(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        if (!validSubmittedData(userAgent, req.headers["user-agent"])) {
-            Logger.warn(`Rejecting submission based on invalid data: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]}`);
+        if (isRequestInvalid({
+            userAgent,
+            userAgentHeader: req.headers["user-agent"],
+            videoDuration,
+            videoID,
+            userID,
+            service,
+            dearrow: {
+                title,
+                thumbnail,
+                downvote,
+            },
+            endpoint: "dearrow-postBranding",
+        })) {
+            Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;
         }

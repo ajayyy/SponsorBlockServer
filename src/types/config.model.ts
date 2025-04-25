@@ -41,6 +41,34 @@ export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
     stopRetryThreshold: number;
 }
 
+export type ValidatorPattern = string | [string, string];
+export interface RequestValidatorRule {
+    // mostly universal
+    userAgent?: ValidatorPattern;
+    userAgentHeader?: ValidatorPattern;
+    videoDuration?: ValidatorPattern;
+    videoID?: ValidatorPattern;
+    userID?: ValidatorPattern;
+    service?: ValidatorPattern;
+    endpoint?: ValidatorPattern;
+    // sb postSkipSegments
+    startTime?: ValidatorPattern;
+    endTime?: ValidatorPattern;
+    category?: ValidatorPattern;
+    actionType?: ValidatorPattern;
+    description?: ValidatorPattern;
+    // dearrow postBranding
+    title?: ValidatorPattern;
+    titleOriginal?: boolean;
+    thumbnailTimestamp?: ValidatorPattern;
+    thumbnailOriginal?: boolean;
+    dearrowDownvote?: boolean;
+    // postCasual
+    casualCategory?: ValidatorPattern;
+    // setUsername
+    newUsername?: ValidatorPattern;
+}
+
 export interface SBSConfig {
     [index: string]: any
     port: number;
@@ -85,10 +113,7 @@ export interface SBSConfig {
         vote: RateLimitConfig;
         view: RateLimitConfig;
     };
-    validityCheck: {
-        userAgent: string | null;
-        userAgentR: string | null;
-    }
+    requestValidatorRules: RequestValidatorRule[];
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: RedisConfig;

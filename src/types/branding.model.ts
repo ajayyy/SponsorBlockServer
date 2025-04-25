@@ -74,6 +74,7 @@ export interface BrandingHashDBResult {
 }
 
 export interface OriginalThumbnailSubmission {
+    timestamp?: undefined | null;
     original: true;
 }
 
