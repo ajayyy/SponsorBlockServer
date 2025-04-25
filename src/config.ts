@@ -69,10 +69,7 @@ addDefaults(config, {
             message: "OK",
         }
     },
-    validityCheck: {
-        userAgent: null,
-        userAgentR: null,
-    },
+    requestValidatorRules: [],
     userCounterURL: null,
     userCounterRatio: 10,
     newLeafURLs: null,
