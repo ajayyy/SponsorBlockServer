@@ -509,7 +509,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
     const userID: HashedUserID = await getHashCache(paramUserID);
 
-    if (!validSubmittedData(userAgent)) {
+    if (!validSubmittedData(userAgent, req.headers["user-agent"])) {
         Logger.warn(`Rejecting submission based on invalid data: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");
     }

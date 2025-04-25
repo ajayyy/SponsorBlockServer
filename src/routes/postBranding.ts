@@ -58,7 +58,7 @@ export async function postBranding(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        if (!validSubmittedData(userAgent)) {
+        if (!validSubmittedData(userAgent, req.headers["user-agent"])) {
             Logger.warn(`Rejecting submission based on invalid data: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]}`);
             res.status(200).send("OK");
             return;

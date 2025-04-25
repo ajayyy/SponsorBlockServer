@@ -87,6 +87,7 @@ export interface SBSConfig {
     };
     validityCheck: {
         userAgent: string | null;
+        userAgentR: string | null;
     }
     minimumPrefix?: string;
     maximumPrefix?: string;

@@ -71,6 +71,7 @@ addDefaults(config, {
     },
     validityCheck: {
         userAgent: null,
+        userAgentR: null,
     },
     userCounterURL: null,
     userCounterRatio: 10,
