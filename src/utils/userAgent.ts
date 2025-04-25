@@ -7,7 +7,7 @@ export function parseUserAgent(userAgent: string): string {
     }
 
     if (ua.match(/(com.google.android.youtube\/)|(com.vanced.android.youtube\/)|(^YouTube\/)|(^Dalvik\/)/i)) {
-        return `Vanced/${ua.match(/.android.youtube\/([^\s]+)/i)[1]}`;
+        return `Vanced/${ua.match(/.android.youtube\/([^\s]+)/i)?.[1]}`;
     }
 
     if (ua.match(/(mpv_sponsorblock)|(^python-requests)|(^GuzzleHttp\/)|(^PostmanRuntime\/)/i)) {
