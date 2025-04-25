@@ -86,6 +86,7 @@ export interface SBSConfig {
     discordNewUserWebhookURL?: string;
     neuralBlockURL?: string;
     discordNeuralBlockRejectWebhookURL?: string;
+    discordRejectedNewUserWebhookURL?: string;
     minReputationToSubmitChapter: number;
     minReputationToSubmitFiller: number;
     userCounterURL?: string;

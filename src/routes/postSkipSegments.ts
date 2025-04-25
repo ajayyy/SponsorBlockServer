@@ -520,6 +520,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         segments,
         endpoint: "sponsorblock-postSkipSegments"
     })) {
+        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam);
         Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");
     }
@@ -570,33 +571,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
             Logger.warn(`New user trying to submit: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
             return res.status(403).send(permission.reason);
-        } else if (permission.newUser && config.discordNewUserWebhookURL) {
-            axios.post(config.discordNewUserWebhookURL, {
-                "embeds": [{
-                    "title": userID,
-                    "url": `https://www.youtube.com/watch?v=${videoID}`,
-                    "description": `**User Agent**: ${userAgent}\
-                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
-                        \n**Real User Agent**: ${req.headers["user-agent"]}\
-                        \n**Video Duration**: ${videoDurationParam}`,
-                    "color": 10813440,
-                    "thumbnail": {
-                        "url": getMaxResThumbnail(videoID),
-                    },
-                }],
-            })
-                .then(res => {
-                    if (res.status >= 400) {
-                        Logger.error("Error sending reported submission Discord hook");
-                        Logger.error(JSON.stringify((res.data)));
-                        Logger.error("\n");
-                    }
-                })
-                .catch(err => {
-                    Logger.error("Failed to send reported submission Discord hook.");
-                    Logger.error(JSON.stringify(err));
-                    Logger.error("\n");
-                });
+        } else if (permission.newUser) {
+            sendNewUserWebhook(config.discordNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam);
         }
 
         // Will be filled when submitting
@@ -683,6 +659,37 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     } finally {
         lock.unlock();
     }
+}
+
+function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: any, userAgent: any, req: Request, videoDurationParam: VideoDuration) {
+    if (!webhookUrl) return;
+
+    axios.post(webhookUrl, {
+        "embeds": [{
+            "title": userID,
+            "url": `https://www.youtube.com/watch?v=${videoID}`,
+            "description": `**User Agent**: ${userAgent}\
+                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
+                        \n**Real User Agent**: ${req.headers["user-agent"]}\
+                        \n**Video Duration**: ${videoDurationParam}`,
+            "color": 10813440,
+            "thumbnail": {
+                "url": getMaxResThumbnail(videoID),
+            },
+        }],
+    })
+        .then(res => {
+            if (res.status >= 400) {
+                Logger.error("Error sending reported submission Discord hook");
+                Logger.error(JSON.stringify((res.data)));
+                Logger.error("\n");
+            }
+        })
+        .catch(err => {
+            Logger.error("Failed to send reported submission Discord hook.");
+            Logger.error(JSON.stringify(err));
+            Logger.error("\n");
+        });
 }
 
 // Takes an array of arrays:

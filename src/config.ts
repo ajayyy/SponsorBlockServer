@@ -48,6 +48,7 @@ addDefaults(config, {
     discordDeArrowLockedWebhookURL: null,
     discordDeArrowWarnedWebhookURL: null,
     discordNewUserWebhookURL: null,
+    discordRejectedNewUserWebhookURL: null,
     minReputationToSubmitChapter: 0,
     minReputationToSubmitFiller: 0,
     getTopUsersCacheTimeMinutes: 240,

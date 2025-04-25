@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 
-import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission } from "../types/branding.model";
+import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission, TitleSubmission } from "../types/branding.model";
 import { HashedIP, IPAddress, VideoID } from "../types/segments.model";
 import { Feature, HashedUserID } from "../types/user.model";
 import { getHashCache } from "../utils/getHashCache";
@@ -73,6 +73,7 @@ export async function postBranding(req: Request, res: Response) {
             },
             endpoint: "dearrow-postBranding",
         })) {
+            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title);
             Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;
@@ -84,34 +85,8 @@ export async function postBranding(req: Request, res: Response) {
 
             res.status(403).send(permission.reason);
             return;
-        } else if (permission.newUser && config.discordNewUserWebhookURL) {
-            axios.post(config.discordNewUserWebhookURL, {
-                "embeds": [{
-                    "title": hashedUserID,
-                    "url": `https://www.youtube.com/watch?v=${videoID}`,
-                    "description": `**User Agent**: ${userAgent}\
-                        \n**Sent User Agent**: ${req.body.userAgent}\
-                        \n**Real User Agent**: ${req.headers["user-agent"]}\
-                        \n**Video Duration**: ${videoDuration}\
-                        \n**Title**: ${title?.title}`,
-                    "color": 1184701,
-                    "thumbnail": {
-                        "url": getMaxResThumbnail(videoID),
-                    },
-                }],
-            })
-                .then(res => {
-                    if (res.status >= 400) {
-                        Logger.error("Error sending reported submission Discord hook");
-                        Logger.error(JSON.stringify((res.data)));
-                        Logger.error("\n");
-                    }
-                })
-                .catch(err => {
-                    Logger.error("Failed to send reported submission Discord hook.");
-                    Logger.error(JSON.stringify(err));
-                    Logger.error("\n");
-                });
+        } else if (permission.newUser) {
+            sendNewUserWebhook(config.discordNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title);
         }
 
         if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
@@ -233,6 +208,38 @@ export async function postBranding(req: Request, res: Response) {
         Logger.error(e as string);
         res.status(500).send("Internal Server Error");
     }
+}
+
+function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission) {
+    if (!webhookUrl) return;
+
+    axios.post(webhookUrl, {
+        "embeds": [{
+            "title": hashedUserID,
+            "url": `https://www.youtube.com/watch?v=${videoID}`,
+            "description": `**User Agent**: ${userAgent}\
+                        \n**Sent User Agent**: ${req.body.userAgent}\
+                        \n**Real User Agent**: ${req.headers["user-agent"]}\
+                        \n**Video Duration**: ${videoDuration}\
+                        \n**Title**: ${title?.title}`,
+            "color": 1184701,
+            "thumbnail": {
+                "url": getMaxResThumbnail(videoID),
+            },
+        }],
+    })
+        .then(res => {
+            if (res.status >= 400) {
+                Logger.error("Error sending reported submission Discord hook");
+                Logger.error(JSON.stringify((res.data)));
+                Logger.error("\n");
+            }
+        })
+        .catch(err => {
+            Logger.error("Failed to send reported submission Discord hook.");
+            Logger.error(JSON.stringify(err));
+            Logger.error("\n");
+        });
 }
 
 /**
