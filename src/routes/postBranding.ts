@@ -59,7 +59,7 @@ export async function postBranding(req: Request, res: Response) {
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
-        if (isRequestInvalid({
+        const matchedRule = isRequestInvalid({
             userAgent,
             userAgentHeader: req.headers["user-agent"],
             videoDuration,
@@ -72,8 +72,9 @@ export async function postBranding(req: Request, res: Response) {
                 downvote,
             },
             endpoint: "dearrow-postBranding",
-        })) {
-            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title);
+        });
+        if (matchedRule !== null) {
+            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, matchedRule);
             Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;
@@ -86,7 +87,7 @@ export async function postBranding(req: Request, res: Response) {
             res.status(403).send(permission.reason);
             return;
         } else if (permission.newUser) {
-            sendNewUserWebhook(config.discordNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title);
+            sendNewUserWebhook(config.discordNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, undefined);
         }
 
         if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
@@ -210,7 +211,7 @@ export async function postBranding(req: Request, res: Response) {
     }
 }
 
-function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission) {
+function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission, ruleName: string | undefined) {
     if (!webhookUrl) return;
 
     axios.post(webhookUrl, {
@@ -225,6 +226,9 @@ function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, vide
             "color": 1184701,
             "thumbnail": {
                 "url": getMaxResThumbnail(videoID),
+            },
+            "footer": {
+                "text": ruleName === undefined ? `Caught by permission check` : `Caught by rule '${ruleName}'`,
             },
         }],
     })

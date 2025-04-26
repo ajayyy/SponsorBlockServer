@@ -43,6 +43,7 @@ export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
 
 export type ValidatorPattern = string | [string, string];
 export interface RequestValidatorRule {
+    ruleName?: string;
     // mostly universal
     userAgent?: ValidatorPattern;
     userAgentHeader?: ValidatorPattern;
