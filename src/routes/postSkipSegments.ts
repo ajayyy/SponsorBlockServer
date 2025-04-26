@@ -510,7 +510,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
     const userID: HashedUserID = await getHashCache(paramUserID);
 
-    if (isRequestInvalid({
+    const matchedRule = isRequestInvalid({
         userAgent,
         userAgentHeader: req.headers["user-agent"],
         videoDuration,
@@ -519,8 +519,9 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         service,
         segments,
         endpoint: "sponsorblock-postSkipSegments"
-    })) {
-        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam);
+    });
+    if (matchedRule !== null) {
+        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, matchedRule);
         Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");
     }
@@ -572,7 +573,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             Logger.warn(`New user trying to submit: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
             return res.status(403).send(permission.reason);
         } else if (permission.newUser) {
-            sendNewUserWebhook(config.discordNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam);
+            sendNewUserWebhook(config.discordNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, undefined);
         }
 
         // Will be filled when submitting
@@ -661,7 +662,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
 }
 
-function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: any, userAgent: any, req: Request, videoDurationParam: VideoDuration) {
+function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: any, userAgent: any, req: Request, videoDurationParam: VideoDuration, ruleName: string | undefined) {
     if (!webhookUrl) return;
 
     axios.post(webhookUrl, {
@@ -675,6 +676,9 @@ function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: a
             "color": 10813440,
             "thumbnail": {
                 "url": getMaxResThumbnail(videoID),
+            },
+            "footer": {
+                "text": ruleName === undefined ? "Caught by permission check" : `Caught by rule '${ruleName}'`,
             },
         }],
     })

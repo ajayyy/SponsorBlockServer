@@ -24,7 +24,8 @@ export interface RequestValidatorInput {
     newUsername?: string;
     endpoint?: string;
 }
-export type CompiledValidityCheck = (input: RequestValidatorInput) => boolean;
+export type CompiledValidityCheck = (input: RequestValidatorInput) => string | null;
+type CompiledPatternCheck = (input: RequestValidatorInput) => boolean;
 type CompiledSegmentCheck = (input: IncomingSegment) => boolean;
 type InputExtractor = (
     input: RequestValidatorInput,
@@ -46,7 +47,7 @@ function patternToRegex(pattern: ValidatorPattern): RegExp {
 function compilePattern(
     pattern: ValidatorPattern,
     extractor: InputExtractor,
-): CompiledValidityCheck {
+): CompiledPatternCheck {
     const regex = patternToRegex(pattern);
 
     return (input: RequestValidatorInput) => {
@@ -72,11 +73,12 @@ function compileSegmentPattern(
 export function compileRules(
     ruleDefinitions: RequestValidatorRule[],
 ): CompiledValidityCheck {
-    if (ruleDefinitions.length === 0) return () => false;
+    if (ruleDefinitions.length === 0) return () => null;
 
     const rules: CompiledValidityCheck[] = [];
+    let untitledRuleCounter = 0;
     for (const ruleDefinition of ruleDefinitions) {
-        const ruleComponents: CompiledValidityCheck[] = [];
+        const ruleComponents: CompiledPatternCheck[] = [];
         const segmentRuleComponents: CompiledSegmentCheck[] = [];
         for (const [ruleKey, rulePattern] of Object.entries(
             ruleDefinition,
@@ -217,6 +219,9 @@ export function compileRules(
                     });
                     break;
                 }
+                case "ruleName":
+                    // not a rule component
+                    break;
                 default: {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const _exhaustive: never = ruleKey;
@@ -239,22 +244,24 @@ export function compileRules(
                 return false;
             });
         }
+        const ruleName = ruleDefinition.ruleName ?? `Untitled rule ${++untitledRuleCounter}`;
         rules.push((input) => {
             for (const rule of ruleComponents) {
-                if (!rule(input)) return false;
+                if (!rule(input)) return null;
             }
-            return true;
+            return ruleName;
         });
     }
     return (input) => {
         for (const rule of rules) {
-            if (rule(input)) return true;
+            const result = rule(input);
+            if (result !== null) return result;
         }
-        return false;
+        return null;
     };
 }
 
-export function isRequestInvalid(input: RequestValidatorInput) {
+export function isRequestInvalid(input: RequestValidatorInput): string | null {
     compiledRules ??= compileRules(config.requestValidatorRules);
     return compiledRules(input);
 }
