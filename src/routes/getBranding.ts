@@ -254,7 +254,7 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
     cache: { currentIP: Promise<HashedIP> | null }): Promise<(_: unknown, index: number) => boolean> {
 
     const shouldKeep = await Promise.all(submissions.map(async (s) => {
-        if (s.shadowHidden != Visibility.HIDDEN) return true;
+        if (s.shadowHidden === Visibility.VISIBLE) return true;
         const table = type === BrandingSubmissionType.Title ? "titleVotes" : "thumbnailVotes";
         const fetchData = () => privateDB.prepare("get", `SELECT "hashedIP" FROM "${table}" WHERE "UUID" = ?`,
             [s.UUID], { useReplica: true }) as Promise<{ hashedIP: HashedIP }>;
