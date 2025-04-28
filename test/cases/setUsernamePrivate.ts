@@ -4,6 +4,8 @@ import assert from "assert";
 import { client } from "../utils/httpClient";
 import { config } from "../../src/config";
 import sinon from "sinon";
+import { insertSegment } from "../utils/segmentQueryGen";
+import { HashedUserID } from "../../src/types/user.model";
 
 const USERID_LIMIT = 30;
 
@@ -42,6 +44,16 @@ describe("setUsernamePrivate tests", () => {
     before(async () => {
         await addUsername(getHash(preExisting_underLimit), preExisting_underLimit, 0);
         await addUsername(getHash(preExisting_overLimit), preExisting_overLimit, 0);
+
+        for (const privId of [
+            preExisting_underLimit,
+            preExisting_overLimit,
+            newUser_underLimit,
+            newUser_overLimit,
+            otherUser
+        ]) {
+            await insertSegment(db, { userID: getHash(privId) as HashedUserID });
+        }
     });
     // stub minUserIDLength
     before(() => sinon.stub(config, "minUserIDLength").value(USERID_LIMIT));

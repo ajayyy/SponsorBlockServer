@@ -2,6 +2,8 @@ import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { insertSegment } from "../utils/segmentQueryGen";
+import { HashedUserID } from "../../src/types/user.model";
 
 const adminPrivateUserID = "testUserId";
 const user00PrivateUserID = "setUsername_00";
@@ -21,6 +23,9 @@ const username06 = "Username 06";
 const user07PrivateUserID = "setUsername_07";
 const username07 = "Username 07";
 const user08PrivateUserID = "setUsername_08";
+const user09PrivateUserID = "setUsername_09";
+const completelyNewUsername = "Completely new user";
+const completelyNewUserPrivId = "setUsername_completelyNew";
 
 async function addUsername(userID: string, userName: string, locked = 0) {
     await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
@@ -35,8 +40,8 @@ async function getUsernameInfo(userID: string): Promise<{ userName: string, lock
     return row;
 }
 
-function addLogUserNameChange(userID: string, newUserName: string, oldUserName = "") {
-    privateDB.prepare("run",
+async function addLogUserNameChange(userID: string, newUserName: string, oldUserName = "") {
+    await privateDB.prepare("run",
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedAt", "updatedByAdmin") VALUES(?, ?, ?, ?, ?)`,
         [getHash(userID), newUserName, oldUserName, new Date().getTime(), + true]
     );
@@ -88,6 +93,22 @@ describe("setUsername", () => {
         await addUsername(getHash(user05PrivateUserID), username05, 0);
         await addUsername(getHash(user06PrivateUserID), username06, 0);
         await addUsername(getHash(user07PrivateUserID), username07, 1);
+        await addUsername(getHash(user08PrivateUserID), "test", 0);
+
+        for (const privId of [
+            user00PrivateUserID,
+            user01PrivateUserID,
+            user02PrivateUserID,
+            user03PrivateUserID,
+            user04PrivateUserID,
+            user05PrivateUserID,
+            user06PrivateUserID,
+            user07PrivateUserID,
+            user08PrivateUserID,
+            user09PrivateUserID,
+        ]) {
+            await insertSegment(db, { userID: getHash(privId) as HashedUserID });
+        }
     });
 
     it("Should be able to set username that has never been set", (done) => {
@@ -233,14 +254,23 @@ describe("setUsername", () => {
             .catch((err) => done(err));
     });
 
-    it("Should delete row if new username is same as publicID", (done) => {
+    it("Should delete existing username if new username is same as publicID", async () => {
         const publicID = getHash(user08PrivateUserID);
-        postSetUserName(getHash(user08PrivateUserID), publicID)
-            .then(() => {
-                getUsernameInfo(getHash(user08PrivateUserID))
-                    .then(usernameinfo => done(`Username should be deleted - ${usernameinfo})`))
-                    .catch(() => done());
-            })
-            .catch((err) => done(err));
+        const resp = await postSetUserName(user08PrivateUserID, publicID);
+        assert.strictEqual(resp.status, 200);
+        await assert.rejects(getUsernameInfo(publicID), "Expected the username to be deleted");
+    });
+
+    it("Should silently reject username change if new username is same as publicID", async () => {
+        const publicID = getHash(user09PrivateUserID);
+        const resp = await postSetUserName(user09PrivateUserID, publicID);
+        assert.strictEqual(resp.status, 200);
+        await assert.rejects(getUsernameInfo(publicID), "Expected the username change to be silently rejected");
+    });
+
+    it("Should ignore username change requests for new users", async () => {
+        const resp = await postSetUserName(completelyNewUserPrivId, completelyNewUsername);
+        assert.strictEqual(resp.status, 200);
+        await assert.rejects(getUsernameInfo(getHash(completelyNewUserPrivId)), "Expected the username change to be silently rejected");
     });
 });

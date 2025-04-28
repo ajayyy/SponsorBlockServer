@@ -1,6 +1,9 @@
 import { getHash } from "../../src/utils/getHash";
 import { client } from "../utils/httpClient";
 import assert from "assert";
+import { insertSegment } from "../utils/segmentQueryGen";
+import { db } from "../../src/databases/databases";
+import { HashedUserID } from "../../src/types/user.model";
 
 // helpers
 const getUsername = (userID: string) => client({
@@ -22,6 +25,10 @@ const userOnePublic = getHash(userOnePrivate);
 const userOneUsername = "getUsername_username";
 
 describe("getUsername test", function() {
+    before(async () => {
+        await insertSegment(db, { userID: userOnePublic as HashedUserID });
+    });
+
     it("Should get back publicUserID if not set", (done) => {
         getUsername(userOnePrivate)
             .then(result => {
