@@ -570,7 +570,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         if (!permission.canSubmit) {
             lock.unlock();
 
-            Logger.warn(`New user trying to submit: ${userID} ${videoID} ${Object.keys(segments?.[0])} ${Object.keys(req.query)} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
+            Logger.warn(`New user trying to submit: ${userID} ${videoID} ${Object.keys(segments?.[0] ?? {})} ${Object.keys(req.query)} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
             return res.status(403).send(permission.reason);
         } else if (permission.newUser) {
             sendNewUserWebhook(config.discordNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, undefined);
