@@ -70,10 +70,13 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<OldSu
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
         if (!submitterThreshold) {
-            const voteResult = await privateDB.prepare("get", `SELECT "UUID" from "titleVotes" where "userID" = ?`, [userID], { useReplica: true });
-            if (voteResult?.UUID) {
-                // Count at least one vote as an old submitter as well
-                return { canSubmit: true, newUser: false };
+            const bannedResult = await db.prepare("get", `SELECT count(*) as "submissionCount" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "userID" = ? AND "shadowHidden" != 0`, [userID], { useReplica: true });
+            if (bannedResult?.submissionCount === 0) {
+                const voteResult = await privateDB.prepare("get", `SELECT "UUID" from "titleVotes" where "userID" = ?`, [userID], { useReplica: true });
+                if (voteResult?.UUID) {
+                    // Count at least one vote as an old submitter as well
+                    return { canSubmit: true, newUser: false };
+                }
             }
         }
 
