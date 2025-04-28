@@ -70,6 +70,16 @@ export async function setUsername(req: Request, res: Response): Promise<Response
             if (await isUserBanned(hashedUserID)) {
                 return res.sendStatus(200);
             }
+
+            const [segments, titles, thumbs] = await Promise.all([
+                db.prepare("get", `SELECT count(*) AS "count" FROM "sponsorTimes" WHERE "userID" = ? LIMIT 1`, [hashedUserID]),
+                db.prepare("get", `SELECT count(*) AS "count" FROM "titles" WHERE "userID" = ? LIMIT 1`, [hashedUserID]),
+                db.prepare("get", `SELECT count(*) AS "count" FROM "thumbnails" WHERE "userID" = ? LIMIT 1`, [hashedUserID]),
+            ]) as {count: number}[];
+
+            if (segments.count === 0 && titles.count === 0 && thumbs.count === 0) {
+                return res.sendStatus(200);
+            }
         }
     }
     catch (error) /* istanbul ignore next */ {
@@ -91,6 +101,8 @@ export async function setUsername(req: Request, res: Response): Promise<Response
             } else {
                 await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, hashedUserID]);
             }
+        } else if (userName === hashedUserID) {
+            return res.sendStatus(200);
         } else {
             //add to the db
             await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [hashedUserID, userName, locked]);
