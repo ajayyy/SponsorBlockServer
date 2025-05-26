@@ -80,7 +80,13 @@ export async function postBranding(req: Request, res: Response) {
             return;
         }
 
-        const permission = await canSubmitDeArrow(hashedUserID);
+        // treat banned users as existing users who "can submit" for the purposes of these checks
+        // this is to avoid their titles from being logged and them taking up "new user" slots with every submission
+        const permission = isBanned ? {
+            canSubmit: true,
+            newUser: false,
+            reason: "",
+        } : await canSubmitDeArrow(hashedUserID);
         if (!permission.canSubmit) {
             Logger.warn(`New user trying to submit dearrow: ${hashedUserID} ${videoID} ${videoDuration} ${Object.keys(req.body)} ${userAgent} ${title?.title} ${req.headers["user-agent"]}`);
 
