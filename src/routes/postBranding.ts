@@ -74,13 +74,19 @@ export async function postBranding(req: Request, res: Response) {
             endpoint: "dearrow-postBranding",
         });
         if (matchedRule !== null) {
-            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, matchedRule);
+            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, `Caught by rule: ${matchedRule}`);
             Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;
         }
 
-        const permission = await canSubmitDeArrow(hashedUserID);
+        // treat banned users as existing users who "can submit" for the purposes of these checks
+        // this is to avoid their titles from being logged and them taking up "new user" slots with every submission
+        const permission = isBanned ? {
+            canSubmit: true,
+            newUser: false,
+            reason: "",
+        } : await canSubmitDeArrow(hashedUserID);
         if (!permission.canSubmit) {
             Logger.warn(`New user trying to submit dearrow: ${hashedUserID} ${videoID} ${videoDuration} ${Object.keys(req.body)} ${userAgent} ${title?.title} ${req.headers["user-agent"]}`);
 
@@ -121,7 +127,7 @@ export async function postBranding(req: Request, res: Response) {
                 const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 if (downvote && existingIsLocked && !isVip) {
-                    sendWebhooks(videoID, existingUUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
+                    if (!isBanned) sendWebhooks(videoID, existingUUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
                     errorCode = 403;
                     return;
                 }
@@ -150,7 +156,7 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
 
-                sendWebhooks(videoID, UUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
+                if (!isBanned) sendWebhooks(videoID, UUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -211,7 +217,7 @@ export async function postBranding(req: Request, res: Response) {
     }
 }
 
-function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission, ruleName: string | undefined) {
+function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission, footerText: string | undefined) {
     if (!webhookUrl) return;
 
     axios.post(webhookUrl, {
@@ -227,8 +233,8 @@ function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, vide
             "thumbnail": {
                 "url": getMaxResThumbnail(videoID),
             },
-            "footer": {
-                "text": ruleName === undefined ? `Caught by permission check` : `Caught by rule '${ruleName}'`,
+            "footer": footerText === undefined ? null : {
+                "text": footerText,
             },
         }],
     })
