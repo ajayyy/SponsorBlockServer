@@ -19,7 +19,7 @@ addDefaults(config, {
     privateDBSchema: "./databases/_private.db.sql",
     readOnly: false,
     webhooks: [],
-    categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "music_offtopic", "filler", "poi_highlight", "chapter"],
+    categoryList: ["sponsor", "selfpromo", "exclusive_access", "interaction", "intro", "outro", "preview", "hook", "music_offtopic", "filler", "poi_highlight", "chapter"],
     casualCategoryList: ["funny", "creative", "clever", "descriptive", "other"],
     categorySupport: {
         sponsor: ["skip", "mute", "full"],
@@ -29,6 +29,7 @@ addDefaults(config, {
         intro: ["skip", "mute"],
         outro: ["skip", "mute"],
         preview: ["skip", "mute"],
+        hook: ["skip", "mute"],
         filler: ["skip", "mute"],
         music_offtopic: ["skip"],
         poi_highlight: ["poi"],
