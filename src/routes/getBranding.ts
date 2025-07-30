@@ -68,7 +68,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
         const casualVotes = getCasualVotes();
 
         for (const title of await titles) {
-            title.title = title.title.replace("<", "‹");
+            title.title = title.title.replaceAll("<", "‹");
         }
 
         return {
@@ -160,7 +160,7 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
         };
 
         (await branding.titles).forEach((title) => {
-            title.title = title.title.replace("<", "‹");
+            title.title = title.title.replaceAll("<", "‹");
 
             initResult(title);
             dbResult[title.videoID].titles.push(title);
