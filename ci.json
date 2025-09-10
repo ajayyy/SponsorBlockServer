@@ -56,7 +56,6 @@
             ]
         }
     ],
-    "hoursAfterWarningExpires": 24,
     "rateLimit": {
         "vote": {
           "windowMs": 900000,

@@ -1,4 +1,3 @@
-import { config } from "../../src/config";
 import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import { ImportMock } from "ts-mock-imports";
@@ -26,8 +25,6 @@ describe("voteOnSponsorTime", () => {
         const warnUser01Hash = getHash("warn-voteuser01");
         const warnUser02Hash = getHash("warn-voteuser02");
         const categoryChangeUserHash = getHash(categoryChangeUser);
-        const MILLISECONDS_IN_HOUR = 3600000;
-        const warningExpireTime = MILLISECONDS_IN_HOUR * config.hoursAfterWarningExpires;
 
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", "views", "category", "actionType", "shadowHidden", "hidden") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         await db.prepare("run", insertSponsorTimeQuery, ["vote-testtesttest", 1, 11, 2, 0, "vote-uuid-0", "testman", 0, 50, "sponsor", "skip", 0, 0]);
@@ -96,8 +93,6 @@ describe("voteOnSponsorTime", () => {
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 2000), warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser01Hash, (now - 3601000), warnVip01Hash,  1]);
         await db.prepare("run", insertWarningQuery, [warnUser02Hash, now, warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 1000)), warnVip01Hash,  1]);
-        await db.prepare("run", insertWarningQuery, [warnUser02Hash, (now - (warningExpireTime + 2000)), warnVip01Hash,  1]);
 
 
         await db.prepare("run", 'INSERT INTO "vipUsers" ("userID") VALUES (?)', [getHash(vipUser)]);

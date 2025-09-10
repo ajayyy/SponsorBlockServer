@@ -37,8 +37,6 @@ addDefaults(config, {
     },
     deArrowTypes: ["title", "thumbnail"],
     maxTitleLength: 110,
-    maxNumberOfActiveWarnings: 1,
-    hoursAfterWarningExpires: 16300000,
     adminUserID: "",
     discordCompletelyIncorrectReportWebhookURL: null,
     discordFirstTimeSubmissionsWebhookURL: null,

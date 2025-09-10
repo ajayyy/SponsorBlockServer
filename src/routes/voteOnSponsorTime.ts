@@ -379,14 +379,12 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
         return { status: 400 };
     }
 
-    const MILLISECONDS_IN_HOUR = 3600000;
-    const now = Date.now();
-    const warnings = (await db.prepare("all", `SELECT "reason" FROM warnings WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1  AND type = 0`,
-        [nonAnonUserID, Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))],
+    const warning = (await db.prepare("get", `SELECT "reason" FROM warnings WHERE "userID" = ? AND enabled = 1  AND type = 0`,
+        [nonAnonUserID],
     ));
 
-    if (warnings.length >= config.maxNumberOfActiveWarnings) {
-        const warningReason = warnings[0]?.reason;
+    if (warning != null) {
+        const warningReason = warning.reason;
         lock.unlock();
         return { status: 403, message: "Vote rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes that are not malicious, and we just want to clarify the rules. " +
                 "Could you please send a message in Discord or Matrix so we can further help you?" +

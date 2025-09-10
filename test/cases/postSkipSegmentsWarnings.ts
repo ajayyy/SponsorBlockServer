@@ -1,4 +1,3 @@
-import { config } from "../../src/config";
 import { getHash } from "../../src/utils/getHash";
 import { db } from "../../src/databases/databases";
 import assert from "assert";
@@ -33,16 +32,14 @@ describe("postSkipSegments Warnings", () => {
         const reason02 = "";
         const reason03 = "Reason03";
 
-        const MILLISECONDS_IN_HOUR = 3600000;
-        const WARNING_EXPIRATION_TIME = config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR;
-
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issuerUserID", "enabled", "reason", "issueTime") VALUES(?, ?, ?, ?, ?)';
         // User 1 | 1 active | custom reason
         db.prepare("run", insertWarningQuery, [warnUser01Hash, warnVip01Hash, 1, reason01, now]);
         // User 2 | 1 inactive | default reason
         db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 0, reason02, now]);
-        // User 3 | 1 expired, active | custom reason
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 1, reason03, (now - WARNING_EXPIRATION_TIME - 1000)]);
+        // User 3 | 1 inactive, 1 active | different reasons
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 0, reason01, now]);
+        db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 1, reason03, now]);
         // User 4 | 1 active | default reason
         db.prepare("run", insertWarningQuery, [warnUser04Hash, warnVip01Hash, 1, reason02, now]);
     });
@@ -87,17 +84,25 @@ describe("postSkipSegments Warnings", () => {
             .catch(err => done(err));
     });
 
-    it("Should be accepted if user has expired warning", (done) => {
+    it("Should be rejected with custom message if user has active warnings, even if has one inactive warning, should use current message", (done) => {
         postSkipSegmentJSON({
             userID: warnUser03,
             videoID: warnVideoID,
             segments: [{
-                segment: [53, 60],
+                segment: [10, 20],
                 category: "sponsor",
             }],
         })
             .then(res => {
-                assert.ok(res.status === 200, `Status code was ${res.status} ${res.data}`);
+                assert.strictEqual(res.status, 403);
+                const errorMessage = res.data;
+                const reason = "Reason03";
+                const expected = "Submission rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes"
+                + " that are not malicious, and we just want to clarify the rules. "
+                + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
+                + `Your userID is ${warnUser03Hash}.\n\nTip message: '${reason}'`;
+
+                assert.strictEqual(errorMessage, expected);
                 done();
             })
             .catch(err => done(err));

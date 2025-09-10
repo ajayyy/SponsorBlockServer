@@ -25,8 +25,6 @@
     "webhooks": [],
     "categoryList": ["sponsor", "intro", "outro", "interaction", "selfpromo", "preview", "music_offtopic", "poi_highlight"], // List of supported categories any other category will be rejected
     "getTopUsersCacheTimeMinutes": 5, // cacheTime for getTopUsers result in minutes
-    "maxNumberOfActiveWarnings": 3, // Users with this number of warnings will be blocked until warnings expire
-    "hoursAfterWarningExpire": 24,
     "rateLimit": {
       "vote": {
         "windowMs": 900000, // 15 minutes

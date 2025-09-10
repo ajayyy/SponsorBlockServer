@@ -164,20 +164,15 @@ async function autoModerateSubmission(apiVideoDetails: videoDetails,
 }
 
 async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult> {
-    const MILLISECONDS_IN_HOUR = 3600000;
-    const now = Date.now();
-    const warnings = (await db.prepare("all",
+    const warning = await db.prepare("get",
         `SELECT "reason" 
         FROM warnings 
-        WHERE "userID" = ? AND "issueTime" > ? AND enabled = 1 AND type = 0
+        WHERE "userID" = ? AND enabled = 1 AND type = 0
         ORDER BY "issueTime" DESC`,
-        [
-            userID,
-            Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR))
-        ],
-    ) as {reason: string}[]).sort((a, b) => (b?.reason?.length ?? 0) - (a?.reason?.length ?? 0));
+        [userID],
+    ) as {reason: string};
 
-    if (warnings?.length >= config.maxNumberOfActiveWarnings) {
+    if (warning != null) {
         const defaultMessage = "Submission rejected due to a tip from a moderator. This means that we noticed you were making some common mistakes"
                                 + " that are not malicious, and we just want to clarify the rules. "
                                 + "Could you please send a message in discord.gg/SponsorBlock or matrix.to/#/#sponsor:ajay.app so we can further help you? "
@@ -185,7 +180,7 @@ async function checkUserActiveWarning(userID: HashedUserID): Promise<CheckResult
 
         return {
             pass: false,
-            errorMessage: defaultMessage + (warnings[0]?.reason?.length > 0 ? `\n\nTip message: '${warnings[0].reason}'` : ""),
+            errorMessage: defaultMessage + (warning.reason?.length > 0 ? `\n\nTip message: '${warning.reason}'` : ""),
             errorCode: 403
         };
     }
