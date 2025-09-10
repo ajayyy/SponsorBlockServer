@@ -3,74 +3,41 @@ import { db } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { client } from "../utils/httpClient";
+import { usersForSuite } from "../utils/randomUsers";
 
 describe("postWarning", () => {
     // constants
     const endpoint = "/api/warnUser";
     const getWarning = (userID: string, type = 0) => db.prepare("all", `SELECT * FROM warnings WHERE "userID" = ? AND "type" = ? ORDER BY "issueTime" ASC`, [userID, type]);
 
-    const userID0 = "warning-0";
-    const userID1 = "warning-1";
-    const userID2 = "warning-2";
-    const userID3 = "warning-3";
-    const userID4 = "warning-4";
-    const userID5 = "warning-5";
-    const userID6 = "warning-6";
-    const userID7 = "warning-7";
-    const userID8 = "warning-8";
-    const userID9 = "warning-9";
-    const userID10 = "warning-10";
-    const userID11 = "warning-11";
-    const userID12 = "warning-12";
-    const userID13 = "warning-13";
-    const userID14 = "warning-14";
-    const publicUserID0 = getHash(userID0);
-    const publicUserID1 = getHash(userID1);
-    const publicUserID2 = getHash(userID2);
-    const publicUserID3 = getHash(userID3);
-    const publicUserID4 = getHash(userID4);
-    const publicUserID5 = getHash(userID5);
-    const publicUserID6 = getHash(userID6);
-    const publicUserID7 = getHash(userID7);
-    const publicUserID8 = getHash(userID8);
-    const publicUserID9 = getHash(userID9);
-    const publicUserID10 = getHash(userID10);
-    const publicUserID11 = getHash(userID11);
-    const publicUserID12 = getHash(userID12);
-    const publicUserID13 = getHash(userID13);
-    const publicUserID14 = getHash(userID14);
-    const vipID1 = "warning-vip-1";
-    const vipID2 = "warning-vip-2";
-    const publicVipID1 = getHash(vipID1);
-    const publicVipID2 = getHash(vipID2);
-    const nonVipUser = "warning-non-vip";
+    const users = usersForSuite("postWarning");
 
     before(async () => {
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issuerUserID", "enabled", "reason", "issueTime") VALUES(?, ?, ?, ?, ?)';
         const insertWarningQueryWithDisableTime = 'INSERT INTO warnings ("userID", "issuerUserID", "enabled", "reason", "issueTime", "disableTime") VALUES(?, ?, ?, ?, ?, ?)';
         const HOUR = 60 * 60 * 1000;
 
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [publicVipID1]);
-        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [publicVipID2]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [users.vip1.public]);
+        await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [users.vip2.public]);
 
-        await db.prepare("run", insertWarningQuery, [publicUserID1, publicVipID1, 1, "warn reason 1", (Date.now() - 24 * HOUR)]); // 24 hours is much past the edit deadline
-        await db.prepare("run", insertWarningQuery, [publicUserID2, publicVipID1, 1, "warn reason 2", (Date.now() - 24 * HOUR)]);
-        await db.prepare("run", insertWarningQuery, [publicUserID3, publicVipID1, 1, "warn reason 3", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID4, publicVipID1, 1, "warn reason 4", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID6, publicVipID1, 1, "warn reason 6", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID9, publicVipID1, 0, "warn reason 9", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID10, publicVipID1, 1, "warn reason 10", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID11, publicVipID1, 1, "warn reason 11", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID12, publicVipID1, 0, "warn reason 12", Date.now()]);
-        await db.prepare("run", insertWarningQuery, [publicUserID13, publicVipID1, 0, "warn reason 13", Date.now()]);
-        await db.prepare("run", insertWarningQueryWithDisableTime, [publicUserID14, publicVipID1, 0, "warn reason 14", 123, 12345]);
-        await db.prepare("run", insertWarningQuery, [publicUserID14, publicVipID1, 1, "another reason 14", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u1.public, users.vip1.public, 1, "warn reason 1", (Date.now() - 24 * HOUR)]); // 24 hours is much past the edit deadline
+        await db.prepare("run", insertWarningQuery, [users.u2.public, users.vip1.public, 1, "warn reason 2", (Date.now() - 24 * HOUR)]);
+        await db.prepare("run", insertWarningQuery, [users.u3.public, users.vip1.public, 1, "warn reason 3", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u4.public, users.vip1.public, 1, "warn reason 4", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u6.public, users.vip1.public, 1, "warn reason 6", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u9.public, users.vip1.public, 0, "warn reason 9", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u10.public, users.vip1.public, 1, "warn reason 10", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u11.public, users.vip1.public, 1, "warn reason 11", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u12.public, users.vip1.public, 0, "warn reason 12", Date.now()]);
+        await db.prepare("run", insertWarningQuery, [users.u13.public, users.vip1.public, 0, "warn reason 13", Date.now()]);
+        await db.prepare("run", insertWarningQueryWithDisableTime, [users.u14.public, users.vip1.public, 0, "warn reason 14", 123, 12345]);
+        await db.prepare("run", insertWarningQuery, [users.u14.public, users.vip1.public, 1, "another reason 14", Date.now()]);
     });
 
     it("Should be able to create warning if vip (exp 200)", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID0,
+            issuerUserID: users.vip1.private,
+            userID: users.u0.public,
             reason: "warning-reason-0"
         };
         client.post(endpoint, json)
@@ -91,8 +58,8 @@ describe("postWarning", () => {
 
     it("Should be not be able to edit a warning if past deadline and same vip", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID1,
+            issuerUserID: users.vip1.private,
+            userID: users.u1.public,
             reason: "edited reason 1",
         };
 
@@ -102,7 +69,7 @@ describe("postWarning", () => {
                 const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 1,
-                    issuerUserID: publicVipID1,
+                    issuerUserID: users.vip1.public,
                 };
                 assert.equal(row.length, 1);
                 assert.ok(partialDeepEquals(row[0], expected));
@@ -113,8 +80,8 @@ describe("postWarning", () => {
 
     it("Should be not be able to edit a warning if past deadline and different vip", (done) => {
         const json = {
-            issuerUserID: vipID2,
-            userID: publicUserID2,
+            issuerUserID: users.vip2.private,
+            userID: users.u2.public,
             reason: "edited reason 2",
         };
 
@@ -124,7 +91,7 @@ describe("postWarning", () => {
                 const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 1,
-                    issuerUserID: publicVipID1,
+                    issuerUserID: users.vip1.public,
                 };
                 assert.equal(row.length, 1);
                 assert.ok(partialDeepEquals(row[0], expected));
@@ -135,8 +102,8 @@ describe("postWarning", () => {
 
     it("Should be able to remove warning if same vip as issuer", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID3,
+            issuerUserID: users.vip1.private,
+            userID: users.u3.public,
             enabled: false
         };
         const beforeTime = Date.now();
@@ -160,8 +127,8 @@ describe("postWarning", () => {
 
     it("Should be able to remove warning if not the same vip as issuer", (done) => {
         const json = {
-            issuerUserID: vipID2,
-            userID: publicUserID4,
+            issuerUserID: users.vip2.private,
+            userID: users.u4.public,
             enabled: false
         };
         const beforeTime = Date.now();
@@ -185,8 +152,8 @@ describe("postWarning", () => {
 
     it("Should not be able to create warning if not vip (exp 403)", (done) => {
         const json = {
-            issuerUserID: nonVipUser,
-            userID: publicUserID5,
+            issuerUserID: users.nonvip.private,
+            userID: users.u5.public,
             reason: "warn reason 5",
         };
 
@@ -209,7 +176,7 @@ describe("postWarning", () => {
 
     it("Should be able to remove your own warning", (done) => {
         const json = {
-            userID: userID6,
+            userID: users.u6.private,
             enabled: false
         };
         const beforeTime = Date.now();
@@ -218,7 +185,7 @@ describe("postWarning", () => {
             .then(async res => {
                 const afterTime = Date.now();
                 assert.strictEqual(res.status, 200);
-                const row = await getWarning(publicUserID6);
+                const row = await getWarning(users.u6.public);
                 const expected = {
                     enabled: 0
                 };
@@ -233,7 +200,7 @@ describe("postWarning", () => {
 
     it("Should not be able to add your own warning", (done) => {
         const json = {
-            userID: userID7,
+            userID: users.u7.private,
             enabled: true,
             reason: "warn reason 7",
         };
@@ -241,7 +208,7 @@ describe("postWarning", () => {
         client.post(endpoint, json)
             .then(async res => {
                 assert.strictEqual(res.status, 403);
-                const data = await getWarning(publicUserID7);
+                const data = await getWarning(users.u7.public);
                 assert.equal(data.length, 0);
                 done();
             })
@@ -250,8 +217,8 @@ describe("postWarning", () => {
 
     it("Should not be able to warn a user without reason", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID8,
+            issuerUserID: users.vip1.private,
+            userID: users.u8.public,
             enabled: true
         };
 
@@ -265,8 +232,8 @@ describe("postWarning", () => {
 
     it("Should not be able to re-warn a user without reason", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID9,
+            issuerUserID: users.vip1.private,
+            userID: users.u9.public,
             enabled: true
         };
 
@@ -280,8 +247,8 @@ describe("postWarning", () => {
 
     it("Should be able to edit a warning if within deadline and same vip", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID10,
+            issuerUserID: users.vip1.private,
+            userID: users.u10.public,
             enabled: true,
             reason: "edited reason 10",
         };
@@ -292,7 +259,7 @@ describe("postWarning", () => {
                 const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 1,
-                    issuerUserID: publicVipID1,
+                    issuerUserID: users.vip1.public,
                     reason: json.reason,
                 };
                 assert.equal(row.length, 1);
@@ -304,8 +271,8 @@ describe("postWarning", () => {
 
     it("Should not be able to edit a warning if within deadline and different vip", (done) => {
         const json = {
-            issuerUserID: vipID2,
-            userID: publicUserID11,
+            issuerUserID: users.vip2.private,
+            userID: users.u11.public,
             enabled: true,
             reason: "edited reason 11",
         };
@@ -316,7 +283,7 @@ describe("postWarning", () => {
                 const row = await getWarning(json.userID);
                 const expected = {
                     enabled: 1,
-                    issuerUserID: publicVipID1,
+                    issuerUserID: users.vip1.public,
                     reason: "warn reason 11",
                 };
                 assert.equal(row.length, 1);
@@ -328,8 +295,8 @@ describe("postWarning", () => {
 
     it("Should be able to warn a previously warned user again (same vip)", (done) => {
         const json = {
-            issuerUserID: vipID1,
-            userID: publicUserID12,
+            issuerUserID: users.vip1.private,
+            userID: users.u12.public,
             enabled: true,
             reason: "new reason 12",
         };
@@ -341,12 +308,12 @@ describe("postWarning", () => {
                 const expected = [
                     {
                         enabled: 0,
-                        issuerUserID: publicVipID1,
+                        issuerUserID: users.vip1.public,
                         reason: "warn reason 12",
                     },
                     {
                         enabled: 1,
-                        issuerUserID: publicVipID1,
+                        issuerUserID: users.vip1.public,
                         reason: "new reason 12",
                     }
                 ];
@@ -360,8 +327,8 @@ describe("postWarning", () => {
 
     it("Should be able to warn a previously warned user again (different vip)", (done) => {
         const json = {
-            issuerUserID: vipID2,
-            userID: publicUserID13,
+            issuerUserID: users.vip2.private,
+            userID: users.u13.public,
             enabled: true,
             reason: "new reason 13",
         };
@@ -373,12 +340,12 @@ describe("postWarning", () => {
                 const expected = [
                     {
                         enabled: 0,
-                        issuerUserID: publicVipID1,
+                        issuerUserID: users.vip1.public,
                         reason: "warn reason 13",
                     },
                     {
                         enabled: 1,
-                        issuerUserID: publicVipID2,
+                        issuerUserID: users.vip2.public,
                         reason: "new reason 13",
                     }
                 ];
@@ -392,8 +359,8 @@ describe("postWarning", () => {
 
     it("Disabling a warning should only set disableTime for the active warning", (done) => {
         const json = {
-            issuerUserID: vipID2,
-            userID: publicUserID14,
+            issuerUserID: users.vip2.private,
+            userID: users.u14.public,
             enabled: false,
         };
         const beforeTime = Date.now();
@@ -406,13 +373,13 @@ describe("postWarning", () => {
                 const expected = [
                     {
                         enabled: 0,
-                        issuerUserID: publicVipID1,
+                        issuerUserID: users.vip1.public,
                         reason: "warn reason 14",
                         disableTime: 12345,
                     },
                     {
                         enabled: 0,
-                        issuerUserID: publicVipID1,
+                        issuerUserID: users.vip1.public,
                         reason: "another reason 14",
                     }
                 ];
