@@ -61,7 +61,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
                 return res.sendStatus(409);
             }
         } else {
-            await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "type" = ?', [userID, type]);
+            await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0, "disableTime" = ? WHERE "userID" = ? AND "type" = ? AND "enabled" = 1', [issueTime, userID, type]);
             resultStatus = "removed from";
         }
 

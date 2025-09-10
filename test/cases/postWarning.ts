@@ -7,7 +7,7 @@ import { client } from "../utils/httpClient";
 describe("postWarning", () => {
     // constants
     const endpoint = "/api/warnUser";
-    const getWarning = (userID: string, type = 0) => db.prepare("all", `SELECT "userID", "issueTime", "issuerUserID", enabled, "reason" FROM warnings WHERE "userID" = ? AND "type" = ? ORDER BY "issueTime" ASC`, [userID, type]);
+    const getWarning = (userID: string, type = 0) => db.prepare("all", `SELECT * FROM warnings WHERE "userID" = ? AND "type" = ? ORDER BY "issueTime" ASC`, [userID, type]);
 
     const userID0 = "warning-0";
     const userID1 = "warning-1";
@@ -23,6 +23,7 @@ describe("postWarning", () => {
     const userID11 = "warning-11";
     const userID12 = "warning-12";
     const userID13 = "warning-13";
+    const userID14 = "warning-14";
     const publicUserID0 = getHash(userID0);
     const publicUserID1 = getHash(userID1);
     const publicUserID2 = getHash(userID2);
@@ -37,6 +38,7 @@ describe("postWarning", () => {
     const publicUserID11 = getHash(userID11);
     const publicUserID12 = getHash(userID12);
     const publicUserID13 = getHash(userID13);
+    const publicUserID14 = getHash(userID14);
     const vipID1 = "warning-vip-1";
     const vipID2 = "warning-vip-2";
     const publicVipID1 = getHash(vipID1);
@@ -45,6 +47,7 @@ describe("postWarning", () => {
 
     before(async () => {
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issuerUserID", "enabled", "reason", "issueTime") VALUES(?, ?, ?, ?, ?)';
+        const insertWarningQueryWithDisableTime = 'INSERT INTO warnings ("userID", "issuerUserID", "enabled", "reason", "issueTime", "disableTime") VALUES(?, ?, ?, ?, ?, ?)';
         const HOUR = 60 * 60 * 1000;
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES (?)`, [publicVipID1]);
@@ -60,6 +63,8 @@ describe("postWarning", () => {
         await db.prepare("run", insertWarningQuery, [publicUserID11, publicVipID1, 1, "warn reason 11", Date.now()]);
         await db.prepare("run", insertWarningQuery, [publicUserID12, publicVipID1, 0, "warn reason 12", Date.now()]);
         await db.prepare("run", insertWarningQuery, [publicUserID13, publicVipID1, 0, "warn reason 13", Date.now()]);
+        await db.prepare("run", insertWarningQueryWithDisableTime, [publicUserID14, publicVipID1, 0, "warn reason 14", 123, 12345]);
+        await db.prepare("run", insertWarningQuery, [publicUserID14, publicVipID1, 1, "another reason 14", Date.now()]);
     });
 
     it("Should be able to create warning if vip (exp 200)", (done) => {
@@ -134,9 +139,11 @@ describe("postWarning", () => {
             userID: publicUserID3,
             enabled: false
         };
+        const beforeTime = Date.now();
 
         client.post(endpoint, json)
             .then(async res => {
+                const afterTime = Date.now();
                 assert.strictEqual(res.status, 200);
                 const row = await getWarning(json.userID);
                 const expected = {
@@ -144,6 +151,8 @@ describe("postWarning", () => {
                 };
                 assert.equal(row.length, 1);
                 assert.ok(partialDeepEquals(row[0], expected));
+                // check disableTime
+                assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
                 done();
             })
             .catch(err => done(err));
@@ -155,9 +164,11 @@ describe("postWarning", () => {
             userID: publicUserID4,
             enabled: false
         };
+        const beforeTime = Date.now();
 
         client.post(endpoint, json)
             .then(async res => {
+                const afterTime = Date.now();
                 assert.strictEqual(res.status, 200);
                 const row = await getWarning(json.userID);
                 const expected = {
@@ -165,6 +176,8 @@ describe("postWarning", () => {
                 };
                 assert.equal(row.length, 1);
                 assert.ok(partialDeepEquals(row[0], expected));
+                // check disableTime
+                assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
                 done();
             })
             .catch(err => done(err));
@@ -199,9 +212,11 @@ describe("postWarning", () => {
             userID: userID6,
             enabled: false
         };
+        const beforeTime = Date.now();
 
         client.post(endpoint, json)
             .then(async res => {
+                const afterTime = Date.now();
                 assert.strictEqual(res.status, 200);
                 const row = await getWarning(publicUserID6);
                 const expected = {
@@ -209,6 +224,8 @@ describe("postWarning", () => {
                 };
                 assert.equal(row.length, 1);
                 assert.ok(partialDeepEquals(row[0], expected));
+                // check disableTime
+                assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
                 done();
             })
             .catch(err => done(err));
@@ -334,8 +351,8 @@ describe("postWarning", () => {
                     }
                 ];
                 assert.equal(row.length, 2);
-                assert.ok(partialDeepEquals(row[0], expected[0]));
-                assert.ok(partialDeepEquals(row[1], expected[1]));
+                assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
+                assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
                 done();
             })
             .catch(err => done(err));
@@ -366,8 +383,44 @@ describe("postWarning", () => {
                     }
                 ];
                 assert.equal(row.length, 2);
-                assert.ok(partialDeepEquals(row[0], expected[0]));
-                assert.ok(partialDeepEquals(row[1], expected[1]));
+                assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
+                assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Disabling a warning should only set disableTime for the active warning", (done) => {
+        const json = {
+            issuerUserID: vipID2,
+            userID: publicUserID14,
+            enabled: false,
+        };
+        const beforeTime = Date.now();
+
+        client.post(endpoint, json)
+            .then(async res => {
+                const afterTime = Date.now();
+                assert.strictEqual(res.status, 200);
+                const row = await getWarning(json.userID);
+                const expected = [
+                    {
+                        enabled: 0,
+                        issuerUserID: publicVipID1,
+                        reason: "warn reason 14",
+                        disableTime: 12345,
+                    },
+                    {
+                        enabled: 0,
+                        issuerUserID: publicVipID1,
+                        reason: "another reason 14",
+                    }
+                ];
+                assert.equal(row.length, 2);
+                assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
+                assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
+                // check disableTime
+                assert.ok(row[1].disableTime >= beforeTime && row[1].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
                 done();
             })
             .catch(err => done(err));
