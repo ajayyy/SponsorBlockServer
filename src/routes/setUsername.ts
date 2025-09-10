@@ -7,7 +7,7 @@ import { isUserBanned } from "../utils/checkBan";
 import { HashedUserID } from "../types/user.model";
 import { isRequestInvalid } from "../utils/requestValidator";
 
-function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<Response>  {
+function logUserNameChange(userID: string, newUserName: string, oldUserName: string, updatedByAdmin: boolean): Promise<void>  {
     return privateDB.prepare("run",
         `INSERT INTO "userNameLogs"("userID", "newUserName", "oldUserName", "updatedByAdmin", "updatedAt") VALUES(?, ?, ?, ?, ?)`,
         [userID, newUserName, oldUserName, + updatedByAdmin, new Date().getTime()]
