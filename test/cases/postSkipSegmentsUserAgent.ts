@@ -21,10 +21,10 @@ describe("postSkipSegments - userAgent", () => {
     };
     const dbFormatSegment = convertSingleToDBFormat(segment);
 
-    before(() => {
+    before(async () => {
         const insertLockCategoriesQuery = `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES(?, ?, ?, ?)`;
-        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "sponsor", "Custom Reason"]);
-        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "intro", ""]);
+        await db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "sponsor", "Custom Reason"]);
+        await db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "intro", ""]);
     });
 
     it("Should be able to submit with empty user-agent", (done) => {

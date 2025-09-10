@@ -23,7 +23,7 @@ describe("postSkipSegments Warnings", () => {
         data
     });
 
-    before(() => {
+    before(async () => {
         const now = Date.now();
 
         const warnVip01Hash = getHash("postSkipSegmentsWarnVIP");
@@ -34,14 +34,14 @@ describe("postSkipSegments Warnings", () => {
 
         const insertWarningQuery = 'INSERT INTO warnings ("userID", "issuerUserID", "enabled", "reason", "issueTime") VALUES(?, ?, ?, ?, ?)';
         // User 1 | 1 active | custom reason
-        db.prepare("run", insertWarningQuery, [warnUser01Hash, warnVip01Hash, 1, reason01, now]);
+        await db.prepare("run", insertWarningQuery, [warnUser01Hash, warnVip01Hash, 1, reason01, now]);
         // User 2 | 1 inactive | default reason
-        db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 0, reason02, now]);
+        await db.prepare("run", insertWarningQuery, [warnUser02Hash, warnVip01Hash, 0, reason02, now]);
         // User 3 | 1 inactive, 1 active | different reasons
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 0, reason01, now]);
-        db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 1, reason03, now]);
+        await db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 0, reason01, now]);
+        await db.prepare("run", insertWarningQuery, [warnUser03Hash, warnVip01Hash, 1, reason03, now+1]);
         // User 4 | 1 active | default reason
-        db.prepare("run", insertWarningQuery, [warnUser04Hash, warnVip01Hash, 1, reason02, now]);
+        await db.prepare("run", insertWarningQuery, [warnUser04Hash, warnVip01Hash, 1, reason02, now]);
     });
 
     it("Should be rejected with custom message if user has active warnings", (done) => {

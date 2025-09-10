@@ -21,10 +21,10 @@ describe("postSkipSegments - duration", () => {
 
     const queryDatabaseDuration = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "videoDuration" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
 
-    before(() => {
+    before(async () => {
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 0, 0, 0, "full-video-duration-uuid-0", userIDTwo, 0, 0, "sponsor", "full", 123, 0, "full_video_duration_segment"]);
-        db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 25, 30, 0, "full-video-duration-uuid-1", userIDTwo, 0, 0, "sponsor", "skip", 123, 0, "full_video_duration_segment"]);
+        await db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 0, 0, 0, "full-video-duration-uuid-0", userIDTwo, 0, 0, "sponsor", "full", 123, 0, "full_video_duration_segment"]);
+        await db.prepare("run", insertSponsorTimeQuery, ["full_video_duration_segment", 25, 30, 0, "full-video-duration-uuid-1", userIDTwo, 0, 0, "sponsor", "skip", 123, 0, "full_video_duration_segment"]);
     });
 
     it("Should be able to submit a single time with a precise duration close to the one from the YouTube API (JSON method)", (done) => {

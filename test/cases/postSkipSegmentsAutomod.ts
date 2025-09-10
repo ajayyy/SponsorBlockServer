@@ -19,11 +19,11 @@ describe("postSkipSegments - Automod 80%", () => {
 
     const queryDatabaseCategory = (videoID: string) => db.prepare("all", `SELECT "startTime", "endTime", "category" FROM "sponsorTimes" WHERE "videoID" = ? and "votes" > -1`, [videoID]);
 
-    before(() => {
+    before(async () => {
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "UUID", "userID", "timeSubmitted", views, category, "actionType", "videoDuration", "shadowHidden", "hashedVideoID") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.prepare("run", insertSponsorTimeQuery, [over80VideoID, 0, 1000, 0, "80percent-uuid-0", userIDHash, 0, 0, "interaction", "skip", 0, 0, over80VideoID]);
-        db.prepare("run", insertSponsorTimeQuery, [over80VideoID, 1001, 1005, 0, "80percent-uuid-1", userIDHash, 0, 0, "interaction", "skip", 0, 0, over80VideoID]);
-        db.prepare("run", insertSponsorTimeQuery, [over80VideoID, 0, 5000, -2, "80percent-uuid-2", userIDHash, 0, 0, "interaction", "skip", 0, 0, over80VideoID]);
+        await db.prepare("run", insertSponsorTimeQuery, [over80VideoID, 0, 1000, 0, "80percent-uuid-0", userIDHash, 0, 0, "interaction", "skip", 0, 0, over80VideoID]);
+        await db.prepare("run", insertSponsorTimeQuery, [over80VideoID, 1001, 1005, 0, "80percent-uuid-1", userIDHash, 0, 0, "interaction", "skip", 0, 0, over80VideoID]);
+        await db.prepare("run", insertSponsorTimeQuery, [over80VideoID, 0, 5000, -2, "80percent-uuid-2", userIDHash, 0, 0, "interaction", "skip", 0, 0, over80VideoID]);
     });
 
     it("Should allow multiple times if total is under 80% of video (JSON method)", (done) => {

@@ -33,11 +33,11 @@ const checkUserViews = (user: User) =>
         });
 
 describe("getViewsForUser", function() {
-    before(() => {
+    before(async () => {
         // add views for users
-        insertSegment(db, { userID: users["u-1"].pubID, views: users["u-1"].info.views1 });
-        insertSegment(db, { userID: users["u-1"].pubID, views: users["u-1"].info.views2 });
-        insertSegment(db, { userID: users["u-2"].pubID, views: users["u-2"].info.views });
+        await insertSegment(db, { userID: users["u-1"].pubID, views: users["u-1"].info.views1 });
+        await insertSegment(db, { userID: users["u-1"].pubID, views: users["u-1"].info.views2 });
+        await insertSegment(db, { userID: users["u-2"].pubID, views: users["u-2"].info.views });
     });
     it("Should get back views for user one", () =>
         checkUserViews(users["u-1"])
