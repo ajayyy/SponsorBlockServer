@@ -1,4 +1,4 @@
-import { db, privateDB } from "../../src/databases/databases";
+import { db } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { Category, Service } from "../../src/types/segments.model";

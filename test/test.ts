@@ -59,12 +59,13 @@ async function init() {
             mocha.run((failures) => {
                 mockServer.close();
                 server.close();
-                redis.quit();
-                process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
-                process.exit();
+                redis.quit().finally(() => {
+                    process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
+                    process.exit();
+                });
             });
         });
     });
 }
 
-init();
+void init();

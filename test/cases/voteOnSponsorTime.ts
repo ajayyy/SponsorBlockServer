@@ -128,705 +128,486 @@ describe("voteOnSponsorTime", () => {
     const getSegmentCategory = (UUID: string) => db.prepare("get", `SELECT "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
     const getPrivateVoteInfo = (UUID: string) => privateDB.prepare("all", `SELECT * FROM "votes" WHERE "UUID" = ?`, [UUID]);
 
-    it("Should be able to upvote a segment", (done) => {
+    it("Should be able to upvote a segment", async () => {
         const UUID = "vote-uuid-0";
-        postVote("randomID", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 3);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("randomID", UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 3);
     });
 
-    it("Should be able to upvote a segment with a partial ID", (done) => {
+    it("Should be able to upvote a segment with a partial ID", async () => {
         const UUID = "vote-u34113123";
-        postVote("randomIDpartial", UUID.substring(0, 9), 1, "vote-testtesttest---sdaas")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 3);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("randomIDpartial", UUID.substring(0, 9), 1, "vote-testtesttest---sdaas");
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 3);
     });
 
-    it("Should be able to downvote a segment", (done) => {
+    it("Should be able to downvote a segment", async () => {
         const UUID = "vote-uuid-2";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes < 10);
-                const voteInfo = await getPrivateVoteInfo(UUID);
-                assert.strictEqual(voteInfo.length, 1);
-                assert.strictEqual(voteInfo[0].normalUserID, randomID2Hashed);
-                assert.strictEqual(voteInfo[0].type, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.ok(row.votes < 10);
+        const voteInfo = await getPrivateVoteInfo(UUID);
+        assert.strictEqual(voteInfo.length, 1);
+        assert.strictEqual(voteInfo[0].normalUserID, randomID2Hashed);
+        assert.strictEqual(voteInfo[0].type, 0);
     });
 
-    it("Should not be able to downvote the same segment when voting from a different user on the same IP", (done) => {
+    it("Should not be able to downvote the same segment when voting from a different user on the same IP", async () => {
         const UUID = "vote-uuid-2";
-        postVote("randomID3", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 9);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("randomID3", UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 9);
     });
 
-    it("Should not be able to downvote a segment if the user is shadow banned", (done) => {
+    it("Should not be able to downvote a segment if the user is shadow banned", async () => {
         const UUID = "vote-uuid-1.6";
-        postVote("randomID4", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 10);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("randomID4", UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 10);
     });
 
-    it("Should not be able to upvote a segment if the user hasn't submitted yet", (done) => {
+    it("Should not be able to upvote a segment if the user hasn't submitted yet", async () => {
         const UUID = "vote-uuid-1";
-        postVote("hasNotSubmittedID", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 2);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("hasNotSubmittedID", UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 2);
     });
 
-    it("Should not be able to downvote a segment if the user hasn't submitted yet", (done) => {
+    it("Should not be able to downvote a segment if the user hasn't submitted yet", async () => {
         const UUID = "vote-uuid-1.5";
-        postVote("hasNotSubmittedID", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 10);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("hasNotSubmittedID", UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 10);
     });
 
-    it("VIP should be able to completely downvote a segment", (done) => {
+    it("VIP should be able to completely downvote a segment", async () => {
         const UUID = "vote-uuid-3";
-        postVote(vipUser, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes <= -2);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.ok(row.votes <= -2);
     });
 
-    it("should be able to completely downvote your own segment (segment unlocked)", (done) => {
+    it("should be able to completely downvote your own segment (segment unlocked)", async () => {
         const UUID = "own-submission-uuid";
-        postVote("own-submission-id", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes <= -2);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("own-submission-id", UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.ok(row.votes <= -2);
     });
 
-    it("should not be able to completely downvote somebody elses segment", (done) => {
+    it("should not be able to completely downvote somebody elses segment", async () => {
         const UUID = "not-own-submission-uuid";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 499);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 499);
     });
 
-    it("should be able to completely downvote chapter using malicious", (done) => {
+    it("should be able to completely downvote chapter using malicious", async () => {
         const UUID = "chapter-uuid-1";
-        postVote(randomID2, UUID, 30)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -2);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 30);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, -2);
     });
 
-    it("should not be able to completely downvote non-chapter using malicious", (done) => {
+    it("should not be able to completely downvote non-chapter using malicious", async () => {
         const UUID = "non-chapter-uuid-2";
-        postVote(randomID2, UUID, 30)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 30);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 0);
     });
 
-    it("Should be able to vote for a category and it should add your vote to the database", (done) => {
+    it("Should be able to vote for a category and it should add your vote to the database", async () => {
         const UUID = "vote-uuid-4";
-        postVoteCategory(randomID2, UUID, "intro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.category, "sponsor");
-                assert.strictEqual(categoryRows.length, 2);
-                assert.strictEqual(categoryRows[0].votes, 1);
-                assert.strictEqual(categoryRows[0].category, "intro");
-                assert.strictEqual(categoryRows[1].votes, 1);
-                assert.strictEqual(categoryRows[1].category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(randomID2, UUID, "intro");
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
+        assert.strictEqual(row.category, "sponsor");
+        assert.strictEqual(categoryRows.length, 2);
+        assert.strictEqual(categoryRows[0].votes, 1);
+        assert.strictEqual(categoryRows[0].category, "intro");
+        assert.strictEqual(categoryRows[1].votes, 1);
+        assert.strictEqual(categoryRows[1].category, "sponsor");
     });
 
-    it("Should not able to change to an invalid category", (done) => {
+    it("Should not able to change to an invalid category", async () => {
         const UUID = "incorrect-category";
-        postVoteCategory(randomID2, UUID, "fakecategory")
-            .then(async res => {
-                assert.strictEqual(res.status, 400);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(randomID2, UUID, "fakecategory");
+        assert.strictEqual(res.status, 400);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "sponsor");
     });
 
-    it("Should not able to change to highlight category", (done) => {
+    it("Should not able to change to highlight category", async () => {
         const UUID = "incorrect-category";
-        postVoteCategory(randomID2, UUID, "highlight")
-            .then(async res => {
-                assert.strictEqual(res.status, 400);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(randomID2, UUID, "highlight");
+        assert.strictEqual(res.status, 400);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "sponsor");
     });
 
-    it("Should not able to change to chapter category", (done) => {
+    it("Should not able to change to chapter category", async () => {
         const UUID = "incorrect-category";
-        postVoteCategory(randomID2, UUID, "chapter")
-            .then(async res => {
-                assert.strictEqual(res.status, 400);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(randomID2, UUID, "chapter");
+        assert.strictEqual(res.status, 400);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "sponsor");
     });
 
-    it("Should be able to change your vote for a category and it should add your vote to the database(segment unlocked, nextCatgeory unlocked)", (done) => {
+    it("Should be able to change your vote for a category and it should add your vote to the database(segment unlocked, nextCatgeory unlocked)", async () => {
         const UUID = "vote-uuid-4";
-        postVoteCategory(randomID2, UUID, "outro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200, "Status code should be 200");
-                const submissionRow = await getSegmentCategory(UUID);
-                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
-                let introVotes = 0;
-                let outroVotes = 0;
-                let sponsorVotes = 0;
-                for (const row of categoryRows) {
-                    if (row?.category === "intro") introVotes += row?.votes;
-                    if (row?.category === "outro") outroVotes += row?.votes;
-                    if (row?.category === "sponsor") sponsorVotes += row?.votes;
-                }
-                assert.strictEqual(submissionRow.category, "sponsor");
-                assert.strictEqual(categoryRows.length, 3);
-                assert.strictEqual(introVotes, 0);
-                assert.strictEqual(outroVotes, 1);
-                assert.strictEqual(sponsorVotes, 1);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(randomID2, UUID, "outro");
+        assert.strictEqual(res.status, 200, "Status code should be 200");
+        const submissionRow = await getSegmentCategory(UUID);
+        const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
+        let introVotes = 0;
+        let outroVotes = 0;
+        let sponsorVotes = 0;
+        for (const row of categoryRows) {
+            if (row?.category === "intro") introVotes += row?.votes;
+            if (row?.category === "outro") outroVotes += row?.votes;
+            if (row?.category === "sponsor") sponsorVotes += row?.votes;
+        }
+        assert.strictEqual(submissionRow.category, "sponsor");
+        assert.strictEqual(categoryRows.length, 3);
+        assert.strictEqual(introVotes, 0);
+        assert.strictEqual(outroVotes, 1);
+        assert.strictEqual(sponsorVotes, 1);
     });
 
 
-    it("Should not be able to change your vote to an invalid category", (done) => {
+    it("Should not be able to change your vote to an invalid category", async () => {
         const UUID = "incorrect-category-change";
-        const vote = (inputCat: string, assertCat: string, callback: Mocha.Done) => {
-            postVoteCategory(randomID2, UUID, inputCat)
-                .then(async () => {
-                    const row = await getSegmentCategory(UUID);
-                    assert.strictEqual(row.category, assertCat);
-                    callback();
-                })
-                .catch(err => done(err));
+        const vote = async (inputCat: string, assertCat: string) => {
+            await postVoteCategory(randomID2, UUID, inputCat);
+            const row = await getSegmentCategory(UUID);
+            assert.strictEqual(row.category, assertCat);
         };
-        vote("sponsor", "sponsor", () => {
-            vote("fakeCategory", "sponsor", done);
-        });
+        await vote("sponsor", "sponsor");
+        await vote("fakeCategory", "sponsor");
     });
 
-    it("Submitter should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, notVip)", (done) => {
+    it("Submitter should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, notVip)", async () => {
         const userID = categoryChangeUser;
         const UUID = "category-change-uuid-1";
         const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, category);
     });
 
-    it("Submitter's vote on the category should not work (segment locked, nextCatgeory unlocked, notVip)", (done) => {
+    it("Submitter's vote on the category should not work (segment locked, nextCatgeory unlocked, notVip)", async () => {
         const userID = categoryChangeUser;
         const UUID = "category-change-uuid-2";
         const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "intro");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "intro");
     });
 
-    it("Submitter's vote on the category should not work (segment unlocked, nextCatgeory locked, notVip)", (done) => {
+    it("Submitter's vote on the category should not work (segment unlocked, nextCatgeory locked, notVip)", async () => {
         const userID = categoryChangeUser;
         const UUID = "category-change-uuid-3";
         const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "intro");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "intro");
     });
 
-    it("Submitter's vote on the category should not work (segment locked, nextCatgeory locked, notVip)", (done) => {
+    it("Submitter's vote on the category should not work (segment locked, nextCatgeory locked, notVip)", async () => {
         const userID = categoryChangeUser;
         const UUID = "category-change-uuid-4";
         const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "intro");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "intro");
     });
 
-    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", (done) => {
+    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory unlocked, Vip)", async () => {
         const userID = vipUser;
         const UUID = "category-change-uuid-5";
         const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, category);
     });
 
-    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory unlocked, Vip)", (done) => {
+    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory unlocked, Vip)", async () => {
         const userID = vipUser;
         const UUID = "category-change-uuid-6";
         const category = "sponsor";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, category);
     });
 
-    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory locked, Vip)", (done) => {
+    it("Vip should be able to vote for a category and it should immediately change (segment unlocked, nextCatgeory locked, Vip)", async () => {
         const userID = vipUser;
         const UUID = "category-change-uuid-7";
         const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, category);
     });
 
-    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory locked, Vip)", (done) => {
+    it("Vip should be able to vote for a category and it should immediately change (segment locked, nextCatgeory locked, Vip)", async () => {
         const userID = vipUser;
         const UUID = "category-change-uuid-8";
         const category = "preview";
-        postVoteCategory(userID, UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, category);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory(userID, UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, category);
     });
 
-    it("Should not be able to vote for a category of a segment (Too many warning)", (done) => {
+    it("Should not be able to vote for a category of a segment (Too many warning)", async () => {
         const UUID = "category-warnvote-uuid-0";
         const category = "preview";
-        postVoteCategory("warn-voteuser01", UUID, category)
-            .then(res => {
-                assert.strictEqual(res.status, 403);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory("warn-voteuser01", UUID, category);
+        assert.strictEqual(res.status, 403);
     });
 
-    it("Should be able to vote for a category as a shadowbanned user, but it shouldn't add your vote to the database", (done) => {
+    it("Should be able to vote for a category as a shadowbanned user, but it shouldn't add your vote to the database", async () => {
         const UUID = "category-banvote-uuid-0";
         const category = "preview";
-        postVoteCategory("randomID4", UUID, category)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.category, "intro");
-                assert.strictEqual(categoryRows.length, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory("randomID4", UUID, category);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        const categoryRows = await db.prepare("all", `SELECT votes, category FROM "categoryVotes" WHERE "UUID" = ?`, [UUID]);
+        assert.strictEqual(row.category, "intro");
+        assert.strictEqual(categoryRows.length, 0);
     });
 
-    it("Should not be able to category-vote on an invalid UUID submission", (done) => {
+    it("Should not be able to category-vote on an invalid UUID submission", async () => {
         const UUID = "invalid-uuid";
-        postVoteCategory("randomID3", UUID, "intro")
-            .then(res => {
-                assert.strictEqual(res.status, 404);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory("randomID3", UUID, "intro");
+        assert.strictEqual(res.status, 404);
     });
 
-    it("Should not be able to category-vote on a full video segment", (done) => {
+    it("Should not be able to category-vote on a full video segment", async () => {
         const UUID = "full-video-uuid-1";
-        postVoteCategory("randomID3", UUID, "selfpromo")
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory("randomID3", UUID, "selfpromo");
+        assert.strictEqual(res.status, 400);
     });
 
-    it('Non-VIP should not be able to upvote "dead" submission', (done) => {
+    it('Non-VIP should not be able to upvote "dead" submission', async () => {
         const UUID = "vote-uuid-5";
-        postVote(randomID2, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 403);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -3);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 1);
+        assert.strictEqual(res.status, 403);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, -3);
     });
 
-    it('Non-VIP should not be able to downvote "dead" submission', (done) => {
+    it('Non-VIP should not be able to downvote "dead" submission', async () => {
         const UUID = "vote-uuid-5";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -3);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, -3);
     });
 
-    it('VIP should be able to upvote "dead" submission', (done) => {
+    it('VIP should be able to upvote "dead" submission', async () => {
         const UUID = "vote-uuid-5";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.ok(row.votes > -3);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.ok(row.votes > -3);
     });
 
-    it("Should not be able to upvote a segment (Too many warning)", (done) => {
+    it("Should not be able to upvote a segment (Too many warning)", async () => {
         const UUID = "warnvote-uuid-0";
-        postVote("warn-voteuser01", UUID, 1)
-            .then(res => {
-                assert.strictEqual(res.status, 403);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("warn-voteuser01", UUID, 1);
+        assert.strictEqual(res.status, 403);
     });
 
-    it("Non-VIP should not be able to downvote on a segment with no-segments category", (done) => {
+    it("Non-VIP should not be able to downvote on a segment with no-segments category", async () => {
         const UUID = "no-sponsor-segments-uuid-0";
-        postVote("randomID", UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 2);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("randomID", UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 2);
     });
 
-    it("Non-VIP should be able to upvote on a segment with no-segments category", (done) => {
+    it("Non-VIP should be able to upvote on a segment with no-segments category", async () => {
         const UUID = "no-sponsor-segments-uuid-0";
-        postVote("randomID", UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 3);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote("randomID", UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 3);
     });
 
-    it("Non-VIP should not be able to category vote on a segment with no-segments category", (done) => {
+    it("Non-VIP should not be able to category vote on a segment with no-segments category", async () => {
         const UUID = "no-sponsor-segments-uuid-0";
-        postVoteCategory("randomID", UUID, "outro")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentCategory(UUID);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVoteCategory("randomID", UUID, "outro");
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentCategory(UUID);
+        assert.strictEqual(row.category, "sponsor");
     });
 
-    it("VIP upvote should lock segment", (done) => {
+    it("VIP upvote should lock segment", async () => {
         const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.locked, 1);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        assert.strictEqual(row.locked, 1);
     });
 
-    it("VIP downvote should unlock segment", (done) => {
+    it("VIP downvote should unlock segment", async () => {
         const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.locked, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await db.prepare("get", `SELECT "locked" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        assert.strictEqual(row.locked, 0);
     });
 
-    it("VIP upvote should unhide segment", (done) => {
+    it("VIP upvote should unhide segment", async () => {
         const UUID = "segment-hidden-uuid-1";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(row.hidden, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await db.prepare("get", `SELECT "hidden" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        assert.strictEqual(row.hidden, 0);
     });
 
-    it("Should be able to undo-vote a segment", (done) => {
+    it("Should be able to undo-vote a segment", async () => {
         const UUID = "vote-uuid-2";
-        postVote(randomID2, UUID, 20)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 10);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(randomID2, UUID, 20);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 10);
     });
 
-    it("Should not be able to vote with type 10", (done) => {
+    it("Should not be able to vote with type 10", async () => {
         const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 10)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 10);
+        assert.strictEqual(res.status, 400);
     });
 
-    it("Should not be able to vote with type 11", (done) => {
+    it("Should not be able to vote with type 11", async () => {
         const UUID = "segment-locking-uuid-1";
-        postVote(vipUser, UUID, 11)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(vipUser, UUID, 11);
+        assert.strictEqual(res.status, 400);
     });
 
-    it("Should be able to update stored videoDuration with VIP upvote", (done) => {
+    it("Should be able to update stored videoDuration with VIP upvote", async () => {
         const UUID = "duration-update-uuid-1";
-        postVote(vipUser, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
-                assert.strictEqual(videoDuration, 500);
-                done();
-            });
+        const res = await postVote(vipUser, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const { videoDuration } = await db.prepare("get", `SELECT "videoDuration" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);
+        assert.strictEqual(videoDuration, 500);
     });
 
-    it("Should hide changed submission on any downvote", (done) => {
+    it("Should hide changed submission on any downvote", async () => {
         const UUID = "duration-changed-uuid-3";
         const videoID = "duration-changed";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
-                assert.strictEqual(hiddenSegments.length, 2);
-                const expected = [{
-                    "UUID": "duration-changed-uuid-1",
-                }, {
-                    "UUID": "duration-changed-uuid-2",
-                }];
-                arrayDeepEquals(hiddenSegments, expected);
-                done();
-            });
+        const res = await postVote(randomID2, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const hiddenSegments = await db.prepare("all", `SELECT "UUID" FROM "sponsorTimes" WHERE "videoID" = ? AND "hidden" = 1`, [videoID]);
+        assert.strictEqual(hiddenSegments.length, 2);
+        const expected = [{
+            "UUID": "duration-changed-uuid-1",
+        }, {
+            "UUID": "duration-changed-uuid-2",
+        }];
+        arrayDeepEquals(hiddenSegments, expected);
     });
 
-    it("Should be able to downvote segment with ajacent actionType lock", (done) => {
+    it("Should be able to downvote segment with ajacent actionType lock", async () => {
         const UUID = "no-sponsor-segments-uuid-2";
-        postVote(randomID2, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 1);
-                done();
-            });
+        const res = await postVote(randomID2, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 1);
     });
 
-    it("Should not be able to revive full video segment as non-vip", (done) => {
+    it("Should not be able to revive full video segment as non-vip", async () => {
         const UUID = "full-video-uuid-1";
-        postVote("VIPUser", UUID, 0).then(() => {
-            postVote("randomID3", UUID, 1)
-                .then(async res => {
-                    assert.strictEqual(res.status, 200);
-                    const row = await getSegmentVotes(UUID);
-                    assert.strictEqual(row.votes, -2);
-                    done();
-                })
-                .catch(err => done(err));
-        });
+        await postVote("VIPUser", UUID, 0);
+        const res = await postVote("randomID3", UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, -2);
     });
 
-    it("Should be able to upvote a segment if the user has submitted that in category", (done) => {
+    it("Should be able to upvote a segment if the user has submitted that in category", async () => {
         const UUID = "testing-outro-skip-1";
-        postVote(outroSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 1);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(outroSubmitter, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 1);
     });
 
-    it("Should be able to downvote a segment if the user has submitted that in category", (done) => {
+    it("Should be able to downvote a segment if the user has submitted that in category", async () => {
         const UUID = "testing-outro-skip-2";
-        postVote(outroSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -1);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(outroSubmitter, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, -1);
     });
 
-    it("Should be able to upvote a segment if the user has submitted that in category but different action", (done) => {
+    it("Should be able to upvote a segment if the user has submitted that in category but different action", async () => {
         const UUID = "testing-outro-mute-1";
-        postVote(outroSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 1);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(outroSubmitter, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 1);
     });
 
-    it("Should be able to downvote a segment if the user has submitted that in category but different action", (done) => {
+    it("Should be able to downvote a segment if the user has submitted that in category but different action", async () => {
         const UUID = "testing-outro-mute-2";
-        postVote(outroSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, -1);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(outroSubmitter, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, -1);
     });
 
-    it("Should not be able to upvote a segment if the user's only submission of that category was downvoted", (done) => {
+    it("Should not be able to upvote a segment if the user's only submission of that category was downvoted", async () => {
         const UUID = "testing-intro-skip-1";
-        postVote(badIntroSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(badIntroSubmitter, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 0);
     });
 
-    it("Should not be able to downvote a segment if the user's only submission of that category was downvoted", (done) => {
+    it("Should not be able to downvote a segment if the user's only submission of that category was downvoted", async () => {
         const UUID = "testing-intro-skip-2";
-        postVote(badIntroSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(badIntroSubmitter, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 0);
     });
 
-    it("Should not be able to upvote a segment if the user's only submission of that category was hidden", (done) => {
+    it("Should not be able to upvote a segment if the user's only submission of that category was hidden", async () => {
         const UUID = "testing-interaction-skip-1";
-        postVote(hiddenInteractionSubmitter, UUID, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(hiddenInteractionSubmitter, UUID, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 0);
     });
 
-    it("Should not be able to downvote a segment if the user's only submission of that category was hidden", (done) => {
+    it("Should not be able to downvote a segment if the user's only submission of that category was hidden", async () => {
         const UUID = "testing-interaction-skip-2";
-        postVote(hiddenInteractionSubmitter, UUID, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegmentVotes(UUID);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await postVote(hiddenInteractionSubmitter, UUID, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegmentVotes(UUID);
+        assert.strictEqual(row.votes, 0);
     });
 });

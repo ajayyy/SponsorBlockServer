@@ -122,7 +122,7 @@ function chooseSegment<T extends DBSegment>(choices: T[]): FullVideoSegmentVideo
         return {
             segments: transformDBSegments(choices),
             hasStartSegment
-        }
+        };
     }
     // if locked, only choose from locked
     const locked = choices.filter((segment) => segment.locked);

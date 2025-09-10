@@ -31,15 +31,15 @@ module.exports = {
     },
     overrides: [
         {
-            files: ["src/**/*.ts"],
+            files: ["**/*.ts"],
 
             parserOptions: {
-                project: ["./tsconfig.json"],
+                project: ["./tsconfig.eslint.json"],
             },
 
             rules: {
-                "@typescript-eslint/no-misused-promises": "warn",
-                "@typescript-eslint/no-floating-promises" : "warn"
+                "@typescript-eslint/no-misused-promises": "error",
+                "@typescript-eslint/no-floating-promises" : "error"
             }
         },
     ],

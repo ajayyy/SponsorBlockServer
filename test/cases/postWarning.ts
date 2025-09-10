@@ -34,73 +34,61 @@ describe("postWarning", () => {
         await db.prepare("run", insertWarningQuery, [users.u14.public, users.vip1.public, 1, "another reason 14", Date.now()]);
     });
 
-    it("Should be able to create warning if vip (exp 200)", (done) => {
+    it("Should be able to create warning if vip (exp 200)", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u0.public,
             reason: "warning-reason-0"
         };
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 1,
-                    issuerUserID: getHash(json.issuerUserID),
-                    reason: json.reason,
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 1,
+            issuerUserID: getHash(json.issuerUserID),
+            reason: json.reason,
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
     });
 
-    it("Should be not be able to edit a warning if past deadline and same vip", (done) => {
+    it("Should be not be able to edit a warning if past deadline and same vip", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u1.public,
             reason: "edited reason 1",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 409);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 1,
-                    issuerUserID: users.vip1.public,
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 409);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 1,
+            issuerUserID: users.vip1.public,
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
     });
 
-    it("Should be not be able to edit a warning if past deadline and different vip", (done) => {
+    it("Should be not be able to edit a warning if past deadline and different vip", async () => {
         const json = {
             issuerUserID: users.vip2.private,
             userID: users.u2.public,
             reason: "edited reason 2",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 409);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 1,
-                    issuerUserID: users.vip1.public,
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 409);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 1,
+            issuerUserID: users.vip1.public,
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
     });
 
-    it("Should be able to remove warning if same vip as issuer", (done) => {
+    it("Should be able to remove warning if same vip as issuer", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u3.public,
@@ -108,24 +96,20 @@ describe("postWarning", () => {
         };
         const beforeTime = Date.now();
 
-        client.post(endpoint, json)
-            .then(async res => {
-                const afterTime = Date.now();
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 0
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                // check disableTime
-                assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        const afterTime = Date.now();
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 0
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
+        // check disableTime
+        assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
     });
 
-    it("Should be able to remove warning if not the same vip as issuer", (done) => {
+    it("Should be able to remove warning if not the same vip as issuer", async () => {
         const json = {
             issuerUserID: users.vip2.private,
             userID: users.u4.public,
@@ -133,119 +117,91 @@ describe("postWarning", () => {
         };
         const beforeTime = Date.now();
 
-        client.post(endpoint, json)
-            .then(async res => {
-                const afterTime = Date.now();
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 0
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                // check disableTime
-                assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        const afterTime = Date.now();
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 0
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
+        // check disableTime
+        assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
     });
 
-    it("Should not be able to create warning if not vip (exp 403)", (done) => {
+    it("Should not be able to create warning if not vip (exp 403)", async () => {
         const json = {
             issuerUserID: users.nonvip.private,
             userID: users.u5.public,
             reason: "warn reason 5",
         };
 
-        client.post(endpoint, json)
-            .then(res => {
-                assert.strictEqual(res.status, 403);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 403);
     });
 
-    it("Should return 400 if missing body", (done) => {
-        client.post(endpoint, {})
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 400 if missing body", async () => {
+        const res = await client.post(endpoint, {});
+        assert.strictEqual(res.status, 400);
     });
 
-    it("Should be able to remove your own warning", (done) => {
+    it("Should be able to remove your own warning", async () => {
         const json = {
             userID: users.u6.private,
             enabled: false
         };
         const beforeTime = Date.now();
 
-        client.post(endpoint, json)
-            .then(async res => {
-                const afterTime = Date.now();
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(users.u6.public);
-                const expected = {
-                    enabled: 0
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                // check disableTime
-                assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        const afterTime = Date.now();
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(users.u6.public);
+        const expected = {
+            enabled: 0
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
+        // check disableTime
+        assert.ok(row[0].disableTime >= beforeTime && row[0].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
     });
 
-    it("Should not be able to add your own warning", (done) => {
+    it("Should not be able to add your own warning", async () => {
         const json = {
             userID: users.u7.private,
             enabled: true,
             reason: "warn reason 7",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 403);
-                const data = await getWarning(users.u7.public);
-                assert.equal(data.length, 0);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 403);
+        const data = await getWarning(users.u7.public);
+        assert.equal(data.length, 0);
     });
 
-    it("Should not be able to warn a user without reason", (done) => {
+    it("Should not be able to warn a user without reason", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u8.public,
             enabled: true
         };
 
-        client.post(endpoint, json)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 400);
     });
 
-    it("Should not be able to re-warn a user without reason", (done) => {
+    it("Should not be able to re-warn a user without reason", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u9.public,
             enabled: true
         };
 
-        client.post(endpoint, json)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 400);
     });
 
-    it("Should be able to edit a warning if within deadline and same vip", (done) => {
+    it("Should be able to edit a warning if within deadline and same vip", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u10.public,
@@ -253,23 +209,19 @@ describe("postWarning", () => {
             reason: "edited reason 10",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 1,
-                    issuerUserID: users.vip1.public,
-                    reason: json.reason,
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 1,
+            issuerUserID: users.vip1.public,
+            reason: json.reason,
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
     });
 
-    it("Should not be able to edit a warning if within deadline and different vip", (done) => {
+    it("Should not be able to edit a warning if within deadline and different vip", async () => {
         const json = {
             issuerUserID: users.vip2.private,
             userID: users.u11.public,
@@ -277,23 +229,19 @@ describe("postWarning", () => {
             reason: "edited reason 11",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 409);
-                const row = await getWarning(json.userID);
-                const expected = {
-                    enabled: 1,
-                    issuerUserID: users.vip1.public,
-                    reason: "warn reason 11",
-                };
-                assert.equal(row.length, 1);
-                assert.ok(partialDeepEquals(row[0], expected));
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 409);
+        const row = await getWarning(json.userID);
+        const expected = {
+            enabled: 1,
+            issuerUserID: users.vip1.public,
+            reason: "warn reason 11",
+        };
+        assert.equal(row.length, 1);
+        assert.ok(partialDeepEquals(row[0], expected));
     });
 
-    it("Should be able to warn a previously warned user again (same vip)", (done) => {
+    it("Should be able to warn a previously warned user again (same vip)", async () => {
         const json = {
             issuerUserID: users.vip1.private,
             userID: users.u12.public,
@@ -301,31 +249,27 @@ describe("postWarning", () => {
             reason: "new reason 12",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = [
-                    {
-                        enabled: 0,
-                        issuerUserID: users.vip1.public,
-                        reason: "warn reason 12",
-                    },
-                    {
-                        enabled: 1,
-                        issuerUserID: users.vip1.public,
-                        reason: "new reason 12",
-                    }
-                ];
-                assert.equal(row.length, 2);
-                assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
-                assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = [
+            {
+                enabled: 0,
+                issuerUserID: users.vip1.public,
+                reason: "warn reason 12",
+            },
+            {
+                enabled: 1,
+                issuerUserID: users.vip1.public,
+                reason: "new reason 12",
+            }
+        ];
+        assert.equal(row.length, 2);
+        assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
+        assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
     });
 
-    it("Should be able to warn a previously warned user again (different vip)", (done) => {
+    it("Should be able to warn a previously warned user again (different vip)", async () => {
         const json = {
             issuerUserID: users.vip2.private,
             userID: users.u13.public,
@@ -333,31 +277,27 @@ describe("postWarning", () => {
             reason: "new reason 13",
         };
 
-        client.post(endpoint, json)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = [
-                    {
-                        enabled: 0,
-                        issuerUserID: users.vip1.public,
-                        reason: "warn reason 13",
-                    },
-                    {
-                        enabled: 1,
-                        issuerUserID: users.vip2.public,
-                        reason: "new reason 13",
-                    }
-                ];
-                assert.equal(row.length, 2);
-                assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
-                assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = [
+            {
+                enabled: 0,
+                issuerUserID: users.vip1.public,
+                reason: "warn reason 13",
+            },
+            {
+                enabled: 1,
+                issuerUserID: users.vip2.public,
+                reason: "new reason 13",
+            }
+        ];
+        assert.equal(row.length, 2);
+        assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
+        assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
     });
 
-    it("Disabling a warning should only set disableTime for the active warning", (done) => {
+    it("Disabling a warning should only set disableTime for the active warning", async () => {
         const json = {
             issuerUserID: users.vip2.private,
             userID: users.u14.public,
@@ -365,31 +305,27 @@ describe("postWarning", () => {
         };
         const beforeTime = Date.now();
 
-        client.post(endpoint, json)
-            .then(async res => {
-                const afterTime = Date.now();
-                assert.strictEqual(res.status, 200);
-                const row = await getWarning(json.userID);
-                const expected = [
-                    {
-                        enabled: 0,
-                        issuerUserID: users.vip1.public,
-                        reason: "warn reason 14",
-                        disableTime: 12345,
-                    },
-                    {
-                        enabled: 0,
-                        issuerUserID: users.vip1.public,
-                        reason: "another reason 14",
-                    }
-                ];
-                assert.equal(row.length, 2);
-                assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
-                assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
-                // check disableTime
-                assert.ok(row[1].disableTime >= beforeTime && row[1].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await client.post(endpoint, json);
+        const afterTime = Date.now();
+        assert.strictEqual(res.status, 200);
+        const row = await getWarning(json.userID);
+        const expected = [
+            {
+                enabled: 0,
+                issuerUserID: users.vip1.public,
+                reason: "warn reason 14",
+                disableTime: 12345,
+            },
+            {
+                enabled: 0,
+                issuerUserID: users.vip1.public,
+                reason: "another reason 14",
+            }
+        ];
+        assert.equal(row.length, 2);
+        assert.ok(partialDeepEquals(row[0], expected[0]), "warning 1");
+        assert.ok(partialDeepEquals(row[1], expected[1]), "warning 2");
+        // check disableTime
+        assert.ok(row[1].disableTime >= beforeTime && row[1].disableTime <= afterTime, "expected disableTime to be somewhere between execution start and end");
     });
 });

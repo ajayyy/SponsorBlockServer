@@ -59,71 +59,47 @@ describe("setUsernamePrivate tests", () => {
     before(() => sinon.stub(config, "minUserIDLength").value(USERID_LIMIT));
     after(() => sinon.restore());
 
-    it("Existing privateID = username under Limit should retreive successfully", (done) => {
+    it("Existing privateID = username under Limit should retreive successfully", async () => {
         const privateID = preExisting_underLimit;
-        hasSetUsername(getHash(privateID))
-            .then((usernameInfo) => {
-                assert.ok(usernameInfo);
-                done();
-            });
+        assert.ok(await hasSetUsername(getHash(privateID)));
     });
 
-    it("Existing privateID = username over Limit should retreive successfully", (done) => {
+    it("Existing privateID = username over Limit should retreive successfully", async () => {
         const privateID = preExisting_overLimit;
-        hasSetUsername(getHash(privateID))
-            .then((usernameInfo) => {
-                assert.ok(usernameInfo);
-                done();
-            });
+        assert.ok(await hasSetUsername(getHash(privateID)));
     });
 
-    it("Should return error if trying to set userID = username under limit", (done) => {
+    it("Should return error if trying to set userID = username under limit", async () => {
         const privateID = newUser_underLimit;
-        postSetUserName(privateID, privateID)
-            .then(async (res) => {
-                assert.strictEqual(res.status, 400);
-                const usernameInfo = await hasSetUsername(getHash(privateID));
-                assert.ok(!usernameInfo);
-                done();
-            })
-            .catch((err) => done(err));
+        const res = await postSetUserName(privateID, privateID);
+        assert.strictEqual(res.status, 400);
+        const usernameInfo = await hasSetUsername(getHash(privateID));
+        assert.ok(!usernameInfo);
     });
 
-    it("Should return error if trying to set username = other privateID over limit", (done) => {
+    it("Should return error if trying to set username = other privateID over limit", async () => {
         const privateID = newUser_overLimit;
-        postSetUserName(privateID, privateID)
-            .then(async (res) => {
-                assert.strictEqual(res.status, 400);
-                const usernameInfo = await hasSetUsername(getHash(privateID));
-                assert.ok(!usernameInfo);
-                done();
-            })
-            .catch((err) => done(err));
+        const res = await postSetUserName(privateID, privateID);
+        assert.strictEqual(res.status, 400);
+        const usernameInfo = await hasSetUsername(getHash(privateID));
+        assert.ok(!usernameInfo);
     });
 
-    it("Should return error if trying to set username = other privateID over limit", (done) => {
+    it("Should return error if trying to set username = other privateID over limit", async () => {
         const privateID = otherUser;
         const otherUserPrivate = preExisting_overLimit;
-        postSetUserName(privateID, otherUserPrivate)
-            .then(async (res) => {
-                assert.strictEqual(res.status, 400);
-                const usernameInfo = await hasSetUsername(getHash(privateID));
-                assert.ok(!usernameInfo);
-                done();
-            })
-            .catch((err) => done(err));
+        const res = await postSetUserName(privateID, otherUserPrivate);
+        assert.strictEqual(res.status, 400);
+        const usernameInfo = await hasSetUsername(getHash(privateID));
+        assert.ok(!usernameInfo);
     });
 
-    it("Should not return error if trying to set username = other privateID under limit", (done) => {
+    it("Should not return error if trying to set username = other privateID under limit", async () => {
         const privateID = otherUser;
         const otherUserPrivate = preExisting_underLimit;
-        postSetUserName(privateID, otherUserPrivate)
-            .then(async (res) => {
-                assert.strictEqual(res.status, 200);
-                const usernameInfo = await hasSetUsername(getHash(privateID));
-                assert.ok(usernameInfo);
-                done();
-            })
-            .catch((err) => done(err));
+        const res = await postSetUserName(privateID, otherUserPrivate);
+        assert.strictEqual(res.status, 200);
+        const usernameInfo = await hasSetUsername(getHash(privateID));
+        assert.ok(usernameInfo);
     });
 });

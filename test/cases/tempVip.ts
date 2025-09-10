@@ -68,191 +68,118 @@ describe("tempVIP test", function() {
         await redis.del(tempVIPKey(publicTempVIPOne));
     });
 
-    it("Should update db version when starting the application", () => {
-        privateDB.prepare("get", "SELECT key, value FROM config where key = ?", ["version"])
-            .then(row => {
-                assert.ok(row.value >= 5, `Versions are not at least 5. private is ${row.value}`);
-            });
+    it("Should update db version when starting the application", async () => {
+        const row = await privateDB.prepare("get", "SELECT key, value FROM config where key = ?", ["version"]);
+        assert.ok(row.value >= 5, `Versions are not at least 5. private is ${row.value}`);
     });
-    it("User should not already be temp VIP", (done) => {
-        checkUserVIP(publicTempVIPOne)
-            .then(result => {
-                assert.ok(!result);
-            })
-            .then(async () => {
-                const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
-                assert.ok(!row?.enabled);
-                done();
-            })
-            .catch(err => done(err));
+    it("User should not already be temp VIP", async () => {
+        assert.ok(!await checkUserVIP(publicTempVIPOne));
+        const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
+        assert.ok(!row?.enabled);
     });
-    it("Should be able to normal upvote as a user", (done) => {
-        postVote(tempVIPOne, UUID0, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegment(UUID0);
-                assert.strictEqual(row.votes, 1);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to normal upvote as a user", async () => {
+        const res = await postVote(tempVIPOne, UUID0, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegment(UUID0);
+        assert.strictEqual(row.votes, 1);
     });
-    it("Should be able to add tempVIP", (done) => {
-        addTempVIP("true", permVIP1, publicTempVIPOne)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                // check redis
-                const vip = await checkUserVIP(publicTempVIPOne);
-                assert.strictEqual(vip, "ChannelID");
-                assert.strictEqual(res.data, "Temp VIP added on channel ChannelAuthor");
-                // check privateDB
-                const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
-                assert.ok(row.enabled);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to add tempVIP", async () => {
+        const res = await addTempVIP("true", permVIP1, publicTempVIPOne);
+        assert.strictEqual(res.status, 200);
+        // check redis
+        const vip = await checkUserVIP(publicTempVIPOne);
+        assert.strictEqual(vip, "ChannelID");
+        assert.strictEqual(res.data, "Temp VIP added on channel ChannelAuthor");
+        // check privateDB
+        const row = await privateDB.prepare("get", `SELECT * FROM "tempVipLog" WHERE "targetUserID" = ?`, [publicTempVIPOne]);
+        assert.ok(row.enabled);
     });
-    it("Should be able to VIP downvote", (done) => {
-        postVote(tempVIPOne, UUID0, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegment(UUID0);
-                assert.strictEqual(row.votes, -2);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to VIP downvote", async () => {
+        const res = await postVote(tempVIPOne, UUID0, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegment(UUID0);
+        assert.strictEqual(row.votes, -2);
     });
-    it("Should not be able to lock segment", (done) => {
-        postVote(tempVIPOne, UUID0, 1)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegment(UUID0);
-                assert.strictEqual(row.votes, 1);
-                assert.strictEqual(row.locked, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to lock segment", async () => {
+        const res = await postVote(tempVIPOne, UUID0, 1);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegment(UUID0);
+        assert.strictEqual(row.votes, 1);
+        assert.strictEqual(row.locked, 0);
     });
-    it("Should be able to change category but not lock", (done) => {
-        postVoteCategory(tempVIPOne, UUID0, "filler")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegment(UUID0);
-                assert.strictEqual(row.category, "filler");
-                assert.strictEqual(row.locked, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to change category but not lock", async () => {
+        const res = await postVoteCategory(tempVIPOne, UUID0, "filler");
+        assert.strictEqual(res.status, 200);
+        const row = await getSegment(UUID0);
+        assert.strictEqual(row.category, "filler");
+        assert.strictEqual(row.locked, 0);
     });
-    it("Should be able to remove tempVIP prematurely", (done) => {
-        addTempVIP("false", permVIP1, publicTempVIPOne)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const vip = await checkUserVIP(publicTempVIPOne);
-                assert.strictEqual(res.data, "Temp VIP removed");
-                assert.ok(!vip, "Should be no listed channelID");
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to remove tempVIP prematurely", async () => {
+        const res = await addTempVIP("false", permVIP1, publicTempVIPOne);
+        assert.strictEqual(res.status, 200);
+        const vip = await checkUserVIP(publicTempVIPOne);
+        assert.strictEqual(res.data, "Temp VIP removed");
+        assert.ok(!vip, "Should be no listed channelID");
     });
-    it("Should not be able to VIP downvote", (done) => {
-        postVote(tempVIPOne, UUID1, 0)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegment(UUID1);
-                assert.strictEqual(row.votes, 0);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to VIP downvote", async () => {
+        const res = await postVote(tempVIPOne, UUID1, 0);
+        assert.strictEqual(res.status, 200);
+        const row = await getSegment(UUID1);
+        assert.strictEqual(row.votes, 0);
     });
-    it("Should not be able to VIP change category", (done) => {
-        postVoteCategory(tempVIPOne, UUID1, "filler")
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await getSegment(UUID1);
-                assert.strictEqual(row.category, "sponsor");
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to VIP change category", async () => {
+        const res = await postVoteCategory(tempVIPOne, UUID1, "filler");
+        assert.strictEqual(res.status, 200);
+        const row = await getSegment(UUID1);
+        assert.strictEqual(row.category, "sponsor");
     });
     // error code testing
-    it("Should be able to add tempVIP after removal", (done) => {
-        addTempVIP("true", permVIP1, publicTempVIPOne)
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const vip = await checkUserVIP(publicTempVIPOne);
-                assert.strictEqual(vip, "ChannelID");
-                done();
-            })
-            .catch(err => done(err));
+    it("Should be able to add tempVIP after removal", async () => {
+        const res = await addTempVIP("true", permVIP1, publicTempVIPOne);
+        assert.strictEqual(res.status, 200);
+        const vip = await checkUserVIP(publicTempVIPOne);
+        assert.strictEqual(vip, "ChannelID");
     });
-    it("Should not be able to add VIP without existing VIP (403)", (done) => {
+    it("Should not be able to add VIP without existing VIP (403)", async () => {
         const privateID = "non-vip-privateid";
-        addTempVIP("true", privateID, publicTempVIPOne)
-            .then(async res => {
-                assert.strictEqual(res.status, 403);
-                const vip = await checkUserVIP(getHash(privateID) as HashedUserID);
-                assert.ok(!vip, "Should be no listed channelID");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await addTempVIP("true", privateID, publicTempVIPOne);
+        assert.strictEqual(res.status, 403);
+        const vip = await checkUserVIP(getHash(privateID) as HashedUserID);
+        assert.ok(!vip, "Should be no listed channelID");
     });
-    it("Should not be able to add permanant VIP as temporary VIP (409)", (done) => {
-        addTempVIP("true", permVIP1, publicPermVIP2)
-            .then(async res => {
-                assert.strictEqual(res.status, 409);
-                const vip = await checkUserVIP(publicPermVIP2);
-                assert.ok(!vip, "Should be no listed channelID");
-                done();
-            })
-            .catch(err => done(err));
+    it("Should not be able to add permanant VIP as temporary VIP (409)", async () => {
+        const res = await addTempVIP("true", permVIP1, publicPermVIP2);
+        assert.strictEqual(res.status, 409);
+        const vip = await checkUserVIP(publicPermVIP2);
+        assert.ok(!vip, "Should be no listed channelID");
     });
-    it("Temp VIP should not be able to add another Temp VIP (403)", (done) => {
+    it("Temp VIP should not be able to add another Temp VIP (403)", async () => {
         const privateID = "non-vip-privateid";
         const publicID = getHash(privateID) as HashedUserID;
-        addTempVIP("true", tempVIPOne, publicID)
-            .then(async res => {
-                assert.strictEqual(res.status, 403);
-                const vip = await checkUserVIP(publicID);
-                assert.ok(!vip, "Should be no listed channelID");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await addTempVIP("true", tempVIPOne, publicID);
+        assert.strictEqual(res.status, 403);
+        const vip = await checkUserVIP(publicID);
+        assert.ok(!vip, "Should be no listed channelID");
     });
     // error 40X testing
-    it("Should return 404 with invalid videoID", (done) => {
+    it("Should return 404 with invalid videoID", async () => {
         const privateID = "non-vip-privateid";
         const publicID = getHash(privateID) as HashedUserID;
-        addTempVIP("true", permVIP1, publicID, "knownWrongID")
-            .then(async res => {
-                assert.strictEqual(res.status, 404);
-                const vip = await checkUserVIP(publicID);
-                assert.ok(!vip, "Should be no listed channelID");
-                done();
-            })
-            .catch(err => done(err));
+        const res = await addTempVIP("true", permVIP1, publicID, "knownWrongID");
+        assert.strictEqual(res.status, 404);
+        const vip = await checkUserVIP(publicID);
+        assert.ok(!vip, "Should be no listed channelID");
     });
-    it("Should return 400 with invalid userID", (done) => {
-        addTempVIP("true", permVIP1, "" as HashedUserID, "knownWrongID")
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 400 with invalid userID", async () => {
+        const res = await addTempVIP("true", permVIP1, "" as HashedUserID, "knownWrongID");
+        assert.strictEqual(res.status, 400);
     });
-    it("Should return 400 with invalid adminUserID", (done) => {
-        addTempVIP("true", "", publicTempVIPOne)
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 400 with invalid adminUserID", async () => {
+        const res = await addTempVIP("true", "", publicTempVIPOne);
+        assert.strictEqual(res.status, 400);
     });
-    it("Should return 400 with invalid channelID", (done) => {
-        addTempVIP("true", permVIP1, publicTempVIPOne, "")
-            .then(res => {
-                assert.strictEqual(res.status, 400);
-                done();
-            })
-            .catch(err => done(err));
+    it("Should return 400 with invalid channelID", async () => {
+        const res = await addTempVIP("true", permVIP1, publicTempVIPOne, "");
+        assert.strictEqual(res.status, 400);
     });
 });

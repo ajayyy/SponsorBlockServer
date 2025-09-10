@@ -15,7 +15,6 @@ describe("postBranding", () => {
     const userID5 = `PostBrandingUser5${".".repeat(16)}`;
     const userID6 = `PostBrandingUser6${".".repeat(16)}`;
     const userID7 = `PostBrandingUser7${".".repeat(16)}`;
-    const userID8 = `PostBrandingUser8${".".repeat(16)}`;
     const bannedUser = `BannedPostBrandingUser${".".repeat(16)}`;
 
 

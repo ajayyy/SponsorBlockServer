@@ -16,32 +16,24 @@ describe("tokenUtils test", function() {
         mock.onGet(/identity/).reply(200, patreon.activeIdentity);
     });
 
-    it("Should be able to create patreon token", function (done) {
-        if (!config?.patreon) this.skip();
-        tokenUtils.createAndSaveToken(tokenUtils.TokenType.patreon, "test_code").then((licenseKey) => {
-            assert.ok(validateToken(licenseKey[0]));
-            done();
-        });
+    it("Should be able to create patreon token", async function () {
+        if (!config?.patreon) return this.skip();
+        const licenseKey = await tokenUtils.createAndSaveToken(tokenUtils.TokenType.patreon, "test_code");
+        assert.ok(validateToken(licenseKey[0]));
     });
-    it("Should be able to create local token", (done) => {
-        tokenUtils.createAndSaveToken(tokenUtils.TokenType.local).then((licenseKey) => {
-            assert.ok(validateToken(licenseKey[0]));
-            done();
-        });
+    it("Should be able to create local token", async () => {
+        const licenseKey = await tokenUtils.createAndSaveToken(tokenUtils.TokenType.local);
+        assert.ok(validateToken(licenseKey[0]));
     });
-    it("Should be able to get patreon identity", function (done) {
-        if (!config?.patreon) this.skip();
-        tokenUtils.getPatreonIdentity("fake_access_token").then((result) => {
-            assert.deepEqual(result, patreon.activeIdentity);
-            done();
-        });
+    it("Should be able to get patreon identity", async function () {
+        if (!config?.patreon) return this.skip();
+        const result = await tokenUtils.getPatreonIdentity("fake_access_token");
+        assert.deepEqual(result, patreon.activeIdentity);
     });
-    it("Should be able to refresh token", function (done) {
-        if (!config?.patreon) this.skip();
-        tokenUtils.refreshToken(tokenUtils.TokenType.patreon, "fake-licence-Key", "fake_refresh_token").then((result) => {
-            assert.strictEqual(result, true);
-            done();
-        });
+    it("Should be able to refresh token", async function () {
+        if (!config?.patreon) return this.skip();
+        const result = await tokenUtils.refreshToken(tokenUtils.TokenType.patreon, "fake-licence-Key", "fake_refresh_token");
+        assert.strictEqual(result, true);
     });
 
     after(function () {
@@ -56,17 +48,13 @@ describe("tokenUtils failing tests", function() {
         mock.onGet(/identity/).reply(204, patreon.activeIdentity);
     });
 
-    it("Should fail if patreon is not correctly stubbed", function (done) {
-        tokenUtils.createAndSaveToken(tokenUtils.TokenType.patreon, "test_code").then((licenseKey) => {
-            assert.strictEqual(licenseKey, null);
-            done();
-        });
+    it("Should fail if patreon is not correctly stubbed", async () => {
+        const licenseKey = await tokenUtils.createAndSaveToken(tokenUtils.TokenType.patreon, "test_code");
+        assert.strictEqual(licenseKey, null);
     });
-    it("Should fail if token type is invalid", (done) => {
-        tokenUtils.createAndSaveToken("invalidTokenType" as tokenUtils.TokenType).then((licenseKey) => {
-            assert.strictEqual(licenseKey, null);
-            done();
-        });
+    it("Should fail if token type is invalid", async () => {
+        const licenseKey = await tokenUtils.createAndSaveToken("invalidTokenType" as tokenUtils.TokenType);
+        assert.strictEqual(licenseKey, null);
     });
 
     after(function () {

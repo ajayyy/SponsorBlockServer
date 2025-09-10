@@ -73,11 +73,11 @@ describe("getUserID", () => {
         )
     );
 
-    it("Should be able to get multiple fuzzy user info from middle", () => {
+    it("Should be able to get multiple fuzzy user info from middle", () =>
         validateSearch("user",
             [users["fuzzy_1"], users["fuzzy_2"], users["specific_1"]]
-        );
-    });
+        )
+    );
 
     it("Should be able to get with fuzzy public ID", () => {
         const userID = users["public_1"].pubID.substring(0,60);
