@@ -49,7 +49,7 @@
     "@typescript-eslint/parser": "^5.44.0",
     "axios-mock-adapter": "^1.21.2",
     "eslint": "^8.28.0",
-    "mocha": "^10.1.0",
+    "mocha": "^10.8.2",
     "nodemon": "^3.1.9",
     "nyc": "^15.1.0",
     "sinon": "^14.0.2",
