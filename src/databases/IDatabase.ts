@@ -6,7 +6,10 @@ export interface QueryOption {
 export interface IDatabase {
     init(): Promise<void>;
 
-    prepare(type: QueryType, query: string, params?: any[], options?: QueryOption): Promise<any | any[] | void>;
+    prepare(type: "run", query: string, params?: any[], options?: QueryOption): Promise<void>;
+    prepare(type: "get", query: string, params?: any[], options?: QueryOption): Promise<any>;
+    prepare(type: "all", query: string, params?: any[], options?: QueryOption): Promise<any[]>;
+    prepare(type: QueryType, query: string, params?: any[], options?: QueryOption): Promise<any>;
 
     highLoad(): boolean;
 

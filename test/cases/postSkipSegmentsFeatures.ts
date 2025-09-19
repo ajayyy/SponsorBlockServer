@@ -21,17 +21,17 @@ describe("postSkipSegments Features - Chapters", () => {
         };
     }
 
-    before(() => {
+    before(async () => {
         const submitNumberOfTimes = 10;
         const submitUser_reputationHash = getHash(submitUser_reputation);
         const insertSponsorTimeQuery = 'INSERT INTO "sponsorTimes" ("videoID", "startTime", "endTime", "votes", "locked", "UUID", "userID", "timeSubmitted", views, category, "actionType", "shadowHidden") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         for (let i = 0; i < submitNumberOfTimes; i++) {
             const uuid = `post_reputation_uuid-${i}`;
             const videoID = `post_reputation_video-${i}`;
-            db.prepare("run", insertSponsorTimeQuery, [videoID, 1, 11, 5, 1, uuid, submitUser_reputationHash, 1597240000000, 50, "sponsor", "skip", 0]);
+            await db.prepare("run", insertSponsorTimeQuery, [videoID, 1, 11, 5, 1, uuid, submitUser_reputationHash, 1597240000000, 50, "sponsor", "skip", 0]);
         }
         // user feature
-        db.prepare("run", `INSERT INTO "userFeatures" ("userID", "feature", "issuerUserID", "timeSubmitted") VALUES(?, ?, ?, ?)`, [getHash(submitUser_feature), Feature.ChapterSubmitter, "generic-VIP", 0]);
+        await db.prepare("run", `INSERT INTO "userFeatures" ("userID", "feature", "issuerUserID", "timeSubmitted") VALUES(?, ?, ?, ?)`, [getHash(submitUser_feature), Feature.ChapterSubmitter, "generic-VIP", 0]);
     });
 
     it("Should be able to submit a single chapter due to reputation (JSON method)", (done) => {

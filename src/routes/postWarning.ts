@@ -4,7 +4,6 @@ import { db } from "../databases/databases";
 import { isUserVIP } from "../utils/isUserVIP";
 import { getHashCache } from "../utils/getHashCache";
 import { HashedUserID, UserID } from "../types/user.model";
-import { config } from "../config";
 import { generateWarningDiscord, warningData, dispatchEvent } from "../utils/webhookUtils";
 import { WarningType } from "../types/warning.model";
 
@@ -16,12 +15,7 @@ type warningEntry = {
     reason: string
 }
 
-function checkExpiredWarning(warning: warningEntry): boolean {
-    const MILLISECONDS_IN_HOUR = 3600000;
-    const now = Date.now();
-    const expiry =  Math.floor(now - (config.hoursAfterWarningExpires * MILLISECONDS_IN_HOUR));
-    return warning.issueTime > expiry && !warning.enabled;
-}
+const MAX_EDIT_DELAY = 900000; // 15 mins
 
 const getUsername = (userID: HashedUserID) => db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID], { useReplica: true });
 
@@ -44,30 +38,30 @@ export async function postWarning(req: Request, res: Response): Promise<Response
 
     try {
         if (enabled) {
-            const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "issuerUserID" = ? AND "type" = ?', [userID, issuerUserID, type]) as warningEntry;
+            if (!reason) {
+                return res.status(400).json({ "message": "Missing warning reason" });
+            }
+            const previousWarning = await db.prepare("get", 'SELECT * FROM "warnings" WHERE "userID" = ? AND "type" = ? AND "enabled" = 1', [userID, type]) as warningEntry;
 
             if (!previousWarning) {
-                if (!reason) {
-                    return res.status(400).json({ "message": "Missing warning reason" });
-                }
                 await db.prepare(
                     "run",
                     'INSERT INTO "warnings" ("userID", "issueTime", "issuerUserID", "enabled", "reason", "type") VALUES (?, ?, ?, 1, ?, ?)',
                     [userID, issueTime, issuerUserID, reason, type]
                 );
                 resultStatus = "issued to";
-            // check if warning is still within issue time and warning is not enabled
-            } else if (checkExpiredWarning(previousWarning) ) {
+            // allow a warning to be edited by the same vip within 15 mins of issuing
+            } else if (issuerUserID === previousWarning.issuerUserID && (Date.now() - MAX_EDIT_DELAY) < previousWarning.issueTime) {
                 await db.prepare(
-                    "run", 'UPDATE "warnings" SET "enabled" = 1, "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
+                    "run", 'UPDATE "warnings" SET "reason" = ? WHERE "userID" = ? AND "issueTime" = ?',
                     [reason, userID, previousWarning.issueTime]
                 );
-                resultStatus = "re-enabled for";
+                resultStatus = "edited for";
             } else {
                 return res.sendStatus(409);
             }
         } else {
-            await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0 WHERE "userID" = ? AND "type" = ?', [userID, type]);
+            await db.prepare("run", 'UPDATE "warnings" SET "enabled" = 0, "disableTime" = ? WHERE "userID" = ? AND "type" = ? AND "enabled" = 1', [issueTime, userID, type]);
             resultStatus = "removed from";
         }
 

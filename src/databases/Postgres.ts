@@ -109,7 +109,7 @@ export class Postgres implements IDatabase {
         }
     }
 
-    async prepare(type: QueryType, query: string, params?: any[], options: QueryOption = {}): Promise<any[]> {
+    async prepare(type: QueryType, query: string, params?: any[], options: QueryOption = {}): Promise<any> {
         // Convert query to use numbered parameters
         let count = 1;
         for (let char = 0; char < query.length; char++) {

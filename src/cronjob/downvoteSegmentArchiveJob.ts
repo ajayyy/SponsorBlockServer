@@ -3,7 +3,6 @@ import { CronJob } from "cron";
 import { config as serverConfig } from "../config";
 import { Logger } from "../utils/logger";
 import { db } from "../databases/databases";
-import { DBSegment } from "../types/segments.model";
 
 const jobConfig = serverConfig?.crons?.downvoteSegmentArchive;
 
@@ -14,18 +13,18 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
     Logger.info(`DownvoteSegmentArchiveJob starts at ${timeNow}`);
     try {
     // insert into archive sponsorTime
-    await db.prepare(
-        "run",
-        `INSERT INTO "archivedSponsorTimes" 
-        SELECT * 
-        FROM "sponsorTimes" 
-        WHERE "votes" < ? AND (? - "timeSubmitted") > ?`,
-        [
-            voteLimit,
-            timeNow,
-            threshold
-        ]
-    ) as DBSegment[];
+        await db.prepare(
+            "run",
+            `INSERT INTO "archivedSponsorTimes" 
+             SELECT * 
+             FROM "sponsorTimes" 
+             WHERE "votes" < ? AND (? - "timeSubmitted") > ?`,
+            [
+                voteLimit,
+                timeNow,
+                threshold
+            ]
+        );
 
     } catch (err) {
         Logger.error("Execption when insert segment in archivedSponsorTimes");
@@ -35,15 +34,15 @@ export const archiveDownvoteSegment = async (dayLimit: number, voteLimit: number
 
     // remove from sponsorTime
     try {
-    await db.prepare(
-        "run",
-        'DELETE FROM "sponsorTimes" WHERE "votes" < ? AND (? - "timeSubmitted") > ?',
-        [
-            voteLimit,
-            timeNow,
-            threshold
-        ]
-    ) as DBSegment[];
+        await db.prepare(
+            "run",
+            'DELETE FROM "sponsorTimes" WHERE "votes" < ? AND (? - "timeSubmitted") > ?',
+            [
+                voteLimit,
+                timeNow,
+                threshold
+            ]
+        );
 
     } catch (err) {
         Logger.error("Execption when deleting segment in sponsorTimes");

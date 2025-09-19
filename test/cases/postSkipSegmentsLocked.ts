@@ -9,10 +9,10 @@ describe("postSkipSegments - LockedVideos", () => {
     const videoID = "lockedVideo";
     const userID = userIDOne;
 
-    before(() => {
+    before(async () => {
         const insertLockCategoriesQuery = `INSERT INTO "lockCategories" ("userID", "videoID", "category", "reason") VALUES(?, ?, ?, ?)`;
-        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "sponsor", "Custom Reason"]);
-        db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "intro", ""]);
+        await db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "sponsor", "Custom Reason"]);
+        await db.prepare("run", insertLockCategoriesQuery, [getHash(VIPLockUser), videoID, "intro", ""]);
     });
 
     it("Should return 403 and custom reason for submiting in lockedCategory", (done) => {

@@ -13,7 +13,7 @@ export class Sqlite implements IDatabase {
     }
 
     // eslint-disable-next-line require-await
-    async prepare(type: QueryType, query: string, params: any[] = []): Promise<any[]> {
+    async prepare(type: QueryType, query: string, params: any[] = []): Promise<any> {
         // Logger.debug(`prepare (sqlite): type: ${type}, query: ${query}, params: ${params}`);
         const preparedQuery = this.db.prepare(Sqlite.processQuery(query));
 

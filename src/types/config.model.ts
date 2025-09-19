@@ -109,8 +109,6 @@ export interface SBSConfig {
     categorySupport: Record<string, string[]>;
     maxTitleLength: number;
     getTopUsersCacheTimeMinutes: number;
-    maxNumberOfActiveWarnings: number;
-    hoursAfterWarningExpires: number;
     rateLimit: {
         vote: RateLimitConfig;
         view: RateLimitConfig;

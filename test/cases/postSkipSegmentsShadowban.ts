@@ -19,8 +19,8 @@ describe("postSkipSegments - shadowban", () => {
 
     const queryDatabaseShadowhidden = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "shadowHidden", "userID" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
 
-    before(() => {
-        db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, [banUser01Hash]);
+    before(async () => {
+        await db.prepare("run", `INSERT INTO "shadowBannedUsers" ("userID") VALUES(?)`, [banUser01Hash]);
     });
 
     it("Should automatically shadowban segments if user is banned", (done) => {

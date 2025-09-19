@@ -81,19 +81,19 @@ describe("getUserInfo", () => {
 
         // warnings & bans
         // warn-0
-        insertWarning(db, users["warn-0"].pubID, { reason: "warning0-0", issueTime: 10 });
+        await insertWarning(db, users["warn-0"].pubID, { reason: "warning0-0", issueTime: 10 });
         // warn-1
-        insertWarning(db, users["warn-1"].pubID, { reason: "warning1-0", issueTime: 20 });
-        insertWarning(db, users["warn-1"].pubID, { reason: "warning1-1", issueTime: 30 });
+        await insertWarning(db, users["warn-1"].pubID, { reason: "warning1-0", issueTime: 20 });
+        await insertWarning(db, users["warn-1"].pubID, { reason: "warning1-1", issueTime: 30 });
         // warn -2
-        insertWarning(db, users["warn-2"].pubID, { reason: "warning2-0", issueTime: 40, enabled: false });
+        await insertWarning(db, users["warn-2"].pubID, { reason: "warning2-0", issueTime: 40, enabled: false });
         // warn-3
-        insertWarning(db, users["warn-3"].pubID, { reason: "warning3-0", issueTime: 50 });
-        insertWarning(db, users["warn-3"].pubID, { reason: "warning3-1", issueTime: 60, enabled: false });
+        await insertWarning(db, users["warn-3"].pubID, { reason: "warning3-0", issueTime: 50 });
+        await insertWarning(db, users["warn-3"].pubID, { reason: "warning3-1", issueTime: 60, enabled: false });
 
         // ban-
-        insertBan(db, users["ban-1"].pubID);
-        insertBan(db, users["ban-2"].pubID);
+        await insertBan(db, users["ban-1"].pubID);
+        await insertBan(db, users["ban-2"].pubID);
     });
 
     it("Should be able to get a 200", () => statusTest(200, { userID: users["n-1"].privID }));
