@@ -182,8 +182,27 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             };
 
             const canUseCache = requiredSegments.length === 0;
-            data.segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
-                .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType))
+            const segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
+                .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
+
+            // Make sure no hash duplicates exist
+            if (trimUUIDs) {
+                const seen = new Set<string>();
+                for (const segment of segments) {
+                    const shortUUID = segment.UUID.substring(0, trimUUIDs);
+                    if (seen.has(shortUUID)) {
+                        // Duplicate found, disable trimming
+                        trimUUIDs = undefined;
+                        break;
+                    }
+
+                    seen.add(shortUUID);
+                }
+
+                seen.clear();
+            }
+
+            data.segments = segments
                 .map((segment) => ({
                     category: segment.category,
                     actionType: segment.actionType,
