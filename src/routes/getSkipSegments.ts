@@ -182,13 +182,13 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
             };
 
             const canUseCache = requiredSegments.length === 0;
-            const segments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
+            const filteredSegments = (await prepareCategorySegments(req, videoID as VideoID, service, videoData.segments, cache, canUseCache))
                 .filter((segment: Segment) => categories.includes(segment?.category) && actionTypes.includes(segment?.actionType));
 
             // Make sure no hash duplicates exist
             if (trimUUIDs) {
                 const seen = new Set<string>();
-                for (const segment of segments) {
+                for (const segment of filteredSegments) {
                     const shortUUID = segment.UUID.substring(0, trimUUIDs);
                     if (seen.has(shortUUID)) {
                         // Duplicate found, disable trimming
@@ -202,7 +202,7 @@ async function getSegmentsByHash(req: Request, hashedVideoIDPrefix: VideoIDHash,
                 seen.clear();
             }
 
-            data.segments = segments
+            data.segments = filteredSegments
                 .map((segment) => ({
                     category: segment.category,
                     actionType: segment.actionType,
@@ -443,7 +443,7 @@ async function getSkipSegments(req: Request, res: Response): Promise<Response> {
 
     await getEtag("skipSegments", (videoID as string), service)
         .then(etag => res.set("ETag", etag))
-        .catch(() => null);
+        .catch(() => ({}));
     return res.send(segments);
 }
 
