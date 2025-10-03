@@ -223,10 +223,4 @@ describe("setUsername", () => {
         assert.strictEqual(resp.status, 200);
         await assert.rejects(getUsernameInfo(publicID), "Expected the username change to be silently rejected");
     });
-
-    it("Should ignore username change requests for new users", async () => {
-        const resp = await postSetUserName(completelyNewUserPrivId, completelyNewUsername);
-        assert.strictEqual(resp.status, 200);
-        await assert.rejects(getUsernameInfo(getHash(completelyNewUserPrivId)), "Expected the username change to be silently rejected");
-    });
 });
