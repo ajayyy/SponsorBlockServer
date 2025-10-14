@@ -30,6 +30,7 @@ describe("getSkipSegments", () => {
         await db.prepare("run", query, ["chapterVid", 71, 75, 2, 0, "chapterVid-3", "testman", 0, 50, "chapter", "chapter", "YouTube", 0, 0, 0, "Chapter 3"]);
         await db.prepare("run", query, ["requiredSegmentHashVid", 10, 20, -2, 0, "1d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd428fb5f9e65c4e16e7807340fa", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
         await db.prepare("run", query, ["requiredSegmentHashVid", 20, 30, -2, 0, "1ebde8e8ae03096b6c866aa2c8cc7ee1d720ca1fca27bea3f39a6a1b876577e71", "testman", 0, 50, "sponsor", "skip", "YouTube", 0, 0, 0, ""]);
+        await db.prepare("run", query, ["getSkipSegmentID0", 1, 12, 1, 0, "uuid01-spot", "testman", 0, 50, "sponsor", "skip", "Spotify", 100, 0, 0, ""]);
         return;
     });
 
@@ -491,6 +492,24 @@ describe("getSkipSegments", () => {
         client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: 1 } })
             .then(res => {
                 assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to get a time by category for spotify service", (done) => {
+        client.get(endpoint, { params: { videoID: "getSkipSegmentID0", category: "sponsor", service: "spotify" } })
+            .then(res => {
+                assert.strictEqual(res.status, 200);
+                const data = res.data;
+                assert.strictEqual(data.length, 1);
+                assert.strictEqual(data[0].segment[0], 1);
+                assert.strictEqual(data[0].segment[1], 12);
+                assert.strictEqual(data[0].category, "sponsor");
+                assert.strictEqual(data[0].UUID, "uuid01-spot");
+                assert.strictEqual(data[0].votes, 1);
+                assert.strictEqual(data[0].locked, 0);
+                assert.strictEqual(data[0].videoDuration, 100);
                 done();
             })
             .catch(err => done(err));
