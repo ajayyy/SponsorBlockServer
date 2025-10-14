@@ -46,8 +46,8 @@ describe("postSkipSegments", () => {
 
     const submitVIPuser = `VIPPostSkipUser${".".repeat(16)}`;
 
-    const queryDatabase = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "votes", "userID", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
-    const queryDatabaseActionType = (videoID: string) => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
+    const queryDatabase = (videoID: string, service = "YouTube") => db.prepare("get", `SELECT "startTime", "endTime", "votes", "userID", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ?`, [videoID, service]);
+    const queryDatabaseActionType = (videoID: string, service = "YouTube") => db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "actionType" FROM "sponsorTimes" WHERE "videoID" = ? AND "service" = ?`, [videoID, service]);
     const queryDatabaseVideoInfo = (videoID: string) => db.prepare("get", `SELECT * FROM "videoInfo" WHERE "videoID" = ?`, [videoID]);
 
     before(async () => {
@@ -135,33 +135,6 @@ describe("postSkipSegments", () => {
                     endTime: 10,
                     category: "sponsor",
                     actionType: "mute",
-                };
-                assert.ok(partialDeepEquals(row, expected));
-                done();
-            })
-            .catch(err => done(err));
-    });
-
-    it("Should be able to submit a single time under a different service (JSON method)", (done) => {
-        const videoID = "postSkip7";
-        postSkipSegmentJSON({
-            userID: submitUserOne,
-            videoID,
-            service: "PeerTube",
-            segments: [{
-                segment: [0, 10],
-                category: "sponsor",
-            }],
-        })
-            .then(async res => {
-                assert.strictEqual(res.status, 200);
-                const row = await db.prepare("get", `SELECT "startTime", "endTime", "locked", "category", "service" FROM "sponsorTimes" WHERE "videoID" = ?`, [videoID]);
-                const expected = {
-                    startTime: 0,
-                    endTime: 10,
-                    locked: 0,
-                    category: "sponsor",
-                    service: "PeerTube",
                 };
                 assert.ok(partialDeepEquals(row, expected));
                 done();
@@ -370,6 +343,57 @@ describe("postSkipSegments", () => {
             }))
             .then(res => {
                 assert.strictEqual(res.status, 409);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to submit for spotify service", (done) => {
+        const videoID = "postSkipParamSingle";
+        postSkipSegmentParam({
+            videoID,
+            startTime: 23,
+            endTime: 105,
+            userID: submitUserOne,
+            category: "sponsor",
+            service: "Spotify"
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabase(videoID, "Spotify");
+                const expected = {
+                    startTime: 23,
+                    endTime: 105,
+                    category: "sponsor",
+                };
+                assert.ok(partialDeepEquals(row, expected));
+
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to submit a time for spotify service (JSON method)", (done) => {
+        const videoID = "postSkipJSONSingle";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            segments: [{
+                segment: [22, 103],
+                category: "sponsor",
+            }],
+            service: "Spotify"
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const row = await queryDatabase(videoID, "Spotify");
+                const expected = {
+                    startTime: 22,
+                    endTime: 103,
+                    locked: 0,
+                    category: "sponsor",
+                };
+                assert.ok(partialDeepEquals(row, expected));
                 done();
             })
             .catch(err => done(err));

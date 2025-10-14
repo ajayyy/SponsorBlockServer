@@ -22,7 +22,8 @@ export enum ActionType {
 // Uncomment as needed
 export enum Service {
     YouTube = "YouTube",
-    PeerTube = "PeerTube",
+    Spotify = "Spotify",
+    PeerTube = "PeerTube"
     // Twitch = 'Twitch',
     // Nebula = 'Nebula',
     // RSS = 'RSS',

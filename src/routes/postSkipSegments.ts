@@ -141,8 +141,8 @@ async function autoModerateSubmission(apiVideoDetails: videoDetails,
         .map(segment => [parseFloat(segment.segment[0]), parseFloat(segment.segment[1])]);
 
     // add previous submissions by this user
-    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? AND "videoID" = ? AND "votes" > -1 AND "actionType" != 'chapter' AND "hidden" = 0`
-        , [submission.userID, submission.videoID]) as { startTime: string, endTime: string }[];
+    const allSubmittedByUser = await db.prepare("all", `SELECT "startTime", "endTime" FROM "sponsorTimes" WHERE "userID" = ? AND "videoID" = ? AND "service" = ? AND "votes" > -1 AND "actionType" != 'chapter' AND "hidden" = 0`
+        , [submission.userID, submission.videoID, submission.service]) as { startTime: string, endTime: string }[];
 
     if (allSubmittedByUser) {
         //add segments the user has previously submitted
@@ -195,12 +195,17 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
     if (typeof videoID !== "string" || videoID?.length == 0) {
         invalidFields.push("videoID");
     }
-    if (service === Service.YouTube && config.mode !== "test") {
-        const sanitizedVideoID = youtubeID.validate(videoID) ? videoID : youtubeID.sanitize(videoID);
-        if (!youtubeID.validate(sanitizedVideoID)) {
-            invalidFields.push("videoID");
-            errors.push("YouTube videoID could not be extracted");
+    if (service === Service.YouTube) {
+        if (config.mode !== "test") {
+            const sanitizedVideoID = youtubeID.validate(videoID) ? videoID : youtubeID.sanitize(videoID);
+            if (!youtubeID.validate(sanitizedVideoID)) {
+                invalidFields.push("videoID");
+                errors.push("YouTube videoID could not be extracted");
+            }
         }
+    } else if (service !== Service.Spotify) {
+        invalidFields.push("service");
+        errors.push("Service is not supported");
     }
     const minLength = config.minUserIDLength;
     if (typeof userID !== "string" || userID?.length < minLength) {
@@ -359,6 +364,15 @@ async function checkByAutoModerator(videoID: VideoID, userID: HashedUserID, segm
 
 async function updateDataIfVideoDurationChange(videoID: VideoID, service: Service, videoDuration: VideoDuration, videoDurationParam: VideoDuration) {
     let lockedCategoryList = await db.prepare("all", 'SELECT category, "actionType", reason from "lockCategories" where "videoID" = ? AND "service" = ?', [videoID, service]);
+
+    if (service === Service.Spotify) {
+        // Don't handle changed durations
+        return {
+            videoDuration,
+            apiVideoDetails: null,
+            lockedCategoryList
+        };
+    }
 
     const previousSubmissions = await db.prepare("all",
         `SELECT "videoDuration", "UUID" 
@@ -617,10 +631,12 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
                 //add to private db as well
                 await privateDB.prepare("run", `INSERT INTO "sponsorTimes" VALUES(?, ?, ?, ?)`, [videoID, hashedIP, timeSubmitted, service]);
 
-                await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published") 
-                    SELECT ?, ?, ?, ?
-                    WHERE NOT EXISTS (SELECT 1 FROM "videoInfo" WHERE "videoID" = ?)`, [
-                    videoID, apiVideoDetails?.authorId || "", apiVideoDetails?.title || "", apiVideoDetails?.published || 0, videoID]);
+                if (service === Service.YouTube) {
+                    await db.prepare("run", `INSERT INTO "videoInfo" ("videoID", "channelID", "title", "published") 
+                        SELECT ?, ?, ?, ?
+                        WHERE NOT EXISTS (SELECT 1 FROM "videoInfo" WHERE "videoID" = ?)`, [
+                        videoID, apiVideoDetails?.authorId || "", apiVideoDetails?.title || "", apiVideoDetails?.published || 0, videoID]);
+                }
 
                 // Clear redis cache for this video
                 QueryCacher.clearSegmentCache({
