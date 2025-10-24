@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { HashedUserID } from "../types/user.model";
 import { Logger } from "../utils/logger";
+import { VipRepository } from "../databases/repositories";
 
 interface AddUserAsVIPRequest extends Request {
     query: {
@@ -38,12 +39,12 @@ export async function addUserAsVIP(req: AddUserAsVIPRequest, res: Response): Pro
     try {
         if (enabled && !userIsVIP) {
             // add them to the vip list
-            await db.prepare("run", 'INSERT INTO "vipUsers" VALUES(?)', [userID]);
+            VipRepository.addVip(userID, db);
         }
 
         if (!enabled && userIsVIP) {
             //remove them from the shadow ban list
-            await db.prepare("run", 'DELETE FROM "vipUsers" WHERE "userID" = ?', [userID]);
+            VipRepository.deleteVip(userID, db);
         }
 
         return res.sendStatus(200);
