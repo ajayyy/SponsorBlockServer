@@ -8,6 +8,7 @@ import { HashedUserID } from "../types/user.model";
 import redis from "../utils/redis";
 import { tempVIPKey } from "../utils/redisKeys";
 import { Logger } from "../utils/logger";
+import { VipRepository } from "../databases/repositories";
 
 interface AddUserAsTempVIPRequest extends Request {
     query: {
@@ -52,8 +53,6 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
         return res.sendStatus(409);
     }
 
-    const startTime = Date.now();
-
     if (enabled) {
         const dayInSeconds = 86400;
         const channelInfo = await getChannelInfo(channelVideoID);
@@ -63,7 +62,7 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
 
         try {
             await redis.setEx(tempVIPKey(userID), dayInSeconds, channelInfo?.id);
-            await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
+            VipRepository.addTempVip(adminUserID, userID, privateDB);
             return res.status(200).send(`Temp VIP added on channel ${channelInfo?.name}`);
         } catch (e) {
             Logger.error(e as string);
@@ -72,7 +71,7 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
     }
     try {
         await redis.del(tempVIPKey(userID));
-        await privateDB.prepare("run", `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`, [adminUserID, userID, + enabled, startTime]);
+        VipRepository.removeTempVip(adminUserID, userID, privateDB);
         return res.status(200).send(`Temp VIP removed`);
     } catch (e) {
         Logger.error(e as string);
