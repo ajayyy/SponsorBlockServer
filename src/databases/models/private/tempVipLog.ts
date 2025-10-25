@@ -1,4 +1,4 @@
-export interface CreatePrivateTempVipLog {
+export interface IPrivateTempVipLog {
     issuerUserID: string;
     targetUserID: string
     enabled: boolean;
@@ -14,7 +14,7 @@ export class PrivateTempVipLog {
     // SERIAL PK
     public id: number | null;
 
-    constructor(data: CreatePrivateTempVipLog) {
+    constructor(data: IPrivateTempVipLog) {
         this.issuerUserID = data.issuerUserID;
         this.targetUserID = data.targetUserID;
         this.enabled = data.enabled;

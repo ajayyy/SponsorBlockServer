@@ -54,10 +54,10 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
     }
 
     const tempVipLog = new PrivateTempVipLog({
-                issuerUserID: adminUserID,
-                targetUserID: userID,
-                enabled: enabled
-            });
+        issuerUserID: adminUserID,
+        targetUserID: userID,
+        enabled: enabled
+    });
 
     if (enabled) {
         const dayInSeconds = 86400;

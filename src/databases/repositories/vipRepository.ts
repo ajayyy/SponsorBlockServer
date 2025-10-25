@@ -1,6 +1,6 @@
-import { IDatabase } from "../IDatabase";
+import type { IDatabase } from "../IDatabase";
 import { VipUser } from "../models";
-import { PrivateTempVipLog } from "../models/private/tempVipLog";
+import { PrivateTempVipLog } from "../models/private";
 
 export class VipRepository {
     private publicDb: IDatabase;
