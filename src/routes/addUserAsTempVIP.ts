@@ -1,14 +1,14 @@
 import { VideoID } from "../types/segments.model";
 import { getVideoDetails } from "../utils/getVideoDetails";
 import { getHashCache } from "../utils/getHashCache";
-import { privateDB } from "../databases/databases";
+import { vipRepository } from "../databases/databases";
 import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { HashedUserID } from "../types/user.model";
 import redis from "../utils/redis";
 import { tempVIPKey } from "../utils/redisKeys";
 import { Logger } from "../utils/logger";
-import { VipRepository } from "../databases/repositories";
+import { PrivateTempVipLog } from "../databases/models/private";
 
 interface AddUserAsTempVIPRequest extends Request {
     query: {
@@ -53,6 +53,12 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
         return res.sendStatus(409);
     }
 
+    const tempVipLog = new PrivateTempVipLog({
+                issuerUserID: adminUserID,
+                targetUserID: userID,
+                enabled: enabled
+            });
+
     if (enabled) {
         const dayInSeconds = 86400;
         const channelInfo = await getChannelInfo(channelVideoID);
@@ -62,7 +68,7 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
 
         try {
             await redis.setEx(tempVIPKey(userID), dayInSeconds, channelInfo?.id);
-            VipRepository.addTempVip(adminUserID, userID, privateDB);
+            await vipRepository.addTempVipLog(tempVipLog);
             return res.status(200).send(`Temp VIP added on channel ${channelInfo?.name}`);
         } catch (e) {
             Logger.error(e as string);
@@ -71,7 +77,7 @@ export async function addUserAsTempVIP(req: AddUserAsTempVIPRequest, res: Respon
     }
     try {
         await redis.del(tempVIPKey(userID));
-        VipRepository.removeTempVip(adminUserID, userID, privateDB);
+        await vipRepository.addTempVipLog(tempVipLog);
         return res.status(200).send(`Temp VIP removed`);
     } catch (e) {
         Logger.error(e as string);

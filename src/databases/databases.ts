@@ -2,6 +2,7 @@ import { config } from "../config";
 import { Sqlite } from "./Sqlite";
 import { Postgres } from "./Postgres";
 import { IDatabase } from "./IDatabase";
+import { VipRepository } from "./repositories";
 
 let db: IDatabase;
 let privateDB: IDatabase;
@@ -77,8 +78,11 @@ async function initDb(): Promise<void> {
     }
 }
 
+const vipRepository = new VipRepository(db, privateDB);
+
 export {
     db,
     privateDB,
     initDb,
+    vipRepository
 };

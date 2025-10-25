@@ -1,46 +1,35 @@
-import { HashedUserID } from "../../types/user.model";
-import { db } from "../databases";
 import { IDatabase } from "../IDatabase";
 import { VipUser } from "../models";
 import { PrivateTempVipLog } from "../models/private/tempVipLog";
 
 export class VipRepository {
-    public static async addVip(hashedUserId: HashedUserID, publicDb: IDatabase): Promise<void> {
-        const vipUser = new VipUser({ userID: hashedUserId });
+    private publicDb: IDatabase;
+    private privateDb: IDatabase;
 
-        await publicDb.prepare("run", 'INSERT INTO "vipUsers" VALUES(?)', [vipUser.userID]);
+    constructor(publicDb: IDatabase, privateDb: IDatabase) {
+        this.publicDb = publicDb;
+        this.privateDb = privateDb;
     }
 
-    public static async deleteVip(hashedUserId: HashedUserID, publicDb: IDatabase): Promise<void> {
-        const vipUser = new VipUser({ userID: hashedUserId });
-
-        await publicDb.prepare("run", 'DELETE FROM "vipUsers" WHERE "userID" = ?', [vipUser.userID]);
+    /**
+     * Creates a new VIP user.
+     */
+    public async create(vipUser: VipUser): Promise<void> {
+        await this.publicDb.prepare("run", 'INSERT INTO "vipUsers" VALUES(?)', [vipUser.userID]);
     }
 
-    public static async addTempVip(adminUserId: string, userId: string, privateDb: IDatabase): Promise<void> {
-        const tempVipLog = new PrivateTempVipLog({
-            issuerUserID: adminUserId,
-            targetUserID: userId,
-            enabled: true,
-            updatedAt: Date.now()
-        });
-
-        await privateDb.prepare(
-            "run",
-            `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`,
-            [tempVipLog.issuerUserID, tempVipLog.targetUserID, + tempVipLog.enabled, tempVipLog.updatedAt]
-        );
+    /**
+     * Deletes a VIP user. 
+     */
+    public async delete(vipUser: VipUser): Promise<void> {
+        await this.publicDb.prepare("run", 'DELETE FROM "vipUsers" WHERE "userID" = ?', [vipUser.userID]);
     }
 
-    public static async removeTempVip(adminUserId: string, userId: string, privateDb: IDatabase): Promise<void> {
-        const tempVipLog = new PrivateTempVipLog({
-            issuerUserID: adminUserId,
-            targetUserID: userId,
-            enabled: false,
-            updatedAt: Date.now()
-        });
-
-        await privateDb.prepare(
+    /**
+     * Adds a new log entry to the temporary VIP log.
+     */
+    public async addTempVipLog(tempVipLog: PrivateTempVipLog): Promise<void> {
+        await this.privateDb.prepare(
             "run",
             `INSERT INTO "tempVipLog" VALUES (?, ?, ?, ?)`,
             [tempVipLog.issuerUserID, tempVipLog.targetUserID, + tempVipLog.enabled, tempVipLog.updatedAt]

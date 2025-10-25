@@ -1,11 +1,11 @@
 import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
+import { vipRepository } from "../databases/databases";
 import { config } from "../config";
 import { Request, Response } from "express";
 import { isUserVIP } from "../utils/isUserVIP";
 import { HashedUserID } from "../types/user.model";
 import { Logger } from "../utils/logger";
-import { VipRepository } from "../databases/repositories";
+import { VipUser } from "../databases/models";
 
 interface AddUserAsVIPRequest extends Request {
     query: {
@@ -37,14 +37,16 @@ export async function addUserAsVIP(req: AddUserAsVIPRequest, res: Response): Pro
     const userIsVIP = await isUserVIP(userID);
 
     try {
+        const vipUser = new VipUser({ userID: userID });
+
         if (enabled && !userIsVIP) {
             // add them to the vip list
-            VipRepository.addVip(userID, db);
+            await vipRepository.create(vipUser);
         }
 
         if (!enabled && userIsVIP) {
             //remove them from the shadow ban list
-            VipRepository.deleteVip(userID, db);
+            await vipRepository.delete(vipUser);
         }
 
         return res.sendStatus(200);
