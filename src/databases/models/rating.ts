@@ -4,18 +4,24 @@ export interface IRating {
     type: number;
     count: number;
     hashedVideoID: string;
-    id: number;
+    // SERIAL PK
+    id?: number;
 }
 
 export class Rating {
     public videoID: string;
-    public service: string = 'YouTube';
+    public service: string;
     public type: number;
     public count: number;
     public hashedVideoID: string;
-    public id: number;
+    public id: number | null;
 
     constructor(data: IRating) {
-        Object.assign(this, data);
+        this.videoID = data.videoID;
+        this.service = data?.service ?? "YouTube";
+        this.type = data.type;
+        this.count = data.count;
+        this.hashedVideoID = data.hashedVideoID;
+        this.id = data?.id ?? null;
     }
 }

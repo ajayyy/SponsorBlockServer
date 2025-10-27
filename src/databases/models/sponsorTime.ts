@@ -1,9 +1,9 @@
-export interface IArchivedSponsorTime {
+export interface ISponsorTime {
     videoID: string;
     startTime: number;
     endTime: number;
     votes: number;
-    locked?: number;
+    locked: number;
     incorrectVotes?: number;
     UUID?: string;
     userID: string;
@@ -21,7 +21,7 @@ export interface IArchivedSponsorTime {
     description?: string;
 }
 
-export class ArchivedSponsorTime {
+export class SponsorTime {
     public videoID: string;
     public startTime: number;
     public endTime: number;
@@ -44,26 +44,26 @@ export class ArchivedSponsorTime {
     public userAgent: string;
     public description: string;
 
-    constructor(data: IArchivedSponsorTime) {
+    constructor(data: ISponsorTime) {
         this.videoID = data.videoID;
         this.startTime = data.startTime;
         this.endTime = data.endTime;
         this.votes = data.votes;
-        this.locked = data?.locked ?? 0;
-        this.incorrectVotes = data?.incorrectVotes ?? 1;
-        this.UUID = data?.UUID ?? null;
+        this.locked = data.locked;
+        this.incorrectVotes = data.incorrectVotes ?? 1;
+        this.UUID = data.UUID ?? null;
         this.userID = data.userID;
         this.timeSubmitted = data.timeSubmitted;
         this.views = data.views;
-        this.category = data?.category ?? "sponsor";
-        this.actionType = data?.actionType ?? "skip";
-        this.service = data?.service ?? "YouTube";
-        this.videoDuration = data?.videoDuration ?? 0;
-        this.hidden = data?.hidden ?? 0;
-        this.reputation = data?.reputation ?? 0;
+        this.category = data.category ?? "sponsor";
+        this.actionType = data.actionType ?? "skip";
+        this.service = data.service ?? "YouTube";
+        this.videoDuration = data.videoDuration ?? 0;
+        this.hidden = data.hidden ?? 0;
+        this.reputation = data.reputation ?? 0;
         this.shadowHidden = data.shadowHidden;
-        this.hashedVideoID = data?.hashedVideoID ?? "";
-        this.userAgent = data?.userAgent ?? "";
-        this.description = data?.description ?? "";
+        this.hashedVideoID = data.hashedVideoID ?? "";
+        this.userAgent = data.userAgent ?? "";
+        this.description = data.description ?? "";
     }
 }

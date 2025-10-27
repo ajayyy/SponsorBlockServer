@@ -5,7 +5,7 @@ export interface IUnlistedVideo {
     channelID: string;
     timeSubmitted: number;
     service?: string;
-    id: number;
+    id?: number;
 }
 
 export class UnlistedVideo {
@@ -14,7 +14,8 @@ export class UnlistedVideo {
     public views: string;
     public channelID: string;
     public timeSubmitted: number;
-    public service: string = 'YouTube';
+    public service: string = "YouTube";
+    // SERIAL PK
     public id: number;
 
     constructor(data: IUnlistedVideo) {

@@ -1,5 +1,5 @@
 export interface IThumbnailVote {
-    UUID: string;
+    UUID?: string;
     votes?: number;
     locked?: number;
     shadowHidden?: number;
@@ -8,14 +8,19 @@ export interface IThumbnailVote {
 }
 
 export class ThumbnailVote {
-    public UUID: string;
-    public votes: number = 0;
-    public locked: number = 0;
-    public shadowHidden: number = 0;
-    public downvotes: number = 0;
-    public removed: number = 0;
+    public UUID: string|null;
+    public votes: number;
+    public locked: number;
+    public shadowHidden: number;
+    public downvotes: number;
+    public removed: number;
 
     constructor(data: IThumbnailVote) {
-        Object.assign(this, data);
+        this.UUID = data?.UUID ?? null;
+        this.votes = data?.votes ?? 0;
+        this.locked = data?.locked ?? 0;
+        this.shadowHidden = data?.shadowHidden ?? 0;
+        this.downvotes = data?.downvotes ?? 0;
+        this.removed = data?.removed ?? 0;
     }
 }

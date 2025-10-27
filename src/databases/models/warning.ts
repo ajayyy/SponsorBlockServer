@@ -12,10 +12,15 @@ export class Warning {
     public issueTime: number;
     public issuerUserID: string;
     public enabled: number;
-    public reason: string = '';
-    public type: number = 0;
+    public reason: string;
+    public type: number;
 
     constructor(data: IWarning) {
-        Object.assign(this, data);
+        this.userID = data.userID;
+        this.issueTime = data.issueTime;
+        this.issuerUserID = data.issuerUserID;
+        this.enabled = data.enabled;
+        this.reason = data?.reason ?? "";
+        this.type = data?.type ?? 0;
     }
 }

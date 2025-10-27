@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 export interface ITitle {
     videoID: string;
     title: string;
@@ -6,7 +8,7 @@ export interface ITitle {
     service: string;
     hashedVideoID: string;
     timeSubmitted: number;
-    UUID: string;
+    UUID?: string;
 }
 
 export class Title {
@@ -17,9 +19,17 @@ export class Title {
     public service: string;
     public hashedVideoID: string;
     public timeSubmitted: number;
+    // PK
     public UUID: string;
 
     constructor(data: ITitle) {
-        Object.assign(this, data);
+        this.videoID = data.videoID;
+        this.title = data.title;
+        this.original = data?.original ?? 0;
+        this.userID = data.userID;
+        this.service = data.service;
+        this.hashedVideoID = data.hashedVideoID;
+        this.timeSubmitted = data.timeSubmitted;
+        this.UUID = data?.UUID ?? crypto.randomUUID();
     }
 }

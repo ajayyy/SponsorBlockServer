@@ -3,9 +3,10 @@ export interface IShadowBannedUser {
 }
 
 export class ShadowBannedUser {
+    // PK
     public userID: string;
 
     constructor(data: IShadowBannedUser) {
-        Object.assign(this, data);
+        this.userID = data.userID;
     }
 }

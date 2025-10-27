@@ -13,9 +13,15 @@ export class PrivateUserNameLog {
     public oldUserName: string;
     public updatedbyAdmin: boolean;
     public updatedAt: number;
-    public id: number;
+    // SERIAL PK
+    public id: number|null;
 
     constructor(data: IPrivateUserNameLog) {
-        Object.assign(this, data);
+        this.userID = data.userID;
+        this.newUserName = data.newUserName;
+        this.oldUserName = data.oldUserName;
+        this.updatedbyAdmin = data.updatedbyAdmin;
+        this.updatedAt = data.updatedAt;
+        this.id = data?.id ?? null;
     }
 }

@@ -1,13 +1,15 @@
 export interface IThumbnailTimestamp {
-    UUID: string;
+    UUID?: string;
     timestamp: number;
 }
 
 export class ThumbnailTimestamp {
-    public UUID: string;
+    // PK
+    public UUID: string|null;
     public timestamp: number;
 
     constructor(data: IThumbnailTimestamp) {
-        Object.assign(this, data);
+        this.UUID = data?.UUID ?? null;
+        this.timestamp = data.timestamp;
     }
 }

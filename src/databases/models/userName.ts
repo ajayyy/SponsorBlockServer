@@ -7,9 +7,11 @@ export interface IUserName {
 export class UserName {
     public userID: string;
     public userName: string;
-    public locked: number = 0;
+    public locked: number;
 
     constructor(data: IUserName) {
-        Object.assign(this, data);
+        this.userID = data.userID;
+        this.userName = data.userName;
+        this.locked = data?.locked ?? 0;
     }
 }

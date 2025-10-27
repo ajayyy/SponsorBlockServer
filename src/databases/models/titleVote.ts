@@ -1,5 +1,5 @@
 export interface ITitleVote {
-    UUID: string;
+    UUID?: string;
     votes?: number;
     locked?: number;
     shadowHidden?: number;
@@ -9,15 +9,22 @@ export interface ITitleVote {
 }
 
 export class TitleVote {
-    public UUID: string;
-    public votes: number = 0;
-    public locked: number = 0;
-    public shadowHidden: number = 0;
-    public verification: number = 0;
-    public downvotes: number = 0;
-    public removed: number = 0;
+    // PK
+    public UUID: string|null;
+    public votes: number;
+    public locked: number;
+    public shadowHidden: number;
+    public verification: number;
+    public downvotes: number;
+    public removed: number;
 
     constructor(data: ITitleVote) {
-        Object.assign(this, data);
+        this.UUID = data?.UUID ?? null;
+        this.votes = data?.votes ?? 0;
+        this.locked = data?.locked ?? 0;
+        this.shadowHidden = data?.shadowHidden ?? 0;
+        this.verification = data?.verification ?? 0;
+        this.downvotes = data?.downvotes ?? 0;
+        this.removed = data?.removed ?? 0;
     }
 }

@@ -4,7 +4,7 @@ export interface IPrivateVote {
     hashedIP: string;
     type: number;
     originalVoteType: number;
-    id: number;
+    id?: number;
 }
 
 export class PrivateVote {
@@ -13,9 +13,15 @@ export class PrivateVote {
     public hashedIP: string;
     public type: number;
     public originalVoteType: number;
-    public id: number;
+    // SERIAL PK
+    public id: number|null;
 
     constructor(data: IPrivateVote) {
-        Object.assign(this, data);
+        this.UUID = data.UUID;
+        this.userID = data.userID;
+        this.hashedIP = data.hashedIP;
+        this.type = data.type;
+        this.originalVoteType = data.originalVoteType;
+        this.id = data?.id ?? null;
     }
 }

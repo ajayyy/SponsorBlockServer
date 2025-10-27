@@ -4,10 +4,12 @@ export interface IPrivateConfig {
 }
 
 export class PrivateConfig {
+    // PK
     public key: string;
     public value: string;
 
     constructor(data: IPrivateConfig) {
-        Object.assign(this, data);
+        this.key = data.key;
+        this.value = data.value;
     }
 }

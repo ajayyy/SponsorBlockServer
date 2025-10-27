@@ -12,6 +12,9 @@ export class VideoInfo {
     public published: number;
 
     constructor(data: IVideoInfo) {
-        Object.assign(this, data);
+        this.videoID = data.videoID;
+        this.channelID = data.channelID;
+        this.title = data.title;
+        this.published = data.published;
     }
 }

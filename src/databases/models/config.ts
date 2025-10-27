@@ -4,10 +4,12 @@ export interface IConfig {
 }
 
 export class Config {
+    // PK
     public key: string;
     public value: string;
 
     constructor(data: IConfig) {
-        Object.assign(this, data);
+        this.key = data.key;
+        this.value = data.value;
     }
 }

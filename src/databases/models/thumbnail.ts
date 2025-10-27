@@ -4,7 +4,7 @@ export interface IThumbnail {
     service: string;
     hashedVideoID: string;
     timeSubmitted: number;
-    UUID: string;
+    UUID?: string;
 }
 
 export class Thumbnail {
@@ -13,9 +13,15 @@ export class Thumbnail {
     public service: string;
     public hashedVideoID: string;
     public timeSubmitted: number;
-    public UUID: string;
+    // PK
+    public UUID: string|null;
 
     constructor(data: IThumbnail) {
-        Object.assign(this, data);
+        this.original = data?.original ?? 0;
+        this.userID = data.userID;
+        this.service = data.service;
+        this.hashedVideoID = data.hashedVideoID;
+        this.timeSubmitted = data.timeSubmitted;
+        this.UUID = data?.UUID ?? null;
     }
 }

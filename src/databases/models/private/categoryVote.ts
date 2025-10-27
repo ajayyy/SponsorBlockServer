@@ -4,7 +4,7 @@ export interface IPrivateCategoryVote {
     hashedIP: string;
     category: string;
     timeSubmitted: number;
-    id: number;
+    id?: number;
 }
 
 export class PrivateCategoryVote {
@@ -13,9 +13,15 @@ export class PrivateCategoryVote {
     public hashedIP: string;
     public category: string;
     public timeSubmitted: number;
-    public id: number;
+    // SERIAL PK
+    public id: number|null;
 
     constructor(data: IPrivateCategoryVote) {
-        Object.assign(this, data);
+        this.UUID = data.UUID;
+        this.userID = data.userID;
+        this.hashedIP = data.hashedIP;
+        this.category = data.category;
+        this.timeSubmitted = data.timeSubmitted;
+        this.id = data?.id ?? null;
     }
 }

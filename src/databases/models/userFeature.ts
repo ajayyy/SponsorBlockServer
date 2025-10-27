@@ -12,6 +12,9 @@ export class UserFeature {
     public timeSubmitted: number;
 
     constructor(data: IUserFeature) {
-        Object.assign(this, data);
+        this.userID = data.userID;
+        this.feature = data.feature;
+        this.issuerUserID = data.issuerUserID;
+        this.timeSubmitted = data.timeSubmitted;
     }
 }
