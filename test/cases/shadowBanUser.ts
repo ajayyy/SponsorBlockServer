@@ -1,4 +1,4 @@
-import { db } from "../../src/databases/databases";
+import { db, privateDB } from "../../src/databases/databases";
 import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
 import { Category, Service } from "../../src/types/segments.model";
@@ -10,6 +10,7 @@ describe("shadowBanUser", () => {
     const getShadowBanSegmentCategory = (userID: string, status: number): Promise<{shadowHidden: number, category: Category}[]> => db.prepare("all", `SELECT "shadowHidden", "category" FROM "sponsorTimes" WHERE "userID" = ? AND "shadowHidden" = ?`, [userID, status]);
     const getShadowBanTitles = (userID: string, status: number) => db.prepare("all", `SELECT tv."shadowHidden" FROM "titles" t JOIN "titleVotes" tv ON t."UUID" = tv."UUID" WHERE t."userID" = ? AND tv."shadowHidden" = ?`, [userID, status]);
     const getShadowBanThumbnails = (userID: string, status: number) => db.prepare("all", `SELECT tv."shadowHidden" FROM "thumbnails" t JOIN "thumbnailVotes" tv ON t."UUID" = tv."UUID" WHERE t."userID" = ? AND tv."shadowHidden" = ?`, [userID, status]);
+    const getIPShadowBan = (hashedIP: string) => db.prepare("get", `SELECT * FROM "shadowBannedIPs" WHERE "hashedIP" = ?`, [hashedIP]);
 
     const endpoint = "/api/shadowBanUser";
     const VIPuserID = "shadow-ban-vip";
@@ -55,6 +56,14 @@ describe("shadowBanUser", () => {
             [getHash("shadow-ban-vip", 1), "lockedVideo", "skip", "sponsor", "YouTube"]);
 
         await db.prepare("run", `INSERT INTO "vipUsers" ("userID") VALUES(?)`, [getHash(VIPuserID)]);
+
+        const privateInsertQuery = `INSERT INTO "sponsorTimes" ("videoID", "hashedIP", "timeSubmitted", "service") VALUES(?, ?, ?, ?)`;
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916068933, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062936, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916064324, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062443, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916062342, "YouTube"]);
+        await privateDB.prepare("run", privateInsertQuery, [video, "shadowBannedIP8", 1674590916069491, "YouTube"]);
 
         const titleQuery = `INSERT INTO "titles" ("videoID", "title", "original", "userID", "service", "hashedVideoID", "timeSubmitted", "UUID") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         const titleVotesQuery = `INSERT INTO "titleVotes" ("UUID", "votes", "locked", "shadowHidden", "verification") VALUES (?, ?, ?, ?, ?)`;
@@ -387,6 +396,39 @@ describe("shadowBanUser", () => {
         })
             .then(res => {
                 assert.strictEqual(res.status, 200);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
+    it("Should be able to ban user by userID and other users who used that IP and hide specific category", (done) => {
+        const hashedIP = "shadowBannedIP8";
+        const userID = "shadowBanned8";
+        const userID2 = "shadowBanned9";
+        client({
+            method: "POST",
+            url: endpoint,
+            params: {
+                userID,
+                enabled: true,
+                categories: `["sponsor", "intro"]`,
+                unHideOldSubmissions: true,
+                adminUserID: VIPuserID,
+                lookForIPs2: true
+            }
+        })
+            .then(async res => {
+                assert.strictEqual(res.status, 200);
+                const videoRow = await getShadowBanSegments(userID, 1);
+                const videoRow2 = await getShadowBanSegments(userID2, 1);
+                const normalShadowRow = await getShadowBan(userID);
+                const normalShadowRow2 = await getShadowBan(userID2);
+                const ipShadowRow = await getIPShadowBan(hashedIP);
+                assert.ok(ipShadowRow);
+                assert.ok(normalShadowRow);
+                assert.ok(normalShadowRow2);
+                assert.strictEqual(videoRow.length, 2);
+                assert.strictEqual(videoRow2.length, 2);
                 done();
             })
             .catch(err => done(err));

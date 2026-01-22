@@ -4,6 +4,10 @@ CREATE INDEX IF NOT EXISTS "privateDB_sponsorTimes_v4"
     ON public."sponsorTimes" USING btree
     ("videoID" ASC NULLS LAST, service COLLATE pg_catalog."default" ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST);
 
+CREATE INDEX IF NOT EXISTS "privateDB_time"
+    ON public."sponsorTimes" USING btree
+    ("timeSubmitted" ASC NULLS LAST);
+
 -- votes
 
 CREATE INDEX IF NOT EXISTS "votes_userID"
