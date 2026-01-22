@@ -1,7 +1,7 @@
 import { HashedUserID } from "../types/user.model";
 import { db } from "../databases/databases";
 import { Category, HashedIP } from "../types/segments.model";
-import { banUser } from "../routes/shadowBanUser";
+import { announceBan, banUser } from "../routes/shadowBanUser";
 import { config } from "../config";
 import { Logger } from "./logger";
 
@@ -19,6 +19,7 @@ export async function checkBanStatus(userID: HashedUserID, ip: HashedIP): Promis
 
     if (!userBanStatus && ipBanStatus) {
         // Make sure the whole user is banned
+        announceBan([userID]);
         banUser(userID, true, true, 1, config.categoryList as Category[], config.deArrowTypes)
             .catch((e) => Logger.error(`Error banning user after submitting from a banned IP: ${e}`));
     }

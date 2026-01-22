@@ -8,6 +8,7 @@ import { QueryCacher } from "../utils/queryCacher";
 import { isUserVIP } from "../utils/isUserVIP";
 import { parseCategories, parseDeArrowTypes } from "../utils/parseParams";
 import { Logger } from "../utils/logger";
+import axios from "axios";
 
 export async function shadowBanUser(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;
@@ -153,6 +154,7 @@ export async function banIP(hashedIP: HashedIP, unHideOldSubmissions: boolean, t
     //find all previous submissions and hide them
     if (unHideOldSubmissions) {
         const users = await unHideSubmissionsByIP(categories, hashedIP, type);
+        announceBan([...users]);
 
         await Promise.all([...users].map((user) => {
             return banUser(user, true, unHideOldSubmissions, type, categories, deArrowTypes);
@@ -183,4 +185,28 @@ async function unHideSubmissionsByIP(categories: string[], hashedIP: HashedIP, t
     }));
 
     return users;
+}
+
+export function announceBan(userIDs: UserID[]) {
+    if (config.discordAutobanWebhookURL) {
+        axios.post(config.discordAutobanWebhookURL, {
+            "embeds": [{
+                "title": "Auto banned user",
+                "description": userIDs.join("\n"),
+                "color": 10813440,
+            }],
+        })
+            .then(res => {
+                if (res.status >= 400) {
+                    Logger.error("Error sending auto ban Discord hook");
+                    Logger.error(JSON.stringify((res.data)));
+                    Logger.error("\n");
+                }
+            })
+            .catch(err => {
+                Logger.error("Failed to send auto ban Discord hook.");
+                Logger.error(JSON.stringify(err));
+                Logger.error("\n");
+            });
+    }
 }
