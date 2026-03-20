@@ -27,7 +27,7 @@
     "express-rate-limit": "^6.7.0",
     "form-data": "^4.0.4",
     "lodash": "^4.17.23",
-    "@ajayyy/simple-lru-cache": "^1.1.4",
+    "@ajayyy/simple-lru-cache": "^1.1.5",
     "lz4-napi": "^2.2.0",
     "pg": "^8.8.0",
     "rate-limit-redis": "^3.0.1",
