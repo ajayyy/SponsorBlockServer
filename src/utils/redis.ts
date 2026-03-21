@@ -7,7 +7,7 @@ import { RedisReply } from "rate-limit-redis";
 import { db } from "../databases/databases";
 import { Postgres } from "../databases/Postgres";
 import { compress, uncompress } from "lz4-napi";
-import { LRUCache } from "@ajayyy/simple-lru-cache/dist/index";
+import { LRUCache } from "lru-cache";
 import { shouldClientCacheKey } from "./redisKeys";
 import { ZMember } from "@redis/client/dist/lib/commands/generic-transformers";
 
@@ -79,13 +79,15 @@ const activeRequestPromises: Record<string, Promise<string>> = {};
 const resetKeys: Set<RedisCommandArgument> = new Set();
 const cache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, string>({
     // maxSize: config.redis.clientCacheSize,
-    maxElements: 80000,
-    ttl: 1000 * 60 * 30
+    max: 80000,
+    ttl: 1000 * 60 * 30,
+    ttlResolution: 1000 * 60 * 15
 }) : null;
 // Used to cache ttl data
 const ttlCache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, number>({
-    maxElements: config.redis.clientCacheSize / 10 / 4, // 4 byte integer per element
-    ttl: 1000 * 60 * 30
+    max: config.redis.clientCacheSize / 10 / 4, // 4 byte integer per element
+    ttl: 1000 * 60 * 30,
+    ttlResolution: 1000 * 60 * 15
 }) : null;
 
 // For redis
@@ -404,8 +406,8 @@ export function getRedisStats(): RedisStats {
         avgWriteTime: writeResponseTime.length > 0 ? writeResponseTime.reduce((a, b) => a + b, 0) / writeResponseTime.length : 0,
         memoryCacheHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses),
         memoryCacheTotalHits: memoryCacheHits / (memoryCacheHits + memoryCacheMisses + memoryCacheUncachedMisses),
-        memoryCacheLength: cache?.currentElementCount ?? 0,
-        memoryCacheSize: cache?.currentSize ?? 0,
+        memoryCacheLength: cache?.size ?? 0,
+        memoryCacheSize: cache?.calculatedSize ?? 0,
         lastInvalidation,
         lastInvalidationMessage
     };
