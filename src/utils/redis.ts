@@ -78,8 +78,7 @@ const activeRequestPromises: Record<string, Promise<string>> = {};
 // Used to handle race conditions
 const resetKeys: Set<RedisCommandArgument> = new Set();
 const cache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, string>({
-    // maxSize: config.redis.clientCacheSize,
-    max: 80000,
+    max: config.redis.clientCacheMax,
     ttl: 1000 * 60 * 30,
     ttlResolution: 1000 * 60 * 15
 }) : null;

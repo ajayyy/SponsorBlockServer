@@ -180,6 +180,7 @@ addDefaults(config, {
         maxReadResponseTime: 500,
         disableHashCache: false,
         clientCacheSize: 2000,
+        clientCacheMax: 200,
         useCompression: false,
         dragonflyMode: false
     },
