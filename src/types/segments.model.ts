@@ -23,9 +23,9 @@ export enum ActionType {
 export enum Service {
     YouTube = "YouTube",
     Spotify = "Spotify",
-    PeerTube = "PeerTube"
+    PeerTube = "PeerTube",
     // Twitch = 'Twitch',
-    // Nebula = 'Nebula',
+    Nebula = 'Nebula',
     // RSS = 'RSS',
     // Corridor = 'Corridor',
     // Lbry = 'Lbry'
