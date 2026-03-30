@@ -25,7 +25,7 @@ export enum Service {
     Spotify = "Spotify",
     PeerTube = "PeerTube",
     // Twitch = 'Twitch',
-    Nebula = 'Nebula',
+    Nebula = "Nebula",
     // RSS = 'RSS',
     // Corridor = 'Corridor',
     // Lbry = 'Lbry'
