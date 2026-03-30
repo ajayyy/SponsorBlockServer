@@ -3,7 +3,7 @@ import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 
 import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission, TitleSubmission } from "../types/branding.model";
-import { HashedIP, IPAddress, VideoID } from "../types/segments.model";
+import { HashedIP, IPAddress, Service, VideoID } from "../types/segments.model";
 import { Feature, HashedUserID } from "../types/user.model";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
@@ -36,6 +36,24 @@ interface ExistingVote {
     UUID: BrandingUUID;
     type: number;
     id: number;
+}
+
+function getVideoUrl(videoID: VideoID, service: Service): string {
+    switch (service) {
+        case Service.Nebula:
+            return `https://nebula.tv/videos/${videoID}`;
+        default:
+            return `https://www.youtube.com/watch?v=${videoID}`;
+    }
+}
+
+function getVideoThumbnailUrl(videoID: VideoID, service: Service): string | undefined {
+    switch (service) {
+        case Service.Nebula:
+            return undefined;
+        default:
+            return getMaxResThumbnail(videoID);
+    }
 }
 
 export async function postBranding(req: Request, res: Response) {
@@ -74,7 +92,7 @@ export async function postBranding(req: Request, res: Response) {
             endpoint: "dearrow-postBranding",
         });
         if (matchedRule !== null) {
-            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, `Caught by rule: ${matchedRule}`);
+            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, service, userAgent, req, videoDuration, title, `Caught by rule: ${matchedRule}`);
             Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;
@@ -93,10 +111,10 @@ export async function postBranding(req: Request, res: Response) {
             res.status(403).send(permission.reason);
             return;
         } else if (permission.newUser) {
-            sendNewUserWebhook(config.discordNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, undefined);
+            sendNewUserWebhook(config.discordNewUserWebhookURL, hashedUserID, videoID, service, userAgent, req, videoDuration, title, undefined);
         }
 
-        if (videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
+        if (service === Service.YouTube && videoDuration && thumbnail && await checkForWrongVideoDuration(videoID, videoDuration)) {
             res.status(403).send("YouTube is currently testing a new anti-adblock technique called server-side ad-injection. This causes skips and submissions to be offset by the duration of the ad. It seems that you are affected by this A/B test, so until a fix is developed, we cannot accept submissions from your device due to them potentially being inaccurate.");
             return;
         }
@@ -127,7 +145,7 @@ export async function postBranding(req: Request, res: Response) {
                 const existingIsLocked = !!existingUUID && (await db.prepare("get", `SELECT "locked" from "titleVotes" where "UUID" = ?`, [existingUUID]))?.locked;
                 if (existingUUID != undefined && isBanned) return; // ignore votes on existing details from banned users
                 if (downvote && existingIsLocked && !isVip) {
-                    if (!isBanned) sendWebhooks(videoID, existingUUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
+                    if (!isBanned) sendWebhooks(videoID, service, existingUUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
                     errorCode = 403;
                     return;
                 }
@@ -156,7 +174,7 @@ export async function postBranding(req: Request, res: Response) {
                     await db.prepare("run", `UPDATE "titleVotes" as tv SET "locked" = 0 FROM "titles" t WHERE tv."UUID" = t."UUID" AND tv."UUID" != ? AND t."videoID" = ?`, [UUID, videoID]);
                 }
 
-                if (!isBanned) sendWebhooks(videoID, UUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
+                if (!isBanned) sendWebhooks(videoID, service, UUID, voteType, wasWarned, shouldLock).catch((e) => Logger.error(e));
             }
         })(), (async () => {
             if (thumbnail) {
@@ -217,22 +235,22 @@ export async function postBranding(req: Request, res: Response) {
     }
 }
 
-function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission, footerText: string | undefined) {
+function sendNewUserWebhook(webhookUrl: string, hashedUserID: HashedUserID, videoID: VideoID, service: Service, userAgent: any, req: Request, videoDuration: number, title: TitleSubmission, footerText: string | undefined) {
     if (!webhookUrl) return;
 
     axios.post(webhookUrl, {
         "embeds": [{
             "title": hashedUserID,
-            "url": `https://www.youtube.com/watch?v=${videoID}`,
+            "url": getVideoUrl(videoID, service),
             "description": `**User Agent**: ${userAgent}\
                         \n**Sent User Agent**: ${req.body.userAgent}\
                         \n**Real User Agent**: ${req.headers["user-agent"]}\
                         \n**Video Duration**: ${videoDuration}\
                         \n**Title**: ${title?.title}`,
             "color": 1184701,
-            "thumbnail": {
-                "url": getMaxResThumbnail(videoID),
-            },
+            "thumbnail": getVideoThumbnailUrl(videoID, service) ? {
+                "url": getVideoThumbnailUrl(videoID, service),
+            } : undefined,
             "footer": footerText === undefined ? null : {
                 "text": footerText,
             },
@@ -363,7 +381,7 @@ async function canSubmitOriginal(hashedUserID: HashedUserID, isVip: boolean): Pr
     return isVip || (upvotedThumbs > 1 && customThumbs > 1 && originalThumbs / customThumbs < 0.4);
 }
 
-async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: BrandingVoteType, wasWarned: boolean, vipAction: boolean) {
+async function sendWebhooks(videoID: VideoID, service: Service, UUID: BrandingUUID, voteType: BrandingVoteType, wasWarned: boolean, vipAction: boolean) {
     const currentSubmission = await db.prepare(
         "get",
         `SELECT 
@@ -376,17 +394,17 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         [UUID]);
 
     if (wasWarned && voteType === BrandingVoteType.Upvote) {
-        const data = await getVideoDetails(videoID);
+        const data = service === Service.YouTube ? await getVideoDetails(videoID) : null;
         axios.post(config.discordDeArrowWarnedWebhookURL, {
             "embeds": [{
-                "title": data?.title,
-                "url": `https://www.youtube.com/watch?v=${videoID}`,
+                "title": data?.title ?? videoID,
+                "url": getVideoUrl(videoID, service),
                 "description": `**Submitted title:** ${currentSubmission.title}\
                     \n\n**Submitted by:** ${currentSubmission.userID}`,
                 "color": 10813440,
-                "thumbnail": {
-                    "url": getMaxResThumbnail(videoID),
-                },
+                "thumbnail": getVideoThumbnailUrl(videoID, service) ? {
+                    "url": getVideoThumbnailUrl(videoID, service),
+                } : undefined,
             }],
         })
             .then(res => {
@@ -421,19 +439,19 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         if (lockedSubmission && currentSubmission.score - lockedSubmission.score > 2) {
             const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [lockedSubmission.userID]);
 
-            const data = await getVideoDetails(videoID);
+            const data = service === Service.YouTube ? await getVideoDetails(videoID) : null;
             axios.post(config.discordDeArrowLockedWebhookURL, {
                 "embeds": [{
-                    "title": data?.title,
-                    "url": `https://www.youtube.com/watch?v=${videoID}`,
+                    "title": data?.title ?? videoID,
+                    "url": getVideoUrl(videoID, service),
                     "description": `**${lockedSubmission.score}** score vs **${currentSubmission.score}**\
                         \n\n**Locked title:** ${lockedSubmission.title}\
                         \n**New title:** ${currentSubmission.title}\
                         \n\n**Submitted by:** ${usernameRow?.userName ?? ""}\n${lockedSubmission.userID}`,
                     "color": 10813440,
-                    "thumbnail": {
-                        "url": getMaxResThumbnail(videoID),
-                    },
+                    "thumbnail": getVideoThumbnailUrl(videoID, service) ? {
+                        "url": getVideoThumbnailUrl(videoID, service),
+                    } : undefined,
                 }],
             })
                 .then(res => {
@@ -455,18 +473,18 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
     if (voteType === BrandingVoteType.Downvote && currentSubmission.locked === 1) {
         const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [currentSubmission.userID]);
 
-        const data = await getVideoDetails(videoID);
+        const data = service === Service.YouTube ? await getVideoDetails(videoID) : null;
         axios.post(config.discordDeArrowLockedWebhookURL, {
             "embeds": [{
-                "title": data?.title,
-                "url": `https://www.youtube.com/watch?v=${videoID}`,
+                "title": data?.title ?? videoID,
+                "url": getVideoUrl(videoID, service),
                 "description": `Locked title ${vipAction ? "was removed by a VIP" : `with **${currentSubmission.score}** score received a downvote`}\
                     \n\n**Locked title:** ${currentSubmission.title}\
                     \n**Submitted by:** ${usernameRow?.userName ?? ""}\n${currentSubmission.userID}`,
                 "color": 10813440,
-                "thumbnail": {
-                    "url": getMaxResThumbnail(videoID),
-                },
+                "thumbnail": getVideoThumbnailUrl(videoID, service) ? {
+                    "url": getVideoThumbnailUrl(videoID, service),
+                } : undefined,
             }],
         })
             .then(res => {
