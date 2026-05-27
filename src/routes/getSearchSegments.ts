@@ -94,7 +94,7 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
     const sortBy: SortableFields = getSortField(req.query.sortBy, req.body.sortBy);
     const sortDir: string = req.query.sortDir ?? req.body.sortDir ?? "asc";
 
-    const minVotes: number = req.query.minVotes ?? req.body.minVotes ?? -3;
+    const minVotes: number = req.query.minVotes ?? req.body.minVotes ?? -Infinity;
     const maxVotes: number = req.query.maxVotes ?? req.body.maxVotes ?? Infinity;
 
     const minViews: number = req.query.minViews ?? req.body.minViews ?? -1;
