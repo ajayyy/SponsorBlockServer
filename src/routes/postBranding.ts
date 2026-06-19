@@ -53,11 +53,6 @@ export async function postBranding(req: Request, res: Response) {
 
     try {
         const hashedUserID = await getHashCache(userID);
-        const isVip = await isUserVIP(hashedUserID);
-        const shouldLock = isVip && autoLock !== false;
-        const hashedVideoID = await getHashCache(videoID, 1);
-        const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
-        const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
         const matchedRule = isRequestInvalid({
             userAgent,
@@ -79,6 +74,12 @@ export async function postBranding(req: Request, res: Response) {
             res.status(200).send("OK");
             return;
         }
+
+        const isVip = await isUserVIP(hashedUserID);
+        const shouldLock = isVip && autoLock !== false;
+        const hashedVideoID = await getHashCache(videoID, 1);
+        const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
+        const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
         // treat banned users as existing users who "can submit" for the purposes of these checks
         // this is to avoid their titles from being logged and them taking up "new user" slots with every submission
