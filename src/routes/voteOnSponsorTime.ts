@@ -276,7 +276,7 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
         const currentCategoryCount = currentCategoryInfo?.votes ?? startingVotes;
 
         // Add submission as vote
-        if (!currentCategoryInfo && submissionInfo) {
+        if (!currentCategoryInfo && submissionInfo && submissionInfo.userID !== userID && segmentInfo.category !== category) {
             await db.prepare("run", `insert into "categoryVotes" ("UUID", "category", "votes") values (?, ?, ?)`, [UUID, segmentInfo.category, currentCategoryCount]);
             await privateDB.prepare("run", `insert into "categoryVotes" ("UUID", "userID", "hashedIP", "category", "timeSubmitted") values (?, ?, ?, ?, ?)`, [UUID, submissionInfo.userID, "unknown", segmentInfo.category, submissionInfo.timeSubmitted]);
         }
