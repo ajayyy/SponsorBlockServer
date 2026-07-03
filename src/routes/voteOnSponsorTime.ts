@@ -211,7 +211,7 @@ async function categoryVote(UUID: SegmentUUID, userID: HashedUserID, isVIP: bool
     // Check if they've already made a vote
     const usersLastVoteInfo = await privateDB.prepare("get", `select count(*) as votes, category from "categoryVotes" where "UUID" = ? and "userID" = ? group by category`, [UUID, userID], { useReplica: true });
 
-    if (usersLastVoteInfo?.category === category) {
+    if (usersLastVoteInfo?.category === category && !isVIP) {
         // Double vote, ignore
         return { status: finalResponse.finalStatus };
     }
