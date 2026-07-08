@@ -32,8 +32,14 @@ async function addUsername(userID: string, userName: string, locked = 0) {
     await addLogUserNameChange(userID, userName);
 }
 
-async function getUsernameInfo(userID: string): Promise<{ userName: string, locked: string}> {
-    const row = await db.prepare("get", 'SELECT "userName", "locked" FROM "userNames" WHERE "userID" = ?', [userID]);
+interface UsernameInfo {
+    userName: string;
+    locked: string;
+    updateTime: number | null;
+}
+
+async function getUsernameInfo(userID: string): Promise<UsernameInfo> {
+    const row = await db.prepare("get", 'SELECT "userName", "locked", "updateTime" FROM "userNames" WHERE "userID" = ?', [userID]);
     if (!row) {
         throw new Error("No username found");
     }
@@ -56,11 +62,21 @@ function wellFormatUserName(userName: string) {
     return userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 }
 
+function currentTime(): number {
+    return new Date().getTime();
+}
+
 async function testUserNameChangelog(userID: string, newUserName: string, oldUserName: string, byAdmin: boolean) {
     const log = await getLastLogUserNameChange(userID);
     assert.strictEqual(newUserName, log.newUserName);
     assert.strictEqual(oldUserName, log.oldUserName);
     assert.strictEqual(byAdmin, Boolean(log.updatedByAdmin));
+}
+
+function testUsernameUpdateTime(info: UsernameInfo, minTime: number) {
+    assert.ok(info.updateTime != null, "update time should be set");
+    console.log(info.updateTime, minTime);
+    assert.ok(info.updateTime >= minTime, "update time should've been updated");
 }
 
 const endpoint = "/api/setUsername";
@@ -111,18 +127,22 @@ describe("setUsername", () => {
     });
 
     it("Should be able to set username that has never been set", async () => {
+        const minTime = currentTime();
         const res = await postSetUserName(user00PrivateUserID, username00);
         const usernameInfo = await getUsernameInfo(getHash(user00PrivateUserID));
         assert.strictEqual(res.status, 200);
         assert.strictEqual(usernameInfo.userName, username00);
         assert.notStrictEqual(usernameInfo.locked, 1, "username should not be locked");
+        testUsernameUpdateTime(usernameInfo, minTime);
     });
 
     it("Should return 200", async () => {
         const username = "Changed%20Username";
+        const minTime = currentTime();
         const res = await postSetUserName(user01PrivateUserID, username);
         assert.strictEqual(res.status, 200);
         await testUserNameChangelog(user01PrivateUserID, username, username01, false);
+        testUsernameUpdateTime(await getUsernameInfo(getHash(user01PrivateUserID)), minTime);
     });
 
     it('Should return 400 for missing param "userID"', async () => {
@@ -163,11 +183,13 @@ describe("setUsername", () => {
 
     it("Should be able to change username", async () => {
         const newUsername = "newUsername";
+        const minTime = currentTime();
         await postSetUserName(user03PrivateUserID, newUsername);
         const usernameInfo = await getUsernameInfo(getHash(user03PrivateUserID));
         assert.strictEqual(usernameInfo.userName, newUsername, "Username should change");
         assert.notStrictEqual(usernameInfo.locked, 1, "Username should not be locked");
         await testUserNameChangelog(user03PrivateUserID, newUsername, username03, false);
+        testUsernameUpdateTime(usernameInfo, minTime);
     });
 
     it("Should not be able to change locked username", async () => {
@@ -180,10 +202,12 @@ describe("setUsername", () => {
 
     it("Should filter out unicode control characters", async () => {
         const newUsername = "This\nUsername+has\tInvalid+Characters";
+        const minTime = currentTime();
         await postSetUserName(user05PrivateUserID, newUsername);
         const usernameInfo = await getUsernameInfo(getHash(user05PrivateUserID));
         assert.notStrictEqual(usernameInfo.userName, newUsername, "Username should not contain control characters");
         await testUserNameChangelog(user05PrivateUserID, wellFormatUserName(newUsername), username05, false);
+        testUsernameUpdateTime(usernameInfo, minTime);
     });
 
     it("Incorrect adminUserID should return 403", async () => {
@@ -194,20 +218,24 @@ describe("setUsername", () => {
 
     it("Admin should be able to change username", async () => {
         const newUsername = "New Username";
+        const minTime = currentTime();
         await postSetUserNameAdmin(getHash(user06PrivateUserID), newUsername, adminPrivateUserID);
         const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
         assert.strictEqual(usernameInfo.userName, newUsername, "username should be changed");
         assert.strictEqual(usernameInfo.locked, 1, "Username should be locked");
         await testUserNameChangelog(user06PrivateUserID, newUsername, username06, true);
+        testUsernameUpdateTime(usernameInfo, minTime);
     });
 
     it("Admin should be able to change locked username", async () => {
         const newUsername = "New Username";
+        const minTime = currentTime();
         await postSetUserNameAdmin(getHash(user07PrivateUserID), newUsername, adminPrivateUserID);
-        const usernameInfo = await getUsernameInfo(getHash(user06PrivateUserID));
+        const usernameInfo = await getUsernameInfo(getHash(user07PrivateUserID));
         assert.strictEqual(usernameInfo.userName, newUsername, "Username should be changed");
         assert.strictEqual(usernameInfo.locked, 1, "Username should be locked");
         await testUserNameChangelog(user07PrivateUserID, newUsername, username07, true);
+        testUsernameUpdateTime(usernameInfo, minTime);
     });
 
     it("Should delete existing username if new username is same as publicID", async () => {

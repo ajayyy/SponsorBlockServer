@@ -92,6 +92,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ? LIMIT 1`, [hashedUserID]);
         const locked = adminUserIDInput === undefined ? 0 : 1;
         let oldUserName = "";
+        const updateTime = new Date().getTime();
 
         if (row?.userName !== undefined) {
             //already exists, update this row
@@ -99,13 +100,13 @@ export async function setUsername(req: Request, res: Response): Promise<Response
             if (userName == hashedUserID && !locked) {
                 await db.prepare("run", `DELETE FROM "userNames" WHERE "userID" = ?`, [hashedUserID]);
             } else {
-                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ? WHERE "userID" = ?`, [userName, locked, hashedUserID]);
+                await db.prepare("run", `UPDATE "userNames" SET "userName" = ?, "locked" = ?, "updateTime" = ? WHERE "userID" = ?`, [userName, locked, updateTime, hashedUserID]);
             }
         } else if (userName === hashedUserID) {
             return res.sendStatus(200);
         } else {
             //add to the db
-            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked") VALUES(?, ?, ?)`, [hashedUserID, userName, locked]);
+            await db.prepare("run", `INSERT INTO "userNames"("userID", "userName", "locked", "updateTime") VALUES(?, ?, ?, ?)`, [hashedUserID, userName, locked, updateTime]);
         }
 
         await logUserNameChange(hashedUserID, userName, oldUserName, adminUserIDInput !== undefined);
