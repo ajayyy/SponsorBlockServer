@@ -2,6 +2,7 @@ import { hashPrefixTester } from "../utils/hashPrefixTester";
 import { getLabelsByHash } from "./getVideoLabel";
 import { Request, Response } from "express";
 import { VideoIDHash, Service } from "../types/segments.model";
+import { getEtag } from "../middleware/etag";
 import { getService } from "../utils/getService";
 
 export async function getVideoLabelsByHash(req: Request, res: Response): Promise<Response> {
@@ -25,5 +26,11 @@ export async function getVideoLabelsByHash(req: Request, res: Response): Promise
         segments: data.segments,
         hasStartSegment: data.hasStartSegment
     }));
+
+
+    const hashKey = hashPrefix.length === 4 ? "videoLabelHash" : "videoLabelsLargerHash";
+    await getEtag(hashKey, hashPrefix, service)
+        .then(etag => res.set("ETag", etag))
+        .catch(() => null);
     return res.status(output.length === 0 ? 404 : 200).json(output);
 }
