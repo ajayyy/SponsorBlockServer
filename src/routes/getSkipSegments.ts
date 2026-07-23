@@ -47,12 +47,6 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
                 [videoID, segment.timeSubmitted, service], { useReplica: true }) as Promise<{ hashedIP: HashedIP }[]>;
             try {
                 if (db.highLoad() || privateDB.highLoad()) {
-                    Logger.error("High load, not handling shadowhide");
-                    if (db instanceof Postgres && privateDB instanceof Postgres) {
-                        Logger.error(`Postgres stats: ${JSON.stringify(db.getStats())}`);
-                        Logger.error(`Postgres private stats: ${JSON.stringify(privateDB.getStats())}`);
-                    }
-                    Logger.error(`Redis stats: ${JSON.stringify(getRedisStats())}`);
                     return false;
                 }
 
