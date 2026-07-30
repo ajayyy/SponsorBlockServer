@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS "casualVoteTitles" (
 	PRIMARY KEY("videoID", "service", "id")
 );
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
-CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 COMMIT;
