@@ -25,8 +25,7 @@ async function init() {
 
     await initDb();
 
-    const dbMode = config.postgres ? "postgres"
-        : "sqlite";
+    const dbMode = "postgres";
     Logger.info(`Database Mode: ${dbMode}`);
 
     // set commit at headCommit

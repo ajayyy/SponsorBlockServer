@@ -4,7 +4,7 @@
   "description": "Server that holds the SponsorBlock database",
   "main": "src/index.ts",
   "scripts": {
-    "test": "npm run tsc && ts-node test/test.ts",
+    "test": "ts-node test/test.ts",
     "cover": "nyc npm test",
     "cover:report": "nyc report",
     "dev": "nodemon",
@@ -20,7 +20,6 @@
   "license": "AGPL-3.0-only",
   "dependencies": {
     "axios": "^1.13.6",
-    "better-sqlite3": "^11.2.1",
     "cron": "^2.1.0",
     "express": "^4.22.1",
     "express-promise-router": "^4.1.1",
@@ -36,7 +35,6 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@types/better-sqlite3": "^7.6.2",
     "@types/cron": "^2.0.0",
     "@types/express": "^4.17.14",
     "@types/lodash": "^4.14.189",

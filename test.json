@@ -11,8 +11,12 @@
     "neuralBlockURL": "http://127.0.0.1:8081/NeuralBlock",
     "userCounterURL": "http://127.0.0.1:8081/UserCounter",
     "behindProxy": true,
-    "db": ":memory:",
-    "privateDB": ":memory:",
+    "postgres": {
+        "user": "test_db_user",
+        "password": "test_db_pass",
+        "host": "localhost",
+        "port": 5499
+    },
     "createDatabaseIfNotExist": true,
     "schemaFolder": "./databases",
     "dbSchema": "./databases/_sponsorTimes.db.sql",

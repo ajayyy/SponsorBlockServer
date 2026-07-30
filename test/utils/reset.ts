@@ -13,7 +13,7 @@ export async function resetRedis() {
     }
 }
 export async function resetPostgres() {
-    if (process.env.TEST_POSTGRES && config.mode == "test" && config.postgres) {
+    if (config.mode == "test" && config.postgres) {
         const pool = new Pool({ ...config.postgres });
         await pool.query(`DROP DATABASE IF EXISTS "sponsorTimes"`);
         await pool.query(`DROP DATABASE IF EXISTS "privateDB"`);
