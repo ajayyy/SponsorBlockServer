@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS "slopBloomDiff" (
 	PRIMARY KEY ("id", "index")
 );
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
-CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 COMMIT;

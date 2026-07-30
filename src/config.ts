@@ -3,7 +3,7 @@ import { SBSConfig } from "./types/config.model";
 import packageJson from "../package.json";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
-const configFile = process.env.TEST_POSTGRES ? "ci.json"
+const configFile = process.env.TEST_REDIS ? "ci.json"
     : isTestMode ? "test.json"
         : "config.json";
 export const config: SBSConfig = JSON.parse(fs.readFileSync(configFile).toString("utf8"));
