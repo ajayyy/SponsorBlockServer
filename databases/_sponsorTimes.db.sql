@@ -104,6 +104,78 @@ CREATE TABLE IF NOT EXISTS "casualVoteTitles" (
 	PRIMARY KEY("videoID", "service", "id")
 );
 
+CREATE TABLE IF NOT EXISTS "slopVotes" (
+	"contentID"	TEXT NOT NULL,
+	"profileID"	TEXT,
+	"id"	INTEGER NOT NULL,
+	"hashedContentID"	TEXT NOT NULL,
+	"hashedProfileID"	TEXT,
+	"count"	INTEGER NOT NULL,
+	"wholeProfile" INTEGER NOT NULL,
+	PRIMARY KEY("contentID", "id")
+);
+
+CREATE TABLE IF NOT EXISTS "slopVoteSubmissions" (
+	"UUID" TEXT PRIMARY KEY,
+	"contentID"	TEXT NOT NULL,
+	"userID"	TEXT NOT NULL,
+	"hashedIP"	TEXT NOT NULL,
+	"id"	INTEGER NOT NULL,
+	"comment"	TEXT,
+	"rating" INTEGER,
+	"wholeProfile" BOOLEAN,
+	"timeSubmitted"	INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "slopList" (
+	"UUID" TEXT PRIMARY KEY,
+	"userID"	TEXT NOT NULL,
+	"listID"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	"description"	TEXT NOT NULL,
+	"supportURL"	TEXT,
+	"publish"	INTEGER NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "slopListSubmission" (
+	"UUID" TEXT PRIMARY KEY,
+	"contentID"	TEXT,
+	"profileID"	TEXT,
+	"userID"	TEXT NOT NULL,
+	"hashedIP"	TEXT NOT NULL,
+	"listID"	INTEGER NOT NULL,
+	"timeSubmitted"	INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "slopListPrivate" (
+	"UUID" TEXT PRIMARY KEY,
+	"hashedIP"	TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "slopBloom" (
+	"id" INTEGER PRIMARY KEY,
+	"data"	BYTEA NOT NULL,
+	"timeGenerated"	INTEGER NOT NULL
+);
+
+-- The data about the generated bloom
+CREATE TABLE IF NOT EXISTS "slopBloomGeneration" (
+	"id" INTEGER,
+	"contentID" TEXT NOT NULL,
+	"hash" INTEGER NOT NULL,
+	"timeGenerated"	INTEGER NOT NULL,
+	PRIMARY KEY ("id", "contentID", "hash")
+);
+
+CREATE TABLE IF NOT EXISTS "slopBloomDiff" (
+	"id" INTEGER,
+	"index" INTEGER NOT NULL,
+	"data"	BOOLEAN NOT NULL,
+	"timeGenerated"	INTEGER NOT NULL,
+	PRIMARY KEY ("id", "index")
+);
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
 

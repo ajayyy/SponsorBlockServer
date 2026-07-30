@@ -39,6 +39,7 @@ interface RedisSB {
     zRemRangeByScore(key: string, min: number | RedisCommandArgument, max: number | RedisCommandArgument): Promise<number>;
     zAdd(key: string, members: ZMember | ZMember[]): Promise<number>;
     zCard(key: string): Promise<number>;
+    publish(channel: string, key: string): Promise<number>;
 }
 
 let exportClient: RedisSB = {
@@ -55,7 +56,8 @@ let exportClient: RedisSB = {
     ttl: () => Promise.resolve(null),
     zRemRangeByScore: () => Promise.resolve(null),
     zAdd: () => Promise.resolve(null),
-    zCard: () => Promise.resolve(null)
+    zCard: () => Promise.resolve(null),
+    publish: () => Promise.resolve(null)
 };
 
 let lastClientFail = 0;
@@ -317,6 +319,7 @@ if (config.redis?.enabled) {
     exportClient.zRemRangeByScore = client.zRemRangeByScore.bind(client);
     exportClient.zAdd = client.zAdd.bind(client);
     exportClient.zCard = client.zCard.bind(client);
+    exportClient.publish = client.publish.bind(client);
     /* istanbul ignore next */
     client.on("error", function(error) {
         lastClientFail = Date.now();
@@ -363,6 +366,8 @@ if (config.redis?.enabled) {
                 setupCacheClientTracking(client as RedisClientType, cacheClient as RedisClientType),
                 setupCacheClientTracking(readClient as RedisClientType, cacheClient as RedisClientType)
             ]).then(() => cache?.clear());
+
+            setupWaitingLockListener(cacheClient as RedisClientType);
         });
 
         void cacheClient.connect();
@@ -436,6 +441,29 @@ async function setupCacheClientListener(cacheClient: RedisClientType,
                 // To tell it to not save the result of this currently running request
                 if (key && activeRequestPromises[key] !== undefined) {
                     resetKeys.add(key);
+                }
+            }
+        }
+    }).catch(Logger.error);
+}
+
+const locks: Record<string, Array<() => void>> = {};
+export function subscribeToWaitingLock(key: string): Promise<void> {
+    return new Promise((resolve) => {
+        locks[key] ||= [];
+        locks[key].push(resolve);
+    });
+}
+function setupWaitingLockListener(cacheClient: RedisClientType) {
+    cacheClient.subscribe("waitingLock", (message) => {
+        if (message) {
+            const callbacks = locks[message];
+            if (callbacks?.[0]) {
+                callbacks[0]();
+                callbacks.shift();
+
+                if (callbacks.length === 0) {
+                    delete locks[message];
                 }
             }
         }

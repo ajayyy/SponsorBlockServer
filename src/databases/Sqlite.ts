@@ -81,7 +81,7 @@ export class Sqlite implements IDatabase {
             query = `${parts[0]} GROUP BY ${column} ORDER BY ${parts[1]}`;
         }
 
-        return query.replace(/ ~\* /g, " REGEXP ");
+        return query.replace(/ ~\* /g, " REGEXP ").replace("BYTEA", "BLOB");
     }
 
     private static upgradeDB(db: Database, fileNamePrefix: string, schemaFolder: string) {

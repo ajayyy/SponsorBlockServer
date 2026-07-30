@@ -19,7 +19,7 @@ export async function getStatus(req: Request, res: Response, server: Server): Pr
                 processTime = Date.now() - dbStartTime;
                 return e.value;
             })
-            .catch(e => /* istanbul ignore next */ {
+            .catch(e => { /* istanbul ignore next */
                 Logger.error(`status: SQL query timed out: ${e}`);
                 return -1;
             });
@@ -29,7 +29,7 @@ export async function getStatus(req: Request, res: Response, server: Server): Pr
             .then(e => {
                 redisProcessTime = Date.now() - redisStartTime;
                 return e;
-            }).catch(e => /* istanbul ignore next */ {
+            }).catch(e => { /* istanbul ignore next */
                 Logger.error(`status: redis increment timed out ${e}\nload: ${os.loadavg().slice(1)} with ${JSON.stringify(getRedisStats())}\n${JSON.stringify((db as Postgres)?.getStats?.())}`);
                 return [-1];
             });

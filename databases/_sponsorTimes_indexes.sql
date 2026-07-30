@@ -196,3 +196,40 @@ CREATE INDEX IF NOT EXISTS "casualVotes_hashedVideoID_2"
     ON public."casualVotes" USING btree
     (service COLLATE pg_catalog."default" ASC NULLS LAST, "hashedVideoID" text_pattern_ops ASC NULLS LAST, "timeSubmitted" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+-- slop
+
+CREATE INDEX IF NOT EXISTS "slopBloomDiff_timeGenerated"
+    ON public."slopBloomDiff" USING btree
+    ("id" ASC NULLS LAST, "data" ASC NULLS LAST, "timeGenerated" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVoteSubmissions_content_user"
+    ON public."slopVoteSubmissions" USING btree
+    ("contentID" ASC NULLS LAST, "userID" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVotes_contentID"
+    ON public."slopVotes" USING btree
+    ("contentID" ASC NULLS LAST, "id" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVotes_hashedContentID"
+    ON public."slopVotes" USING btree
+    ("hashedContentID" text_pattern_ops ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVotes_hashedContentID_wholeProfile"
+    ON public."slopVotes" USING btree
+    ("wholeProfile" ASC NULLS LAST, "hashedContentID" text_pattern_ops ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVotes_hashedProfileID"
+    ON public."slopVotes" USING btree
+    ("wholeProfile" ASC NULLS LAST, "hashedProfileID" text_pattern_ops ASC NULLS LAST, "profileID" ASC NULLS LAST, "id" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVotes_profileID"
+    ON public."slopVotes" USING btree
+    ("wholeProfile" ASC NULLS LAST, "profileID" ASC NULLS LAST)
+    TABLESPACE pg_default;

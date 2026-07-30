@@ -62,6 +62,8 @@ import { getSegmentID } from "./routes/getSegmentID";
 import { postCasual } from "./routes/postCasual";
 import { getConfigEndpoint } from "./routes/getConfig";
 import { setConfig } from "./routes/setConfig";
+import { getSlopBloomDiff, getSlopBloomFilter, getSlopByHashEndpoint } from "./routes/getSlop";
+import { postSlop } from "./routes/postSlop";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -236,6 +238,11 @@ function setupRoutes(router: Router, server: Server) {
     router.get("/api/branding", getBranding);
     router.get("/api/branding/:prefix", getBrandingByHashEndpoint);
     router.post("/api/branding", postBranding);
+
+    router.get("/api/slopByHash", getSlopByHashEndpoint);
+    router.get("/api/slopBloom/:bloomID", getSlopBloomFilter);
+    router.get("/api/slopBloomDiff/:bloomID", getSlopBloomDiff);
+    router.post("/api/slop", postSlop);
 
     router.get("/api/config", getConfigEndpoint);
     router.post("/api/config", setConfig);

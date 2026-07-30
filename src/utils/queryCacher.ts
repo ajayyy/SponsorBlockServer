@@ -1,9 +1,10 @@
 import redis, { TooManyActiveConnectionsError } from "../utils/redis";
 import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey, videoLabelsLargerHashKey, skipSegmentsLargerHashKey } from "./redisKeys";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey, videoLabelsLargerHashKey, skipSegmentsLargerHashKey, slopContentHashKey, slopProfileHashKey, slopProfileFromContentHashKey } from "./redisKeys";
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
+import { ContentID, ContentIDHash, ProfileID, ProfileIDHash } from "../types/slop.model";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
@@ -142,6 +143,16 @@ function clearBrandingCache(videoInfo: { videoID: VideoID; hashedVideoID: VideoI
     }
 }
 
+function clearSlopCache(info: { contentID: ContentID; hashedContentID: ContentIDHash; profileID?: ProfileID; hashedProfileID: ProfileIDHash; }): void {
+    if (info) {
+        redis.del(slopContentHashKey(info.hashedContentID)).catch((err) => Logger.error(err));
+        redis.del(slopProfileFromContentHashKey(info.hashedContentID)).catch((err) => Logger.error(err));
+        if (info.profileID) {
+            redis.del(slopProfileHashKey(info.hashedProfileID)).catch((err) => Logger.error(err));
+        }
+    }
+}
+
 async function getKeyLastModified(key: string): Promise<Date> {
     if (!config.redis?.enabled) return Promise.reject("ETag - Redis not enabled");
     return await redis.ttl(key)
@@ -173,4 +184,5 @@ export const QueryCacher = {
     getKeyLastModified,
     clearRatingCache,
     clearFeatureCache,
+    clearSlopCache,
 };
