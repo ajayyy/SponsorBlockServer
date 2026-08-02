@@ -33,7 +33,7 @@ async function generateBloomFilter(bloomID: BloomFilterID) {
     for (const contentID of contentIDs) {
         const hashes = hashContent(contentID as string).sort((a, b) => a - b);
         modifyBloom(bloom, hashes, ModifyBloomOperation.Add);
-        for (const hash of hashes) {
+        for (const hash of new Set(hashes)) {
             promises.push(db.prepare("run", `INSERT INTO "slopBloomGeneration" ("id", "contentID", "hash", "timeGenerated") VALUES (?, ?, ?, ?)`, [tempID, contentID, hash, now]));
         }
     }
@@ -44,6 +44,7 @@ async function generateBloomFilter(bloomID: BloomFilterID) {
     await db.prepare("run", `DELETE FROM "slopBloom" WHERE "id" = ?`, [bloomID]);
     await db.prepare("run", `DELETE FROM "slopBloomGeneration" WHERE "id" = ?`, [bloomID]);
     await db.prepare("run", `DELETE FROM "slopBloomDiff" WHERE "id" = ?`, [bloomID]);
+
     await db.prepare("run", `UPDATE "slopBloom" SET "id" = ? WHERE "id" = ?`, [bloomID, tempID]);
     await db.prepare("run", `UPDATE "slopBloomGeneration" SET "id" = ? WHERE "id" = ?`, [bloomID, tempID]);
 }
@@ -181,7 +182,7 @@ async function addToBloomFilter(transaction: Transaction, bloomID: BloomFilterID
                         "timeGenerated" = ?`, [bloomID, hash, true, now, true, now]);
         }
 
-        for (const hash of hashes) {
+        for (const hash of new Set(hashes)) {
             await transaction.add(`INSERT INTO "slopBloomGeneration" ("id", "contentID", "hash", "timeGenerated") VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING;`, [bloomID, contentID, hash, now]);
         }
     } else {
