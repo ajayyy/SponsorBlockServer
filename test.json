@@ -73,5 +73,6 @@
         "redirectUri": "http://127.0.0.1/fake/callback"
     },
     "minReputationToSubmitFiller": -1,
-    "minUserIDLength": 0
+    "minUserIDLength": 0,
+    "bloomSize": 64
 }

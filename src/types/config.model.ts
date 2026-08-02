@@ -149,7 +149,8 @@ export interface SBSConfig {
         poToken: string | null;
         floatieUrl: string | null;
         floatieAuth: string | null;
-    }
+    },
+    bloomSize: number;
 }
 
 export interface WebhookConfig {

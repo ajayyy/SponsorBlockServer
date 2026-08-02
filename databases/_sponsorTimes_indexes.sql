@@ -226,10 +226,15 @@ CREATE INDEX IF NOT EXISTS "slopVotes_hashedContentID_wholeProfile"
 
 CREATE INDEX IF NOT EXISTS "slopVotes_hashedProfileID"
     ON public."slopVotes" USING btree
-    ("wholeProfile" ASC NULLS LAST, "hashedProfileID" text_pattern_ops ASC NULLS LAST, "profileID" ASC NULLS LAST, "id" ASC NULLS LAST)
+    ("hashedProfileID" text_pattern_ops ASC NULLS LAST, "wholeProfile" ASC NULLS LAST, "profileID" ASC NULLS LAST, "id" ASC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS "slopVotes_profileID"
     ON public."slopVotes" USING btree
     ("wholeProfile" ASC NULLS LAST, "profileID" ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS "slopVotes_profileID2"
+    ON public."slopVotes" USING btree
+    ("profileID" ASC NULLS LAST, "wholeProfile" ASC NULLS LAST)
     TABLESPACE pg_default;

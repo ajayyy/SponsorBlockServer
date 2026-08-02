@@ -176,6 +176,13 @@ CREATE TABLE IF NOT EXISTS "slopBloomDiff" (
 	PRIMARY KEY ("id", "index")
 );
 
+CREATE TABLE IF NOT EXISTS "slopBloomQueue" (
+	"contentID" TEXT NOT NULL,
+	"profileID" TEXT,
+	"timeAdded"	INTEGER NOT NULL,
+	PRIMARY KEY ("contentID")
+);
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 

@@ -216,7 +216,8 @@ addDefaults(config, {
         poToken: null,
         floatieUrl: null,
         floatieAuth: null
-    }
+    },
+    bloomSize: 64
 });
 loadFromEnv(config);
 migrate(config);

@@ -3,7 +3,7 @@ import { config } from "../config";
 
 import { db } from "../databases/databases";
 import { IPAddress } from "../types/segments.model";
-import { BloomAction, modifyBloomFilters } from "../utils/bloomFilter";
+import { modifyBloomFilters } from "../utils/bloomFilter";
 import { checkBanStatus } from "../utils/checkBan";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
@@ -30,7 +30,7 @@ export async function postSlop(req: Request, res: Response) {
         // todo: use isvip for all human box only
         const isVip = await isUserVIP(hashedUserID);
         const hashedContentID = await getHashCache(contentID, 1);
-        const hashedProfileID = await getHashCache(profileID, 1);
+        const hashedProfileID = profileID ? await getHashCache(profileID, 1) : null;
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);
 
@@ -79,7 +79,6 @@ export async function postSlop(req: Request, res: Response) {
         const existingVotes = await db.prepare("all", `SELECT "id", "UUID", "wholeProfile" FROM "slopVoteSubmissions" WHERE "contentID" = ? AND "userID" = ?`
             , [contentID, hashedUserID]
         );
-        const voteIdsToAddToBloom: number[] = [];
 
         for (const voteType of votes) {
             const isRating = voteType === "rating";
@@ -92,22 +91,15 @@ export async function postSlop(req: Request, res: Response) {
                     , [UUID, contentID, hashedUserID, hashedIP, voteId, isRating ? comment : null, isRating ? rating : null, wholeProfile, now]);
 
                 if (!isRating) {
-                    const alreadyASubmission = (await db.prepare("get", `SELECT "contentID" FROM "slopVotes" WHERE "id" = ? AND "contentID" = ?`, [voteId, contentID]))?.contentID;
-
                     const wholeProfileIncreaseValue = wholeProfile ? 1 : 0;
 
                     await db.prepare("run", `INSERT INTO "slopVotes" ("contentID", "profileID", "id", "hashedContentID", "hashedProfileID", "count", "wholeProfile")
                         VALUES (?, ?, ?, ?, ?, 1, ?)
                         ON CONFLICT ("contentID", "id")
                         DO UPDATE SET
-                            "count" = EXCLUDED."count" + 1,
-                            "wholeProfile" = EXCLUDED."wholeProfile" + ?`
-                    , [contentID, profileID, voteId, hashedContentID, hashedProfileID, wholeProfileIncreaseValue, wholeProfileIncreaseValue]);
-
-                    // If not already in there, add to bloom filter
-                    if (!alreadyASubmission) {
-                        voteIdsToAddToBloom.push(voteId);
-                    }
+                            "count" = "slopVotes"."count" + EXCLUDED."count",
+                            "wholeProfile" = "slopVotes"."wholeProfile" + EXCLUDED."wholeProfile"`
+                    , [contentID, profileID, voteId, hashedContentID, hashedProfileID, wholeProfileIncreaseValue]);
                 }
             } else if (voteId && votedBefore && isRating) {
                 // Update the comment or rating if there already was a submission
@@ -118,7 +110,6 @@ export async function postSlop(req: Request, res: Response) {
             }
         }
 
-        const voteIdsToRemoveFromBloom: number[] = [];
         for (const vote of existingVotes) {
             const isRating = vote.id === 30;
             if (!votes.includes(slopVoteIDToNames[vote.id])) {
@@ -137,8 +128,6 @@ export async function postSlop(req: Request, res: Response) {
                             WHERE "contentID" = ? AND "id" = ?`
                     , [contentID, vote.id]))?.count;
                     if (newVoteCount <= 0) {
-                        voteIdsToRemoveFromBloom.push(vote.id);
-
                         await db.prepare("run", `DELETE FROM "slopVotes"
                             WHERE "contentID" = ? AND "id" = ?`
                         , [contentID, vote.id]);
@@ -147,8 +136,7 @@ export async function postSlop(req: Request, res: Response) {
             }
         }
 
-        await modifyBloomFilters(BloomAction.Add, voteIdsToAddToBloom, contentID, profileID);
-        await modifyBloomFilters(BloomAction.Remove, voteIdsToRemoveFromBloom, contentID, profileID);
+        await modifyBloomFilters(contentID, profileID);
 
         QueryCacher.clearSlopCache({ contentID, hashedContentID, profileID, hashedProfileID });
         res.status(200).send("OK");

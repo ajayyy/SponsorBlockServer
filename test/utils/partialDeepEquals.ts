@@ -24,8 +24,16 @@ export const partialDeepEquals = (actual: Record<string, any>, expected: Record<
 };
 
 export const arrayPartialDeepEquals = (actual: Array<any>, expected: Array<any>): boolean => {
-    for (const value of expected)
-        if (!actual.some(a => partialDeepEquals(a, value, false))) return false;
+    for (const value of expected) {
+        const containsValue = actual.some(a => partialDeepEquals(a, value, false));
+        if (!containsValue) {
+            Logger.error(`Missing value: ${JSON.stringify(value)}`);
+            Logger.error(`Actual array: ${JSON.stringify(actual)}`);
+
+            return false;
+        }
+    }
+
     return true;
 };
 
