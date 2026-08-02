@@ -18,35 +18,27 @@ export const AllBloomFilters = Object.values(BloomFilterID);
 export const numberOfHashes = 4;
 async function generateBloomFilter(bloomID: BloomFilterID) {
     const now = Date.now();
-    const tempID = bloomID + 100000;
+    const transaction = new Transaction();
 
     // Delete temp bloom
-    await db.prepare("run", `DELETE FROM "slopBloom" WHERE "id" = ?`, [tempID]);
-    await db.prepare("run", `DELETE FROM "slopBloomGeneration" WHERE "id" = ?`, [tempID]);
-    await db.prepare("run", `DELETE FROM "slopBloomDiff" WHERE "id" = ?`, [tempID]);
+    transaction.add(`DELETE FROM "slopBloom" WHERE "id" = ?`, [bloomID]);
+    transaction.add(`DELETE FROM "slopBloomGeneration" WHERE "id" = ?`, [bloomID]);
+    transaction.add(`DELETE FROM "slopBloomDiff" WHERE "id" = ?`, [bloomID]);
 
     const query = getQueryForBloom(bloomID);
     const contentIDs = (await db.prepare("all", query)).map((a) => a.contentID);
 
     const bloom = new Uint8Array(config.bloomSize / 8);
-    const promises = [];
     for (const contentID of contentIDs) {
         const hashes = hashContent(contentID as string).sort((a, b) => a - b);
         modifyBloom(bloom, hashes, ModifyBloomOperation.Add);
         for (const hash of new Set(hashes)) {
-            promises.push(db.prepare("run", `INSERT INTO "slopBloomGeneration" ("id", "contentID", "hash", "timeGenerated") VALUES (?, ?, ?, ?)`, [tempID, contentID, hash, now]));
+            transaction.add(`INSERT INTO "slopBloomGeneration" ("id", "contentID", "hash", "timeGenerated") VALUES (?, ?, ?, ?)`, [bloomID, contentID, hash, now]);
         }
     }
-    await db.prepare("run", `INSERT INTO "slopBloom" ("id", "data", "timeGenerated") VALUES (?, ?, ?)`, [tempID, bloom, now]);
-    await promises;
+    transaction.add(`INSERT INTO "slopBloom" ("id", "data", "timeGenerated") VALUES (?, ?, ?)`, [bloomID, bloom, now]);
 
-    // Clear old generation and move new one in
-    await db.prepare("run", `DELETE FROM "slopBloom" WHERE "id" = ?`, [bloomID]);
-    await db.prepare("run", `DELETE FROM "slopBloomGeneration" WHERE "id" = ?`, [bloomID]);
-    await db.prepare("run", `DELETE FROM "slopBloomDiff" WHERE "id" = ?`, [bloomID]);
-
-    await db.prepare("run", `UPDATE "slopBloom" SET "id" = ? WHERE "id" = ?`, [bloomID, tempID]);
-    await db.prepare("run", `UPDATE "slopBloomGeneration" SET "id" = ? WHERE "id" = ?`, [bloomID, tempID]);
+    await db.transaction(transaction);
 }
 
 
