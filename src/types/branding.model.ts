@@ -117,6 +117,7 @@ export interface BrandingSegmentDBResult {
     endTime: number;
     category: Category;
     videoDuration: number;
+    timeSubmitted: number;
 }
 
 export interface CasualVoteDBResult {
@@ -131,6 +132,7 @@ export interface BrandingSegmentHashDBResult extends BrandingDBSubmissionData {
     endTime: number;
     category: Category;
     videoDuration: number;
+    timeSubmitted: number;
 }
 
 export interface CasualVoteHashDBResult extends BrandingDBSubmissionData {

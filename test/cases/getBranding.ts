@@ -12,6 +12,9 @@ describe("getBranding", () => {
     const videoID2ShadowHide = "videoID3";
     const videoIDEmpty = "videoID4";
     const videoIDRandomTime = "videoID5";
+    const videoIDOldOverlapRandomTime = "videoID511";
+    const videoIDNewRandomTime = "videoID522";
+    const videoIDNewWithoutOverlapRandomTime = "videoID533";
     const videoIDUnverified = "videoID6";
     const videoIDvidDuration = "videoID7";
     const videoIDCasual = "videoIDCasual";
@@ -23,6 +26,9 @@ describe("getBranding", () => {
     const videoID2ShadowHideHash = getHash(videoID2ShadowHide, 1).slice(0, 4);
     const videoIDEmptyHash = "aaaa";
     const videoIDRandomTimeHash = getHash(videoIDRandomTime, 1).slice(0, 4);
+    const videoIDOldOverlapRandomTimeHash = getHash(videoIDOldOverlapRandomTime, 1).slice(0, 4);
+    const videoIDNewRandomTimeHash = getHash(videoIDNewRandomTime, 1).slice(0, 4);
+    const videoIDNewWithoutOverlapRandomTimeHash = getHash(videoIDNewWithoutOverlapRandomTime, 1).slice(0, 4);
     const videoIDUnverifiedHash = getHash(videoIDUnverified, 1).slice(0, 4);
     const videoIDvidDurationHash = getHash(videoIDUnverified, 1).slice(0, 4);
     const videoIDCasualHash = getHash(videoIDCasual, 1).slice(0, 4);
@@ -120,6 +126,15 @@ describe("getBranding", () => {
 
         await db.prepare("run", segmentQuery, [videoIDRandomTime, 1, 11, 1, 0, "uuidbranding1", "testman", 0, 50, "sponsor", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
         await db.prepare("run", segmentQuery, [videoIDRandomTime, 20, 33, 2, 0, "uuidbranding2", "testman", 0, 50, "intro", "skip", "YouTube", 100, 0, 0, "", videoIDRandomTimeHash]);
+
+        await db.prepare("run", segmentQuery, [videoIDOldOverlapRandomTime, 0, 11, 1, 0, "uuidbranding12222", "testman", 1789006994000, 50, "sponsor", "skip", "YouTube", 0, 0, 0, "", videoIDOldOverlapRandomTimeHash]);
+        await db.prepare("run", segmentQuery, [videoIDOldOverlapRandomTime, 20, 33, 2, 0, "uuidbranding222222", "testman", 1789006994000, 50, "intro", "skip", "YouTube", 0, 0, 0, "", videoIDOldOverlapRandomTimeHash]);
+
+        await db.prepare("run", segmentQuery, [videoIDNewRandomTime, 0, 5, 1, 0, "uuidbranding13333", "testman", 1789006995001, 50, "sponsor", "skip", "YouTube", 0, 0, 0, "", videoIDNewRandomTimeHash]);
+        await db.prepare("run", segmentQuery, [videoIDNewRandomTime, 20, 33, 2, 0, "uuidbranding233333", "testman", 1789006995001, 50, "intro", "skip", "YouTube", 0, 0, 0, "", videoIDNewRandomTimeHash]);
+
+        await db.prepare("run", segmentQuery, [videoIDNewWithoutOverlapRandomTime, 0, 5, 1, 0, "uuidbranding133334", "testman", 1789006995001, 50, "sponsor", "skip", "YouTube", 0, 0, 0, "", videoIDNewWithoutOverlapRandomTimeHash]);
+        await db.prepare("run", segmentQuery, [videoIDNewWithoutOverlapRandomTime, 30, 33, 2, 0, "uuidbranding2333334", "testman", 1789006995001, 50, "intro", "skip", "YouTube", 0, 0, 0, "", videoIDNewWithoutOverlapRandomTimeHash]);
 
         await Promise.all([
             db.prepare("run", titleQuery, [videoIDUnverified, "title1", 0, "userID1", Service.YouTube, videoIDUnverifiedHash, 1, "UUID-uv-1"]),
@@ -296,13 +311,49 @@ describe("getBranding", () => {
         const result2 = await getBrandingByHash(videoIDRandomTimeHash, { fetchAll: true });
 
         const randomTime = result1.data.randomTime;
-        assert.strictEqual(randomTime, result2.data[videoIDRandomTime].randomTime);
-        assert.ok(randomTime > 0 && randomTime < 1);
+        assert.strictEqual(randomTime, 0.007917027387768012);
+        assert.strictEqual(result2.data[videoIDRandomTime].randomTime, 0.007917027387768012);
 
         const timeAbsolute = randomTime * videoDuration;
         assert.ok(timeAbsolute < 1 || (timeAbsolute > 11 && timeAbsolute < 20) || timeAbsolute > 33);
 
         assert.strictEqual(result1.data.videoDuration, 100);
+    });
+
+    it("should get correct random time old style", async () => {
+        const result1 = await getBranding({ videoID: videoIDOldOverlapRandomTime, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDOldOverlapRandomTimeHash, { fetchAll: true });
+
+        const randomTime = result1.data.randomTime;
+        // Plain generation
+        assert.notStrictEqual(randomTime, 0.06085040559992194);
+        // Old generation
+        assert.strictEqual(randomTime, 0.3499288984969484);
+
+        assert.strictEqual(result2.data[videoIDOldOverlapRandomTime].randomTime, 0.3499288984969484);
+    });
+
+    it("should get correct random time new style", async () => {
+        const result1 = await getBranding({ videoID: videoIDNewRandomTime, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDNewRandomTimeHash, { fetchAll: true });
+
+        const randomTime = result1.data.randomTime;
+        // Plain generation
+        assert.notStrictEqual(randomTime, 0.05861556124873457);
+
+        // After regenerating because of a conflict
+        assert.strictEqual(randomTime, 0.2564594582654536);
+        assert.strictEqual(result2.data[videoIDNewRandomTime].randomTime, 0.2564594582654536);
+    });
+
+    it("should get correct random time new style when there is no overlap", async () => {
+        const result1 = await getBranding({ videoID: videoIDNewWithoutOverlapRandomTime, fetchAll: true });
+        const result2 = await getBrandingByHash(videoIDNewWithoutOverlapRandomTimeHash, { fetchAll: true });
+
+        const randomTime = result1.data.randomTime;
+        // Plain generation
+        assert.strictEqual(randomTime, 0.8115481701679528);
+        assert.strictEqual(result2.data[videoIDNewWithoutOverlapRandomTime].randomTime, 0.8115481701679528);
     });
 
     it("should get top titles and thumbnails that are unverified", async () => {

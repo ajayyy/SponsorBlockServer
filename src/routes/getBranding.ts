@@ -44,7 +44,7 @@ export async function getVideoBranding(res: Response, videoID: VideoID, service:
 
     const getSegments = () => db.prepare(
         "all",
-        `SELECT "startTime", "endTime", "category", "videoDuration" FROM "sponsorTimes" 
+        `SELECT "startTime", "endTime", "category", "videoDuration", "timeSubmitted" FROM "sponsorTimes" 
         WHERE "votes" > -2 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "videoID" = ? AND "service" = ?
         ORDER BY "timeSubmitted" ASC`,
         [videoID, service],
@@ -123,7 +123,7 @@ export async function getVideoBrandingByHash(videoHashPrefix: VideoIDHash, servi
 
     const getSegments = () => db.prepare(
         "all",
-        `SELECT "videoID", "startTime", "endTime", "category", "videoDuration" FROM "sponsorTimes" 
+        `SELECT "videoID", "startTime", "endTime", "category", "videoDuration", "timeSubmitted" FROM "sponsorTimes" 
         WHERE "votes" > -2 AND "shadowHidden" = 0 AND "hidden" = 0 AND "actionType" = 'skip' AND "hashedVideoID" LIKE ? AND "service" = ?
         ORDER BY "timeSubmitted" ASC`,
         [`${videoHashPrefix}%`, service],
@@ -275,17 +275,20 @@ async function shouldKeepSubmission(submissions: BrandingDBSubmission[], type: B
     return (_, index) => shouldKeep[index];
 }
 
-export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResult[], videoDuration: number): number {
-    let randomTime = SeedRandom.alea(videoID)();
+function simpleRandomTime(seed: string, hasOutro: boolean): number {
+    let randomTime = SeedRandom.alea(seed)();
 
     // Don't allow random times past 90% of the video if no endcard
-    if (!segments.some((s) => s.category === "outro") && randomTime > 0.9) {
+    if (!hasOutro && randomTime > 0.9) {
         randomTime -= 0.9;
     }
 
-    if (segments.length === 0) return randomTime;
+    return randomTime;
+}
 
-    videoDuration ||= Math.max(...segments.map((s) => s.endTime)); // use highest end time as a fallback here
+function findRandomTimeOldStyle(videoID: VideoID, segments: BrandingSegmentDBResult[], videoDuration: number): number {
+    const hasOutro = segments.some((s) => s.category === "outro");
+    const randomTime = simpleRandomTime(videoID, hasOutro);
 
     // There are segments, treat this as a relative time in the chopped up video
     const sorted = segments.sort((a, b) => a.startTime - b.startTime);
@@ -321,6 +324,34 @@ export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResu
 
     // Fallback to just the random time
     return randomTime;
+}
+
+export function findRandomTime(videoID: VideoID, segments: BrandingSegmentDBResult[], videoDuration: number): number {
+    let randomTime = simpleRandomTime(videoID, false);
+    if (segments.length === 0) return randomTime;
+
+    videoDuration ||= Math.max(...segments.map((s) => s.endTime)); // use highest end time as a fallback here
+
+    // If any old segments, do old style for now
+    if (segments.some((a) => !a.timeSubmitted || a.timeSubmitted < 1789006995000)) {
+        return findRandomTimeOldStyle(videoID, segments, videoDuration);
+    }
+
+    const isOverlap = (a: BrandingSegmentDBResult) => a.startTime < randomTime * videoDuration && a.endTime > randomTime * videoDuration;
+
+    // Ensure random time isn't in segments
+    let tries = 0;
+    while (tries < 3 && segments.some(isOverlap)) {
+        randomTime = simpleRandomTime(videoID + tries, false);
+        tries++;
+    }
+
+    if (!segments.some(isOverlap)) {
+        return randomTime;
+    } else {
+        // Fall back to old style
+        return findRandomTimeOldStyle(videoID, segments, videoDuration);
+    }
 }
 
 export async function getBranding(req: Request, res: Response) {
