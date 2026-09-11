@@ -1,7 +1,7 @@
-import { config } from "../config";
-import { Postgres } from "./Postgres";
-import { IDatabase } from "./IDatabase";
-import { Logger } from "../utils/logger";
+import { config } from "../config.js";
+import { Postgres } from "./Postgres.js";
+import { IDatabase } from "./IDatabase.js";
+import { Logger } from "../utils/logger.js";
 
 let db: IDatabase;
 let privateDB: IDatabase;

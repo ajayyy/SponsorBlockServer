@@ -1,21 +1,21 @@
 import { Request, Response } from "express";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-
-import { BrandingUUID, CasualCategory, CasualVoteSubmission } from "../types/branding.model";
-import { HashedIP, IPAddress, Service, VideoID } from "../types/segments.model";
-import { HashedUserID } from "../types/user.model";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getService } from "../utils/getService";
-import { Logger } from "../utils/logger";
 import crypto from "crypto";
-import { QueryCacher } from "../utils/queryCacher";
-import { acquireLock } from "../utils/redisLock";
-import { checkBanStatus } from "../utils/checkBan";
-import { canSubmitDeArrow } from "../utils/permissions";
-import { isRequestInvalid } from "../utils/requestValidator";
-import { parseUserAgent } from "../utils/userAgent";
+
+import { config } from "../config.js";
+import { db, privateDB } from "../databases/databases.js";
+import { BrandingUUID, CasualCategory, CasualVoteSubmission } from "../types/branding.model.js";
+import { HashedIP, IPAddress, Service, VideoID } from "../types/segments.model.js";
+import { HashedUserID } from "../types/user.model.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { getIP } from "../utils/getIP.js";
+import { getService } from "../utils/getService.js";
+import { Logger } from "../utils/logger.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { acquireLock } from "../utils/redisLock.js";
+import { checkBanStatus } from "../utils/checkBan.js";
+import { canSubmitDeArrow } from "../utils/permissions.js";
+import { isRequestInvalid } from "../utils/requestValidator.js";
+import { parseUserAgent } from "../utils/userAgent.js";
 
 interface ExistingVote {
     UUID: BrandingUUID;

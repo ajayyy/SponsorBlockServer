@@ -1,12 +1,11 @@
-import { db } from "../databases/databases";
-import { Logger } from "../utils/logger";
+import { unlink, readdir, stat } from "node:fs/promises";
+import path from "node:path";
+import { exec, ExecOptions } from "node:child_process";
 import { Request, Response } from "express";
-import { config } from "../config";
-import util from "util";
-import fs from "fs";
-import path from "path";
-import { exec, ExecOptions } from "child_process";
-const unlink = util.promisify(fs.unlink);
+
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { config } from "../config.js";
 
 const ONE_MINUTE = 1000 * 60;
 
@@ -65,48 +64,47 @@ let lastUpdate = 0;
 let updateQueued = false;
 let updateRunning = false;
 
-function removeOutdatedDumps(exportPath: string): Promise<void> {
-    return new Promise((resolve) => {
-        // Get list of table names
-        // Create array for each table
-        const tableFiles: Record<string, TableFile[]> = tableNames.reduce((obj: any, tableName) => {
-            obj[tableName] = [];
-            return obj;
-        }, {});
+async function removeOutdatedDumps(exportPath: string): Promise<void> {
+    // Get list of table names
+    // Create array for each table
+    const tableFiles: Record<string, TableFile[]> = tableNames.reduce((obj: any, tableName) => {
+        obj[tableName] = [];
+        return obj;
+    }, {});
 
-        // read files in export directory
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        fs.readdir(exportPath, async (err: any, files: string[]) => {
-            if (err) Logger.error(err);
-            if (err) return resolve();
+    // read files in export directory
+    let files;
+    try {
+        files = await readdir(exportPath);
+    } catch (err: any) {
+        Logger.error(err);
+        return;
+    }
 
-            files.forEach(file => {
-                // we only care about files that start with "<tablename>_" and ends with .csv
-                tableNames.forEach(tableName => {
-                    if (file.startsWith(`${tableName}`) && file.endsWith(".csv")) {
-                        const filePath = path.join(exportPath, file);
-                        tableFiles[tableName].push({
-                            file: filePath,
-                            timestamp: fs.statSync(filePath).mtime.getTime()
-                        });
-                    }
+    for (const file of files) {
+        // we only care about files that start with "<tablename>_" and ends with .csv
+        for (const tableName of tableNames) {
+            if (file.startsWith(`${tableName}`) && file.endsWith(".csv")) {
+                const filePath = path.join(exportPath, file);
+                tableFiles[tableName].push({
+                    file: filePath,
+                    timestamp: (await stat(filePath)).mtime.getTime()
                 });
-            });
-
-            for (const tableName in tableFiles) {
-                const files = tableFiles[tableName].sort((a, b) => b.timestamp - a.timestamp);
-                for (let i = 2; i < files.length; i++) {
-                    if (!latestDumpFiles.some((file) => file.fileName === files[i].file.match(/[^/]+$/)[0])) {
-                        // remove old file
-                        await unlink(files[i].file).catch((error: any) => {
-                            Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
-                        });
-                    }
-                }
             }
-            resolve();
-        });
-    });
+        }
+    }
+
+    for (const tableName in tableFiles) {
+        const files = tableFiles[tableName].sort((a, b) => b.timestamp - a.timestamp);
+        for (let i = 2; i < files.length; i++) {
+            if (!latestDumpFiles.some((file) => file.fileName === files[i].file.match(/[^/]+$/)[0])) {
+                // remove old file
+                await unlink(files[i].file).catch((error: any) => {
+                    Logger.error(`[dumpDatabase] Garbage collection failed ${error}`);
+                });
+            }
+        }
+    }
 }
 
 export default async function dumpDatabase(req: Request, res: Response, showPage: boolean): Promise<void> {

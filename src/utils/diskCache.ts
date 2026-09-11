@@ -1,7 +1,8 @@
 import axios, { AxiosError } from "axios";
 import { Agent } from "http";
-import { config } from "../config";
-import { Logger } from "./logger";
+
+import { config } from "../config.js";
+import { Logger } from "./logger.js";
 
 const httpAgent = new Agent({ keepAlive: true });
 

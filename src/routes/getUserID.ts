@@ -1,7 +1,8 @@
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { UserID } from "../types/user.model";
-import { Logger } from "../utils/logger";
+
+import { db } from "../databases/databases.js";
+import { UserID } from "../types/user.model.js";
+import { Logger } from "../utils/logger.js";
 
 function getFuzzyUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     // escape [_ % \] to avoid ReDOS
@@ -13,7 +14,7 @@ function getFuzzyUserID(userName: string): Promise<{userName: string, userID: Us
     try {
         return db.prepare("all", `SELECT "userName", "userID" FROM "userNames" WHERE "userName"
         LIKE ? ESCAPE '\\' LIMIT 10`, [userName]);
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }
@@ -21,7 +22,7 @@ function getFuzzyUserID(userName: string): Promise<{userName: string, userID: Us
 function getExactUserID(userName: string): Promise<{userName: string, userID: UserID }[]>  {
     try {
         return db.prepare("all", `SELECT "userName", "userID" from "userNames" WHERE "userName" = ? LIMIT 10`, [userName]);
-    } catch (err) /* istanbul ignore next */{
+    } catch /* istanbul ignore next */{
         return null;
     }
 }

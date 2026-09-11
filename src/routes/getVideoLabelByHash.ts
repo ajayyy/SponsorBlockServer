@@ -1,8 +1,9 @@
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { getLabelsByHash } from "./getVideoLabel";
 import { Request, Response } from "express";
-import { VideoIDHash, Service } from "../types/segments.model";
-import { getService } from "../utils/getService";
+
+import { hashPrefixTester } from "../utils/hashPrefixTester.js";
+import { getLabelsByHash } from "./getVideoLabel.js";
+import { VideoIDHash, Service } from "../types/segments.model.js";
+import { getService } from "../utils/getService.js";
 
 export async function getVideoLabelsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;

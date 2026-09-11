@@ -1,11 +1,12 @@
-import { db, privateDB } from "../databases/databases";
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
 import os from "os";
-import redis, { getRedisStats } from "../utils/redis";
-import { promiseOrTimeout } from "../utils/promise";
-import { Postgres } from "../databases/Postgres";
 import { Server } from "http";
+
+import { db, privateDB } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import redis, { getRedisStats } from "../utils/redis.js";
+import { promiseOrTimeout } from "../utils/promise.js";
+import { Postgres } from "../databases/Postgres.js";
 
 export async function getStatus(req: Request, res: Response, server: Server): Promise<Response> {
     const startTime = Date.now();

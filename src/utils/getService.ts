@@ -1,4 +1,4 @@
-import { Service } from "../types/segments.model";
+import { Service } from "../types/segments.model.js";
 
 export function getService<T extends string>(...value: T[]): Service {
     const serviceByName = Object.values(Service).reduce((acc, serviceName) => {

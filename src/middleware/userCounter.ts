@@ -1,9 +1,10 @@
 import axios from "axios";
-import { Logger } from "../utils/logger";
-import { config } from "../config";
-import { getIP } from "../utils/getIP";
 import { NextFunction, Request, Response } from "express";
 import { Agent } from "http";
+
+import { Logger } from "../utils/logger.js";
+import { config } from "../config.js";
+import { getIP } from "../utils/getIP.js";
 
 const httpAgent = new Agent({ keepAlive: true });
 

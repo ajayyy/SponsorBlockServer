@@ -1,4 +1,4 @@
-import { VideoID } from "../types/segments.model";
+import { VideoID } from "../types/segments.model.js";
 
 const idRegex = new RegExp(/([0-9A-Za-z_-]{11})/); // group to always be index 1
 const exclusiveIdegex = new RegExp(`^${idRegex.source}$`);

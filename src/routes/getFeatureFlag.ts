@@ -1,5 +1,6 @@
-import { config } from "../config";
 import { Request, Response } from "express";
+
+import { config } from "../config.js";
 
 export function getFeatureFlag(req: Request, res: Response): Response {
     const { params: { name } } = req;

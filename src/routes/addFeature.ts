@@ -1,12 +1,13 @@
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
-import { config } from "../config";
 import { Request, Response } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { Feature, HashedUserID, UserID } from "../types/user.model";
-import { Logger } from "../utils/logger";
-import { QueryCacher } from "../utils/queryCacher";
-import { getVerificationValue, verifyOldSubmissions } from "./postBranding";
+
+import { getHashCache } from "../utils/getHashCache.js";
+import { db } from "../databases/databases.js";
+import { config } from "../config.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { Feature, HashedUserID, UserID } from "../types/user.model.js";
+import { Logger } from "../utils/logger.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { getVerificationValue, verifyOldSubmissions } from "./postBranding.js";
 
 interface AddFeatureRequest extends Request {
     body: {

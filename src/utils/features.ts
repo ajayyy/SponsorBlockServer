@@ -1,7 +1,7 @@
-import { db } from "../databases/databases";
-import { Feature, HashedUserID } from "../types/user.model";
-import { QueryCacher } from "./queryCacher";
-import { userFeatureKey } from "./redisKeys";
+import { db } from "../databases/databases.js";
+import { Feature, HashedUserID } from "../types/user.model.js";
+import { QueryCacher } from "./queryCacher.js";
+import { userFeatureKey } from "./redisKeys.js";
 
 export async function hasFeature(userID: HashedUserID, feature: Feature): Promise<boolean> {
     return await QueryCacher.get(async () => {

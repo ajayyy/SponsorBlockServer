@@ -1,8 +1,9 @@
-import { db } from "../databases/databases";
-import { createMemoryCache } from "../utils/createMemoryCache";
-import { config } from "../config";
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
+
+import { db } from "../databases/databases.js";
+import { createMemoryCache } from "../utils/createMemoryCache.js";
+import { config } from "../config.js";
+import { Logger } from "../utils/logger.js";
 
 const MILLISECONDS_IN_MINUTE = 60000;
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -77,7 +78,7 @@ export async function getTopUsers(req: Request, res: Response): Promise<Response
     const categoryStatsEnabled = req.query.categoryStats;
 
     //setup which sort type to use
-    let sortBy = "";
+    let sortBy;
     if (sortType == 0) {
         sortBy = "minutesSaved";
     } else if (sortType == 1) {

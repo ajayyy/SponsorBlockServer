@@ -1,8 +1,8 @@
-import { config } from "../config";
-import { innerTubeVideoDetails } from "../types/innerTubeApi.model";
-import { APIVideoData } from "../types/youtubeApi.model";
-import { YouTubeAPI } from "../utils/youtubeApi";
-import { getPlayerData } from "../utils/innerTubeAPI";
+import { config } from "../config.js";
+import { innerTubeVideoDetails } from "../types/innerTubeApi.model.js";
+import { APIVideoData } from "../types/youtubeApi.model.js";
+import { YouTubeAPI } from "../utils/youtubeApi.js";
+import { getPlayerData } from "../utils/innerTubeAPI.js";
 
 export interface videoDetails {
   videoId: string,

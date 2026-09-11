@@ -1,15 +1,17 @@
-import { config } from "../config";
-import { Logger } from "./logger";
+import { RedisReply } from "rate-limit-redis";
 import { RedisArgument, RedisClientType, SetOptions, createClient } from "redis";
 import { RedisClientOptions } from "@redis/client/dist/lib/client";
-import { RedisReply } from "rate-limit-redis";
-import { db } from "../databases/databases";
-import { Postgres } from "../databases/Postgres";
 import { compress, uncompress } from "lz4-napi";
 import { LRUCache } from "lru-cache";
-import { shouldClientCacheKey } from "./redisKeys";
 import { RedisVariadicArgument, SortedSetMember } from "@redis/client/dist/lib/commands/generic-transformers";
 import { ReplyUnion } from "@redis/client/dist/lib/RESP/types";
+
+import { config } from "../config.js";
+import { Logger } from "./logger.js";
+import { db } from "../databases/databases.js";
+import { Postgres } from "../databases/Postgres.js";
+import { shouldClientCacheKey } from "./redisKeys.js";
+
 
 export interface RedisStats {
     activeRequests: number;

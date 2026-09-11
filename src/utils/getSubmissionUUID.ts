@@ -1,7 +1,7 @@
-import { getHash } from "./getHash";
-import { HashedValue } from "../types/hash.model";
-import { ActionType, VideoID, Service, Category } from "../types/segments.model";
-import { HashedUserID } from "../types/user.model";
+import { getHash } from "./getHash.js";
+import { HashedValue } from "../types/hash.model.js";
+import { ActionType, VideoID, Service, Category } from "../types/segments.model.js";
+import { HashedUserID } from "../types/user.model.js";
 
 export function getSubmissionUUID(
     videoID: VideoID,

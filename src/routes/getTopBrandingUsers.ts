@@ -1,6 +1,7 @@
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
+
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
 
 async function generateTopUsersStats(sortBy: string) {
     const rows = await db.prepare("all", `SELECT COUNT(distinct "titles"."UUID") as "titleCount", COUNT(distinct "thumbnails"."UUID") as "thumbnailCount", COALESCE("userName", "titles"."userID") as "userName"
@@ -23,7 +24,7 @@ async function generateTopUsersStats(sortBy: string) {
 export async function getTopBrandingUsers(req: Request, res: Response): Promise<Response> {
     const sortType = parseInt(req.query.sortType as string);
 
-    let sortBy = "";
+    let sortBy;
     if (sortType == 0) {
         sortBy = "titleCount";
     } else if (sortType == 1) {

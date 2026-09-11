@@ -1,9 +1,10 @@
-import { db } from "../databases/databases";
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { ActionType, Category, VideoID, VideoIDHash } from "../types/segments.model";
-import { parseActionTypes } from "../utils/parseParams";
+
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { hashPrefixTester } from "../utils/hashPrefixTester.js";
+import { ActionType, Category, VideoID, VideoIDHash } from "../types/segments.model.js";
+import { parseActionTypes } from "../utils/parseParams.js";
 
 interface LockResultByHash {
     videoID: VideoID,

@@ -1,22 +1,23 @@
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
-import { isUserVIP } from "../utils/isUserVIP";
-import { isUserTempVIP } from "../utils/isUserTempVIP";
-import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { db, privateDB } from "../databases/databases";
-import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
-import { getFormattedTime } from "../utils/getFormattedTime";
-import { getIP } from "../utils/getIP";
-import { getHashCache } from "../utils/getHashCache";
-import { config } from "../config";
-import { HashedUserID, UserID } from "../types/user.model";
-import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "../types/segments.model";
-import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
-import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
-import { deleteLockCategories } from "./deleteLockCategories";
-import { acquireLock } from "../utils/redisLock";
-import { checkBanStatus } from "../utils/checkBan";
+
+import { Logger } from "../utils/logger.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { isUserTempVIP } from "../utils/isUserTempVIP.js";
+import { getMaxResThumbnail } from "../utils/youtubeApi.js";
+import { db, privateDB } from "../databases/databases.js";
+import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils.js";
+import { getFormattedTime } from "../utils/getFormattedTime.js";
+import { getIP } from "../utils/getIP.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { config } from "../config.js";
+import { HashedUserID, UserID } from "../types/user.model.js";
+import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "../types/segments.model.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { getVideoDetails, videoDetails } from "../utils/getVideoDetails.js";
+import { deleteLockCategories } from "./deleteLockCategories.js";
+import { acquireLock } from "../utils/redisLock.js";
+import { checkBanStatus } from "../utils/checkBan.js";
 
 const voteTypes = {
     normal: 0,

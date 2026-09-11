@@ -1,9 +1,10 @@
-import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { Feature, HashedUserID, UserID } from "../types/user.model";
-import { HashedValue } from "../types/hash.model";
-import { Logger } from "./logger";
-import { BrandingUUID } from "../types/branding.model";
 import { RedisArgument } from "redis";
+
+import { Service, VideoID, VideoIDHash } from "../types/segments.model.js";
+import { Feature, HashedUserID, UserID } from "../types/user.model.js";
+import { HashedValue } from "../types/hash.model.js";
+import { Logger } from "./logger.js";
+import { BrandingUUID } from "../types/branding.model.js";
 
 export const skipSegmentsKey = (videoID: VideoID, service: Service): string =>
     `segments.v4.${service}.videoID.${videoID}`;

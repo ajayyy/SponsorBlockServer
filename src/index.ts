@@ -1,10 +1,9 @@
-import { config } from "./config";
-import { initDb } from "./databases/databases";
-import { createServer } from "./app";
-import { Logger } from "./utils/logger";
-import { startAllCrons } from "./cronjob";
-import { getCommit } from "./utils/getCommit";
-import { connectionPromise } from "./utils/redis";
+import { config } from "./config.js";
+import { initDb } from "./databases/databases.js";
+import { createServer } from "./app.js";
+import { Logger } from "./utils/logger.js";
+import { getCommit } from "./utils/getCommit.js";
+import { connectionPromise } from "./utils/redis.js";
 
 async function init() {
     process.on("unhandledRejection", (error: any) => {
@@ -33,9 +32,6 @@ async function init() {
             : getCommit() as string;
     createServer(() => {
         Logger.info(`Server started on port ${config.port}.`);
-
-        // ignite cron job after server created
-        startAllCrons();
     }).setTimeout(15000);
 }
 

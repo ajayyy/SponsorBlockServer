@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "../utils/redisKeys";
-import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, DBSegment, Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { Logger } from "../utils/logger";
-import { QueryCacher } from "../utils/queryCacher";
-import { getService } from "../utils/getService";
+
+import { db } from "../databases/databases.js";
+import { videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "../utils/redisKeys.js";
+import { SBRecord } from "../types/lib.model.js";
+import { ActionType, Category, DBSegment, Service, VideoID, VideoIDHash } from "../types/segments.model.js";
+import { Logger } from "../utils/logger.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { getService } from "../utils/getService.js";
 
 interface FullVideoSegment {
     category: Category;

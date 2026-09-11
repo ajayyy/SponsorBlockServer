@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { getService } from "../utils/getService";
-import { Logger } from "../utils/logger";
+
+import { db } from "../databases/databases.js";
+import { getService } from "../utils/getService.js";
+import { Logger } from "../utils/logger.js";
 
 /**
  * Optional API method that will be used temporarily to help collect

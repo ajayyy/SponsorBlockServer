@@ -4,16 +4,10 @@ import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-import { FlatCompat } from "@eslint/eslintrc";
-
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
-
-module.exports = defineConfig([{
+export default defineConfig([
+    {
     languageOptions: {
         globals: {
             ...Object.fromEntries(Object.entries(globals.browser).map(([key]) => [key, "off"])),
@@ -26,7 +20,10 @@ module.exports = defineConfig([{
         parserOptions: {},
     },
 
-    extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
+    extends: [
+        js.configs.recommended,
+        tseslint.configs.recommended,
+    ],
 
     plugins: {
         "@typescript-eslint": typescriptEslint,
