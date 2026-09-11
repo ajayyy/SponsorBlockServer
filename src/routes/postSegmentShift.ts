@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
-import { isUserVIP } from "../utils/isUserVIP";
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
+
+import { Logger } from "../utils/logger.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { db } from "../databases/databases.js";
 
 const ACTION_NONE = Symbol("none");
 const ACTION_UPDATE = Symbol("update");

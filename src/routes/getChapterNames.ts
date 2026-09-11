@@ -1,7 +1,8 @@
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { Postgres } from "../databases/Postgres";
+
+import { Logger } from "../utils/logger.js";
+import { db } from "../databases/databases.js";
+import { Postgres } from "../databases/Postgres.js";
 
 export async function getChapterNames(req: Request, res: Response): Promise<Response> {
     const description = req.query.description as string;

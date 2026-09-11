@@ -25,8 +25,7 @@ async function init() {
 
     await initDb();
 
-    const dbMode = config.postgres ? "postgres"
-        : "sqlite";
+    const dbMode = "postgres";
     Logger.info(`Database Mode: ${dbMode}`);
 
     // set commit at headCommit
@@ -59,10 +58,9 @@ async function init() {
             mocha.run((failures) => {
                 mockServer.close();
                 server.close();
-                redis.quit().finally(() => {
-                    process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
-                    process.exit();
-                });
+                redis.destroy();
+                process.exitCode = failures ? 1 : 0; // exit with non-zero status if there were failures
+                process.exit();
             });
         });
     });

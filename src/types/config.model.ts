@@ -1,6 +1,7 @@
 import { PoolConfig } from "pg";
 import * as redis from "redis";
-import { DeArrowType } from "./segments.model";
+
+import { DeArrowType } from "./segments.model.js";
 
 interface RedisConfig extends redis.RedisClientOptions {
     enabled: boolean;

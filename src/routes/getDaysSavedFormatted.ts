@@ -1,6 +1,7 @@
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
+
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
 
 export async function getDaysSavedFormatted(req: Request, res: Response): Promise<Response> {
     try {

@@ -1,6 +1,7 @@
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { getService } from "../utils/getService";
+
+import { db } from "../databases/databases.js";
+import { getService } from "../utils/getService.js";
 
 export async function getSegmentID(req: Request, res: Response): Promise<Response> {
     const partialUUID = req.query?.UUID;

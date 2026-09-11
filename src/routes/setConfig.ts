@@ -1,9 +1,10 @@
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { UserID } from "../types/user.model";
-import { Logger } from "../utils/logger";
+
+import { getHashCache } from "../utils/getHashCache.js";
+import { db } from "../databases/databases.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { UserID } from "../types/user.model.js";
+import { Logger } from "../utils/logger.js";
 
 interface SetConfigRequest extends Request {
     body: {

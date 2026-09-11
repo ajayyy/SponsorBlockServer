@@ -1,10 +1,11 @@
 import axios from "axios";
 import { Request, Response } from "express";
-import { config } from "../config";
-import { privateDB } from "../databases/databases";
-import { Logger } from "../utils/logger";
-import { getPatreonIdentity, PatronStatus, refreshToken, TokenType } from "../utils/tokenUtils";
-import { getHash } from "../utils/getHash";
+
+import { config } from "../config.js";
+import { privateDB } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { getPatreonIdentity, PatronStatus, refreshToken, TokenType } from "../utils/tokenUtils.js";
+import { getHash } from "../utils/getHash.js";
 
 interface VerifyTokenRequest extends Request {
     query: {

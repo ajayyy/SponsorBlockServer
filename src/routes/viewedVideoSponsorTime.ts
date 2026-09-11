@@ -1,5 +1,6 @@
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
+
+import { db } from "../databases/databases.js";
 
 export async function viewedVideoSponsorTime(req: Request, res: Response): Promise<Response> {
     const UUID = req.query?.UUID;

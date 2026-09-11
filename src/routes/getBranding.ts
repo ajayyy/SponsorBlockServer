@@ -1,21 +1,22 @@
 import { Request, Response } from "express";
 import { isEmpty } from "lodash";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-import { Postgres } from "../databases/Postgres";
-import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, CasualVoteDBResult, CasualVoteHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
-import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
-import { shuffleArray } from "../utils/array";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getService } from "../utils/getService";
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { Logger } from "../utils/logger";
-import { promiseOrTimeout } from "../utils/promise";
-import { QueryCacher } from "../utils/queryCacher";
-import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys";
 import * as SeedRandom from "seedrandom";
-import { getEtag } from "../middleware/etag";
+
+import { config } from "../config.js";
+import { db, privateDB } from "../databases/databases.js";
+import { Postgres } from "../databases/Postgres.js";
+import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, CasualVoteDBResult, CasualVoteHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model.js";
+import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model.js";
+import { shuffleArray } from "../utils/array.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { getIP } from "../utils/getIP.js";
+import { getService } from "../utils/getService.js";
+import { hashPrefixTester } from "../utils/hashPrefixTester.js";
+import { Logger } from "../utils/logger.js";
+import { promiseOrTimeout } from "../utils/promise.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys.js";
+import { getEtag } from "../middleware/etag.js";
 
 enum BrandingSubmissionType {
     Title = "title",
@@ -370,7 +371,7 @@ export async function getBranding(req: Request, res: Response) {
 
         await getEtag("branding", (videoID as string), service)
             .then(etag => res.set("ETag", etag))
-            .catch(() => null);
+            .catch(() => null as void);
 
         const status = result.titles.length > 0 || result.thumbnails.length > 0 || result.casualVotes.length > 0 ? 200 : 404;
         return res.status(status).json(result);
@@ -397,7 +398,7 @@ export async function getBrandingByHashEndpoint(req: Request, res: Response) {
 
         await getEtag("brandingHash", (hashPrefix as string), service)
             .then(etag => res.set("ETag", etag))
-            .catch(() => null);
+            .catch(() => null as void);
 
         const status = !isEmpty(result) ? 200 : 404;
         return res.status(status).json(result);

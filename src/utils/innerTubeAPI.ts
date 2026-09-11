@@ -1,8 +1,9 @@
 import axios, { AxiosError } from "axios";
-import { Logger } from "./logger";
-import { innerTubeVideoDetails } from "../types/innerTubeApi.model";
-import DiskCache from "./diskCache";
-import { config } from "../config";
+
+import { Logger } from "./logger.js";
+import { innerTubeVideoDetails } from "../types/innerTubeApi.model.js";
+import DiskCache from "./diskCache.js";
+import { config } from "../config.js";
 
 const privateResponse = (videoId: string, reason: string): innerTubeVideoDetails => ({
     videoId,

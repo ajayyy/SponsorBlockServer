@@ -1,14 +1,15 @@
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { getSegmentsByHash } from "./getSkipSegments";
 import { Request, Response } from "express";
-import { VideoIDHash } from "../types/segments.model";
-import { Logger } from "../utils/logger";
-import { parseSkipSegments } from "../utils/parseSkipSegments";
-import { getEtag } from "../middleware/etag";
+
+import { hashPrefixTester } from "../utils/hashPrefixTester.js";
+import { getSegmentsByHash } from "./getSkipSegments.js";
+import { VideoIDHash } from "../types/segments.model.js";
+import { Logger } from "../utils/logger.js";
+import { parseSkipSegments } from "../utils/parseSkipSegments.js";
+import { getEtag } from "../middleware/etag.js";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
+    if (!req.params.prefix || typeof req.params.prefix !== "string" || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
@@ -26,7 +27,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
         const hashKey = hashPrefix.length === 4 ? "skipSegmentsHash" : "skipSegmentsLargerHash";
         await getEtag(hashKey, hashPrefix, service)
             .then(etag => res.set("ETag", etag))
-            .catch(/* istanbul ignore next */ () => null);
+            .catch(/* istanbul ignore next */ () => null as void);
         const output = Object.entries(segments).map(([videoID, data]) => ({
             videoID,
             segments: data.segments,

@@ -1,5 +1,5 @@
-import { Category, Service, VideoID, VideoIDHash } from "./segments.model";
-import { UserID } from "./user.model";
+import { Category, Service, VideoID, VideoIDHash } from "./segments.model.js";
+import { UserID } from "./user.model.js";
 
 export type BrandingUUID = string & { readonly __brandingUUID: unique symbol };
 

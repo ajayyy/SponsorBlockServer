@@ -1,6 +1,7 @@
-import { config } from "../config";
 import { Request } from "express";
-import { IPAddress } from "../types/segments.model";
+
+import { config } from "../config.js";
+import { IPAddress } from "../types/segments.model.js";
 
 export function getIP(req: Request): IPAddress {
     // if in testing mode, return immediately

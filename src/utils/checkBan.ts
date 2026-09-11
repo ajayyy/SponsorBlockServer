@@ -1,9 +1,9 @@
-import { HashedUserID } from "../types/user.model";
-import { db } from "../databases/databases";
-import { Category, HashedIP } from "../types/segments.model";
-import { announceBan, banUser } from "../routes/shadowBanUser";
-import { config } from "../config";
-import { Logger } from "./logger";
+import { HashedUserID } from "../types/user.model.js";
+import { db } from "../databases/databases.js";
+import { Category, HashedIP } from "../types/segments.model.js";
+import { announceBan, banUser } from "../routes/shadowBanUser.js";
+import { config } from "../config.js";
+import { Logger } from "./logger.js";
 
 export async function isUserBanned(userID: HashedUserID): Promise<boolean> {
     return (await db.prepare("get", `SELECT 1 FROM "shadowBannedUsers" WHERE "userID" = ? LIMIT 1`, [userID], { useReplica: true })) !== undefined;

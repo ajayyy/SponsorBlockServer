@@ -1,9 +1,10 @@
-import { db, privateDB } from "../databases/databases";
 import { Request, Response } from "express";
 import os from "os";
-import redis, { getRedisStats } from "../utils/redis";
-import { Postgres } from "../databases/Postgres";
 import { Server } from "http";
+
+import { db, privateDB } from "../databases/databases.js";
+import redis, { getRedisStats } from "../utils/redis.js";
+import { Postgres } from "../databases/Postgres.js";
 
 export async function getMetrics(req: Request, res: Response, server: Server): Promise<Response> {
     const redisStats = getRedisStats();

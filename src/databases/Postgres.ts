@@ -1,10 +1,10 @@
-import { Logger } from "../utils/logger";
-import { IDatabase, QueryOption, QueryType } from "./IDatabase";
 import { Client, Pool, QueryResult, types } from "pg";
-
 import fs from "fs";
-import { CustomPostgresReadOnlyConfig, CustomWritePostgresConfig } from "../types/config.model";
-import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promise";
+
+import { Logger } from "../utils/logger.js";
+import { IDatabase, QueryOption, QueryType } from "./IDatabase.js";
+import { CustomPostgresReadOnlyConfig, CustomWritePostgresConfig } from "../types/config.model.js";
+import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promise.js";
 
 // return numeric (pg_type oid=1700) as float
 types.setTypeParser(1700, function(val) {

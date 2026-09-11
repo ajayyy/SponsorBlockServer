@@ -1,8 +1,9 @@
-import { db } from "../databases/databases";
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
-import { Category, VideoID, ActionType } from "../types/segments.model";
-import { filterInvalidCategoryActionType, parseActionTypes, parseCategories } from "../utils/parseParams";
+
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { Category, VideoID, ActionType } from "../types/segments.model.js";
+import { filterInvalidCategoryActionType, parseActionTypes, parseCategories } from "../utils/parseParams.js";
 
 interface lockArray {
     category: Category;

@@ -1,10 +1,11 @@
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
-import { config } from "../config";
 import { Request, Response } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { HashedUserID } from "../types/user.model";
-import { Logger } from "../utils/logger";
+
+import { getHashCache } from "../utils/getHashCache.js";
+import { db } from "../databases/databases.js";
+import { config } from "../config.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { HashedUserID } from "../types/user.model.js";
+import { Logger } from "../utils/logger.js";
 
 interface AddUserAsVIPRequest extends Request {
     query: {

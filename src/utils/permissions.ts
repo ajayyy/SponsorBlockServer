@@ -1,13 +1,15 @@
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-import { Category } from "../types/segments.model";
-import { Feature, HashedUserID } from "../types/user.model";
-import { hasFeature } from "./features";
-import { isUserVIP } from "./isUserVIP";
-import { oneOf } from "./promise";
-import redis from "./redis";
-import { getReputation } from "./reputation";
-import { getServerConfig } from "./serverConfig";
+import { parseInt } from "lodash";
+
+import { config } from "../config.js";
+import { db, privateDB } from "../databases/databases.js";
+import { Category } from "../types/segments.model.js";
+import { Feature, HashedUserID } from "../types/user.model.js";
+import { hasFeature } from "./features.js";
+import { isUserVIP } from "./isUserVIP.js";
+import { oneOf } from "./promise.js";
+import redis from "./redis.js";
+import { getReputation } from "./reputation.js";
+import { getServerConfig } from "./serverConfig.js";
 
 interface OldSubmitterResult {
     canSubmit: boolean;
@@ -46,7 +48,8 @@ async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<OldSubmitter
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
         await redis.zRemRangeByScore("submitters", "-inf", Date.now() - fiveMinutes);
-        const last5MinUsers = await redis.zCard("submitters");
+        let last5MinUsers = await redis.zCard("submitters");
+        if (typeof last5MinUsers === "string") last5MinUsers = parseInt(last5MinUsers);
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submitters", { score: Date.now(), value: userID });
@@ -81,7 +84,8 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<OldSu
         }
 
         await redis.zRemRangeByScore("submittersDeArrow", "-inf", Date.now() - fiveMinutes);
-        const last5MinUsers = await redis.zCard("submittersDeArrow");
+        let last5MinUsers = await redis.zCard("submittersDeArrow");
+        if (typeof last5MinUsers === "string") last5MinUsers = parseInt(last5MinUsers);
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submittersDeArrow", { score: Date.now(), value: userID });

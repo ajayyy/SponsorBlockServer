@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { VideoID, VideoIDHash, Service } from "../types/segments.model";
-import { QueryCacher } from "../utils/queryCacher";
-import { brandingHashKey, brandingKey, skipSegmentsHashKey, skipSegmentsKey, skipSegmentsLargerHashKey, videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "../utils/redisKeys";
+
+import { VideoID, VideoIDHash, Service } from "../types/segments.model.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { brandingHashKey, brandingKey, skipSegmentsHashKey, skipSegmentsKey, skipSegmentsLargerHashKey, videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "../utils/redisKeys.js";
 
 type hashType = "skipSegments" | "skipSegmentsHash" | "skipSegmentsLargerHash" | "videoLabel" | "videoLabelHash" | "videoLabelsLargerHash" | "branding" | "brandingHash";
 type ETag = `"${hashType};${VideoIDHash};${Service};${number}"`;

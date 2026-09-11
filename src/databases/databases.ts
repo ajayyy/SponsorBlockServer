@@ -1,7 +1,7 @@
-import { config } from "../config";
-import { Sqlite } from "./Sqlite";
-import { Postgres } from "./Postgres";
-import { IDatabase } from "./IDatabase";
+import { config } from "../config.js";
+import { Postgres } from "./Postgres.js";
+import { IDatabase } from "./IDatabase.js";
+import { Logger } from "../utils/logger.js";
 
 let db: IDatabase;
 let privateDB: IDatabase;
@@ -39,33 +39,11 @@ if (config.postgres?.enabled) {
         } : null
     });
 } else {
-    db = new Sqlite({
-        dbPath: config.db,
-        dbSchemaFileName: config.dbSchema,
-        dbSchemaFolder: config.schemaFolder,
-        fileNamePrefix: "sponsorTimes",
-        readOnly: config.readOnly,
-        createDbIfNotExists: config.createDatabaseIfNotExist,
-        enableWalCheckpointNumber: !config.readOnly && config.mode === "production"
-    });
-    privateDB = new Sqlite({
-        dbPath: config.privateDB,
-        dbSchemaFileName: config.privateDBSchema,
-        dbSchemaFolder: config.schemaFolder,
-        fileNamePrefix: "private",
-        readOnly: config.readOnly,
-        createDbIfNotExists: config.createDatabaseIfNotExist,
-        enableWalCheckpointNumber: false
-    });
+    Logger.error("Sqlite is no longer supported, please migrate to postgres");
 }
 async function initDb(): Promise<void> {
     await db.init();
     await privateDB.init();
-
-    if (db instanceof Sqlite) {
-        // Attach private db to main db
-        (db as Sqlite).attachDatabase(config.privateDB, "privateDB");
-    }
 
     if (config.mode === "mirror" && db instanceof Postgres) {
         const tables = config?.dumpDatabase?.tables ?? [];

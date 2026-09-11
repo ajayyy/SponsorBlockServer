@@ -1,14 +1,15 @@
-import { db, privateDB } from "../databases/databases";
-import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
-import { config } from "../config";
-import { Category, DeArrowType, HashedIP, Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { UserID } from "../types/user.model";
-import { QueryCacher } from "../utils/queryCacher";
-import { isUserVIP } from "../utils/isUserVIP";
-import { parseCategories, parseDeArrowTypes } from "../utils/parseParams";
-import { Logger } from "../utils/logger";
 import axios from "axios";
+
+import { db, privateDB } from "../databases/databases.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { config } from "../config.js";
+import { Category, DeArrowType, HashedIP, Service, VideoID, VideoIDHash } from "../types/segments.model.js";
+import { UserID } from "../types/user.model.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { parseCategories, parseDeArrowTypes } from "../utils/parseParams.js";
+import { Logger } from "../utils/logger.js";
 
 export async function shadowBanUser(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;

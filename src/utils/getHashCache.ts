@@ -1,9 +1,9 @@
-import redis from "../utils/redis";
-import { shaHashKey } from "../utils/redisKeys";
-import { HashedValue } from "../types/hash.model";
-import { Logger } from "../utils/logger";
-import { getHash } from "../utils/getHash";
-import { config } from "../config";
+import redis from "../utils/redis.js";
+import { shaHashKey } from "../utils/redisKeys.js";
+import { HashedValue } from "../types/hash.model.js";
+import { Logger } from "../utils/logger.js";
+import { getHash } from "../utils/getHash.js";
+import { config } from "../config.js";
 
 const defaultedHashTimes = 5000;
 const cachedHashTimes = defaultedHashTimes - 1;

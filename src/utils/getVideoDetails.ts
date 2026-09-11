@@ -1,8 +1,8 @@
-import { config } from "../config";
-import { innerTubeVideoDetails } from "../types/innerTubeApi.model";
-import { APIVideoData } from "../types/youtubeApi.model";
-import { YouTubeAPI } from "../utils/youtubeApi";
-import { getPlayerData } from "../utils/innerTubeAPI";
+import { config } from "../config.js";
+import { innerTubeVideoDetails } from "../types/innerTubeApi.model.js";
+import { APIVideoData } from "../types/youtubeApi.model.js";
+import { YouTubeAPI } from "../utils/youtubeApi.js";
+import { getPlayerData } from "../utils/innerTubeAPI.js";
 
 export interface videoDetails {
   videoId: string,
@@ -43,20 +43,16 @@ async function newLeafWrapper(videoId: string, ignoreCache: boolean) {
     return result?.data ?? Promise.reject();
 }
 
-export function getVideoDetails(videoId: string, ignoreCache = false): Promise<videoDetails> {
+export function getVideoDetails(videoId: string, ignoreCache = false): Promise<videoDetails | null> {
     if (!config.newLeafURLs) {
         return getPlayerData(videoId, ignoreCache)
             .then(data => convertFromInnerTube(data))
-            .catch(() => {
-                return null;
-            });
+            .catch(() => null as videoDetails | null);
     }
     return Promise.any([
         newLeafWrapper(videoId, ignoreCache)
             .then(videoData => convertFromNewLeaf(videoData)),
         getPlayerData(videoId, ignoreCache)
             .then(data => convertFromInnerTube(data))
-    ]).catch(() => {
-        return null;
-    });
+    ]).catch(() => null as videoDetails | null);
 }

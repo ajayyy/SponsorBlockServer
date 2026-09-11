@@ -1,31 +1,32 @@
-import { config } from "../config";
-import { Logger } from "../utils/logger";
-import { db, privateDB } from "../databases/databases";
-import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { getSubmissionUUID } from "../utils/getSubmissionUUID";
-import { getHash } from "../utils/getHash";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getFormattedTime } from "../utils/getFormattedTime";
-import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, HashedIP, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
-import { deleteLockCategories } from "./deleteLockCategories";
-import { QueryCacher } from "../utils/queryCacher";
-import { getReputation } from "../utils/reputation";
-import { HashedUserID, UserID } from "../types/user.model";
-import { isUserVIP } from "../utils/isUserVIP";
-import { isUserTempVIP } from "../utils/isUserTempVIP";
-import { parseUserAgent } from "../utils/userAgent";
-import { getService } from "../utils/getService";
 import axios from "axios";
-import { vote } from "./voteOnSponsorTime";
-import { canSubmit, canSubmitGlobal } from "../utils/permissions";
-import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
-import * as youtubeID from "../utils/youtubeID";
-import { acquireLock } from "../utils/redisLock";
-import { checkBanStatus } from "../utils/checkBan";
-import { isRequestInvalid } from "../utils/requestValidator";
+
+import { config } from "../config.js";
+import { Logger } from "../utils/logger.js";
+import { db, privateDB } from "../databases/databases.js";
+import { getMaxResThumbnail } from "../utils/youtubeApi.js";
+import { getSubmissionUUID } from "../utils/getSubmissionUUID.js";
+import { getHash } from "../utils/getHash.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { getIP } from "../utils/getIP.js";
+import { getFormattedTime } from "../utils/getFormattedTime.js";
+import { dispatchEvent } from "../utils/webhookUtils.js";
+import { ActionType, Category, HashedIP, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model.js";
+import { deleteLockCategories } from "./deleteLockCategories.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { getReputation } from "../utils/reputation.js";
+import { HashedUserID, UserID } from "../types/user.model.js";
+import { isUserVIP } from "../utils/isUserVIP.js";
+import { isUserTempVIP } from "../utils/isUserTempVIP.js";
+import { parseUserAgent } from "../utils/userAgent.js";
+import { getService } from "../utils/getService.js";
+import { vote } from "./voteOnSponsorTime.js";
+import { canSubmit, canSubmitGlobal } from "../utils/permissions.js";
+import { getVideoDetails, videoDetails } from "../utils/getVideoDetails.js";
+import * as youtubeID from "../utils/youtubeID.js";
+import { acquireLock } from "../utils/redisLock.js";
+import { checkBanStatus } from "../utils/checkBan.js";
+import { isRequestInvalid } from "../utils/requestValidator.js";
 
 type CheckResult = {
     pass: boolean,

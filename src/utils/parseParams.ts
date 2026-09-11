@@ -1,23 +1,24 @@
 import { Request } from "express";
-import { ActionType, SegmentUUID, Category, DeArrowType } from "../types/segments.model";
-import { config } from "../config";
+
+import { ActionType, SegmentUUID, Category, DeArrowType } from "../types/segments.model.js";
+import { config } from "../config.js";
 
 type fn = (req: Request, fallback: any) => any[];
 
 const syntaxErrorWrapper = (fn: fn, req: Request, fallback: any) => {
     try { return fn(req, fallback); }
-    catch (e) {
+    catch {
         return undefined;
     }
 };
 
-const getQueryList = <T>(req: Request, fallback: T[], param: string, paramPlural: string): string[] | T[] =>
-    req.query[paramPlural]
-        ? JSON.parse(req.query[paramPlural] as string)
+const getQueryList = <T>(req: Request, fallback: T[], param: string, paramPlural: string): T[] =>
+    req.query[paramPlural] && typeof req.query[paramPlural] === "string"
+        ? JSON.parse(req.query[paramPlural])
         : req.query[param]
             ? Array.isArray(req.query[param])
-                ? req.query[param]
-                : [req.query[param]]
+                ? req.query[param] as T[]
+                : [req.query[param] as T]
             : fallback;
 
 const getCategories = (req: Request, fallback: Category[] ): string[] | Category[] =>
@@ -48,24 +49,10 @@ const filterActionType = (actionTypes: ActionType[]) => {
 export const filterInvalidCategoryActionType = (categories: Category[], actionTypes: ActionType[]): Category[] =>
     categories.filter((category: Category) => filterActionType(actionTypes).includes(category));
 
-const getActionTypes = (req: Request, fallback: ActionType[]): ActionType[] =>
-    req.query.actionTypes
-        ? JSON.parse(req.query.actionTypes as string)
-        : req.query.actionType
-            ? Array.isArray(req.query.actionType)
-                ? req.query.actionType
-                : [req.query.actionType]
-            : fallback;
+const getActionTypes = (req: Request, fallback: ActionType[]): ActionType[] => getQueryList(req, fallback, "actionType", "actionTypes");
 
 // fallback to empty array
-const getRequiredSegments = (req: Request): SegmentUUID[] =>
-    req.query.requiredSegments
-        ? JSON.parse(req.query.requiredSegments as string)
-        : req.query.requiredSegment
-            ? Array.isArray(req.query.requiredSegment)
-                ? req.query.requiredSegment
-                : [req.query.requiredSegment]
-            : [];
+const getRequiredSegments = (req: Request): SegmentUUID[] => getQueryList(req, [], "requiredSegment", "requiredSegments");
 
 export const parseCategories = (req: Request, fallback: Category[]): Category[] => {
     const categories = syntaxErrorWrapper(getCategories, req, fallback);

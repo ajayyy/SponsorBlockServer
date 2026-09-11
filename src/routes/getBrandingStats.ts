@@ -1,10 +1,10 @@
 /* istanbul ignore file */
-
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
 import axios from "axios";
-import { Logger } from "../utils/logger";
-import { getCWSUsers, getChromeUsers } from "../utils/getCWSUsers";
+
+import { db } from "../databases/databases.js";
+import { Logger } from "../utils/logger.js";
+import { getCWSUsers, getChromeUsers } from "../utils/getCWSUsers.js";
 
 // A cache of the number of chrome web store users
 let chromeUsersCache = 30000;

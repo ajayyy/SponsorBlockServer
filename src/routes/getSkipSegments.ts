@@ -1,22 +1,22 @@
 import { Request, Response } from "express";
 import { partition } from "lodash";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey, shadowHiddenIPKey, skipSegmentsLargerHashKey } from "../utils/redisKeys";
-import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { Logger } from "../utils/logger";
-import { QueryCacher } from "../utils/queryCacher";
-import { getReputation } from "../utils/reputation";
-import { getService } from "../utils/getService";
-import { promiseOrTimeout } from "../utils/promise";
-import { parseSkipSegments } from "../utils/parseSkipSegments";
-import { getEtag } from "../middleware/etag";
-import { shuffleArray } from "../utils/array";
-import { Postgres } from "../databases/Postgres";
-import { getRedisStats } from "../utils/redis";
+
+import { config } from "../config.js";
+import { db, privateDB } from "../databases/databases.js";
+import { skipSegmentsHashKey, skipSegmentsKey, skipSegmentGroupsKey, shadowHiddenIPKey, skipSegmentsLargerHashKey } from "../utils/redisKeys.js";
+import { SBRecord } from "../types/lib.model.js";
+import { ActionType, Category, DBSegment, HashedIP, IPAddress, OverlappingSegmentGroup, Segment, SegmentCache, SegmentUUID, Service, VideoData, VideoID, VideoIDHash, Visibility, VotableObject } from "../types/segments.model.js";
+import { getHashCache } from "../utils/getHashCache.js";
+import { getIP } from "../utils/getIP.js";
+import { Logger } from "../utils/logger.js";
+import { QueryCacher } from "../utils/queryCacher.js";
+import { getReputation } from "../utils/reputation.js";
+import { getService } from "../utils/getService.js";
+import { promiseOrTimeout } from "../utils/promise.js";
+import { parseSkipSegments } from "../utils/parseSkipSegments.js";
+import { getEtag } from "../middleware/etag.js";
+import { shuffleArray } from "../utils/array.js";
+import { Postgres } from "../databases/Postgres.js";
 
 async function prepareCategorySegments(req: Request, videoID: VideoID, service: Service, segments: DBSegment[], cache: SegmentCache = { shadowHiddenSegmentIPs: {} }, useCache: boolean): Promise<Segment[]> {
     const shouldFilter: boolean[] = await Promise.all(segments.map(async (segment) => {
@@ -51,13 +51,13 @@ async function prepareCategorySegments(req: Request, videoID: VideoID, service: 
                 }
 
                 cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = promiseOrTimeout(QueryCacher.get(fetchData, shadowHiddenIPKey(videoID, segment.timeSubmitted, service)), 150);
-            } catch (e) {
+            } catch {
                 // give up on shadowhide for now
                 cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted] = null;
             }
         }
 
-        let ipList = [];
+        let ipList;
         try {
             ipList = await cache.shadowHiddenSegmentIPs[videoID][segment.timeSubmitted];
         } catch (e) {
@@ -328,7 +328,7 @@ async function chooseSegments(videoID: VideoID, service: Service, segments: DBSe
 //Segments with less than -1 votes are already ignored before this function is called
 async function buildSegmentGroups(segments: DBSegment[]): Promise<OverlappingSegmentGroup[]> {
     const reputationPromises = segments.map(segment =>
-        segment.userID && !db.highLoad() ? getReputation(segment.userID).catch(() => null) : null);
+        segment.userID && !db.highLoad() ? getReputation(segment.userID).catch(() => null as number | null) : null);
 
     //Create groups of segments that are similar to eachother
     //Segments must be sorted by their startTime so that we can build groups chronologically:
