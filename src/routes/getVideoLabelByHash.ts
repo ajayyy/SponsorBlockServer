@@ -6,7 +6,7 @@ import { getService } from "../utils/getService";
 
 export async function getVideoLabelsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
+    if (!req.params.prefix || typeof req.params.prefix !== "string" || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;

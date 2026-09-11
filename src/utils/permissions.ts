@@ -1,3 +1,4 @@
+import { parseInt } from "lodash";
 import { config } from "../config";
 import { db, privateDB } from "../databases/databases";
 import { Category } from "../types/segments.model";
@@ -46,7 +47,8 @@ async function oldSubmitterOrAllowed(userID: HashedUserID): Promise<OldSubmitter
     const isOldSubmitter = result.submissionCount >= 1;
     if (!isOldSubmitter) {
         await redis.zRemRangeByScore("submitters", "-inf", Date.now() - fiveMinutes);
-        const last5MinUsers = await redis.zCard("submitters");
+        let last5MinUsers = await redis.zCard("submitters");
+        if (typeof last5MinUsers === "string") last5MinUsers = parseInt(last5MinUsers);
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submitters", { score: Date.now(), value: userID });
@@ -81,7 +83,8 @@ async function oldDeArrowSubmitterOrAllowed(userID: HashedUserID): Promise<OldSu
         }
 
         await redis.zRemRangeByScore("submittersDeArrow", "-inf", Date.now() - fiveMinutes);
-        const last5MinUsers = await redis.zCard("submittersDeArrow");
+        let last5MinUsers = await redis.zCard("submittersDeArrow");
+        if (typeof last5MinUsers === "string") last5MinUsers = parseInt(last5MinUsers);
 
         if (maxUsers && last5MinUsers < parseInt(maxUsers)) {
             await redis.zAdd("submittersDeArrow", { score: Date.now(), value: userID });

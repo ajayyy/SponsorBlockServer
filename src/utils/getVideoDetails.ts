@@ -43,20 +43,16 @@ async function newLeafWrapper(videoId: string, ignoreCache: boolean) {
     return result?.data ?? Promise.reject();
 }
 
-export function getVideoDetails(videoId: string, ignoreCache = false): Promise<videoDetails> {
+export function getVideoDetails(videoId: string, ignoreCache = false): Promise<videoDetails | null> {
     if (!config.newLeafURLs) {
         return getPlayerData(videoId, ignoreCache)
             .then(data => convertFromInnerTube(data))
-            .catch(() => {
-                return null;
-            });
+            .catch(() => null as videoDetails | null);
     }
     return Promise.any([
         newLeafWrapper(videoId, ignoreCache)
             .then(videoData => convertFromNewLeaf(videoData)),
         getPlayerData(videoId, ignoreCache)
             .then(data => convertFromInnerTube(data))
-    ]).catch(() => {
-        return null;
-    });
+    ]).catch(() => null as videoDetails | null);
 }

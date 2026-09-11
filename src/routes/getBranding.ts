@@ -370,7 +370,7 @@ export async function getBranding(req: Request, res: Response) {
 
         await getEtag("branding", (videoID as string), service)
             .then(etag => res.set("ETag", etag))
-            .catch(() => null);
+            .catch(() => null as void);
 
         const status = result.titles.length > 0 || result.thumbnails.length > 0 || result.casualVotes.length > 0 ? 200 : 404;
         return res.status(status).json(result);
@@ -397,7 +397,7 @@ export async function getBrandingByHashEndpoint(req: Request, res: Response) {
 
         await getEtag("brandingHash", (hashPrefix as string), service)
             .then(etag => res.set("ETag", etag))
-            .catch(() => null);
+            .catch(() => null as void);
 
         const status = !isEmpty(result) ? 200 : 404;
         return res.status(status).json(result);

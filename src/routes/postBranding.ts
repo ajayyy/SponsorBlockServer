@@ -17,7 +17,7 @@ import { hasFeature } from "../utils/features";
 import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
 import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { getVideoDetails } from "../utils/getVideoDetails";
+import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
 import { canSubmitDeArrow } from "../utils/permissions";
 import { parseUserAgent } from "../utils/userAgent";
 import { isRequestInvalid } from "../utils/requestValidator";
@@ -375,9 +375,10 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" 
         WHERE "titles"."UUID" = ?`,
         [UUID]);
+    let data: videoDetails | null;
 
     if (wasWarned && voteType === BrandingVoteType.Upvote) {
-        const data = await getVideoDetails(videoID);
+        data ??= await getVideoDetails(videoID);
         axios.post(config.discordDeArrowWarnedWebhookURL, {
             "embeds": [{
                 "title": data?.title,
@@ -422,7 +423,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         if (lockedSubmission && currentSubmission.score - lockedSubmission.score > 2) {
             const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [lockedSubmission.userID]);
 
-            const data = await getVideoDetails(videoID);
+            data ??= await getVideoDetails(videoID);
             axios.post(config.discordDeArrowLockedWebhookURL, {
                 "embeds": [{
                     "title": data?.title,
@@ -456,7 +457,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
     if (voteType === BrandingVoteType.Downvote && currentSubmission.locked === 1) {
         const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [currentSubmission.userID]);
 
-        const data = await getVideoDetails(videoID);
+        data ??= await getVideoDetails(videoID);
         axios.post(config.discordDeArrowLockedWebhookURL, {
             "embeds": [{
                 "title": data?.title,

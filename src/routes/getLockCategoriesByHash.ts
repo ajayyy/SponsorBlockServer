@@ -51,7 +51,7 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
         return res.sendStatus(400);
     }
 
-    if (!hashPrefixTester(req.params.prefix)) {
+    if (typeof req.params.prefix !== "string" || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
