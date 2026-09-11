@@ -38,7 +38,6 @@ import { endpoint as getSearchSegments } from "./routes/getSearchSegments";
 import { getStatus } from "./routes/getStatus";
 import { getLockReason } from "./routes/getLockReason";
 import { getUserStats } from "./routes/getUserStats";
-import ExpressPromiseRouter from "express-promise-router";
 import { Server } from "http";
 import { youtubeApiProxy } from "./routes/youtubeApiProxy";
 import { getChapterNames } from "./routes/getChapterNames";
@@ -67,7 +66,7 @@ export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
     const app = express();
 
-    const router = ExpressPromiseRouter();
+    const router = Router();
     app.use(router);
     app.set("etag", false); // disable built in etag
 

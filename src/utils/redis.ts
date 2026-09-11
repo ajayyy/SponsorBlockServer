@@ -1,7 +1,6 @@
 import { config } from "../config";
 import { Logger } from "./logger";
-import { RedisClientType, SetOptions, createClient } from "redis";
-import { RedisCommandArgument, RedisCommandArguments, RedisCommandRawReply } from "@redis/client/dist/lib/commands";
+import { RedisArgument, RedisClientType, SetOptions, createClient } from "redis";
 import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
 import { db } from "../databases/databases";
@@ -9,7 +8,8 @@ import { Postgres } from "../databases/Postgres";
 import { compress, uncompress } from "lz4-napi";
 import { LRUCache } from "lru-cache";
 import { shouldClientCacheKey } from "./redisKeys";
-import { ZMember } from "@redis/client/dist/lib/commands/generic-transformers";
+import { RedisVariadicArgument, SortedSetMember } from "@redis/client/dist/lib/commands/generic-transformers";
+import { ReplyUnion } from "@redis/client/dist/lib/RESP/types";
 
 export interface RedisStats {
     activeRequests: number;
@@ -25,20 +25,20 @@ export interface RedisStats {
 }
 
 interface RedisSB {
-    get(key: RedisCommandArgument, useClientCache?: boolean): Promise<string>;
-    getWithCache(key: RedisCommandArgument): Promise<string>;
-    set(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
-    setWithCache(key: RedisCommandArgument, value: RedisCommandArgument, options?: SetOptions): Promise<string>;
-    setEx(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
-    setExWithCache(key: RedisCommandArgument, seconds: number, value: RedisCommandArgument): Promise<string>;
-    del(...keys: [RedisCommandArgument]): Promise<number>;
-    increment?(key: RedisCommandArgument): Promise<RedisCommandRawReply[]>;
-    sendCommand(args: RedisCommandArguments, options?: RedisClientOptions): Promise<RedisReply>;
-    ttl(key: RedisCommandArgument): Promise<number>;
-    quit(): Promise<void>;
-    zRemRangeByScore(key: string, min: number | RedisCommandArgument, max: number | RedisCommandArgument): Promise<number>;
-    zAdd(key: string, members: ZMember | ZMember[]): Promise<number>;
-    zCard(key: string): Promise<number>;
+    get(key: RedisArgument): Promise<string>;
+    getWithCache(key: RedisArgument): Promise<string>;
+    set(key: RedisArgument, value: RedisArgument, options?: SetOptions): Promise<string>;
+    setWithCache(key: RedisArgument, value: RedisArgument, options?: SetOptions): Promise<string>;
+    setEx(key: RedisArgument, seconds: number, value: RedisArgument): Promise<string>;
+    setExWithCache(key: RedisArgument, seconds: number, value: RedisArgument): Promise<string>;
+    del(keys: RedisVariadicArgument): Promise<number | `${number}`>;
+    increment?(key: RedisArgument): Promise<ReplyUnion[]>;
+    sendCommand(args: ReadonlyArray<RedisArgument>, options?: RedisClientOptions): Promise<RedisReply>;
+    ttl(key: RedisArgument): Promise<number | `${number}`>;
+    destroy(): void;
+    zRemRangeByScore(key: string, min: number | RedisArgument, max: number | RedisArgument): Promise<number | `${number}`>;
+    zAdd(key: string, members: SortedSetMember | SortedSetMember[]): Promise<number | `${number}`>;
+    zCard(key: string): Promise<number | `${number}`>;
 }
 
 let exportClient: RedisSB = {
@@ -51,7 +51,7 @@ let exportClient: RedisSB = {
     del: () => Promise.resolve(null),
     increment: () => Promise.resolve(null),
     sendCommand: () => Promise.resolve(null),
-    quit: () => Promise.resolve(null),
+    destroy: () => null,
     ttl: () => Promise.resolve(null),
     zRemRangeByScore: () => Promise.resolve(null),
     zAdd: () => Promise.resolve(null),
@@ -76,14 +76,14 @@ const maxStoredTimes = 200;
 
 const activeRequestPromises: Record<string, Promise<string>> = {};
 // Used to handle race conditions
-const resetKeys: Set<RedisCommandArgument> = new Set();
-const cache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, string>({
+const resetKeys: Set<RedisArgument> = new Set();
+const cache = config.redis.clientCacheSize ? new LRUCache<RedisArgument, string>({
     max: config.redis.clientCacheMax,
     ttl: 1000 * 60 * 30,
     ttlResolution: 1000 * 60 * 15
 }) : null;
 // Used to cache ttl data
-const ttlCache = config.redis.clientCacheSize ? new LRUCache<RedisCommandArgument, number>({
+const ttlCache = config.redis.clientCacheSize ? new LRUCache<RedisArgument, number>({
     max: config.redis.clientCacheSize / 10 / 4, // 4 byte integer per element
     ttl: 1000 * 60 * 30,
     ttlResolution: 1000 * 60 * 15
@@ -107,7 +107,7 @@ if (config.redis?.enabled) {
 
     let cacheClient = null as RedisClientType | null;
 
-    const createKeyName = (key: RedisCommandArgument) => (key + (config.redis.useCompression ? ".c" : "")) as RedisCommandArgument;
+    const createKeyName = (key: RedisArgument) => (key + (config.redis.useCompression ? ".c" : "")) as RedisArgument;
 
     exportClient.getWithCache = (key) => {
         const cachedItem = cache && cacheClient && cache.get(key);
@@ -196,7 +196,10 @@ if (config.redis?.enabled) {
     };
 
     const del = client.del.bind(client);
-    exportClient.del = (...keys) => {
+    exportClient.del = (keys) => {
+        if (!Array.isArray(keys)) {
+            keys = [keys];
+        }
         if (config.redis.dragonflyMode) {
             for (const key of keys) {
                 void client.publish("__redis__:invalidate", key);
@@ -204,9 +207,9 @@ if (config.redis?.enabled) {
         }
 
         if (config.redis.useCompression) {
-            return del(keys.flatMap((key) => [key, createKeyName(key)]) as [RedisCommandArgument]);
+            return del(keys.flatMap((key) => [key, createKeyName(key)]));
         } else {
-            return del(...keys);
+            return del(keys);
         }
     };
 
@@ -219,7 +222,8 @@ if (config.redis?.enabled) {
 
             return ttlResult + config.redis?.expiryTime - Math.floor(Date.now() / 1000);
         } else {
-            const result = await ttl(createKeyName(key));
+            let result = await ttl(createKeyName(key));
+            if (typeof result === "string") result = parseFloat(result);
             if (ttlCache) ttlCache.set(key, Math.floor(Date.now() / 1000) - (config.redis?.expiryTime - result));
 
             return result;
@@ -253,6 +257,7 @@ if (config.redis?.enabled) {
             if (timeout !== null) clearTimeout(timeout);
 
             activeRequests--;
+            if (typeof reply !== "string") reply = reply.toString();
             resolve(reply);
 
             const responseTime = Date.now() - start;
@@ -275,7 +280,7 @@ if (config.redis?.enabled) {
         });
     });
 
-    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string>, params: T): Promise<string> =>
+    const setFun = <T extends Array<any>>(func: (...args: T) => Promise<string | Buffer<ArrayBufferLike>>, params: T): Promise<string> =>
         new Promise((resolve, reject) => {
             if ((config.redis.maxWriteConnections && activeRequests > config.redis.maxWriteConnections)
                 || (config.redis.responseTimePause
@@ -291,6 +296,7 @@ if (config.redis?.enabled) {
             func(...params).then((reply) => {
                 activeRequests--;
                 writeRequests--;
+                if (typeof reply !== "string") reply = reply.toString();
                 resolve(reply);
 
                 writeResponseTime.push(Date.now() - start);
@@ -350,7 +356,7 @@ if (config.redis?.enabled) {
             Logger.info("Redis cache client: trying to reconnect");
             cache?.clear();
 
-            void cacheClient.disconnect();
+            void cacheClient.destroy();
             setTimeout(() => createCacheClient(), 1000);
         });
 
@@ -413,7 +419,7 @@ export function getRedisStats(): RedisStats {
 }
 
 async function setupCacheClientListener(cacheClient: RedisClientType,
-    cache: LRUCache<RedisCommandArgument, string>) {
+    cache: LRUCache<RedisArgument, string>) {
 
     if (!config.redis.dragonflyMode) {
         cacheConnectionClientId = String(await cacheClient.clientId());

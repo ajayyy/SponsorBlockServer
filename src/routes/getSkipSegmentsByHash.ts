@@ -8,7 +8,7 @@ import { getEtag } from "../middleware/etag";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
+    if (!req.params.prefix || typeof req.params.prefix !== "string" || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
@@ -26,7 +26,7 @@ export async function getSkipSegmentsByHash(req: Request, res: Response): Promis
         const hashKey = hashPrefix.length === 4 ? "skipSegmentsHash" : "skipSegmentsLargerHash";
         await getEtag(hashKey, hashPrefix, service)
             .then(etag => res.set("ETag", etag))
-            .catch(/* istanbul ignore next */ () => null);
+            .catch(/* istanbul ignore next */ () => null as void);
         const output = Object.entries(segments).map(([videoID, data]) => ({
             videoID,
             segments: data.segments,

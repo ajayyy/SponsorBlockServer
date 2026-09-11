@@ -236,14 +236,14 @@ async function queueDump(): Promise<void> {
                 const fileName = `${table.name}_${startTime}.csv`;
                 const file = `${appExportPath}/${fileName}`;
 
-                await new Promise<string>((resolve, reject) => {
+                await new Promise<void>((resolve, reject) => {
                     exec(`psql -c "\\copy (SELECT * FROM \\"${table.name}\\"${table.order ? ` ORDER BY \\"${table.order}\\"` : ``})`
-                            + ` TO '${file}' WITH (FORMAT CSV, HEADER true);"`, credentials, (error, stdout, stderr) => {
+                            + ` TO '${file}' WITH (FORMAT CSV, HEADER true);"`, credentials, (error, _stdout, stderr) => {
                         if (error) {
                             reject(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
                         }
 
-                        resolve(error ? stderr : stdout);
+                        resolve();
                     });
                 });
 

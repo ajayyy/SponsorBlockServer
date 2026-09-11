@@ -4,6 +4,7 @@ import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, ski
 import { Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Feature, HashedUserID, UserID } from "../types/user.model";
 import { config } from "../config";
+import { parseInt } from "lodash";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
@@ -146,6 +147,9 @@ async function getKeyLastModified(key: string): Promise<Date> {
     if (!config.redis?.enabled) return Promise.reject("ETag - Redis not enabled");
     return await redis.ttl(key)
         .then(ttl => {
+            if (typeof ttl === "string") {
+                ttl = parseFloat(ttl);
+            }
             if (ttl <= 0) return new Date();
             const sinceLive = config.redis?.expiryTime - ttl;
             const now = Math.floor(Date.now() / 1000);
