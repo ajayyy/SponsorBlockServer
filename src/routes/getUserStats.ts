@@ -1,10 +1,13 @@
-import { db } from "../databases/databases";
-import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
-import { HashedUserID, UserID } from "../types/user.model";
-import { config } from "../config";
-import { Logger } from "../utils/logger";
-import { isUserBanned } from "../utils/checkBan";
+
+import { db } from "#databases/databases";
+import { getHashCache } from "#utils/getHashCache";
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+import { isUserBanned } from "#utils/checkBan";
+
+import { HashedUserID, UserID } from "#types/user";
+
 type nestedObj = Record<string, Record<string, number>>;
 const maxRewardTimePerSegmentInSeconds = config.maxRewardTimePerSegmentInSeconds ?? 86400;
 
@@ -87,7 +90,7 @@ async function dbGetUsername(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         return row?.userName ?? userID;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return false;
     }
 }

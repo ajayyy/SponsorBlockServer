@@ -1,8 +1,9 @@
-import { IDatabase } from "../../src/databases/IDatabase";
-import { Service, VideoIDHash } from "../../src/types/segments.model";
-import { HashedUserID } from "../../src/types/user.model";
-import { genRandom, genRandomValue } from "./getRandom";
-import { getHash } from "../../src/utils/getHash";
+import { IDatabase } from "#databases/IDatabase";
+import { Service, VideoIDHash } from "#types/segments";
+import { HashedUserID } from "#types/user";
+import { getHash } from "#utils/getHash";
+
+import { genRandom, genRandomValue } from "#test/utils/getRandom";
 
 interface baseParams {
     videoID?: string

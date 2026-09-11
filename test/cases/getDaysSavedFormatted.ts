@@ -1,7 +1,9 @@
 import assert from "assert";
-import { client } from "../utils/httpClient";
 import sinon from "sinon";
-import { db } from "../../src/databases/databases";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
 
 const endpoint = "/api/getDaysSavedFormatted";
 

@@ -1,10 +1,12 @@
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { getSegmentsByHash } from "./getSkipSegments";
 import { Request, Response } from "express";
-import { VideoIDHash } from "../types/segments.model";
-import { Logger } from "../utils/logger";
-import { parseSkipSegments } from "../utils/parseSkipSegments";
-import { getEtag } from "../middleware/etag";
+
+import { hashPrefixTester } from "#utils/hashPrefixTester";
+import { getSegmentsByHash } from "#routes/getSkipSegments";
+import { Logger } from "#utils/logger";
+import { parseSkipSegments } from "#utils/parseSkipSegments";
+import { getEtag } from "#middleware/etag";
+
+import { VideoIDHash } from "#types/segments";
 
 export async function getSkipSegmentsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;

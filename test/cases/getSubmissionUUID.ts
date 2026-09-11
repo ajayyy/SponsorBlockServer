@@ -1,11 +1,13 @@
-import { getSubmissionUUID } from "../../src/utils/getSubmissionUUID";
 import assert from "assert";
-import { ActionType, VideoID, Service, Category } from "../../src/types/segments.model";
-import { HashedUserID } from "../../src/types/user.model";
-import { getHash } from "../../src/utils/getHash";
-import { HashedValue } from "../../src/types/hash.model";
-import { genAnonUser } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+
+import { getSubmissionUUID } from "#utils/getSubmissionUUID";
+import { ActionType, VideoID, Service, Category } from "#types/segments";
+import { HashedUserID } from "#types/user";
+import { getHash } from "#utils/getHash";
+import { HashedValue } from "#types/hash";
+
+import { genAnonUser } from "#test/utils/genUser";
+import { genRandomValue } from "#test/utils/getRandom";
 
 function testHash (segment: segment, version: number): HashedValue {
     const manualHash = getHash(Object.values(segment).join(""), 1) as HashedValue;

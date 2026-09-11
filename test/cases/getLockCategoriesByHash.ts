@@ -1,8 +1,10 @@
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { ActionType } from "../../src/types/segments.model";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+import { ActionType } from "#types/segments";
+
+import { client } from "#test/utils/httpClient";
 
 const fakeHash = "b05a20424f24a53dac1b059fb78d861ba9723645026be2174c93a94f9106bb35";
 const endpoint = "/api/lockCategories";

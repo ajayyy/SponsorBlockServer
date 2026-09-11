@@ -1,26 +1,27 @@
 import { Request, Response } from "express";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-
-import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission, TitleSubmission } from "../types/branding.model";
-import { HashedIP, IPAddress, VideoID } from "../types/segments.model";
-import { Feature, HashedUserID } from "../types/user.model";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getService } from "../utils/getService";
-import { isUserVIP } from "../utils/isUserVIP";
-import { Logger } from "../utils/logger";
 import crypto from "crypto";
-import { QueryCacher } from "../utils/queryCacher";
-import { acquireLock } from "../utils/redisLock";
-import { hasFeature } from "../utils/features";
-import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
-import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
-import { canSubmitDeArrow } from "../utils/permissions";
-import { parseUserAgent } from "../utils/userAgent";
-import { isRequestInvalid } from "../utils/requestValidator";
+
+import { config } from "#config";
+import { db, privateDB } from "#databases/databases";
+import { getHashCache } from "#utils/getHashCache";
+import { getIP } from "#utils/getIP";
+import { getService } from "#utils/getService";
+import { isUserVIP } from "#utils/isUserVIP";
+import { Logger } from "#utils/logger";
+import { QueryCacher } from "#utils/queryCacher";
+import { acquireLock } from "#utils/redisLock";
+import { hasFeature } from "#utils/features";
+import { checkBanStatus } from "#utils/checkBan";
+import { getMaxResThumbnail } from "#utils/youtubeApi";
+import { getVideoDetails, videoDetails } from "#utils/getVideoDetails";
+import { canSubmitDeArrow } from "#utils/permissions";
+import { parseUserAgent } from "#utils/userAgent";
+import { isRequestInvalid } from "#utils/requestValidator";
+
+import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission, TitleSubmission } from "#types/branding";
+import { HashedIP, IPAddress, VideoID } from "#types/segments";
+import { Feature, HashedUserID } from "#types/user";
 
 enum BrandingType {
     Title,

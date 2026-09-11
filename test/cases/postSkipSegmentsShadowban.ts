@@ -1,14 +1,9 @@
 import assert from "assert";
-import { postSkipSegmentParam } from "./postSkipSegments";
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
-import { ImportMock } from "ts-mock-imports";
-import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import { YouTubeApiMock } from "../mocks/youtubeMock";
 
-const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
-const sinonStub = mockManager.mock("listVideos");
-sinonStub.callsFake(YouTubeApiMock.listVideos);
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { postSkipSegmentParam } from "#test/cases/postSkipSegments";
 
 describe("postSkipSegments - shadowban", () => {
     const banUser01 = "postSkip-banUser01";

@@ -1,6 +1,7 @@
-import { HashedUserID, UserID } from "../../src/types/user.model";
-import { getHash } from "../../src/utils/getHash";
-import { genRandom } from "./getRandom";
+import { HashedUserID, UserID } from "#types/user";
+import { getHash } from "#utils/getHash";
+
+import { genRandom } from "#test/utils/getRandom";
 
 export interface TestUser {
     private: UserID,

@@ -1,10 +1,10 @@
-import axios from "axios";
 import { Request, Response } from "express";
-import { config } from "../config";
-import { privateDB } from "../databases/databases";
-import { Logger } from "../utils/logger";
-import { getPatreonIdentity, PatronStatus, refreshToken, TokenType } from "../utils/tokenUtils";
-import { getHash } from "../utils/getHash";
+
+import { config } from "#config";
+import { privateDB } from "#databases/databases";
+import { Logger } from "#utils/logger";
+import { getPatreonIdentity, PatronStatus, refreshToken, TokenType } from "#utils/tokenUtils";
+import { getHash } from "#utils/getHash";
 
 interface VerifyTokenRequest extends Request {
     query: {

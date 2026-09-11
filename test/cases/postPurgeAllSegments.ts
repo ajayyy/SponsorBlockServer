@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
-import { IDatabase } from "../../src/databases/IDatabase";
 import assert from "assert";
-import { client } from "../utils/httpClient";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+import { IDatabase } from "#databases/IDatabase";
+
+import { client } from "#test/utils/httpClient";
 
 async function dbSponsorTimesAdd(db: IDatabase, videoID: string, startTime: number, endTime: number, UUID: string, category: string) {
     const votes = 0,

@@ -1,11 +1,13 @@
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { config } from "../../src/config";
 import sinon from "sinon";
-import { insertSegment } from "../utils/segmentQueryGen";
-import { HashedUserID } from "../../src/types/user.model";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+import { config } from "#config";
+import { HashedUserID } from "#types/user";
+
+import { insertSegment } from "#test/utils/segmentQueryGen";
+import { client } from "#test/utils/httpClient";
 
 const USERID_LIMIT = 30;
 

@@ -1,7 +1,10 @@
-import sinon from "sinon";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
+import sinon from "sinon";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+
 client.defaults.validateStatus = (status) => status < 600;
 
 describe("High load test", () => {

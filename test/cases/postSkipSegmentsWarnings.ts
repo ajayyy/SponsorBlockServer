@@ -1,7 +1,9 @@
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { usersForSuite } from "../utils/randomUsers";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { usersForSuite } from "#test/utils/randomUsers";
 
 describe("postSkipSegments Warnings", () => {
     // Constant and helpers

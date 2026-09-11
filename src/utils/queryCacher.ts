@@ -1,10 +1,10 @@
-import redis, { TooManyActiveConnectionsError } from "../utils/redis";
-import { Logger } from "../utils/logger";
-import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey, videoLabelsLargerHashKey, skipSegmentsLargerHashKey } from "./redisKeys";
-import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { Feature, HashedUserID, UserID } from "../types/user.model";
-import { config } from "../config";
-import { parseInt } from "lodash";
+import redis, { TooManyActiveConnectionsError } from "#utils/redis";
+import { Logger } from "#utils/logger";
+import { skipSegmentsHashKey, skipSegmentsKey, reputationKey, ratingHashKey, skipSegmentGroupsKey, userFeatureKey, videoLabelsKey, videoLabelsHashKey, brandingHashKey, brandingKey, videoLabelsLargerHashKey, skipSegmentsLargerHashKey } from "#utils/redisKeys";
+import { config } from "#config";
+
+import { Service, VideoID, VideoIDHash } from "#types/segments";
+import { Feature, HashedUserID, UserID } from "#types/user";
 
 async function get<T>(fetchFromDB: () => Promise<T>, key: string): Promise<T> {
     try {
@@ -83,7 +83,7 @@ async function getAndSplit<T, U extends string>(fetchFromDB: (values: U[]) => Pr
                     result: JSON.parse(reply)
                 };
             }
-        } catch (e) { } //eslint-disable-line no-empty
+        } catch { } //eslint-disable-line no-empty
 
         return {
             value,

@@ -1,7 +1,9 @@
 import assert from "assert";
-import { postSkipSegmentParam } from "./postSkipSegments";
-import { config } from "../../src/config";
 import sinon from "sinon";
+
+import { config } from "#config";
+
+import { postSkipSegmentParam } from "#test/cases/postSkipSegments";
 
 const videoID = "postSkipSegments-404-video";
 

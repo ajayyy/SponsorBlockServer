@@ -1,8 +1,10 @@
 import axios from "axios";
 import assert from "assert";
-import { config } from "../../src/config";
-import { getHash } from "../../src/utils/getHash";
-import { client } from "../utils/httpClient";
+
+import { config } from "#config";
+import { getHash } from "#utils/getHash";
+
+import { client } from "#test/utils/httpClient";
 
 describe("userCounter", () => {
     it("Should return 200", function () {

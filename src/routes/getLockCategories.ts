@@ -1,9 +1,11 @@
-import { db } from "../databases/databases";
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
-import { ActionType, Category, VideoID } from "../types/segments.model";
-import { getService } from "../utils/getService";
-import { parseActionTypes } from "../utils/parseParams";
+
+import { db } from "#databases/databases";
+import { Logger } from "#utils/logger";
+import { getService } from "#utils/getService";
+import { parseActionTypes } from "#utils/parseParams";
+
+import { ActionType, Category, VideoID } from "#types/segments";
 
 export async function getLockCategories(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;

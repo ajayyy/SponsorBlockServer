@@ -1,11 +1,14 @@
 import assert from "assert";
-import { config } from "../../src/config";
 import axios from "axios";
-import * as tokenUtils from "../../src/utils/tokenUtils";
 import MockAdapter from "axios-mock-adapter";
-import { validateLicenseKeyRegex } from "../../src/routes/verifyToken";
+
+import { config } from "#config";
+import * as tokenUtils from "#utils/tokenUtils";
+import { validateLicenseKeyRegex } from "#routes/verifyToken";
+
+import * as patreon from "#test/mocks/patreonMock";
+
 let mock: MockAdapter;
-import * as patreon from "../mocks/patreonMock";
 
 const validateToken = validateLicenseKeyRegex;
 

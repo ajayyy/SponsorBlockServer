@@ -1,11 +1,13 @@
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { db } from "../../src/databases/databases";
-import { UserID } from "../../src/types/user.model";
-import { Category, VideoID } from "../../src/types/segments.model";
-import { insertVipUser } from "../utils/queryGen";
-import { genUser } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
+
+import { db } from "#databases/databases";
+import { UserID } from "#types/user";
+import { Category, VideoID } from "#types/segments";
+
+import { client } from "#test/utils/httpClient";
+import { insertVipUser } from "#test/utils/queryGen";
+import { genUser } from "#test/utils/genUser";
+import { genRandomValue } from "#test/utils/getRandom";
 
 interface LockCategory {
     category: Category,

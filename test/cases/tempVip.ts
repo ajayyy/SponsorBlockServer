@@ -1,11 +1,13 @@
-import { config } from "../../src/config";
-import { getHash } from "../../src/utils/getHash";
-import { tempVIPKey } from "../../src/utils/redisKeys";
-import { HashedUserID } from "../../src/types/user.model";
-import { client } from "../utils/httpClient";
-import { db, privateDB } from "../../src/databases/databases";
-import redis from "../../src/utils/redis";
 import assert from "assert";
+
+import { config } from "#config";
+import { getHash } from "#utils/getHash";
+import { tempVIPKey } from "#utils/redisKeys";
+import { HashedUserID } from "#types/user";
+import { db, privateDB } from "#databases/databases";
+import redis from "#utils/redis";
+
+import { client } from "#test/utils/httpClient";
 
 // helpers
 const getSegment = (UUID: string) => db.prepare("get", `SELECT "votes", "locked", "category" FROM "sponsorTimes" WHERE "UUID" = ?`, [UUID]);

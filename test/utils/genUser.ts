@@ -1,6 +1,7 @@
-import { genRandom } from "./getRandom";
-import { UserID, HashedUserID } from "../../src/types/user.model";
-import { getHash } from "../../src/utils/getHash";
+import { UserID, HashedUserID } from "#types/user";
+import { getHash } from "#utils/getHash";
+
+import { genRandom } from "#test/utils/getRandom";
 
 type info = Record<string, any>
 

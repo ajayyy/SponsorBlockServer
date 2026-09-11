@@ -1,10 +1,12 @@
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { UserID } from "../../src/types/user.model";
-import { Category, VideoID } from "../../src/types/segments.model";
-import { client } from "../utils/httpClient";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+import { UserID } from "#types/user";
+import { Category, VideoID } from "#types/segments";
+
+import { client } from "#test/utils/httpClient";
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
 
 const stringDeepEquals = (a: string[], b: string[]): boolean => {
     let result = true;

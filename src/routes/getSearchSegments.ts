@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "../types/segments.model";
-import { getService } from "../utils/getService";
-import { parseActionTypes, parseCategories } from "../utils/parseParams";
+
+import { db } from "#databases/databases";
+import { getService } from "#utils/getService";
+import { parseActionTypes, parseCategories } from "#utils/parseParams";
+
+import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "#types/segments";
 
 const maxSegmentsPerPage = 100;
 const defaultSegmentsPerPage = 10;

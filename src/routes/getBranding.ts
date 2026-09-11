@@ -1,21 +1,23 @@
 import { Request, Response } from "express";
 import { isEmpty } from "lodash";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-import { Postgres } from "../databases/Postgres";
-import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, CasualVoteDBResult, CasualVoteHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "../types/branding.model";
-import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "../types/segments.model";
-import { shuffleArray } from "../utils/array";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getService } from "../utils/getService";
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { Logger } from "../utils/logger";
-import { promiseOrTimeout } from "../utils/promise";
-import { QueryCacher } from "../utils/queryCacher";
-import { brandingHashKey, brandingIPKey, brandingKey } from "../utils/redisKeys";
 import * as SeedRandom from "seedrandom";
-import { getEtag } from "../middleware/etag";
+
+import { config } from "#config";
+import { db, privateDB } from "#databases/databases";
+import { Postgres } from "#databases/Postgres";
+import { shuffleArray } from "#utils/array";
+import { getHashCache } from "#utils/getHashCache";
+import { getIP } from "#utils/getIP";
+import { getService } from "#utils/getService";
+import { hashPrefixTester } from "#utils/hashPrefixTester";
+import { Logger } from "#utils/logger";
+import { promiseOrTimeout } from "#utils/promise";
+import { QueryCacher } from "#utils/queryCacher";
+import { brandingHashKey, brandingIPKey, brandingKey } from "#utils/redisKeys";
+import { getEtag } from "#middleware/etag";
+
+import { BrandingDBSubmission, BrandingDBSubmissionData, BrandingHashDBResult, BrandingResult, BrandingSegmentDBResult, BrandingSegmentHashDBResult, CasualVoteDBResult, CasualVoteHashDBResult, ThumbnailDBResult, ThumbnailResult, TitleDBResult, TitleResult } from "#types/branding";
+import { HashedIP, IPAddress, Service, VideoID, VideoIDHash, Visibility } from "#types/segments";
 
 enum BrandingSubmissionType {
     Title = "title",

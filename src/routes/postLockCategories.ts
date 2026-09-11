@@ -1,11 +1,13 @@
-import { Logger } from "../utils/logger";
-import { getHashCache } from "../utils/getHashCache";
-import { isUserVIP } from "../utils/isUserVIP";
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { ActionType, Category, VideoIDHash } from "../types/segments.model";
-import { getService } from "../utils/getService";
-import { config } from "../config";
+
+import { Logger } from "#utils/logger";
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+import { db } from "#databases/databases";
+import { getService } from "#utils/getService";
+import { config } from "#config";
+
+import { ActionType, Category, VideoIDHash } from "#types/segments";
 
 export async function postLockCategories(req: Request, res: Response): Promise<string[]> {
     // Collect user input data

@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { genUsers, User } from "../utils/genUser";
-import { insertSegment, insertVip } from "../utils/queryGen";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { genUsers, User } from "#test/utils/genUser";
+import { insertSegment, insertVip } from "#test/utils/queryGen";
 
 const endpoint = "/api/endpoint";
 

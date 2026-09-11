@@ -1,9 +1,10 @@
 // drop postgres tables
 // reset redis cache
-import { config } from "../../src/config";
 import { createClient } from "redis";
 import { Pool } from "pg";
-import { Logger } from "../../src/utils/logger";
+
+import { config } from "#config";
+import { Logger } from "#utils/logger";
 
 export async function resetRedis() {
     if (config?.redis?.enabled && config.mode === "test") {

@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import { deepStrictEqual } from "assert";
-import { client } from "../utils/httpClient";
 import assert from "assert";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+
+import { client } from "#test/utils/httpClient";
 
 // helpers
 const endpoint = "/api/getSavedTimeForUser";

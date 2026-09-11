@@ -1,7 +1,9 @@
-import { db } from "../../src/databases/databases";
-import { client } from "../utils/httpClient";
 import assert from "assert";
-import { Service } from "../../src/types/segments.model";
+
+import { db } from "#databases/databases";
+import { Service } from "#types/segments";
+
+import { client } from "#test/utils/httpClient";
 
 describe("postCasual", () => {
 

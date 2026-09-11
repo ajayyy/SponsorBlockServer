@@ -1,5 +1,6 @@
 import assert from "assert";
-import { client } from "../utils/httpClient";
+
+import { client } from "#test/utils/httpClient";
 
 const endpoint = "/api/getTotalStats";
 

@@ -1,22 +1,24 @@
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
-import { isUserVIP } from "../utils/isUserVIP";
-import { isUserTempVIP } from "../utils/isUserTempVIP";
-import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { db, privateDB } from "../databases/databases";
-import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
-import { getFormattedTime } from "../utils/getFormattedTime";
-import { getIP } from "../utils/getIP";
-import { getHashCache } from "../utils/getHashCache";
-import { config } from "../config";
-import { HashedUserID, UserID } from "../types/user.model";
-import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "../types/segments.model";
-import { QueryCacher } from "../utils/queryCacher";
 import axios from "axios";
-import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
-import { deleteLockCategories } from "./deleteLockCategories";
-import { acquireLock } from "../utils/redisLock";
-import { checkBanStatus } from "../utils/checkBan";
+
+import { Logger } from "#utils/logger";
+import { isUserVIP } from "#utils/isUserVIP";
+import { isUserTempVIP } from "#utils/isUserTempVIP";
+import { getMaxResThumbnail } from "#utils/youtubeApi";
+import { db, privateDB } from "#databases/databases";
+import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "#utils/webhookUtils";
+import { getFormattedTime } from "#utils/getFormattedTime";
+import { getIP } from "#utils/getIP";
+import { getHashCache } from "#utils/getHashCache";
+import { config } from "#config";
+import { QueryCacher } from "#utils/queryCacher";
+import { getVideoDetails, videoDetails } from "#utils/getVideoDetails";
+import { deleteLockCategories } from "#routes/deleteLockCategories";
+import { acquireLock } from "#utils/redisLock";
+import { checkBanStatus } from "#utils/checkBan";
+
+import { HashedUserID, UserID } from "#types/user";
+import { DBSegment, Category, HashedIP, IPAddress, SegmentUUID, Service, VideoID, VideoIDHash, VideoDuration, ActionType, VoteType } from "#types/segments";
 
 const voteTypes = {
     normal: 0,

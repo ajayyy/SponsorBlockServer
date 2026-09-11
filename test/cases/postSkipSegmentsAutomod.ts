@@ -1,15 +1,10 @@
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { arrayDeepEquals } from "../utils/partialDeepEquals";
-import { postSkipSegmentJSON, convertMultipleToDBFormat } from "./postSkipSegments";
-import { YouTubeApiMock } from "../mocks/youtubeMock";
-import { ImportMock } from "ts-mock-imports";
-import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
 
-const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
-const sinonStub = mockManager.mock("listVideos");
-sinonStub.callsFake(YouTubeApiMock.listVideos);
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { arrayDeepEquals } from "#test/utils/partialDeepEquals";
+import { postSkipSegmentJSON, convertMultipleToDBFormat } from "#test/cases/postSkipSegments";
 
 describe("postSkipSegments - Automod 80%", () => {
     const userID = "postSkipSegments-automodSubmit";

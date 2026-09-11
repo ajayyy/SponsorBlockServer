@@ -1,10 +1,11 @@
 import assert from "assert";
-import { RequestValidatorRule } from "../../src/types/config.model";
-import { ActionType, Category } from "../../src/types/segments.model";
+
+import { RequestValidatorRule } from "#types/config";
+import { ActionType, Category } from "#types/segments";
 import {
     CompiledValidityCheck,
     compileRules,
-} from "../../src/utils/requestValidator";
+} from "#utils/requestValidator";
 
 describe("Request validator", () => {
     describe("single simple rule", () => {

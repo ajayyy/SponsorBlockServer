@@ -1,7 +1,9 @@
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { getHash } from "../../src/utils/getHash";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+
+import { client } from "#test/utils/httpClient";
 
 describe("getVideoLabelHash", () => {
     const endpoint = "/api/videoLabels";

@@ -1,5 +1,6 @@
-import { config } from "../../src/config";
 import axios, { AxiosRequestConfig } from "axios";
+
+import { config } from "#config";
 
 const defaultConfig: AxiosRequestConfig = {
     baseURL: `http://localhost:${config.port}`,

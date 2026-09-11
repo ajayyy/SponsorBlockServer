@@ -1,11 +1,13 @@
-import { Logger } from "../utils/logger";
-import { getHashCache } from "../utils/getHashCache";
-import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
-import { HashedUserID, UserID } from "../types/user.model";
-import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { db } from "../databases/databases";
-import { QueryCacher } from "../utils/queryCacher";
+
+import { Logger } from "#utils/logger";
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+import { db } from "#databases/databases";
+import { QueryCacher } from "#utils/queryCacher";
+
+import { HashedUserID, UserID } from "#types/user";
+import { Service, VideoID, VideoIDHash } from "#types/segments";
 
 export async function postPurgeAllSegments(req: Request, res: Response): Promise<Response> {
     const userID = req.body.userID as UserID;

@@ -1,11 +1,14 @@
 import sinon from "sinon";
-import { config } from "../../src/config";
 import assert from "assert";
 const mode = "production";
+
+import { config } from "#config";
+import { getIP } from "#utils/getIP";
+
+import { createRequest } from "#test/mocks/mockExpressRequest";
+
 let stub: sinon.SinonStub;
 let stub2: sinon.SinonStub;
-import { createRequest } from "../mocks/mockExpressRequest";
-import { getIP } from "../../src/utils/getIP";
 
 const v4RequestOptions = {
     headers: {

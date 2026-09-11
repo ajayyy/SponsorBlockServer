@@ -1,4 +1,4 @@
-import { Logger } from "./logger";
+import { Logger } from "#utils/logger";
 
 export class PromiseTimeoutError<T> extends Error {
     promise?: Promise<T>;

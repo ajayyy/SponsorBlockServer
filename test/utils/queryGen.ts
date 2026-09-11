@@ -1,13 +1,12 @@
-import { IDatabase } from "../../src/databases/IDatabase";
-import { HashedUserID } from "../../src/types/user.model";
-import { User, userArray, usernameUserArray } from "./genUser";
-import { Feature } from "../../src/types/user.model";
-import { ActionType, Category, Service, VideoIDHash } from "../../src/types/segments.model";
-import { genRandomValue } from "./getRandom";
-import { getHash } from "../../src/utils/getHash";
+import { IDatabase } from "#databases/IDatabase";
+import { HashedUserID } from "#types/user";
+import { Feature } from "#types/user";
+import { getHash } from "#utils/getHash";
+import { ActionType, Category, Service, VideoIDHash } from "#types/segments";
 
-// segments
-export { insertSegment } from "./segmentQueryGen";
+import { User, userArray, usernameUserArray } from "#test/utils/genUser";
+import { genRandomValue } from "#test/utils/getRandom";
+export { insertSegment } from "#test/utils/segmentQueryGen";
 
 // vip
 export const insertVip = async (db: IDatabase, userID: HashedUserID) => {

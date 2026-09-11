@@ -1,14 +1,16 @@
 import { parseInt } from "lodash";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-import { Category } from "../types/segments.model";
-import { Feature, HashedUserID } from "../types/user.model";
-import { hasFeature } from "./features";
-import { isUserVIP } from "./isUserVIP";
-import { oneOf } from "./promise";
-import redis from "./redis";
-import { getReputation } from "./reputation";
-import { getServerConfig } from "./serverConfig";
+
+import { config } from "#config";
+import { db, privateDB } from "#databases/databases";
+import { hasFeature } from "#utils/features";
+import { isUserVIP } from "#utils/isUserVIP";
+import { oneOf } from "#utils/promise";
+import redis from "#utils/redis";
+import { getReputation } from "#utils/reputation";
+import { getServerConfig } from "#utils/serverConfig";
+
+import { Category } from "#types/segments";
+import { Feature, HashedUserID } from "#types/user";
 
 interface OldSubmitterResult {
     canSubmit: boolean;

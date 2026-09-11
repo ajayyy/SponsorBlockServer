@@ -1,21 +1,22 @@
 import { Request, Response } from "express";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-
-import { BrandingUUID, CasualCategory, CasualVoteSubmission } from "../types/branding.model";
-import { HashedIP, IPAddress, Service, VideoID } from "../types/segments.model";
-import { HashedUserID } from "../types/user.model";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getService } from "../utils/getService";
-import { Logger } from "../utils/logger";
 import crypto from "crypto";
-import { QueryCacher } from "../utils/queryCacher";
-import { acquireLock } from "../utils/redisLock";
-import { checkBanStatus } from "../utils/checkBan";
-import { canSubmitDeArrow } from "../utils/permissions";
-import { isRequestInvalid } from "../utils/requestValidator";
-import { parseUserAgent } from "../utils/userAgent";
+
+import { config } from "#config";
+import { db, privateDB } from "#databases/databases";
+import { getHashCache } from "#utils/getHashCache";
+import { getIP } from "#utils/getIP";
+import { getService } from "#utils/getService";
+import { Logger } from "#utils/logger";
+import { QueryCacher } from "#utils/queryCacher";
+import { acquireLock } from "#utils/redisLock";
+import { checkBanStatus } from "#utils/checkBan";
+import { canSubmitDeArrow } from "#utils/permissions";
+import { isRequestInvalid } from "#utils/requestValidator";
+import { parseUserAgent } from "#utils/userAgent";
+
+import { BrandingUUID, CasualCategory, CasualVoteSubmission } from "#types/branding";
+import { HashedIP, IPAddress, Service, VideoID } from "#types/segments";
+import { HashedUserID } from "#types/user";
 
 interface ExistingVote {
     UUID: BrandingUUID;

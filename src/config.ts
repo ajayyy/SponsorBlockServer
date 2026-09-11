@@ -1,6 +1,7 @@
 import fs from "fs";
-import { SBSConfig } from "./types/config.model";
-import packageJson from "../package.json";
+import packageJson from "../package.json" with {type: "json"};
+
+import { SBSConfig } from "#types/config";
 
 const isTestMode = process.env.npm_lifecycle_script === packageJson.scripts.test;
 const configFile = process.env.TEST_REDIS ? "ci.json"

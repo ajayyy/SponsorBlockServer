@@ -1,7 +1,9 @@
-import { db } from "../../src/databases/databases";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
 import assert from "assert";
-import { client } from "../utils/httpClient";
+
+import { db } from "#databases/databases";
+
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
+import { client } from "#test/utils/httpClient";
 
 const ENOENTID =        "0".repeat(64);
 const upvotedID =       `a${"0".repeat(63)}`;

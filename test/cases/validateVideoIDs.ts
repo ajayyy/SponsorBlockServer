@@ -1,8 +1,10 @@
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { config } from "../../src/config";
 import sinon from "sinon";
-import { sanitize } from "../../src/utils/youtubeID";
+
+import { config } from "#config";
+import { sanitize } from "#utils/youtubeID";
+
+import { client } from "#test/utils/httpClient";
 
 // videoID array
 const badVideoIDs = [

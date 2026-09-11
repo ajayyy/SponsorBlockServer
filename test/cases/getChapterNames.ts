@@ -1,11 +1,13 @@
 import assert from "assert";
-import { db } from "../../src/databases/databases";
-import { Postgres } from "../../src/databases/Postgres";
-import { client } from "../utils/httpClient";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { insertChapter } from "../utils/segmentQueryGen";
-import { genRandomValue } from "../utils/getRandom";
-import { insertVideoInfo } from "../utils/queryGen";
+
+import { db } from "#databases/databases";
+import { Postgres } from "#databases/Postgres";
+
+import { client } from "#test/utils/httpClient";
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
+import { insertChapter } from "#test/utils/segmentQueryGen";
+import { genRandomValue } from "#test/utils/getRandom";
+import { insertVideoInfo } from "#test/utils/queryGen";
 
 describe("getChapterNames", function () {
     const endpoint = "/api/chapterNames";

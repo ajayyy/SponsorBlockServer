@@ -1,9 +1,11 @@
-import { db } from "../databases/databases";
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { ActionType, Category, VideoID, VideoIDHash } from "../types/segments.model";
-import { parseActionTypes } from "../utils/parseParams";
+
+import { db } from "#databases/databases";
+import { Logger } from "#utils/logger";
+import { hashPrefixTester } from "#utils/hashPrefixTester";
+import { parseActionTypes } from "#utils/parseParams";
+
+import { ActionType, Category, VideoID, VideoIDHash } from "#types/segments";
 
 interface LockResultByHash {
     videoID: VideoID,

@@ -1,15 +1,17 @@
-import { config } from "../config";
-import { Logger } from "./logger";
-import { RedisArgument, RedisClientType, SetOptions, createClient } from "redis";
-import { RedisClientOptions } from "@redis/client/dist/lib/client";
 import { RedisReply } from "rate-limit-redis";
-import { db } from "../databases/databases";
-import { Postgres } from "../databases/Postgres";
+import { RedisArgument, RedisClientType, SetOptions, createClient } from "redis";
+import { RedisClientOptions } from "@redis/client";
 import { compress, uncompress } from "lz4-napi";
 import { LRUCache } from "lru-cache";
-import { shouldClientCacheKey } from "./redisKeys";
-import { RedisVariadicArgument, SortedSetMember } from "@redis/client/dist/lib/commands/generic-transformers";
-import { ReplyUnion } from "@redis/client/dist/lib/RESP/types";
+import { RedisVariadicArgument, SortedSetMember } from "@redis/client/dist/lib/commands/generic-transformers.js";
+import { ReplyUnion } from "@redis/client/dist/lib/RESP/types.js";
+
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+import { db } from "#databases/databases";
+import { Postgres } from "#databases/Postgres";
+import { shouldClientCacheKey } from "#utils/redisKeys";
+
 
 export interface RedisStats {
     activeRequests: number;
@@ -257,8 +259,8 @@ if (config.redis?.enabled) {
             if (timeout !== null) clearTimeout(timeout);
 
             activeRequests--;
-            if (typeof reply !== "string") reply = reply.toString();
-            resolve(reply);
+            if (reply instanceof Buffer) reply = reply.toString();
+            resolve(reply as string);
 
             const responseTime = Date.now() - start;
             readResponseTime.push(responseTime);
@@ -296,8 +298,8 @@ if (config.redis?.enabled) {
             func(...params).then((reply) => {
                 activeRequests--;
                 writeRequests--;
-                if (typeof reply !== "string") reply = reply.toString();
-                resolve(reply);
+                if (reply instanceof Buffer) reply = reply.toString();
+                resolve(reply as string);
 
                 writeResponseTime.push(Date.now() - start);
                 if (writeResponseTime.length > maxStoredTimes) writeResponseTime.shift();

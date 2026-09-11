@@ -1,11 +1,13 @@
+import assert from "assert";
+
 import { partialDeepEquals } from "../utils/partialDeepEquals";
 import { db } from "../../src/databases/databases";
-import assert from "assert";
-import { client } from "../utils/httpClient";
-import { insertSegment, insertThumbnail, insertThumbnailVote, insertTitle, insertTitleVote } from "../utils/segmentQueryGen";
-import { genUsers, User } from "../utils/genUser";
-import { genRandomValue } from "../utils/getRandom";
-import { insertBan, insertUsername, insertWarning } from "../utils/queryGen";
+
+import { client } from "#test/utils/httpClient";
+import { insertSegment, insertThumbnail, insertThumbnailVote, insertTitle, insertTitleVote } from "#test/utils/segmentQueryGen";
+import { genUsers, User } from "#test/utils/genUser";
+import { genRandomValue } from "#test/utils/getRandom";
+import { insertBan, insertUsername, insertWarning } from "#test/utils/queryGen";
 
 describe("getUserInfo", () => {
     const endpoint = "/api/userInfo";

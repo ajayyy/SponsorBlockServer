@@ -1,6 +1,7 @@
-import { getService } from "../../src/utils/getService";
-import { Service } from "../../src/types/segments.model";
 import assert from "assert";
+
+import { getService } from "#utils/getService";
+import { Service } from "#types/segments";
 
 describe("getService", () => {
     it("Should return youtube if not match", () => {

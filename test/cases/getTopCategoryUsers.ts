@@ -1,7 +1,9 @@
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
-import { client } from "../utils/httpClient";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+
+import { client } from "#test/utils/httpClient";
 
 const generateSegment = (userid: string, category: string) => ["getTopCategory", 0, 60, 50, `getTopCategoryUUID_${category}`, getHash(userid), 1, 1, category, 0];
 

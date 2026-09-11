@@ -1,6 +1,9 @@
-import { partialDeepEquals } from "../utils/partialDeepEquals";import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
 
 const videoID1 = "dQw4w9WgXcQ";
 const videoID2 = "dQw4w9WgXcE";
