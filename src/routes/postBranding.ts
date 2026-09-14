@@ -213,7 +213,7 @@ export async function postBranding(req: Request, res: Response) {
 
         lock.unlock();
     } catch (e) {
-        Logger.error(e as string);
+        Logger.error(`postBranding: (${videoID}) ${e as string}`);
         res.status(500).send("Internal Server Error");
     }
 }

@@ -666,7 +666,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
 
         return res.json(newSegments);
     } catch (err) {
-        Logger.error(err as string);
+        Logger.error(`postSkipSegments: (${videoID}, ${userID}, ${JSON.stringify(segments)}) ${err as string}`);
         return res.sendStatus(500);
     } finally {
         lock.unlock();
