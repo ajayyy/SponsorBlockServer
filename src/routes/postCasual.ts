@@ -24,6 +24,8 @@ interface ExistingVote {
 }
 
 export async function postCasual(req: Request, res: Response) {
+    if (req.body == null) return res.status(400).send("No request body found");
+
     const { videoID, userID, downvote } = req.body as CasualVoteSubmission;
     const userAgent = req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
     let categories = req.body.categories as CasualCategory[];

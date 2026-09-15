@@ -47,6 +47,7 @@ function shiftSegment(segment: any, shift: { startTime: any; endTime: any }) {
 }
 
 export async function postSegmentShift(req: Request, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).json({ "message": "No request body found" });
     // Collect user input data
     const videoID = req.body.videoID;
     const startTime = req.body.startTime;

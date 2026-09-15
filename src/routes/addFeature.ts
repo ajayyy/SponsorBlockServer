@@ -33,6 +33,8 @@ const allowedFeatures = {
 };
 
 export async function addFeature(req: AddFeatureRequest, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).send("No request body found");
+
     const { body: { userID, adminUserID } } = req;
     const feature = parseInt(req.body.feature) as Feature;
     const enabled = req.body?.enabled !== "false";

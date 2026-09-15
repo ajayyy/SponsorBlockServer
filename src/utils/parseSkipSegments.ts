@@ -19,7 +19,7 @@ export function parseSkipSegments(req: Request): {
     const actionTypes: ActionType[] = parseActionTypes(req, [ActionType.Skip]);
     const trimUUIDs: number | null = req.query.trimUUIDs ? (parseInt(req.query.trimUUIDs as string) || null) : null;
     const requiredSegments: SegmentUUID[] = parseRequiredSegments(req);
-    const service: Service = getService(req.query.service, req.body.services);
+    const service: Service = getService(req.query.service, req.body?.services);
     const errors: string[] = [];
     if (!Array.isArray(categories)) errors.push(errorMessage("categories"));
     else if (categories.length === 0) errors.push("No valid categories provided.");

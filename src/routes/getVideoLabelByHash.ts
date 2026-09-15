@@ -15,7 +15,7 @@ export async function getVideoLabelsByHash(req: Request, res: Response): Promise
 
     const checkHasStartSegment = req.query.hasStartSegment === "true";
 
-    const service: Service = getService(req.query.service, req.body.service);
+    const service: Service = getService(req.query.service, req.body?.service);
 
     // Get all video id's that match hash prefix
     const segments = await getLabelsByHash(hashPrefix, service, checkHasStartSegment);

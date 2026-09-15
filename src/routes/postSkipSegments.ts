@@ -476,18 +476,18 @@ function proxySubmission(req: Request) {
 }
 
 function preprocessInput(req: Request) {
-    const videoID = req.query.videoID || req.body.videoID;
-    const userID = req.query.userID || req.body.userID;
-    const service = getService(req.query.service, req.body.service);
-    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
+    const videoID = req.query.videoID || req.body?.videoID;
+    const userID = req.query.userID || req.body?.userID;
+    const service = getService(req.query.service, req.body?.service);
+    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body?.videoDuration) || 0) as VideoDuration;
     const videoDuration = videoDurationParam;
 
-    let segments = req.body.segments as IncomingSegment[];
+    let segments = req.body?.segments as IncomingSegment[];
     if (segments === undefined) {
         // Use query instead
         segments = [{
             segment: [req.query.startTime as string, req.query.endTime as string],
-            category: req.query.category as Category,
+            category: (req.query.category ?? "sponsor") as Category,
             actionType: (req.query.actionType as ActionType) ?? ActionType.Skip,
             description: req.query.description as string || "",
         }];
@@ -502,7 +502,7 @@ function preprocessInput(req: Request) {
         segment.segment = segment.segment.map((time) => typeof segment.segment[0] === "string" ? time?.replace(",", ".") : time);
     });
 
-    const userAgent = req.query.userAgent ?? req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
+    const userAgent = req.query.userAgent ?? req.body?.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
 
     return { videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent };
 }
@@ -683,7 +683,7 @@ function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: a
             "title": userID,
             "url": `https://www.youtube.com/watch?v=${videoID}`,
             "description": `**User Agent**: ${userAgent}\
-                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
+                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body?.userAgent}\
                         \n**Real User Agent**: ${req.headers["user-agent"]}\
                         \n**Video Duration**: ${videoDurationParam}`,
             "color": 10813440,

@@ -22,6 +22,7 @@ const MAX_EDIT_DELAY = 900000; // 15 mins
 const getUsername = (userID: HashedUserID) => db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID], { useReplica: true });
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).json({ "message": "No request body found" });
     if (!req.body.userID) return res.status(400).json({ "message": "Missing parameters" });
 
     const issuerUserID: HashedUserID = req.body.issuerUserID ? await getHashCache(req.body.issuerUserID as UserID) : null;

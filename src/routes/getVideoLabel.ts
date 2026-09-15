@@ -159,7 +159,7 @@ async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSeg
 
     const hasStartSegment = req.query.hasStartSegment === "true";
 
-    const service = getService(req.query.service, req.body.service);
+    const service = getService(req.query.service, req.body?.service);
     const segmentData = await getLabelsByVideoID(videoID, service);
     const segments = segmentData.segments;
 

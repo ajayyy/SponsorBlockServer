@@ -40,6 +40,8 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
+    if (req.body == null) return res.status(400).send("No request body found");
+
     const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration, wasWarned, casualMode } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
     const userAgent = req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
