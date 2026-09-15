@@ -63,6 +63,7 @@ import { getSegmentID } from "#routes/getSegmentID";
 import { postCasual } from "#routes/postCasual";
 import { getConfigEndpoint } from "#routes/getConfig";
 import { setConfig } from "#routes/setConfig";
+import { errorHandlerMiddleware } from "#middleware/errors";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -70,6 +71,7 @@ export function createServer(callback: () => void): Server {
 
     const router = Router();
     app.use(router);
+    app.use(errorHandlerMiddleware);
     app.set("etag", false); // disable built in etag
 
     //setup CORS correctly
