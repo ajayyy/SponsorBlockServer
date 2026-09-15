@@ -35,6 +35,20 @@ CREATE INDEX IF NOT EXISTS "sponsorTimes_description_gin"
     ("description" COLLATE pg_catalog."default" gin_trgm_ops, category COLLATE pg_catalog."default" gin_trgm_ops)
     TABLESPACE pg_default;
 
+CREATE INDEX IF NOT EXISTS "sponsorTimes_reputation_index"
+    ON public."sponsorTimes"
+    ("userID")
+    INCLUDE (
+        "votes",
+        "views",
+        "videoID",
+        "category",
+        "timeSubmitted",
+        "locked",
+        "service"
+    )
+    WHERE "actionType" <> 'full';
+
 -- userNames
 
 CREATE INDEX IF NOT EXISTS "userNames_userID"
