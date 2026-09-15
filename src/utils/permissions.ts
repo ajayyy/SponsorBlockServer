@@ -17,7 +17,7 @@ interface OldSubmitterResult {
     newUser: boolean;
 }
 
-interface CanSubmitResult {
+export interface CanSubmitResult {
     canSubmit: boolean;
     reason: string;
 }

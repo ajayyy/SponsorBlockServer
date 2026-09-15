@@ -20,7 +20,7 @@ import { isUserTempVIP } from "#utils/isUserTempVIP";
 import { parseUserAgent } from "#utils/userAgent";
 import { getService } from "#utils/getService";
 import { vote } from "#routes/voteOnSponsorTime";
-import { canSubmit, canSubmitGlobal } from "#utils/permissions";
+import { canSubmit, canSubmitGlobal, CanSubmitResult } from "#utils/permissions";
 import { getVideoDetails, videoDetails } from "#utils/getVideoDetails";
 import * as youtubeID from "#utils/youtubeID";
 import { acquireLock } from "#utils/redisLock";
@@ -217,6 +217,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
     if (!Array.isArray(segments) || segments.length == 0) {
         invalidFields.push("segments");
     }
+    const permissionCache = new Map<Category, Promise<CanSubmitResult>>();
     // validate start and end times (no : marks)
     for (const segmentPair of segments) {
         const startTime = segmentPair.segment[0];
@@ -235,7 +236,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
             invalidFields.push("chapter name (too long)");
         }
 
-        const permission = await canSubmit(hashedUserID, segmentPair.category);
+        const permission = await permissionCache.getOrInsertComputed(segmentPair.category, () => canSubmit(hashedUserID, segmentPair.category));
         if (!permission.canSubmit) {
             Logger.warn(`Rejecting submission due to lack of permissions for category ${segmentPair.category}: ${segmentPair.segment} ${hashedUserID} ${videoID} ${videoDurationParam} ${userAgent}`);
             invalidFields.push(`permission to submit ${segmentPair.category}`);
