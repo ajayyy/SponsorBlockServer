@@ -246,7 +246,7 @@ function setupRoutes(router: Router, server: Server) {
     if (config.postgres?.enabled) {
         router.get("/database", (req, res) => dumpDatabase(req, res, true));
         router.get("/database.json", (req, res) => dumpDatabase(req, res, false));
-        router.get("/database/*", (req, res) => res.status(404).send("CSV downloads disabled. Please use sb-mirror rsync"));
+        router.get("/database/*p", (req, res) => res.status(404).send("CSV downloads disabled. Please use sb-mirror rsync"));
         router.use("/download", (req, res) => res.status(404).send("CSV downloads disabled. Please use sb-mirror rsync"));
     } else {
         router.get("/database.db", function (req: Request, res: Response) {
