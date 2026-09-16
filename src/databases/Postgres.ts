@@ -123,7 +123,7 @@ export class Postgres implements IDatabase {
 
         if (this.config.postgres.maxActiveRequests && this.isReadQuery(type)
                 && this.activePostgresRequests > this.config.postgres.maxActiveRequests) {
-            throw new Error("Too many active postgres requests");
+            throw new Error(`Too many active postgres requests: active: ${this.activePostgresRequests}, read time: ${this.readResponseTime}, write time: ${this.writeResponseTime}`);
         }
 
         const start = Date.now();
