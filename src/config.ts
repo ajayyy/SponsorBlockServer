@@ -200,9 +200,6 @@ addDefaults(config, {
         minPrice: 0,
         redirectUri: "https://sponsor.ajay.app/api/generateToken/patreon"
     },
-    gumroad: {
-        productPermalinks: ["sponsorblock"]
-    },
     tokenSeed: "",
     minUserIDLength: 30,
     deArrowPaywall: false,

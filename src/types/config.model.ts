@@ -133,9 +133,6 @@ export interface SBSConfig {
         minPrice: number,
         redirectUri: string
     }
-    gumroad: {
-        productPermalinks: string[],
-    },
     tokenSeed: string,
     minUserIDLength: number,
     deArrowPaywall: boolean,

@@ -11,7 +11,6 @@ export enum TokenType {
     local = "local",
     free = "free",
     gift = "gift",
-    gumroad = "gumroad"
 }
 
 export enum PatronStatus {

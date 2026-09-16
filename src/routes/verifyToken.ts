@@ -70,11 +70,6 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
                 return res.status(200).send({
                     allowed: true
                 });
-            } else {
-                // Gumroad
-                return res.status(200).send({
-                    allowed: await checkAllGumroadProducts(licenseKey)
-                });
             }
 
         }
@@ -82,21 +77,4 @@ export async function verifyTokenRequest(req: VerifyTokenRequest, res: Response)
         Logger.error(e as string);
         return res.status(500);
     }
-}
-
-async function checkAllGumroadProducts(licenseKey: string): Promise<boolean> {
-    for (const link of config.gumroad.productPermalinks) {
-        try {
-            const result = await axios.post("https://api.gumroad.com/v2/licenses/verify", null, {
-                params: { product_permalink: link, license_key: licenseKey }
-            });
-
-            const allowed = result.status === 200 && result.data?.success;
-            if (allowed) return allowed;
-        } catch (e) /* istanbul ignore next */ {
-            Logger.error(`Gumroad fetch for ${link} failed: ${e}`);
-        }
-    }
-
-    return false;
 }
