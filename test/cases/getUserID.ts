@@ -1,9 +1,11 @@
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
 import { AxiosResponse } from "axios";
-import { UsernameUser, genUser, genUsersUsername } from "../utils/genUser";
-import { insertUsernameBulk } from "../utils/queryGen";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { UsernameUser, genUser, genUsersUsername } from "#test/utils/genUser";
+import { insertUsernameBulk } from "#test/utils/queryGen";
 
 const endpoint = "/api/userID";
 const getUserName = (username: string, exact: any = false): Promise<AxiosResponse> => client.get(endpoint, { params: { username, exact } });

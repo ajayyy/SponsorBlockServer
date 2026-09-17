@@ -1,6 +1,6 @@
-import { config } from "../config";
-import redis from "../utils/redis";
-import { Logger } from "./logger";
+import { config } from "#config";
+import redis from "#utils/redis";
+import { Logger } from "#utils/logger";
 
 const defaultTimeout = 20000;
 

@@ -1,11 +1,10 @@
-import { getHash } from "../../src/utils/getHash";
-import { partialDeepEquals, arrayDeepEquals } from "../utils/partialDeepEquals";
-import { db } from "../../src/databases/databases";
-import { ImportMock } from "ts-mock-imports";
-import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import { YouTubeApiMock } from "../mocks/youtubeMock";
 import assert from "assert";
-import { client } from "../utils/httpClient";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { partialDeepEquals, arrayDeepEquals } from "#test/utils/partialDeepEquals";
+import { client } from "#test/utils/httpClient";
 
 export type Segment = {
     segment: number[];
@@ -34,9 +33,6 @@ export const convertSingleToDBFormat = (segment: Segment) => ({
     category: segment.category,
 });
 
-const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
-const sinonStub = mockManager.mock("listVideos");
-sinonStub.callsFake(YouTubeApiMock.listVideos);
 
 describe("postSkipSegments", () => {
     // Constant and helpers

@@ -1,4 +1,4 @@
-import { Logger } from "../../src/utils/logger";
+import { Logger } from "#utils/logger";
 
 function printActualExpected(actual: Record<string, any>, expected: Record<string, any>, failedKey: string): void {
     Logger.error(`Actual: ${JSON.stringify(actual)}`);

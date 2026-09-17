@@ -1,8 +1,10 @@
-import { Logger } from "../utils/logger";
-import { getHashCache } from "../utils/getHashCache";
-import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
-import { HashedUserID, UserID } from "../types/user.model";
+
+import { Logger } from "#utils/logger";
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+
+import { HashedUserID, UserID } from "#types/user";
 
 export async function getIsUserVIP(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as UserID;

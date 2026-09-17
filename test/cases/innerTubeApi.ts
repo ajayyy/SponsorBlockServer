@@ -1,9 +1,11 @@
-import { config } from "../../src/config";
 import assert from "assert";
-import { YouTubeAPI } from "../../src/utils/youtubeApi";
-import * as innerTube from "../../src/utils/innerTubeAPI";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { getVideoDetails } from "../../src/utils/getVideoDetails";
+
+import { config } from "#config";
+import { YouTubeAPI } from "#utils/youtubeApi";
+import * as innerTube from "#utils/innerTubeAPI";
+import { getVideoDetails } from "#utils/getVideoDetails";
+
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
 
 const videoID = "BaW_jenozKc";
 const expectedInnerTube = { // partial type of innerTubeVideoDetails

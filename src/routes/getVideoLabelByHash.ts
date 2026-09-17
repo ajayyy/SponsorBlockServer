@@ -1,19 +1,21 @@
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { getLabelsByHash } from "./getVideoLabel";
 import { Request, Response } from "express";
-import { VideoIDHash, Service } from "../types/segments.model";
-import { getService } from "../utils/getService";
+
+import { hashPrefixTester } from "#utils/hashPrefixTester";
+import { getLabelsByHash } from "#routes/getVideoLabel";
+import { getService } from "#utils/getService";
+
+import { VideoIDHash, Service } from "#types/segments";
 
 export async function getVideoLabelsByHash(req: Request, res: Response): Promise<Response> {
     let hashPrefix = req.params.prefix as VideoIDHash;
-    if (!req.params.prefix || !hashPrefixTester(req.params.prefix)) {
+    if (!req.params.prefix || typeof req.params.prefix !== "string" || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;
 
     const checkHasStartSegment = req.query.hasStartSegment === "true";
 
-    const service: Service = getService(req.query.service, req.body.service);
+    const service: Service = getService(req.query.service, req.body?.service);
 
     // Get all video id's that match hash prefix
     const segments = await getLabelsByHash(hashPrefix, service, checkHasStartSegment);

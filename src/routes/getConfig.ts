@@ -1,9 +1,11 @@
-import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { UserID } from "../types/user.model";
-import { Logger } from "../utils/logger";
-import { getServerConfig } from "../utils/serverConfig";
+
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+import { Logger } from "#utils/logger";
+import { getServerConfig } from "#utils/serverConfig";
+
+import { UserID } from "#types/user";
 
 export async function getConfigEndpoint(req: Request, res: Response): Promise<Response> {
     const userID = req.query.userID as string;

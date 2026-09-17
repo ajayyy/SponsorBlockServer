@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
-import { client } from "../utils/httpClient";
 import assert from "assert";
-import { genUsers, User } from "../utils/genUser";
-import { insertSegment } from "../utils/segmentQueryGen";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { genUsers, User } from "#test/utils/genUser";
+import { insertSegment } from "#test/utils/segmentQueryGen";
 
 // helpers
 const endpoint = "/api/getViewsForUser";

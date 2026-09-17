@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
-import { isUserVIP } from "../utils/isUserVIP";
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
+
+import { Logger } from "#utils/logger";
+import { isUserVIP } from "#utils/isUserVIP";
+import { getHashCache } from "#utils/getHashCache";
+import { db } from "#databases/databases";
 
 const ACTION_NONE = Symbol("none");
 const ACTION_UPDATE = Symbol("update");
@@ -46,6 +47,7 @@ function shiftSegment(segment: any, shift: { startTime: any; endTime: any }) {
 }
 
 export async function postSegmentShift(req: Request, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).json({ "message": "No request body found" });
     // Collect user input data
     const videoID = req.body.videoID;
     const startTime = req.body.startTime;

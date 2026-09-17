@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
-import { genUsers, User } from "../utils/genUser";
-import { client } from "../utils/httpClient";
 import assert from "assert";
-import { insertVip } from "../utils/queryGen";
+
+import { db } from "#databases/databases";
+
+import { genUsers, User } from "#test/utils/genUser";
+import { client } from "#test/utils/httpClient";
+import { insertVip } from "#test/utils/queryGen";
 
 const endpoint = "/api/isUserVIP";
 const vipUserRequest = (userID: string) => client.get(endpoint, { params: { userID } });

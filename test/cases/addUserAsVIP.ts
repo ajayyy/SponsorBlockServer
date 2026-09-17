@@ -1,8 +1,10 @@
-import { HashedUserID } from "../../src/types/user.model";
-import { client } from "../utils/httpClient";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { genAnonUser, genUsers } from "../utils/genUser";
+
+import { db } from "#databases/databases";
+import { HashedUserID } from "#types/user";
+
+import { client } from "#test/utils/httpClient";
+import { genAnonUser, genUsers } from "#test/utils/genUser";
 
 // helpers
 const checkUserVIP = (publicID: string) => db.prepare("get", `SELECT "userID" FROM "vipUsers" WHERE "userID" = ?`, [publicID]);

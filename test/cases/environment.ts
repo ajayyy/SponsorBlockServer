@@ -1,5 +1,5 @@
 import assert from "assert";
-import { config } from "../../src/config";
+import { config } from "#config";
 
 describe("environment", () => {
     it("minUserIDLength should be < 10", () => {

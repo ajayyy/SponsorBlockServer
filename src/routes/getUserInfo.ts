@@ -1,14 +1,17 @@
-import { db, privateDB } from "../databases/databases";
-import { getHashCache } from "../utils/getHashCache";
-import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
-import { HashedUserID, UserID } from "../types/user.model";
-import { getReputation } from "../utils/reputation";
-import { Category, SegmentUUID } from "../types/segments.model";
-import { config } from "../config";
-import { canSubmit } from "../utils/permissions";
-import { isUserBanned } from "../utils/checkBan";
+
+import { db, privateDB } from "#databases/databases";
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+import { Logger } from "#utils/logger";
+import { getReputation } from "#utils/reputation";
+import { config } from "#config";
+import { canSubmit } from "#utils/permissions";
+import { isUserBanned } from "#utils/checkBan";
+
+import { Category, SegmentUUID } from "#types/segments";
+import { HashedUserID, UserID } from "#types/user";
+
 const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
@@ -29,7 +32,7 @@ async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ min
                 segmentCount: 0,
             };
         }
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }
@@ -38,7 +41,7 @@ async function dbGetIgnoredSegmentCount(userID: HashedUserID): Promise<number> {
     try {
         const row = await db.prepare("get", `SELECT COUNT(*) as "ignoredSegmentCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID], { useReplica: true });
         return row?.ignoredSegmentCount ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }
@@ -47,7 +50,7 @@ async function dbGetUsername(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID]);
         return row?.userName ?? userID;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return false;
     }
 }
@@ -56,7 +59,7 @@ async function dbGetViewsForUser(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID], { useReplica: true });
         return row?.viewCount ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return false;
     }
 }
@@ -65,7 +68,7 @@ async function dbGetIgnoredViewsForUser(userID: HashedUserID) {
     try {
         const row = await db.prepare("get", `SELECT SUM("views") as "ignoredViewCount" FROM "sponsorTimes" WHERE "userID" = ? AND ( "votes" <= -2 OR "shadowHidden" = 1 )`, [userID], { useReplica: true });
         return row?.ignoredViewCount ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return false;
     }
 }
@@ -74,7 +77,7 @@ async function dbGetWarningsForUser(userID: HashedUserID): Promise<number> {
     try {
         const row = await db.prepare("get", `SELECT COUNT(*) as total FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 AND "type" = 0`, [userID], { useReplica: true });
         return row?.total ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         Logger.error(`Couldn't get warnings for user ${userID}. returning 0`);
         return 0;
     }
@@ -84,7 +87,7 @@ async function dbGetDeArrowWarningReasonForUser(userID: HashedUserID): Promise<n
     try {
         const row = await db.prepare("get", `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 AND "type" = 1`, [userID], { useReplica: true });
         return row?.reason ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         Logger.error(`Couldn't get warnings for user ${userID}. returning 0`);
         return 0;
     }
@@ -94,7 +97,7 @@ async function dbGetLastSegmentForUser(userID: HashedUserID): Promise<SegmentUUI
     try {
         const row = await db.prepare("get", `SELECT "UUID" FROM "sponsorTimes" WHERE "userID" = ? ORDER BY "timeSubmitted" DESC LIMIT 1`, [userID], { useReplica: true });
         return row?.UUID ?? null;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }
@@ -103,7 +106,7 @@ async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<st
     try {
         const row = await db.prepare("get", `SELECT reason FROM "warnings" WHERE "userID" = ? AND "enabled" = 1 AND "type" = 0 ORDER BY "issueTime" DESC LIMIT 1`, [userID], { useReplica: true });
         return row?.reason ?? "";
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         Logger.error(`Couldn't get reason for user ${userID}. returning blank`);
         return "";
     }
@@ -112,7 +115,7 @@ async function dbGetActiveWarningReasonForUser(userID: HashedUserID): Promise<st
 async function dbGetBanned(userID: HashedUserID): Promise<boolean> {
     try {
         return await isUserBanned(userID);
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return false;
     }
 }
@@ -130,7 +133,7 @@ async function getTitleSubmissionCount(userID: HashedUserID): Promise<number> {
     try {
         const row = await db.prepare("get", `SELECT COUNT(*) as "titleSubmissionCount" FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" WHERE "titles"."userID" = ? AND "titleVotes"."votes" >= 0`, [userID], { useReplica: true });
         return row?.titleSubmissionCount ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }
@@ -139,7 +142,7 @@ async function getThumbnailSubmissionCount(userID: HashedUserID): Promise<number
     try {
         const row = await db.prepare("get", `SELECT COUNT(*) as "thumbnailSubmissionCount" FROM "thumbnails" JOIN "thumbnailVotes" ON "thumbnails"."UUID" = "thumbnailVotes"."UUID" WHERE "thumbnails"."userID" = ? AND "thumbnailVotes"."votes" >= 0`, [userID], { useReplica: true });
         return row?.thumbnailSubmissionCount ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }
@@ -148,7 +151,7 @@ async function getCasualSubmissionCount(userID: HashedUserID): Promise<number> {
     try {
         const row = await privateDB.prepare("get", `SELECT COUNT(DISTINCT "videoID") as "casualSubmissionCount" FROM "casualVotes" WHERE "userID" = ?`, [userID], { useReplica: true });
         return row?.casualSubmissionCount ?? 0;
-    } catch (err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return null;
     }
 }

@@ -1,9 +1,11 @@
-import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { usersForSuite } from "../utils/randomUsers";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
+import { client } from "#test/utils/httpClient";
+import { usersForSuite } from "#test/utils/randomUsers";
 
 describe("postWarning", () => {
     // constants

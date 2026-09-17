@@ -1,15 +1,11 @@
-import { db, privateDB } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
-import { ImportMock } from "ts-mock-imports";
-import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import { YouTubeApiMock } from "../mocks/youtubeMock";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { arrayDeepEquals } from "../utils/partialDeepEquals";
 
-const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
-const sinonStub = mockManager.mock("listVideos");
-sinonStub.callsFake(YouTubeApiMock.listVideos);
+import { db, privateDB } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+
+import { client } from "#test/utils/httpClient";
+import { arrayDeepEquals } from "#test/utils/partialDeepEquals";
+
 const vipUser = "VIPUser";
 const randomID2 = "randomID2";
 const randomID2Hashed = getHash(randomID2);

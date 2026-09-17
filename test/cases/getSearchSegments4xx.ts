@@ -1,5 +1,6 @@
-import { client } from "../utils/httpClient";
 import assert from "assert";
+
+import { client } from "#test/utils/httpClient";
 
 describe("getSearchSegments 4xx", () => {
     const endpoint = "/api/searchSegments";

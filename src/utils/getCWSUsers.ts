@@ -1,5 +1,6 @@
 import axios from "axios";
-import { Logger } from "../utils/logger";
+
+import { Logger } from "#utils/logger";
 
 export const getCWSUsers = (extID: string): Promise<number | undefined> =>
 

@@ -1,7 +1,7 @@
 version: '3'
 services:
   database:
-    container_name: database
+    container_name: sb-database
     image: postgres:14
     env_file: 
       - database.env
@@ -11,7 +11,7 @@ services:
       - 5432:5432
     restart: always
   redis:
-    container_name: redis
+    container_name: sb-redis
     image: redis:7.0
     command: /usr/local/etc/redis/redis.conf
     volumes:
@@ -24,7 +24,7 @@ services:
     restart: always
   newleaf:
     image: abeltramo/newleaf:latest
-    container_name: newleaf
+    container_name: sb-newleaf
     restart: always
     ports:
       - 3241:3000
@@ -32,13 +32,24 @@ services:
       - ./newleaf/configuration.py:/workdir/configuration.py
   rsync:
     image: mchangrh/rsync:latest
-    container_name: rsync
+    container_name: sb-rsync
     restart: always
     ports:
       - 873:873
     volumes:
       - ./rsync/rsyncd.conf:/etc/rsyncd.conf
       - ./database-export/:/mirror
+  test-database:
+    container_name: sb-test-database
+    image: postgres:14
+    env_file: 
+      - database-test.env
+    volumes:
+      - database-test-data:/var/lib/postgresql/data
+    ports:
+      - 5499:5432
+    restart: always
 
 volumes:
   database-data:
+  database-test-data:

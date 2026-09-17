@@ -1,5 +1,6 @@
 import assert from "assert";
-import { partialDeepEquals, mixedDeepEquals } from "../utils/partialDeepEquals";
+
+import { partialDeepEquals, mixedDeepEquals } from "#test/utils/partialDeepEquals";
 
 describe("Test utils ", () => {
     it("objectContain", () => {

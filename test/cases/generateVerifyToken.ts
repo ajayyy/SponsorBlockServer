@@ -1,12 +1,15 @@
 import assert from "assert";
-import { config } from "../../src/config";
 import axios from "axios";
-import { createAndSaveToken, TokenType } from "../../src/utils/tokenUtils";
 import MockAdapter from "axios-mock-adapter";
+
+import { config } from "#config";
+import { createAndSaveToken, TokenType } from "#utils/tokenUtils";
+import { validateLicenseKeyRegex } from "#routes/verifyToken";
+
+import * as patreon from "#test/mocks/patreonMock";
+import { client } from "#test/utils/httpClient";
+
 let mock: MockAdapter;
-import * as patreon from "../mocks/patreonMock";
-import { client } from "../utils/httpClient";
-import { validateLicenseKeyRegex } from "../../src/routes/verifyToken";
 
 const generateEndpoint = "/api/generateToken";
 const getGenerateToken = (type: string, code: string | null, adminUserID: string | null) => client({

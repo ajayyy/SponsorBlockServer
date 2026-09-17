@@ -1,7 +1,9 @@
-import { config } from "../config";
-import { Logger } from "../utils/logger";
 import axios from "axios";
-import { HashedUserID } from "../types/user.model";
+
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+
+import { HashedUserID } from "#types/user";
 
 function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {

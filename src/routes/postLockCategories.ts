@@ -1,13 +1,16 @@
-import { Logger } from "../utils/logger";
-import { getHashCache } from "../utils/getHashCache";
-import { isUserVIP } from "../utils/isUserVIP";
-import { db } from "../databases/databases";
 import { Request, Response } from "express";
-import { ActionType, Category, VideoIDHash } from "../types/segments.model";
-import { getService } from "../utils/getService";
-import { config } from "../config";
 
-export async function postLockCategories(req: Request, res: Response): Promise<string[]> {
+import { Logger } from "#utils/logger";
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+import { db } from "#databases/databases";
+import { getService } from "#utils/getService";
+import { config } from "#config";
+
+import { ActionType, Category, VideoIDHash } from "#types/segments";
+
+export async function postLockCategories(req: Request, res: Response): Promise<unknown> {
+    if (req.body == null) return res.status(400).json({ "message": "No request body found" });
     // Collect user input data
     const videoID = req.body.videoID;
     let userID = req.body.userID;

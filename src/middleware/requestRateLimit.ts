@@ -1,17 +1,28 @@
-import { getIP } from "../utils/getIP";
-import { getHash } from "../utils/getHash";
-import { getHashCache } from "../utils/getHashCache";
-import rateLimit from "express-rate-limit";
-import { RateLimitConfig } from "../types/config.model";
 import { Request, RequestHandler } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { UserID } from "../types/user.model";
+import rateLimit from "express-rate-limit";
 import RedisStore, { RedisReply } from "rate-limit-redis";
-import redis from "../utils/redis";
-import { config } from "../config";
-import { Logger } from "../utils/logger";
+
+import { getHashCache } from "#utils/getHashCache";
+import { getIP } from "#utils/getIP";
+import { getHash } from "#utils/getHash";
+import { isUserVIP } from "#utils/isUserVIP";
+import redis from "#utils/redis";
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+
+import { RateLimitConfig } from "#types/config";
+import { UserID } from "#types/user";
+
+let rateLimitMiddlewareMock: typeof rateLimitMiddleware | undefined;
+
+export function setMockRateLimitMiddleware(newMock: typeof rateLimitMiddleware | undefined) {
+    rateLimitMiddlewareMock = newMock;
+}
 
 export function rateLimitMiddleware(limitConfig: RateLimitConfig, getUserID?: (req: Request) => UserID): RequestHandler {
+    if (rateLimitMiddlewareMock !== undefined) {
+        return rateLimitMiddlewareMock(limitConfig, getUserID);
+    }
     try {
         return rateLimit({
             windowMs: limitConfig.windowMs,

@@ -1,8 +1,10 @@
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
 
 const endpoint = "/api/lockReason";
 

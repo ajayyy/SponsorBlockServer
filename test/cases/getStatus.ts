@@ -1,8 +1,11 @@
 import assert from "assert";
-import { db } from "../../src/databases/databases";
-import { client } from "../utils/httpClient";
-import { config } from "../../src/config";
 import sinon from "sinon";
+
+import { db } from "#databases/databases";
+import { config } from "#config";
+
+import { client } from "#test/utils/httpClient";
+
 let dbVersion: number;
 
 describe("getStatus", () => {

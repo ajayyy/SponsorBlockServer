@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { insertLock } from "../utils/queryGen";
-import { multiGenRandomValue } from "../utils/getRandom";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
+import { insertLock } from "#test/utils/queryGen";
+import { multiGenRandomValue } from "#test/utils/getRandom";
 
 const endpoint = "/api/lockCategories";
 const defaultActionTypes = ["skip", "mute"];

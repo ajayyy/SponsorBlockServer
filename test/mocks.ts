@@ -1,7 +1,9 @@
 import express from "express";
-import { config } from "../src/config";
 import { Server } from "http";
-import { UserCounter } from "./mocks/UserCounter";
+
+import { config } from "#config";
+
+import { UserCounter } from "#test/mocks/UserCounter";
 
 const app = express();
 

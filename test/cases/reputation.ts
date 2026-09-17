@@ -1,7 +1,9 @@
 import assert from "assert";
-import { db } from "../../src/databases/databases";
-import { getReputation, calculateReputationFromMetrics } from "../../src/utils/reputation";
-import { genUsers } from "../utils/genUser";
+
+import { db } from "#databases/databases";
+import { getReputation, calculateReputationFromMetrics } from "#utils/reputation";
+
+import { genUsers } from "#test/utils/genUser";
 
 describe("reputation", () => {
     // user definitions

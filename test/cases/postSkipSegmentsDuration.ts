@@ -1,16 +1,10 @@
 import assert from "assert";
-import { postSkipSegmentJSON, postSkipSegmentParam } from "./postSkipSegments";
-import { getHash } from "../../src/utils/getHash";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { db } from "../../src/databases/databases";
-import { ImportMock } from "ts-mock-imports";
-import * as YouTubeAPIModule from "../../src/utils/youtubeApi";
-import { YouTubeApiMock } from "../mocks/youtubeMock";
-import { convertSingleToDBFormat } from "./postSkipSegments";
 
-const mockManager = ImportMock.mockStaticClass(YouTubeAPIModule, "YouTubeAPI");
-const sinonStub = mockManager.mock("listVideos");
-sinonStub.callsFake(YouTubeApiMock.listVideos);
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
+import { convertSingleToDBFormat, postSkipSegmentJSON, postSkipSegmentParam } from "#test/cases/postSkipSegments";
 
 describe("postSkipSegments - duration", () => {
     const userIDOne = "postSkip-DurationUserOne";

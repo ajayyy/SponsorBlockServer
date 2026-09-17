@@ -1,10 +1,12 @@
 import assert from "assert";
-import { db } from "../../src/databases/databases";
-import { Feature } from "../../src/types/user.model";
-import { hasFeature } from "../../src/utils/features";
-import { client } from "../utils/httpClient";
-import { grantFeature, insertVip } from "../utils/queryGen";
-import { User, genUser, genUsers } from "../utils/genUser";
+
+import { db } from "#databases/databases";
+import { hasFeature } from "#utils/features";
+import { Feature } from "#types/user";
+
+import { client } from "#test/utils/httpClient";
+import { grantFeature, insertVip } from "#test/utils/queryGen";
+import { User, genUser, genUsers } from "#test/utils/genUser";
 
 const endpoint = "/api/feature";
 

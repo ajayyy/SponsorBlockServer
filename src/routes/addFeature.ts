@@ -1,12 +1,14 @@
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
-import { config } from "../config";
 import { Request, Response } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { Feature, HashedUserID, UserID } from "../types/user.model";
-import { Logger } from "../utils/logger";
-import { QueryCacher } from "../utils/queryCacher";
-import { getVerificationValue, verifyOldSubmissions } from "./postBranding";
+
+import { getHashCache } from "#utils/getHashCache";
+import { db } from "#databases/databases";
+import { config } from "#config";
+import { isUserVIP } from "#utils/isUserVIP";
+import { Logger } from "#utils/logger";
+import { QueryCacher } from "#utils/queryCacher";
+import { getVerificationValue, verifyOldSubmissions } from "#routes/postBranding";
+
+import { Feature, HashedUserID, UserID } from "#types/user";
 
 interface AddFeatureRequest extends Request {
     body: {
@@ -31,6 +33,8 @@ const allowedFeatures = {
 };
 
 export async function addFeature(req: AddFeatureRequest, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).send("No request body found");
+
     const { body: { userID, adminUserID } } = req;
     const feature = parseInt(req.body.feature) as Feature;
     const enabled = req.body?.enabled !== "false";

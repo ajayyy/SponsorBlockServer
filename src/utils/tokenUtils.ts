@@ -1,10 +1,11 @@
 import axios from "axios";
-import { config } from "../config";
-import { privateDB } from "../databases/databases";
-import { Logger } from "./logger";
 import FormData from "form-data";
 import { randomInt } from "node:crypto";
-import { getHash } from "./getHash";
+
+import { config } from "#config";
+import { privateDB } from "#databases/databases";
+import { Logger } from "#utils/logger";
+import { getHash } from "#utils/getHash";
 
 export enum TokenType {
     patreon = "patreon",

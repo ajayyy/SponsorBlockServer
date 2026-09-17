@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
-import { Logger } from "../utils/logger";
-import { db } from "../databases/databases";
-import { isUserVIP } from "../utils/isUserVIP";
-import { getHashCache } from "../utils/getHashCache";
-import { HashedUserID, UserID } from "../types/user.model";
-import { generateWarningDiscord, warningData, dispatchEvent } from "../utils/webhookUtils";
-import { WarningType } from "../types/warning.model";
+
+import { Logger } from "#utils/logger";
+import { db } from "#databases/databases";
+import { isUserVIP } from "#utils/isUserVIP";
+import { getHashCache } from "#utils/getHashCache";
+import { generateWarningDiscord, warningData, dispatchEvent } from "#utils/webhookUtils";
+
+import { HashedUserID, UserID } from "#types/user";
+import { WarningType } from "#types/warning";
 
 type warningEntry = {
     userID: HashedUserID,
@@ -20,6 +22,7 @@ const MAX_EDIT_DELAY = 900000; // 15 mins
 const getUsername = (userID: HashedUserID) => db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [userID], { useReplica: true });
 
 export async function postWarning(req: Request, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).json({ "message": "No request body found" });
     if (!req.body.userID) return res.status(400).json({ "message": "Missing parameters" });
 
     const issuerUserID: HashedUserID = req.body.issuerUserID ? await getHashCache(req.body.issuerUserID as UserID) : null;
@@ -34,7 +37,7 @@ export async function postWarning(req: Request, res: Response): Promise<Response
         return res.status(403).json({ "message": "Not a VIP" });
     }
 
-    let resultStatus = "";
+    let resultStatus;
 
     try {
         if (enabled) {

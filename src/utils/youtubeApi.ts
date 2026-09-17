@@ -1,8 +1,10 @@
-import { config } from "../config";
-import { Logger } from "./logger";
-import { APIVideoData, APIVideoInfo } from "../types/youtubeApi.model";
-import DiskCache from "./diskCache";
 import axios from "axios";
+
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+import DiskCache from "#utils/diskCache";
+
+import { APIVideoData, APIVideoInfo } from "#types/youtubeApi";
 
 export class YouTubeAPI {
     static async listVideos(videoID: string, ignoreCache = false): Promise<APIVideoInfo> {

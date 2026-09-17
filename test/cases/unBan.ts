@@ -1,7 +1,9 @@
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
-import { client } from "../utils/httpClient";
 import assert from "assert";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
 
 describe("unBan", () => {
     const endpoint = "/api/shadowBanUser";

@@ -1,8 +1,10 @@
-import { db } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
-import { client } from "../utils/httpClient";
 import assert from "assert";
-import { Service } from "../../src/types/segments.model";
+
+import { db } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+import { Service } from "#types/segments";
+
+import { client } from "#test/utils/httpClient";
 
 describe("postBranding", () => {
 

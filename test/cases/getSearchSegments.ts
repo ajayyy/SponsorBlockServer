@@ -1,6 +1,8 @@
-import { db } from "../../src/databases/databases";
-import { client } from "../utils/httpClient";
 import assert from "assert";
+
+import { db } from "#databases/databases";
+
+import { client } from "#test/utils/httpClient";
 
 describe("getSearchSegments", () => {
     const endpoint = "/api/searchSegments";

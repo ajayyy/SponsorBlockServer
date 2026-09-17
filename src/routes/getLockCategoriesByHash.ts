@@ -1,9 +1,11 @@
-import { db } from "../databases/databases";
-import { Logger } from "../utils/logger";
 import { Request, Response } from "express";
-import { hashPrefixTester } from "../utils/hashPrefixTester";
-import { ActionType, Category, VideoID, VideoIDHash } from "../types/segments.model";
-import { parseActionTypes } from "../utils/parseParams";
+
+import { db } from "#databases/databases";
+import { Logger } from "#utils/logger";
+import { hashPrefixTester } from "#utils/hashPrefixTester";
+import { parseActionTypes } from "#utils/parseParams";
+
+import { ActionType, Category, VideoID, VideoIDHash } from "#types/segments";
 
 interface LockResultByHash {
     videoID: VideoID,
@@ -51,7 +53,7 @@ export async function getLockCategoriesByHash(req: Request, res: Response): Prom
         return res.sendStatus(400);
     }
 
-    if (!hashPrefixTester(req.params.prefix)) {
+    if (typeof req.params.prefix !== "string" || !hashPrefixTester(req.params.prefix)) {
         return res.status(400).send("Hash prefix does not match format requirements."); // Exit early on faulty prefix
     }
     hashPrefix = hashPrefix.toLowerCase() as VideoIDHash;

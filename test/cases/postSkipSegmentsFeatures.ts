@@ -1,10 +1,12 @@
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
 import assert from "assert";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { genRandom } from "../utils/getRandom";
-import { Feature } from "../../src/types/user.model";
-import { Segment, postSkipSegmentJSON, convertSingleToDBFormat } from "./postSkipSegments";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+import { Feature } from "#types/user";
+
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
+import { genRandom } from "#test/utils/getRandom";
+import { Segment, postSkipSegmentJSON, convertSingleToDBFormat } from "#test/cases/postSkipSegments";
 
 describe("postSkipSegments Features - Chapters", () => {
     const submitUser_noPermissions = "postSkipSegments-chapters-noperm";

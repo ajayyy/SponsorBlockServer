@@ -1,31 +1,33 @@
-import { config } from "../config";
-import { Logger } from "../utils/logger";
-import { db, privateDB } from "../databases/databases";
-import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { getSubmissionUUID } from "../utils/getSubmissionUUID";
-import { getHash } from "../utils/getHash";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getFormattedTime } from "../utils/getFormattedTime";
-import { dispatchEvent } from "../utils/webhookUtils";
 import { Request, Response } from "express";
-import { ActionType, Category, HashedIP, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
-import { deleteLockCategories } from "./deleteLockCategories";
-import { QueryCacher } from "../utils/queryCacher";
-import { getReputation } from "../utils/reputation";
-import { HashedUserID, UserID } from "../types/user.model";
-import { isUserVIP } from "../utils/isUserVIP";
-import { isUserTempVIP } from "../utils/isUserTempVIP";
-import { parseUserAgent } from "../utils/userAgent";
-import { getService } from "../utils/getService";
 import axios from "axios";
-import { vote } from "./voteOnSponsorTime";
-import { canSubmit, canSubmitGlobal } from "../utils/permissions";
-import { getVideoDetails, videoDetails } from "../utils/getVideoDetails";
-import * as youtubeID from "../utils/youtubeID";
-import { acquireLock } from "../utils/redisLock";
-import { checkBanStatus } from "../utils/checkBan";
-import { isRequestInvalid } from "../utils/requestValidator";
+
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+import { db, privateDB } from "#databases/databases";
+import { getMaxResThumbnail } from "#utils/youtubeApi";
+import { getSubmissionUUID } from "#utils/getSubmissionUUID";
+import { getHash } from "#utils/getHash";
+import { getHashCache } from "#utils/getHashCache";
+import { getIP } from "#utils/getIP";
+import { getFormattedTime } from "#utils/getFormattedTime";
+import { dispatchEvent } from "#utils/webhookUtils";
+import { deleteLockCategories } from "#routes/deleteLockCategories";
+import { QueryCacher } from "#utils/queryCacher";
+import { getReputation } from "#utils/reputation";
+import { HashedUserID, UserID } from "#types/user";
+import { isUserVIP } from "#utils/isUserVIP";
+import { isUserTempVIP } from "#utils/isUserTempVIP";
+import { parseUserAgent } from "#utils/userAgent";
+import { getService } from "#utils/getService";
+import { vote } from "#routes/voteOnSponsorTime";
+import { canSubmit, canSubmitGlobal, CanSubmitResult } from "#utils/permissions";
+import { getVideoDetails, videoDetails } from "#utils/getVideoDetails";
+import * as youtubeID from "#utils/youtubeID";
+import { acquireLock } from "#utils/redisLock";
+import { checkBanStatus } from "#utils/checkBan";
+import { isRequestInvalid } from "#utils/requestValidator";
+
+import { ActionType, Category, HashedIP, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "#types/segments";
 
 type CheckResult = {
     pass: boolean,
@@ -215,6 +217,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
     if (!Array.isArray(segments) || segments.length == 0) {
         invalidFields.push("segments");
     }
+    const permissionCache = new Map<Category, Promise<CanSubmitResult>>();
     // validate start and end times (no : marks)
     for (const segmentPair of segments) {
         const startTime = segmentPair.segment[0];
@@ -233,7 +236,7 @@ async function checkInvalidFields(videoID: VideoID, userID: UserID, hashedUserID
             invalidFields.push("chapter name (too long)");
         }
 
-        const permission = await canSubmit(hashedUserID, segmentPair.category);
+        const permission = await permissionCache.getOrInsertComputed(segmentPair.category, () => canSubmit(hashedUserID, segmentPair.category));
         if (!permission.canSubmit) {
             Logger.warn(`Rejecting submission due to lack of permissions for category ${segmentPair.category}: ${segmentPair.segment} ${hashedUserID} ${videoID} ${videoDurationParam} ${userAgent}`);
             invalidFields.push(`permission to submit ${segmentPair.category}`);
@@ -474,18 +477,18 @@ function proxySubmission(req: Request) {
 }
 
 function preprocessInput(req: Request) {
-    const videoID = req.query.videoID || req.body.videoID;
-    const userID = req.query.userID || req.body.userID;
-    const service = getService(req.query.service, req.body.service);
-    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body.videoDuration) || 0) as VideoDuration;
+    const videoID = req.query.videoID || req.body?.videoID;
+    const userID = req.query.userID || req.body?.userID;
+    const service = getService(req.query.service, req.body?.service);
+    const videoDurationParam: VideoDuration = (parseFloat(req.query.videoDuration || req.body?.videoDuration) || 0) as VideoDuration;
     const videoDuration = videoDurationParam;
 
-    let segments = req.body.segments as IncomingSegment[];
+    let segments = req.body?.segments as IncomingSegment[];
     if (segments === undefined) {
         // Use query instead
         segments = [{
             segment: [req.query.startTime as string, req.query.endTime as string],
-            category: req.query.category as Category,
+            category: (req.query.category ?? "sponsor") as Category,
             actionType: (req.query.actionType as ActionType) ?? ActionType.Skip,
             description: req.query.description as string || "",
         }];
@@ -500,7 +503,7 @@ function preprocessInput(req: Request) {
         segment.segment = segment.segment.map((time) => typeof segment.segment[0] === "string" ? time?.replace(",", ".") : time);
     });
 
-    const userAgent = req.query.userAgent ?? req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
+    const userAgent = req.query.userAgent ?? req.body?.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
 
     return { videoID, userID, service, videoDuration, videoDurationParam, segments, userAgent };
 }
@@ -681,7 +684,7 @@ function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: a
             "title": userID,
             "url": `https://www.youtube.com/watch?v=${videoID}`,
             "description": `**User Agent**: ${userAgent}\
-                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body.userAgent}\
+                        \n**Sent User Agent**: ${req.query.userAgent ?? req.body?.userAgent}\
                         \n**Real User Agent**: ${req.headers["user-agent"]}\
                         \n**Video Duration**: ${videoDurationParam}`,
             "color": 10813440,

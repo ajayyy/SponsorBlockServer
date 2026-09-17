@@ -1,12 +1,13 @@
-import { Logger } from "../utils/logger";
-import { HashedUserID, UserID } from "../types/user.model";
-import { getHashCache } from "../utils/getHashCache";
 import { Request, Response } from "express";
-import { Service, VideoID } from "../types/segments.model";
-import { QueryCacher } from "../utils/queryCacher";
-import { isUserVIP } from "../utils/isUserVIP";
-import { VideoIDHash } from "../types/segments.model";
-import { getService } from "../utils/getService";
+
+import { Logger } from "#utils/logger";
+import { getHashCache } from "#utils/getHashCache";
+import { QueryCacher } from "#utils/queryCacher";
+import { isUserVIP } from "#utils/isUserVIP";
+import { getService } from "#utils/getService";
+
+import { HashedUserID, UserID } from "#types/user";
+import { Service, VideoID, VideoIDHash } from "#types/segments";
 
 export async function postClearCache(req: Request, res: Response): Promise<Response> {
     const videoID = req.query.videoID as VideoID;
@@ -52,7 +53,7 @@ export async function postClearCache(req: Request, res: Response): Promise<Respo
         return res.status(200).json({
             message: `Cache cleared on video ${videoID}`
         });
-    } catch(err) /* istanbul ignore next */ {
+    } catch /* istanbul ignore next */ {
         return res.sendStatus(500);
     }
 }

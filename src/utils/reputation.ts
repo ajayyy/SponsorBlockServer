@@ -1,7 +1,8 @@
-import { db } from "../databases/databases";
-import { UserID } from "../types/user.model";
-import { QueryCacher } from "./queryCacher";
-import { reputationKey } from "./redisKeys";
+import { db } from "#databases/databases";
+import { QueryCacher } from "#utils/queryCacher";
+import { reputationKey } from "#utils/redisKeys";
+
+import { UserID } from "#types/user";
 
 interface ReputationDBResult {
     totalSubmissions: number,
@@ -59,6 +60,7 @@ export async function getReputation(userID: UserID): Promise<number> {
 
         return calculateReputationFromMetrics(result);
     } catch (e) {
+        // eslint-disable-next-line preserve-caught-error
         throw new Error(`${(e as Error)?.message}\n\n${userID}`);
     }
 }

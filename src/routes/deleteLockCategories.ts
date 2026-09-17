@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
-import { isUserVIP } from "../utils/isUserVIP";
-import { getHashCache } from "../utils/getHashCache";
-import { db } from "../databases/databases";
-import { ActionType, Category, Service, VideoID } from "../types/segments.model";
-import { UserID } from "../types/user.model";
-import { getService } from "../utils/getService";
-import { config } from "../config";
-import { Logger } from "../utils/logger";
+
+import { isUserVIP } from "#utils/isUserVIP";
+import { getHashCache } from "#utils/getHashCache";
+import { db } from "#databases/databases";
+import { getService } from "#utils/getService";
+import { config } from "#config";
+import { Logger } from "#utils/logger";
+
+import { ActionType, Category, Service, VideoID } from "#types/segments";
+import { UserID } from "#types/user";
 
 interface DeleteLockCategoriesRequest extends Request {
     body: {

@@ -1,26 +1,27 @@
 import { Request, Response } from "express";
-import { config } from "../config";
-import { db, privateDB } from "../databases/databases";
-
-import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission, TitleSubmission } from "../types/branding.model";
-import { HashedIP, IPAddress, VideoID } from "../types/segments.model";
-import { Feature, HashedUserID } from "../types/user.model";
-import { getHashCache } from "../utils/getHashCache";
-import { getIP } from "../utils/getIP";
-import { getService } from "../utils/getService";
-import { isUserVIP } from "../utils/isUserVIP";
-import { Logger } from "../utils/logger";
 import crypto from "crypto";
-import { QueryCacher } from "../utils/queryCacher";
-import { acquireLock } from "../utils/redisLock";
-import { hasFeature } from "../utils/features";
-import { checkBanStatus } from "../utils/checkBan";
 import axios from "axios";
-import { getMaxResThumbnail } from "../utils/youtubeApi";
-import { getVideoDetails } from "../utils/getVideoDetails";
-import { canSubmitDeArrow } from "../utils/permissions";
-import { parseUserAgent } from "../utils/userAgent";
-import { isRequestInvalid } from "../utils/requestValidator";
+
+import { config } from "#config";
+import { db, privateDB } from "#databases/databases";
+import { getHashCache } from "#utils/getHashCache";
+import { getIP } from "#utils/getIP";
+import { getService } from "#utils/getService";
+import { isUserVIP } from "#utils/isUserVIP";
+import { Logger } from "#utils/logger";
+import { QueryCacher } from "#utils/queryCacher";
+import { acquireLock } from "#utils/redisLock";
+import { hasFeature } from "#utils/features";
+import { checkBanStatus } from "#utils/checkBan";
+import { getMaxResThumbnail } from "#utils/youtubeApi";
+import { getVideoDetails, videoDetails } from "#utils/getVideoDetails";
+import { canSubmitDeArrow } from "#utils/permissions";
+import { parseUserAgent } from "#utils/userAgent";
+import { isRequestInvalid } from "#utils/requestValidator";
+
+import { BrandingSubmission, BrandingUUID, TimeThumbnailSubmission, TitleSubmission } from "#types/branding";
+import { HashedIP, IPAddress, VideoID } from "#types/segments";
+import { Feature, HashedUserID } from "#types/user";
 
 enum BrandingType {
     Title,
@@ -39,6 +40,8 @@ interface ExistingVote {
 }
 
 export async function postBranding(req: Request, res: Response) {
+    if (req.body == null) return res.status(400).send("No request body found");
+
     const { videoID, userID, title, thumbnail, autoLock, downvote, videoDuration, wasWarned, casualMode } = req.body as BrandingSubmission;
     const service = getService(req.body.service);
     const userAgent = req.body.userAgent ?? parseUserAgent(req.get("user-agent")) ?? "";
@@ -375,9 +378,10 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         FROM "titles" JOIN "titleVotes" ON "titles"."UUID" = "titleVotes"."UUID" 
         WHERE "titles"."UUID" = ?`,
         [UUID]);
+    let data: videoDetails | null;
 
     if (wasWarned && voteType === BrandingVoteType.Upvote) {
-        const data = await getVideoDetails(videoID);
+        data ??= await getVideoDetails(videoID);
         axios.post(config.discordDeArrowWarnedWebhookURL, {
             "embeds": [{
                 "title": data?.title,
@@ -422,7 +426,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
         if (lockedSubmission && currentSubmission.score - lockedSubmission.score > 2) {
             const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [lockedSubmission.userID]);
 
-            const data = await getVideoDetails(videoID);
+            data ??= await getVideoDetails(videoID);
             axios.post(config.discordDeArrowLockedWebhookURL, {
                 "embeds": [{
                     "title": data?.title,
@@ -456,7 +460,7 @@ async function sendWebhooks(videoID: VideoID, UUID: BrandingUUID, voteType: Bran
     if (voteType === BrandingVoteType.Downvote && currentSubmission.locked === 1) {
         const usernameRow = await db.prepare("get", `SELECT "userName" FROM "userNames" WHERE "userID" = ?`, [currentSubmission.userID]);
 
-        const data = await getVideoDetails(videoID);
+        data ??= await getVideoDetails(videoID);
         axios.post(config.discordDeArrowLockedWebhookURL, {
             "embeds": [{
                 "title": data?.title,

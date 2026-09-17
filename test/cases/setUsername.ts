@@ -1,9 +1,11 @@
-import { db, privateDB } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
-import { client } from "../utils/httpClient";
-import { insertSegment } from "../utils/segmentQueryGen";
-import { HashedUserID } from "../../src/types/user.model";
+
+import { db, privateDB } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+import { HashedUserID } from "#types/user";
+
+import { client } from "#test/utils/httpClient";
+import { insertSegment } from "#test/utils/segmentQueryGen";
 
 const adminPrivateUserID = "testUserId";
 const user00PrivateUserID = "setUsername_00";
@@ -24,8 +26,6 @@ const user07PrivateUserID = "setUsername_07";
 const username07 = "Username 07";
 const user08PrivateUserID = "setUsername_08";
 const user09PrivateUserID = "setUsername_09";
-const completelyNewUsername = "Completely new user";
-const completelyNewUserPrivId = "setUsername_completelyNew";
 
 async function addUsername(userID: string, userName: string, locked = 0) {
     await db.prepare("run", 'INSERT INTO "userNames" ("userID", "userName", "locked") VALUES(?, ?, ?)', [userID, userName, locked]);
@@ -75,7 +75,6 @@ async function testUserNameChangelog(userID: string, newUserName: string, oldUse
 
 function testUsernameUpdateTime(info: UsernameInfo, minTime: number) {
     assert.ok(info.updateTime != null, "update time should be set");
-    console.log(info.updateTime, minTime);
     assert.ok(info.updateTime >= minTime, "update time should've been updated");
 }
 

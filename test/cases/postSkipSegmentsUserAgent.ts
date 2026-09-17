@@ -1,9 +1,11 @@
 import assert from "assert";
-import { convertSingleToDBFormat } from "./postSkipSegments";
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
-import { client } from "../utils/httpClient";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
+import { client } from "#test/utils/httpClient";
+import { convertSingleToDBFormat } from "#test/cases/postSkipSegments";
 
 const endpoint = "/api/skipSegments";
 

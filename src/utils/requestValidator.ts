@@ -1,11 +1,12 @@
-import { config } from "../config";
+import { config } from "#config";
+
 import {
     CasualCategory,
     ThumbnailSubmission,
     TitleSubmission,
-} from "../types/branding.model";
-import { ValidatorPattern, RequestValidatorRule } from "../types/config.model";
-import { IncomingSegment } from "../types/segments.model";
+} from "#types/branding";
+import { ValidatorPattern, RequestValidatorRule } from "#types/config";
+import { IncomingSegment } from "#types/segments";
 
 export interface RequestValidatorInput {
     userAgent?: string;

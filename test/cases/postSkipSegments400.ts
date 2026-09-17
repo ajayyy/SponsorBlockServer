@@ -1,5 +1,6 @@
 import assert from "assert";
-import { postSkipSegmentJSON, postSkipSegmentParam } from "./postSkipSegments";
+
+import { postSkipSegmentJSON, postSkipSegmentParam } from "#test/cases/postSkipSegments";
 
 const videoID = "postSkipSegments-404-video";
 const userID = "postSkipSegments-404-user";

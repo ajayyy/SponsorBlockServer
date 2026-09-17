@@ -1,9 +1,11 @@
-import { getHash } from "../../src/utils/getHash";
-import { client } from "../utils/httpClient";
 import assert from "assert";
-import { insertSegment } from "../utils/segmentQueryGen";
-import { db } from "../../src/databases/databases";
-import { HashedUserID } from "../../src/types/user.model";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+import { HashedUserID } from "#types/user";
+
+import { client } from "#test/utils/httpClient";
+import { insertSegment } from "#test/utils/segmentQueryGen";
 
 // helpers
 const getUsername = (userID: string) => client({

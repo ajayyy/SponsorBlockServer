@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { config } from "../config";
-import { createAndSaveToken, TokenType } from "../utils/tokenUtils";
-import { getHashCache } from "../utils/getHashCache";
+
+import { config } from "#config";
+import { createAndSaveToken, TokenType } from "#utils/tokenUtils";
+import { getHashCache } from "#utils/getHashCache";
 
 interface GenerateTokenRequest extends Request {
     query: {

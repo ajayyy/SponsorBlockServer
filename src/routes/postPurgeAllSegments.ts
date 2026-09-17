@@ -1,13 +1,16 @@
-import { Logger } from "../utils/logger";
-import { getHashCache } from "../utils/getHashCache";
-import { isUserVIP } from "../utils/isUserVIP";
 import { Request, Response } from "express";
-import { HashedUserID, UserID } from "../types/user.model";
-import { Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { db } from "../databases/databases";
-import { QueryCacher } from "../utils/queryCacher";
+
+import { Logger } from "#utils/logger";
+import { getHashCache } from "#utils/getHashCache";
+import { isUserVIP } from "#utils/isUserVIP";
+import { db } from "#databases/databases";
+import { QueryCacher } from "#utils/queryCacher";
+
+import { HashedUserID, UserID } from "#types/user";
+import { Service, VideoID, VideoIDHash } from "#types/segments";
 
 export async function postPurgeAllSegments(req: Request, res: Response): Promise<Response> {
+    if (req.body == null) return res.status(400).json({ "message": "No request body found" });
     const userID = req.body.userID as UserID;
     const service = req.body.service as Service ?? Service.YouTube;
     const videoID = req.body.videoID as VideoID;

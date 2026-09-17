@@ -1,10 +1,12 @@
-import { client } from "../utils/httpClient";
 import assert from "assert";
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
-import { Service } from "../../src/types/segments.model";
-import { BrandingUUID, CasualVote, ThumbnailResult, TitleResult } from "../../src/types/branding.model";
-import { partialDeepEquals } from "../utils/partialDeepEquals";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+import { Service } from "#types/segments";
+import { BrandingUUID, CasualVote, ThumbnailResult, TitleResult } from "#types/branding";
+
+import { client } from "#test/utils/httpClient";
+import { partialDeepEquals } from "#test/utils/partialDeepEquals";
 
 describe("getBranding", () => {
     const videoID1 = "videoID1";

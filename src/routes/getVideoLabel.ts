@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "../utils/redisKeys";
-import { SBRecord } from "../types/lib.model";
-import { ActionType, Category, DBSegment, Service, VideoID, VideoIDHash } from "../types/segments.model";
-import { Logger } from "../utils/logger";
-import { QueryCacher } from "../utils/queryCacher";
-import { getService } from "../utils/getService";
+
+import { db } from "#databases/databases";
+import { videoLabelsHashKey, videoLabelsKey, videoLabelsLargerHashKey } from "#utils/redisKeys";
+import { Logger } from "#utils/logger";
+import { QueryCacher } from "#utils/queryCacher";
+import { getService } from "#utils/getService";
+
+import { SBRecord } from "#types/lib";
+import { ActionType, Category, DBSegment, Service, VideoID, VideoIDHash } from "#types/segments";
 
 interface FullVideoSegment {
     category: Category;
@@ -157,7 +159,7 @@ async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSeg
 
     const hasStartSegment = req.query.hasStartSegment === "true";
 
-    const service = getService(req.query.service, req.body.service);
+    const service = getService(req.query.service, req.body?.service);
     const segmentData = await getLabelsByVideoID(videoID, service);
     const segments = segmentData.segments;
 

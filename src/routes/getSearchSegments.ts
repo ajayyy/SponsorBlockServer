@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
-import { db } from "../databases/databases";
-import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "../types/segments.model";
-import { getService } from "../utils/getService";
-import { parseActionTypes, parseCategories } from "../utils/parseParams";
+
+import { db } from "#databases/databases";
+import { getService } from "#utils/getService";
+import { parseActionTypes, parseCategories } from "#utils/parseParams";
+
+import { ActionType, Category, DBSegment, Service, VideoID, SortableFields } from "#types/segments";
 
 const maxSegmentsPerPage = 100;
 const defaultSegmentsPerPage = 10;
@@ -87,22 +89,22 @@ async function handleGetSegments(req: Request, res: Response): Promise<searchSeg
         return false;
     }
 
-    const service = getService(req.query.service, req.body.service);
+    const service = getService(req.query.service, req.body?.service);
 
-    const page: number = getPage(req.query.page ?? req.body.page);
-    const limit: number = getLimit(req.query.limit ?? req.body.limit);
-    const sortBy: SortableFields = getSortField(req.query.sortBy, req.body.sortBy);
-    const sortDir: string = req.query.sortDir ?? req.body.sortDir ?? "asc";
+    const page: number = getPage(req.query.page ?? req.body?.page);
+    const limit: number = getLimit(req.query.limit ?? req.body?.limit);
+    const sortBy: SortableFields = getSortField(req.query.sortBy, req.body?.sortBy);
+    const sortDir: string = req.query.sortDir ?? req.body?.sortDir ?? "asc";
 
-    const minVotes: number = req.query.minVotes ?? req.body.minVotes ?? -Infinity;
-    const maxVotes: number = req.query.maxVotes ?? req.body.maxVotes ?? Infinity;
+    const minVotes: number = req.query.minVotes ?? req.body?.minVotes ?? -Infinity;
+    const maxVotes: number = req.query.maxVotes ?? req.body?.maxVotes ?? Infinity;
 
-    const minViews: number = req.query.minViews ?? req.body.minViews ?? -1;
-    const maxViews: number = req.query.maxViews ?? req.body.maxViews ?? Infinity;
+    const minViews: number = req.query.minViews ?? req.body?.minViews ?? -1;
+    const maxViews: number = req.query.maxViews ?? req.body?.maxViews ?? Infinity;
 
-    const locked: boolean = (req.query.locked ?? req.body.locked ?? "") !== "false";
-    const hidden: boolean = (req.query.hidden ?? req.body.hidden ?? "") !== "false";
-    const ignored: boolean = (req.query.ignored ?? req.body.ignored ?? "") !== "false";
+    const locked: boolean = (req.query.locked ?? req.body?.locked ?? "") !== "false";
+    const hidden: boolean = (req.query.hidden ?? req.body?.hidden ?? "") !== "false";
+    const ignored: boolean = (req.query.ignored ?? req.body?.ignored ?? "") !== "false";
 
     const filters = {
         minVotes,

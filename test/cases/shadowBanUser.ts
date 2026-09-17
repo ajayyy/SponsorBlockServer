@@ -1,8 +1,10 @@
-import { db, privateDB } from "../../src/databases/databases";
-import { getHash } from "../../src/utils/getHash";
 import assert from "assert";
-import { Category, Service } from "../../src/types/segments.model";
-import { client } from "../utils/httpClient";
+
+import { db, privateDB } from "#databases/databases";
+import { getHash } from "#utils/getHash";
+import { Category, Service } from "#types/segments";
+
+import { client } from "#test/utils/httpClient";
 
 describe("shadowBanUser", () => {
     const getShadowBan = (userID: string) => db.prepare("get", `SELECT * FROM "shadowBannedUsers" WHERE "userID" = ?`, [userID]);

@@ -1,4 +1,4 @@
-import { HashedValue } from "./hash.model";
+import { HashedValue } from "#types/hash";
 
 export type UserID = string & { __userIDBrand: unknown };
 export type HashedUserID = UserID & HashedValue;

@@ -1,7 +1,9 @@
 import assert from "assert";
-import { postSkipSegmentJSON } from "./postSkipSegments";
-import { getHash } from "../../src/utils/getHash";
-import { db } from "../../src/databases/databases";
+
+import { getHash } from "#utils/getHash";
+import { db } from "#databases/databases";
+
+import { postSkipSegmentJSON } from "#test/cases/postSkipSegments";
 
 describe("postSkipSegments - LockedVideos", () => {
     const userIDOne = "postSkip-DurationUserOne";

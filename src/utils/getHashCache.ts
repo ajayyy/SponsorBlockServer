@@ -1,9 +1,10 @@
-import redis from "../utils/redis";
-import { shaHashKey } from "../utils/redisKeys";
-import { HashedValue } from "../types/hash.model";
-import { Logger } from "../utils/logger";
-import { getHash } from "../utils/getHash";
-import { config } from "../config";
+import redis from "#utils/redis";
+import { shaHashKey } from "#utils/redisKeys";
+import { Logger } from "#utils/logger";
+import { getHash } from "#utils/getHash";
+import { config } from "#config";
+
+import { HashedValue } from "#types/hash";
 
 const defaultedHashTimes = 5000;
 const cachedHashTimes = defaultedHashTimes - 1;

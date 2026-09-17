@@ -1,7 +1,9 @@
-import { config } from "../../src/config";
-import redis from "../../src/utils/redis";
 import assert from "assert";
-import { genRandom } from "../utils/getRandom";
+
+import { config } from "#config";
+import redis from "#utils/redis";
+
+import { genRandom } from "#test/utils/getRandom";
 
 const randKey1 = genRandom();
 const randValue1 = genRandom();
