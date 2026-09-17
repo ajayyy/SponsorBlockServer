@@ -107,8 +107,8 @@ export class Histogram {
         return [
             `${baseName}_sum${serializeLabels(labels)} ${this.getSum()}`,
             `${baseName}_count${serializeLabels(labels)} ${this.getCount()}`,
-            ...Object.entries(this.buckets).map(([bucket, value]) => `${baseName}_bucket${serializeLabels({...labels, le: bucket})} ${value}`),
-        ]
+            ...Object.entries(this.buckets).map(([bucket, value]) => `${baseName}_bucket${serializeLabels({ ...labels, le: bucket })} ${value}`),
+        ];
     }
 }
 
@@ -121,5 +121,5 @@ export class Histogram {
 export function serializeLabels(labels: Record<string, string>): string {
     const labelEntries = Object.entries(labels);
     if (labelEntries.length === 0) return "";
-    return `{${labelEntries.map(([key, value]) => `${key}="${value}"`).join(", ")}}`
+    return `{${labelEntries.map(([key, value]) => `${key}="${value}"`).join(", ")}}`;
 }

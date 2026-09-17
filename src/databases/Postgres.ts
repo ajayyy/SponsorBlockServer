@@ -54,10 +54,10 @@ export class Postgres implements IDatabase {
     failedResponseTime: number[] = [];
     maxStoredTimes = 200;
 
-    readSuccessHistogram: Histogram = new Histogram({maxBucket: HISTOGRAM_MAX_BUCKET});
-    writeSuccessHistogram: Histogram = new Histogram({maxBucket: HISTOGRAM_MAX_BUCKET});
-    readFailureHistogram: Histogram = new Histogram({maxBucket: HISTOGRAM_MAX_BUCKET});
-    writeFailureHistogram: Histogram = new Histogram({maxBucket: HISTOGRAM_MAX_BUCKET});
+    readSuccessHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
+    writeSuccessHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
+    readFailureHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
+    writeFailureHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
 
     constructor(private config: DatabaseConfig) {}
 
@@ -294,11 +294,11 @@ export class Postgres implements IDatabase {
         labels = {},
     }: EmitMetricsOptions): string[] {
         return [
-            ...this.readSuccessHistogram.emitMetrics({baseName, labels: {...labels, type: "read", failure: "no"}}),
-            ...this.writeSuccessHistogram.emitMetrics({baseName, labels: {...labels, type: "write", failure: "no"}}),
-            ...this.readFailureHistogram.emitMetrics({baseName, labels: {...labels, type: "read", failure: "yes"}}),
-            ...this.writeFailureHistogram.emitMetrics({baseName, labels: {...labels, type: "write", failure: "yes"}}),
-        ]
+            ...this.readSuccessHistogram.emitMetrics({ baseName, labels: { ...labels, type: "read", failure: "no" } }),
+            ...this.writeSuccessHistogram.emitMetrics({ baseName, labels: { ...labels, type: "write", failure: "no" } }),
+            ...this.readFailureHistogram.emitMetrics({ baseName, labels: { ...labels, type: "read", failure: "yes" } }),
+            ...this.writeFailureHistogram.emitMetrics({ baseName, labels: { ...labels, type: "write", failure: "yes" } }),
+        ];
     }
 
     getStats(): PostgresStats {

@@ -305,7 +305,7 @@ if (config.redis?.enabled) {
 
                 const time = Date.now() - start;
                 writeResponseTime.push(time);
-                writeHistogram.observe(time)
+                writeHistogram.observe(time);
                 if (writeResponseTime.length > maxStoredTimes) writeResponseTime.shift();
             }).catch((err) => {
                 activeRequests--;
@@ -428,7 +428,7 @@ export function getRedisHistograms(): RedisHistograms {
     return {
         read: readHistogram,
         write: writeHistogram,
-    }
+    };
 }
 
 async function setupCacheClientListener(cacheClient: RedisClientType,
