@@ -102,5 +102,9 @@ export async function getMetrics(req: Request, res: Response, server: Server): P
         `# HELP sb_redis_last_invalidation_message The time of the last invalidation message in redis`,
         `# TYPE sb_redis_last_invalidation_message gauge`,
         `sb_redis_last_invalidation_message ${redisStats.lastInvalidationMessage}`,
+        `# HELP sb_postgres_timings Query timings for postgres databases`,
+        `# TYPE sb_postgres_timings histogram`,
+        ...(db as Postgres)?.emitHistograms?.({baseName: "sb_postgres_timings", labels: {db: "public"}}) ?? [],
+        ...(privateDB as Postgres)?.emitHistograms?.({baseName: "sb_postgres_timings", labels: {db: "private"}}) ?? [],
     ].join("\n"));
 }
