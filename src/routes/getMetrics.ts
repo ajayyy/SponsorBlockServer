@@ -1,12 +1,13 @@
 import { db, privateDB } from "../databases/databases";
 import { Request, Response } from "express";
 import os from "os";
-import redis, { getRedisStats } from "../utils/redis";
+import redis, { getRedisHistograms, getRedisStats } from "../utils/redis";
 import { Postgres } from "../databases/Postgres";
 import { Server } from "http";
 
 export async function getMetrics(req: Request, res: Response, server: Server): Promise<Response> {
     const redisStats = getRedisStats();
+    const redisHistograms = getRedisHistograms();
 
     return res.type("text").send([
         `# HELP sb_uptime Uptime of this instance`,
@@ -102,5 +103,13 @@ export async function getMetrics(req: Request, res: Response, server: Server): P
         `# HELP sb_redis_last_invalidation_message The time of the last invalidation message in redis`,
         `# TYPE sb_redis_last_invalidation_message gauge`,
         `sb_redis_last_invalidation_message ${redisStats.lastInvalidationMessage}`,
+        `# HELP sb_postgres_timings Query timings for postgres databases`,
+        `# TYPE sb_postgres_timings histogram`,
+        ...(db as Postgres)?.emitHistograms?.({ baseName: "sb_postgres_timings", labels: { db: "public" } }) ?? [],
+        ...(privateDB as Postgres)?.emitHistograms?.({ baseName: "sb_postgres_timings", labels: { db: "private" } }) ?? [],
+        `# HELP sb_redis_timings Query timings for redis`,
+        `# TYPE sb_redis_timings histogram`,
+        ...redisHistograms.read.emitMetrics({ baseName: "sb_redis_timings", labels: { type: "read" } }),
+        ...redisHistograms.write.emitMetrics({ baseName: "sb_redis_timings", labels: { type: "write" } }),
     ].join("\n"));
 }

@@ -5,6 +5,9 @@ import { Client, Pool, QueryResult, types } from "pg";
 import fs from "fs";
 import { CustomPostgresReadOnlyConfig, CustomWritePostgresConfig } from "../types/config.model";
 import { timeoutPomise, PromiseWithState, savePromiseState, nextFulfilment } from "../utils/promise";
+import { EmitMetricsOptions, Histogram } from "../utils/histogram";
+
+const HISTOGRAM_MAX_BUCKET = 4096; // in ms, the max value of the last histogram bucket, must be a power of 2
 
 // return numeric (pg_type oid=1700) as float
 types.setTypeParser(1700, function(val) {
@@ -50,6 +53,11 @@ export class Postgres implements IDatabase {
     writeResponseTime: number[] = [];
     failedResponseTime: number[] = [];
     maxStoredTimes = 200;
+
+    readSuccessHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
+    writeSuccessHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
+    readFailureHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
+    writeFailureHistogram: Histogram = new Histogram({ maxBucket: HISTOGRAM_MAX_BUCKET });
 
     constructor(private config: DatabaseConfig) {}
 
@@ -145,7 +153,7 @@ export class Postgres implements IDatabase {
                 else if (this.config.postgres.timeout) currentPromises.push(savePromiseState(timeoutPomise(this.config.postgres.timeout)));
                 const queryResult = await nextFulfilment(currentPromises);
 
-                this.updateResponseTime(type, start);
+                this.updateResponseTime(type, start, false);
 
                 this.activePostgresRequests--;
                 switch (type) {
@@ -175,7 +183,7 @@ export class Postgres implements IDatabase {
                     }
                 }
 
-                this.updateResponseTime(type, start, this.failedResponseTime);
+                this.updateResponseTime(type, start, true);
                 this.activePostgresRequests--;
                 Logger.error(`prepare (postgres) try ${tries}: ${err}`);
             }
@@ -256,14 +264,41 @@ export class Postgres implements IDatabase {
         return result;
     }
 
-    private updateResponseTime(type: string, start: number, customArray?: number[]): void {
+    private updateResponseTime(type: string, start: number, isFailure: boolean): void {
         const responseTime = Date.now() - start;
 
-        const array = customArray ?? (this.isReadQuery(type) ?
-            this.readResponseTime : this.writeResponseTime);
+        // the "legacy" rolling average calculation
+        const array = isFailure
+            ? this.failedResponseTime
+            : (this.isReadQuery(type)
+                ? this.readResponseTime
+                : this.writeResponseTime);
 
         array.push(responseTime);
         if (array.length > this.maxStoredTimes) array.shift();
+
+        // histograms
+        const histogram = this.isReadQuery(type)
+            ? isFailure
+                ? this.readFailureHistogram
+                : this.readSuccessHistogram
+            : isFailure
+                ? this.writeFailureHistogram
+                : this.writeSuccessHistogram;
+
+        histogram.observe(responseTime);
+    }
+
+    emitHistograms({
+        baseName,
+        labels = {},
+    }: EmitMetricsOptions): string[] {
+        return [
+            ...this.readSuccessHistogram.emitMetrics({ baseName, labels: { ...labels, type: "read", failure: "no" } }),
+            ...this.writeSuccessHistogram.emitMetrics({ baseName, labels: { ...labels, type: "write", failure: "no" } }),
+            ...this.readFailureHistogram.emitMetrics({ baseName, labels: { ...labels, type: "read", failure: "yes" } }),
+            ...this.writeFailureHistogram.emitMetrics({ baseName, labels: { ...labels, type: "write", failure: "yes" } }),
+        ];
     }
 
     getStats(): PostgresStats {
