@@ -17,7 +17,7 @@ import { HashedUserID, UserID } from "../types/user.model";
 import { isUserVIP } from "../utils/isUserVIP";
 import { isUserTempVIP } from "../utils/isUserTempVIP";
 import { parseUserAgent } from "../utils/userAgent";
-import { getService } from "../utils/getService";
+import { getService, getUnsupportedService } from "../utils/getService";
 import axios from "axios";
 import { vote } from "./voteOnSponsorTime";
 import { canSubmit, canSubmitGlobal } from "../utils/permissions";
@@ -508,6 +508,11 @@ function preprocessInput(req: Request) {
 export async function postSkipSegments(req: Request, res: Response): Promise<Response> {
     if (config.proxySubmission) {
         proxySubmission(req);
+    }
+
+    const unsupportedService = getUnsupportedService(req.query.service, req.body.service);
+    if (unsupportedService) {
+        return res.status(400).send(`Service is not supported: ${unsupportedService}`);
     }
 
     // eslint-disable-next-line prefer-const
