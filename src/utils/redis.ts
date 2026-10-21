@@ -10,6 +10,7 @@ import { compress, uncompress } from "lz4-napi";
 import { LRUCache } from "lru-cache";
 import { shouldClientCacheKey } from "./redisKeys";
 import { ZMember } from "@redis/client/dist/lib/commands/generic-transformers";
+import { Histogram } from "./histogram";
 
 export interface RedisStats {
     activeRequests: number;
@@ -22,6 +23,11 @@ export interface RedisStats {
     memoryCacheSize: number;
     lastInvalidation: number;
     lastInvalidationMessage: number;
+}
+
+export interface RedisHistograms {
+    read: Histogram,
+    write: Histogram,
 }
 
 interface RedisSB {
@@ -73,6 +79,9 @@ const readResponseTime: number[] = [];
 const writeResponseTime: number[] = [];
 let lastResponseTimeLimit = 0;
 const maxStoredTimes = 200;
+
+const readHistogram = new Histogram({ maxBucket: 4096 });
+const writeHistogram = new Histogram({ maxBucket: 4096 });
 
 const activeRequestPromises: Record<string, Promise<string>> = {};
 // Used to handle race conditions
@@ -257,6 +266,7 @@ if (config.redis?.enabled) {
 
             const responseTime = Date.now() - start;
             readResponseTime.push(responseTime);
+            readHistogram.observe(responseTime);
             if (readResponseTime.length > maxStoredTimes) readResponseTime.shift();
             if (config.redis.stopWritingAfterResponseTime
                     && responseTime > config.redis.stopWritingAfterResponseTime) {
@@ -293,7 +303,9 @@ if (config.redis?.enabled) {
                 writeRequests--;
                 resolve(reply);
 
-                writeResponseTime.push(Date.now() - start);
+                const time = Date.now() - start;
+                writeResponseTime.push(time);
+                writeHistogram.observe(time);
                 if (writeResponseTime.length > maxStoredTimes) writeResponseTime.shift();
             }).catch((err) => {
                 activeRequests--;
@@ -409,6 +421,13 @@ export function getRedisStats(): RedisStats {
         memoryCacheSize: cache?.calculatedSize ?? 0,
         lastInvalidation,
         lastInvalidationMessage
+    };
+}
+
+export function getRedisHistograms(): RedisHistograms {
+    return {
+        read: readHistogram,
+        write: writeHistogram,
     };
 }
 
