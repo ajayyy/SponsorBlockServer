@@ -39,7 +39,7 @@ export async function postCasual(req: Request, res: Response) {
         return res.status(400).send("Bad Request");
     }
 
-    if (isRequestInvalid({
+    if (await isRequestInvalid({
         userID,
         videoID,
         userAgent,

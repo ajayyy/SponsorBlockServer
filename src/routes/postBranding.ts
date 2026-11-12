@@ -54,7 +54,7 @@ export async function postBranding(req: Request, res: Response) {
     try {
         const hashedUserID = await getHashCache(userID);
 
-        const matchedRule = isRequestInvalid({
+        const matchedRule = await isRequestInvalid({
             userAgent,
             userAgentHeader: req.headers["user-agent"],
             videoDuration,

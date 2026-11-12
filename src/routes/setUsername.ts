@@ -35,7 +35,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
     // eslint-disable-next-line no-control-regex
     userName = userName.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
-    if (isRequestInvalid({
+    if (await isRequestInvalid({
         userAgentHeader: req.headers["user-agent"],
         userID: adminUserIDInput ?? userIDInput,
         newUsername: userName,

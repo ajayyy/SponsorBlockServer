@@ -70,7 +70,6 @@ addDefaults(config, {
             message: "OK",
         }
     },
-    requestValidatorRules: [],
     userCounterURL: null,
     userCounterRatio: 10,
     newLeafURLs: null,
@@ -267,8 +266,6 @@ function loadFromEnv(config: SBSConfig, prefix = "") {
                 config[key] = value === "true";
             } else if (key === "newLeafURLs") {
                 config[key] = [value];
-            } else if (key === "requestValidatorRules") {
-                config[key] = JSON.parse(value) ?? [];
             } else {
                 config[key] = value;
             }

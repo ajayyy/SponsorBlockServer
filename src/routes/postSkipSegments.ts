@@ -519,7 +519,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
     const userID: HashedUserID = await getHashCache(paramUserID);
 
-    const matchedRule = isRequestInvalid({
+    const matchedRule = await isRequestInvalid({
         userAgent,
         userAgentHeader: req.headers["user-agent"],
         videoDuration,

@@ -1,4 +1,3 @@
-import { config } from "../config";
 import {
     CasualCategory,
     ThumbnailSubmission,
@@ -6,6 +5,8 @@ import {
 } from "../types/branding.model";
 import { ValidatorPattern, RequestValidatorRule } from "../types/config.model";
 import { IncomingSegment } from "../types/segments.model";
+import { Logger } from "./logger";
+import { getServerConfig } from "./serverConfig";
 
 export interface RequestValidatorInput {
     userAgent?: string;
@@ -36,6 +37,7 @@ type RuleEntry =
     | [Exclude<keyof RequestValidatorRule, BooleanRules>, ValidatorPattern]
     | [BooleanRules, boolean];
 
+let rulsetCompiledFor: string | null = null;
 let compiledRules: CompiledValidityCheck;
 
 function patternToRegex(pattern: ValidatorPattern): RegExp {
@@ -261,7 +263,23 @@ export function compileRules(
     };
 }
 
-export function isRequestInvalid(input: RequestValidatorInput): string | null {
-    compiledRules ??= compileRules(config.requestValidatorRules);
-    return compiledRules(input);
+export async function isRequestInvalid(input: RequestValidatorInput): Promise<string | null> {
+    const validatorRules = await getServerConfig("request-validator-rules");
+
+    if (validatorRules) {
+        try {
+            const parsedRules = JSON.parse(validatorRules) ?? [];
+            if (parsedRules) {
+                if (rulsetCompiledFor !== validatorRules || !compiledRules) {
+                    compiledRules = compileRules(parsedRules);
+                    rulsetCompiledFor = validatorRules;
+                }
+                return compiledRules(input);
+            }
+        } catch (error) {
+            Logger.error(`Failed to parse request validator rules: ${error}`);
+        }
+    }
+
+    return null;
 }

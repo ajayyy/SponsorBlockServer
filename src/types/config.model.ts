@@ -114,7 +114,6 @@ export interface SBSConfig {
         vote: RateLimitConfig;
         view: RateLimitConfig;
     };
-    requestValidatorRules: RequestValidatorRule[];
     minimumPrefix?: string;
     maximumPrefix?: string;
     redis?: RedisConfig;
