@@ -16,7 +16,8 @@ interface SetConfigRequest extends Request {
 const allowedConfigs = [
     "old-submitter-block-date",
     "max-users-per-minute",
-    "max-users-per-minute-dearrow"
+    "max-users-per-minute-dearrow",
+    "request-validator-rules"
 ];
 
 export async function setConfig(req: SetConfigRequest, res: Response): Promise<Response> {
