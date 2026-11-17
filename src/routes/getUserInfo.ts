@@ -13,11 +13,10 @@ const maxRewardTime = config.maxRewardTimePerSegmentInSeconds;
 
 async function dbGetSubmittedSegmentSummary(userID: HashedUserID): Promise<{ minutesSaved: number, segmentCount: number }> {
     try {
-        const countShadowHidden = await isUserBanned(userID) ? 2 : 1; // if shadowbanned, count shadowhidden as well
         const row = await db.prepare("get",
             `SELECT SUM(CASE WHEN "actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views" END) as "minutesSaved",
             count(*) as "segmentCount" FROM "sponsorTimes"
-            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != ?`, [maxRewardTime, maxRewardTime, userID, countShadowHidden], { useReplica: true });
+            WHERE "userID" = ?`, [maxRewardTime, maxRewardTime, userID], { useReplica: true });
         if (row.minutesSaved != null) {
             return {
                 minutesSaved: row.minutesSaved,
@@ -54,7 +53,7 @@ async function dbGetUsername(userID: HashedUserID) {
 
 async function dbGetViewsForUser(userID: HashedUserID) {
     try {
-        const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != 1`, [userID], { useReplica: true });
+        const row = await db.prepare("get", `SELECT SUM("views") as "viewCount" FROM "sponsorTimes" WHERE "userID" = ?`, [userID], { useReplica: true });
         return row?.viewCount ?? 0;
     } catch (err) /* istanbul ignore next */ {
         return false;

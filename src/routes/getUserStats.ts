@@ -35,14 +35,13 @@ async function dbGetUserSummary(userID: HashedUserID, fetchCategoryStats: boolea
         `;
     }
     try {
-        const countShadowHidden = await isUserBanned(userID) ? 2 : 1; // if shadowbanned, count shadowhidden as well
         const row = await db.prepare("get", `
             SELECT SUM(CASE WHEN "actionType" = 'chapter' THEN 0 ELSE ((CASE WHEN "endTime" - "startTime" > ? THEN ? ELSE "endTime" - "startTime" END) / 60) * "views" END) as "minutesSaved",
             ${additionalQuery}
             count(*) as "segmentCount"
             FROM "sponsorTimes"
-            WHERE "userID" = ? AND "votes" > -2 AND "shadowHidden" != ?`,
-        [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, userID, countShadowHidden]);
+            WHERE "userID" = ?`,
+        [maxRewardTimePerSegmentInSeconds, maxRewardTimePerSegmentInSeconds, userID]);
         const source = (row.minutesSaved != null) ? row : {};
         const handler = { get: (target: Record<string, any>, name: string) => target?.[name] || 0 };
         const proxy = new Proxy(source, handler);
