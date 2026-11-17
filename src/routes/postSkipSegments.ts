@@ -7,7 +7,7 @@ import { getHash } from "../utils/getHash";
 import { getHashCache } from "../utils/getHashCache";
 import { getIP } from "../utils/getIP";
 import { getFormattedTime } from "../utils/getFormattedTime";
-import { dispatchEvent } from "../utils/webhookUtils";
+import { dispatchEvent, handleSkipSegmentsSubscriptions } from "../utils/webhookUtils";
 import { Request, Response } from "express";
 import { ActionType, Category, HashedIP, IncomingSegment, IPAddress, SegmentUUID, Service, VideoDuration, VideoID } from "../types/segments.model";
 import { deleteLockCategories } from "./deleteLockCategories";
@@ -604,6 +604,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         const startingVotes = 0;
         const reputation = await getReputation(userID);
 
+        const hashedVideoID = getHash(videoID, 1);
         for (const segmentInfo of segments) {
             // Full segments are always rejected since there can only be one, so shadow hide wouldn't work
             if (segmentInfo.ignoreSegment
@@ -616,7 +617,6 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             //also better for duplication checking
             const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType,
                 segmentInfo.description, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
-            const hashedVideoID = getHash(videoID, 1);
 
             const startingLocked = isVIP ? 1 : 0;
             try {
@@ -663,6 +663,8 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         for (let i = 0; i < segments.length; i++) {
             sendWebhooks(apiVideoDetails, userID, videoID, UUIDs[i], segments[i], service).catch((e) => Logger.error(`call send webhooks ${e}`));
         }
+
+        handleSkipSegmentsSubscriptions(hashedVideoID, segments.map((s) => s.category), segments.map((s) => s.actionType)).catch(Logger.error);
 
         return res.json(newSegments);
     } catch (err) {

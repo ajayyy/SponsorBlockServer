@@ -4,7 +4,7 @@ import { isUserVIP } from "../utils/isUserVIP";
 import { isUserTempVIP } from "../utils/isUserTempVIP";
 import { getMaxResThumbnail } from "../utils/youtubeApi";
 import { db, privateDB } from "../databases/databases";
-import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw } from "../utils/webhookUtils";
+import { dispatchEvent, getVoteAuthor, getVoteAuthorRaw, handleSkipSegmentsSubscriptions } from "../utils/webhookUtils";
 import { getFormattedTime } from "../utils/getFormattedTime";
 import { getIP } from "../utils/getIP";
 import { getHashCache } from "../utils/getHashCache";
@@ -537,6 +537,8 @@ export async function vote(ip: IPAddress, UUID: SegmentUUID, paramUserID: UserID
             }
 
             QueryCacher.clearSegmentCache(segmentInfo);
+
+            handleSkipSegmentsSubscriptions(segmentInfo.hashedVideoID, [segmentInfo.category], [segmentInfo.actionType]).catch(Logger.error);
         }
         if (incrementAmount - oldIncrementAmount !== 0) {
             sendWebhooks({

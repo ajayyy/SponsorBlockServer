@@ -2,6 +2,7 @@ import { config } from "../config";
 import { Logger } from "../utils/logger";
 import axios from "axios";
 import { HashedUserID } from "../types/user.model";
+import { db } from "../databases/databases";
 
 function getVoteAuthorRaw(submissionCount: number, isTempVIP: boolean, isVIP: boolean, isOwnSubmission: boolean): string {
     if (isOwnSubmission) {
@@ -83,10 +84,37 @@ function generateWarningDiscord(data: warningData) {
     };
 }
 
+async function handleSkipSegmentsSubscriptions(hash: string, categories: string[], actionTypes: string[]) {
+    const subscriptions = await db.prepare("all", `SELECT * FROM "skipSegmentsSubscriptions"`);
+
+    for (const subscription of subscriptions) {
+        try {
+            const subscriptionCategories = JSON.parse(subscription.categories);
+            const subscriptionActionTypes = JSON.parse(subscription.actionTypes);
+
+            if (subscription.url && subscriptionCategories.some((c: string) => categories.includes(c))
+                    && subscriptionActionTypes.some((a: string) => actionTypes.includes(a))) {
+                await fetch(subscription.url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        hashPrefix: hash.slice(0, subscription.prefixSize)
+                    })
+                });
+            }
+        } catch (err) {
+            Logger.error(`Failed to parse subscription categories or actionTypes for subscription ${subscription.subscribeAuth}`);
+        }
+    }
+}
+
 export {
     getVoteAuthorRaw,
     getVoteAuthor,
     dispatchEvent,
     generateWarningDiscord,
+    handleSkipSegmentsSubscriptions,
     warningData
 };

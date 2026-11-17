@@ -62,6 +62,7 @@ import { getSegmentID } from "./routes/getSegmentID";
 import { postCasual } from "./routes/postCasual";
 import { getConfigEndpoint } from "./routes/getConfig";
 import { setConfig } from "./routes/setConfig";
+import { postSkipSegmentSubscribe } from "./routes/postSkipSegmentsSubscribe";
 
 export function createServer(callback: () => void): Server {
     // Create a service (the app object is just a callback).
@@ -114,6 +115,7 @@ function setupRoutes(router: Router, server: Server) {
     //add the skip segments functions
     router.get("/api/skipSegments", getSkipSegments);
     router.post("/api/skipSegments", postSkipSegments);
+    router.post("/api/skipSegmentsSubscribe", postSkipSegmentSubscribe);
 
     // add the privacy protecting skip segments functions
     router.get("/api/skipSegments/:prefix", getSkipSegmentsByHash);

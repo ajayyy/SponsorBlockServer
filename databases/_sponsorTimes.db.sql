@@ -104,6 +104,16 @@ CREATE TABLE IF NOT EXISTS "casualVoteTitles" (
 	PRIMARY KEY("videoID", "service", "id")
 );
 
+CREATE TABLE IF NOT EXISTS "skipSegmentsSubscriptions" (
+	"subscribeAuth"	TEXT NOT NULL PRIMARY KEY,
+	"categories"	TEXT NOT NULL,
+	"actionTypes"	TEXT NOT NULL,
+	"prefixSize"	INTEGER NOT NULL,
+	"subscriptionTime"	INTEGER NOT NULL,
+	"url"	TEXT NOT NULL
+);
+
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto; --!sqlite-ignore
 CREATE EXTENSION IF NOT EXISTS pg_trgm; --!sqlite-ignore
 
