@@ -5,6 +5,7 @@ import { SBRecord } from "../types/lib.model";
 import { ActionType, Category, DBSegment, Service, VideoID, VideoIDHash } from "../types/segments.model";
 import { Logger } from "../utils/logger";
 import { QueryCacher } from "../utils/queryCacher";
+import { getEtag } from "../middleware/etag";
 import { getService } from "../utils/getService";
 
 interface FullVideoSegment {
@@ -165,6 +166,10 @@ async function handleGetLabel(req: Request, res: Response): Promise<FullVideoSeg
         res.sendStatus(404);
         return false;
     }
+
+    await getEtag("videoLabel", (videoID as string), service)
+        .then(etag => res.set("ETag", etag))
+        .catch(() => null);
 
     if (hasStartSegment) {
         return segmentData;
