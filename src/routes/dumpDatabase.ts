@@ -233,11 +233,15 @@ async function queueDump(): Promise<void> {
             const dumpFiles = [];
 
             for (const table of tables) {
-                const fileName = `${table.name}_${startTime}.csv`;
+                const fileName = `${table.label ?? table.name}_${startTime}.csv`;
                 const file = `${appExportPath}/${fileName}`;
 
+                const columns = (table.limitedColumns && table.name === "sponsorTimes")
+                    ? `"videoID", "startTime", "endTime", "votes", "locked", "UUID", "timeSubmitted","category", "actionType", "description", "service", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID"`
+                    : "*";
+
                 await new Promise<string>((resolve, reject) => {
-                    exec(`psql -c "\\copy (SELECT * FROM \\"${table.name}\\"${table.order ? ` ORDER BY \\"${table.order}\\"` : ``})`
+                    exec(`psql -c "\\copy (SELECT ${columns} FROM \\"${table.name}\\"${table.order ? ` ORDER BY \\"${table.order}\\"` : ``})`
                             + ` TO '${file}' WITH (FORMAT CSV, HEADER true);"`, credentials, (error, stdout, stderr) => {
                         if (error) {
                             reject(`[dumpDatabase] Failed to dump ${table.name} to ${file} due to ${stderr}`);
@@ -249,7 +253,7 @@ async function queueDump(): Promise<void> {
 
                 dumpFiles.push({
                     fileName,
-                    tableName: table.name,
+                    tableName: table.label ?? table.name,
                 });
             }
             latestDumpFiles = [...dumpFiles];

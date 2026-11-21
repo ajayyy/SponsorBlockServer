@@ -185,6 +185,8 @@ export interface DumpDatabase {
 export interface DumpDatabaseTable {
     name: string;
     order?: string;
+    limitedColumns?: boolean;
+    label?: string;
 }
 
 export interface CronJobDefault {

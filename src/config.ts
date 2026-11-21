@@ -158,6 +158,11 @@ addDefaults(config, {
         },
         {
             name: "casualVoteTitles"
+        }, {
+            name: "sponsorTimes",
+            label: "sponsorTimesClean",
+            order: "timeSubmitted",
+            limitedColumns: true
         }]
     },
     diskCacheURL: null,
