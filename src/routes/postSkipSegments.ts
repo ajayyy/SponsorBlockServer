@@ -535,7 +535,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
     }
     if (matchedRule.action === "drop") {
         Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
-        return res.status(200).send("OK");
+        return res.status(200).json(segments.map(segmentInfo => {
+            const UUID = getSubmissionUUID(videoID, segmentInfo.category, segmentInfo.actionType,
+                segmentInfo.description, userID, parseFloat(segmentInfo.segment[0]), parseFloat(segmentInfo.segment[1]), service);
+            return {
+                UUID,
+                category: segmentInfo.category,
+                segment: segmentInfo.segment,
+            };
+        }));
     }
 
     const invalidCheckResult = await checkInvalidFields(videoID, paramUserID, userID, segments, videoDurationParam, userAgent, service);
