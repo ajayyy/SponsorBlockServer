@@ -111,6 +111,11 @@ addDefaults(config, {
         tables: [{
             name: "sponsorTimes",
             order: "timeSubmitted"
+        }, {
+            name: "sponsorTimes",
+            label: "sponsorTimesClean",
+            order: "timeSubmitted",
+            limitedColumns: true
         },
         {
             name: "userNames"
@@ -158,11 +163,6 @@ addDefaults(config, {
         },
         {
             name: "casualVoteTitles"
-        }, {
-            name: "sponsorTimes",
-            label: "sponsorTimesClean",
-            order: "timeSubmitted",
-            limitedColumns: true
         }]
     },
     diskCacheURL: null,
