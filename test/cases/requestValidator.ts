@@ -25,7 +25,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "asdfg",
                 }),
-                "Untitled rule 1",
+                { ruleName: "Untitled rule 1", action: "drop" },
             );
         });
         it("case insensitive match", () => {
@@ -33,7 +33,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "asDfg",
                 }),
-                "Untitled rule 1",
+                { ruleName: "Untitled rule 1", action: "drop" },
             );
         });
         it("simple expected no match", () => {
@@ -41,7 +41,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "125aaa",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing field - no match", () => {
@@ -49,7 +49,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -73,7 +73,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "asdfg",
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("different casing", () => {
@@ -81,7 +81,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "asDfg",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("extra field match", () => {
@@ -90,7 +90,7 @@ describe("Request validator", () => {
                     userID: "asdfg",
                     userAgent: "Mozilla/5.0",
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("simple expected no match", () => {
@@ -98,7 +98,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "125aaa",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing field - no match", () => {
@@ -106,7 +106,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -131,7 +131,7 @@ describe("Request validator", () => {
                     userID: "asdfg",
                     userAgent: "Mozilla/5.0 Chromeium/213.7",
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("only matching one pattern - fail #1", () => {
@@ -140,7 +140,7 @@ describe("Request validator", () => {
                     userID: "asDfg",
                     userAgent: "Mozilla/5.0 Chromeium/213.7",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("only matching one pattern - fail #2", () => {
@@ -149,7 +149,7 @@ describe("Request validator", () => {
                     userID: "asdfg",
                     userAgent: "ReVanced/20.07.39",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing one of the fields - fail #1", () => {
@@ -157,7 +157,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userID: "asdfg",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing one of the fields - fail #2", () => {
@@ -165,7 +165,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0 Chromeium/213.7",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing all fields - fail", () => {
@@ -173,7 +173,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     videoDuration: 21.37,
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -203,7 +203,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("match on one of multiple segments", () => {
@@ -224,7 +224,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("match on one of multiple segments with other missing field", () => {
@@ -244,7 +244,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("no match with one segment", () => {
@@ -259,7 +259,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("no match with multiple segments", () => {
@@ -280,7 +280,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("one segment missing field", () => {
@@ -294,7 +294,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("multiple segments missing field", () => {
@@ -313,7 +313,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("zero segments", () => {
@@ -321,7 +321,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     segments: [],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing segments", () => {
@@ -329,7 +329,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -360,7 +360,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("match on one of multiple segments", () => {
@@ -381,7 +381,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("match on one of multiple segments with other missing field", () => {
@@ -401,7 +401,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("no match with one segment #1", () => {
@@ -416,7 +416,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("no match with one segment #2", () => {
@@ -431,7 +431,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("no match with one segment #2", () => {
@@ -446,7 +446,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("no match with multiple segments", () => {
@@ -467,7 +467,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("no match with multiple segments with partial matches", () => {
@@ -488,7 +488,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("one segment missing field", () => {
@@ -502,7 +502,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("multiple segments missing field", () => {
@@ -521,7 +521,7 @@ describe("Request validator", () => {
                         },
                     ],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("zero segments", () => {
@@ -529,7 +529,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     segments: [],
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing segments", () => {
@@ -537,7 +537,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -562,7 +562,7 @@ describe("Request validator", () => {
                         downvote: true,
                     },
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("simple expected no match", () => {
@@ -572,7 +572,7 @@ describe("Request validator", () => {
                         downvote: false,
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing field - no match", () => {
@@ -580,7 +580,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -610,7 +610,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                "Testing rule",
+                { ruleName: "Testing rule", action: "drop" },
             );
         });
         it("simple expected no match", () => {
@@ -624,7 +624,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("partial match #1", () => {
@@ -638,7 +638,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("partial match #2", () => {
@@ -652,7 +652,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing field - no match #1", () => {
@@ -660,7 +660,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing field - no match #2", () => {
@@ -670,7 +670,7 @@ describe("Request validator", () => {
                         downvote: false,
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing field - no match #3", () => {
@@ -683,7 +683,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
@@ -715,7 +715,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                "Rule one",
+                { ruleName: "Rule one", action: "drop" },
             );
         });
         it("matches 1", () => {
@@ -729,7 +729,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                "Rule one",
+                { ruleName: "Rule one", action: "drop" },
             );
         });
         it("matches 2", () => {
@@ -743,7 +743,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                "Untitled rule 1",
+                { ruleName: "Untitled rule 1", action: "drop" },
             );
         });
         it("no match", () => {
@@ -757,7 +757,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing both fields #1", () => {
@@ -765,7 +765,7 @@ describe("Request validator", () => {
                 compiledRuleset({
                     userAgent: "Mozilla/5.0",
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing both fields #2", () => {
@@ -775,7 +775,7 @@ describe("Request validator", () => {
                         downvote: false,
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
         it("missing both fields #3", () => {
@@ -788,7 +788,7 @@ describe("Request validator", () => {
                         },
                     },
                 }),
-                null,
+                { ruleName: "implicit accept rule", action: "accept" },
             );
         });
     });
