@@ -39,21 +39,23 @@ export async function postCasual(req: Request, res: Response) {
         return res.status(400).send("Bad Request");
     }
 
-    if (await isRequestInvalid({
+    const hashedUserID = await getHashCache(userID);
+    const matchedRule = await isRequestInvalid({
         userID,
+        hashedUserID,
         videoID,
         userAgent,
         userAgentHeader: req.headers["user-agent"],
         casualCategories: categories,
         service,
         endpoint: "dearrow-postCasual",
-    })) {
+    });
+    if (matchedRule.action === "drop") {
         Logger.warn(`Casual vote rejected by request validator: ${userAgent} ${req.headers["user-agent"]} ${categories} ${service} ${videoID}`);
         return res.status(200).send("OK");
     }
 
     try {
-        const hashedUserID = await getHashCache(userID);
         const hashedVideoID = await getHashCache(videoID, 1);
         const hashedIP = await getHashCache(getIP(req) + config.globalSalt as IPAddress);
         const isBanned = await checkBanStatus(hashedUserID, hashedIP);

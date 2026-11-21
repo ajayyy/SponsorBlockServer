@@ -43,14 +43,18 @@ export interface CustomPostgresReadOnlyConfig extends CustomPostgresConfig {
 }
 
 export type ValidatorPattern = string | [string, string];
+export type ValidatorAction = "drop" | "accept" | "accept_log";
 export interface RequestValidatorRule {
     ruleName?: string;
+    action?: ValidatorAction;
+    comment?: string;
     // mostly universal
     userAgent?: ValidatorPattern;
     userAgentHeader?: ValidatorPattern;
     videoDuration?: ValidatorPattern;
     videoID?: ValidatorPattern;
     userID?: ValidatorPattern;
+    hashedUserID?: ValidatorPattern;
     service?: ValidatorPattern;
     endpoint?: ValidatorPattern;
     // sb postSkipSegments

@@ -60,6 +60,7 @@ export async function postBranding(req: Request, res: Response) {
             videoDuration,
             videoID,
             userID,
+            hashedUserID,
             service,
             dearrow: {
                 title,
@@ -68,8 +69,10 @@ export async function postBranding(req: Request, res: Response) {
             },
             endpoint: "dearrow-postBranding",
         });
-        if (matchedRule !== null) {
-            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, `Caught by rule: ${matchedRule}`);
+        if (matchedRule.action !== "accept") {
+            sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, `Action: ${matchedRule.action}, rule: ${matchedRule.ruleName}`);
+        }
+        if (matchedRule.action === "drop") {
             Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
             res.status(200).send("OK");
             return;

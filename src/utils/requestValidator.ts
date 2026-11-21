@@ -3,7 +3,7 @@ import {
     ThumbnailSubmission,
     TitleSubmission,
 } from "../types/branding.model";
-import { ValidatorPattern, RequestValidatorRule } from "../types/config.model";
+import { ValidatorPattern, RequestValidatorRule, ValidatorAction } from "../types/config.model";
 import { IncomingSegment } from "../types/segments.model";
 import { Logger } from "./logger";
 import { getServerConfig } from "./serverConfig";
@@ -14,6 +14,7 @@ export interface RequestValidatorInput {
     videoDuration?: string | number;
     videoID?: string;
     userID?: string;
+    hashedUserID?: string;
     service?: string;
     segments?: IncomingSegment[];
     dearrow?: {
@@ -25,7 +26,12 @@ export interface RequestValidatorInput {
     newUsername?: string;
     endpoint?: string;
 }
-export type CompiledValidityCheck = (input: RequestValidatorInput) => string | null;
+export interface ValidatorResult {
+    action: ValidatorAction;
+    ruleName: string;
+}
+export type CompiledValidityCheck = (input: RequestValidatorInput) => ValidatorResult;
+type CompiledPartialValidityCheck = (input: RequestValidatorInput) => ValidatorResult | null;
 type CompiledPatternCheck = (input: RequestValidatorInput) => boolean;
 type CompiledSegmentCheck = (input: IncomingSegment) => boolean;
 type InputExtractor = (
@@ -75,9 +81,9 @@ function compileSegmentPattern(
 export function compileRules(
     ruleDefinitions: RequestValidatorRule[],
 ): CompiledValidityCheck {
-    if (ruleDefinitions.length === 0) return () => null;
+    if (ruleDefinitions.length === 0) return () => ({ action: "accept", ruleName: "implicit accept rule" });
 
-    const rules: CompiledValidityCheck[] = [];
+    const rules: CompiledPartialValidityCheck[] = [];
     let untitledRuleCounter = 0;
     for (const ruleDefinition of ruleDefinitions) {
         const ruleComponents: CompiledPatternCheck[] = [];
@@ -115,6 +121,11 @@ export function compileRules(
                 case "userID":
                     ruleComponents.push(
                         compilePattern(rulePattern, (input) => input.userID),
+                    );
+                    break;
+                case "hashedUserID":
+                    ruleComponents.push(
+                        compilePattern(rulePattern, (input) => input.hashedUserID),
                     );
                     break;
                 case "service":
@@ -222,6 +233,8 @@ export function compileRules(
                     break;
                 }
                 case "ruleName":
+                case "action":
+                case "comment":
                     // not a rule component
                     break;
                 default: {
@@ -246,12 +259,15 @@ export function compileRules(
                 return false;
             });
         }
-        const ruleName = ruleDefinition.ruleName ?? `Untitled rule ${++untitledRuleCounter}`;
+        const ruleResult: ValidatorResult = {
+            ruleName: ruleDefinition.ruleName ?? `Untitled rule ${++untitledRuleCounter}`,
+            action: ruleDefinition.action ?? "drop",
+        };
         rules.push((input) => {
             for (const rule of ruleComponents) {
                 if (!rule(input)) return null;
             }
-            return ruleName;
+            return ruleResult;
         });
     }
     return (input) => {
@@ -259,11 +275,14 @@ export function compileRules(
             const result = rule(input);
             if (result !== null) return result;
         }
-        return null;
+        return {
+            action: "accept",
+            ruleName: "implicit accept rule"
+        };
     };
 }
 
-export async function isRequestInvalid(input: RequestValidatorInput): Promise<string | null> {
+export async function isRequestInvalid(input: RequestValidatorInput): Promise<ValidatorResult> {
     const validatorRules = await getServerConfig("request-validator-rules");
 
     if (validatorRules) {

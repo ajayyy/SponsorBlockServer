@@ -525,12 +525,15 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         videoDuration,
         videoID,
         userID: paramUserID,
+        hashedUserID: userID,
         service,
         segments,
         endpoint: "sponsorblock-postSkipSegments"
     });
-    if (matchedRule !== null) {
-        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, matchedRule);
+    if (matchedRule.action !== "accept") {
+        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, `Action: ${matchedRule.action}, rule: ${matchedRule.action}`);
+    }
+    if (matchedRule.action === "drop") {
         Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
         return res.status(200).send("OK");
     }
@@ -582,7 +585,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
             Logger.warn(`New user trying to submit: ${userID} ${videoID} ${Object.keys(segments?.[0] ?? {})} ${Object.keys(req.query)} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
             return res.status(403).send(permission.reason);
         } else if (permission.newUser) {
-            sendNewUserWebhook(config.discordNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, undefined);
+            sendNewUserWebhook(config.discordNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, `New user, action: ${matchedRule.action}, rule: ${matchedRule.ruleName}`);
         }
 
         // Will be filled when submitting
@@ -691,7 +694,7 @@ function sendNewUserWebhook(webhookUrl: string, userID: HashedUserID, videoID: a
                 "url": getMaxResThumbnail(videoID),
             },
             "footer": {
-                "text": ruleName === undefined ? "Caught by permission check" : `Caught by rule '${ruleName}'`,
+                "text": ruleName ?? "new user",
             },
         }],
     })
