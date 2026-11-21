@@ -300,5 +300,8 @@ export async function isRequestInvalid(input: RequestValidatorInput): Promise<Va
         }
     }
 
-    return null;
+    return {
+        action: "accept",
+        ruleName: "no rules configured",
+    };
 }
