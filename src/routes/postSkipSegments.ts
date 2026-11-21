@@ -531,7 +531,7 @@ export async function postSkipSegments(req: Request, res: Response): Promise<Res
         endpoint: "sponsorblock-postSkipSegments"
     });
     if (matchedRule.action !== "accept") {
-        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, `Action: ${matchedRule.action}, rule: ${matchedRule.action}`);
+        sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, userID, videoID, userAgent, req, videoDurationParam, `Action: ${matchedRule.action}, rule: ${matchedRule.ruleName}`);
     }
     if (matchedRule.action === "drop") {
         Logger.warn(`Sponsorblock submission rejected by request validator: ${userID} ${videoID} ${videoDurationParam} ${userAgent} ${req.headers["user-agent"]}`);
