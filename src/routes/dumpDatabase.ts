@@ -237,7 +237,7 @@ async function queueDump(): Promise<void> {
                 const file = `${appExportPath}/${fileName}`;
 
                 const columns = (table.limitedColumns && table.name === "sponsorTimes")
-                    ? `"videoID", "startTime", "endTime", "votes", "locked", "UUID", "timeSubmitted","category", "actionType", "description", "service", "videoDuration", "hidden", "reputation", "shadowHidden", "hashedVideoID"`
+                    ? `\\"videoID\\", \\"startTime\\", \\"endTime\\", \\"votes\\", \\"locked\\", \\"UUID\\", \\"timeSubmitted\\", \\"category\\", \\"actionType\\", \\"description\\", \\"service\\", \\"videoDuration\\", \\"hidden\\", \\"reputation\\", \\"shadowHidden\\", \\"hashedVideoID\\"`
                     : "*";
 
                 await new Promise<string>((resolve, reject) => {
