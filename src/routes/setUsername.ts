@@ -78,7 +78,7 @@ export async function setUsername(req: Request, res: Response): Promise<Response
                 db.prepare("get", `SELECT count(*) AS "count" FROM "thumbnails" WHERE "userID" = ? LIMIT 1`, [hashedUserID]),
             ]) as {count: number}[];
 
-            if (segments.count === 0 && titles.count === 0 && thumbs.count === 0) {
+            if (segments.count === 0 && titles.count === 0 && thumbs.count === 0 && userName.length > 40) {
                 return res.sendStatus(200);
             }
         }
