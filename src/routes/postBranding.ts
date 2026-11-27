@@ -73,7 +73,7 @@ export async function postBranding(req: Request, res: Response) {
             sendNewUserWebhook(config.discordRejectedNewUserWebhookURL, hashedUserID, videoID, userAgent, req, videoDuration, title, `Action: ${matchedRule.action}, rule: ${matchedRule.ruleName}`);
         }
         if (matchedRule.action === "drop") {
-            Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title.title} ${thumbnail.timestamp}`);
+            Logger.warn(`Dearrow submission rejected by request validator: ${hashedUserID} ${videoID} ${videoDuration} ${userAgent} ${req.headers["user-agent"]} ${title?.title} ${thumbnail?.timestamp}`);
             res.status(200).send("OK");
             return;
         }
