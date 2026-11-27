@@ -324,6 +324,24 @@ describe("postSkipSegments", () => {
             .catch(err => done(err));
     });
 
+    it("Should not be able to submit with unknown service", (done) => {
+        const videoID = "colon-1";
+        postSkipSegmentJSON({
+            userID: submitUserOne,
+            videoID,
+            service:"Unsupported-xxx",
+            segments: [{
+                segment: ["0", "3"],
+                category: "sponsor",
+            }]
+        })
+            .then(res => {
+                assert.strictEqual(res.status, 400);
+                done();
+            })
+            .catch(err => done(err));
+    });
+
     it("Should throw 409 on duplicate submission", (done) => {
         const videoID = "private-video";
         postSkipSegmentParam({
